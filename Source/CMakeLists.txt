@@ -6,9 +6,21 @@ else()
     add_compile_options(-Wall -Wextra -pedantic -Werror)
 endif()
 
+add_subdirectory(External/OctaneGUI)
+
 set(SOURCE Main.cpp)
 
 add_executable(
     LevelSketch
     ${SOURCE}
+)
+
+target_include_directories(
+    LevelSketch
+    PRIVATE External
+)
+
+target_link_libraries(
+    LevelSketch
+    OctaneGUI
 )

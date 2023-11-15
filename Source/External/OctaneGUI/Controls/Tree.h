@@ -1,0 +1,125 @@
+/**
+
+MIT License
+
+Copyright (c) 2022-2023 Mitchell Davis <mdavisprog@gmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+#pragma once
+
+#include "Container.h"
+
+namespace OctaneGUI
+{
+
+class TreeItem;
+class VerticalContainer;
+
+/// @brief Control that displays a hierarchy of items.
+///
+/// Tree controls can display a hierarchy of items which can be expanded
+/// or collapsed.
+class Tree : public Container
+{
+    CLASS(Tree)
+
+public:
+    Tree(Window* InWindow);
+
+    std::shared_ptr<Tree> AddChild(const char* Text);
+    std::shared_ptr<Tree> AddChild(const char32_t* Text);
+
+    Tree& SetText(const char* Text);
+    Tree& SetText(const char32_t* Text);
+    const char32_t* GetText() const;
+
+    Tree& SetExpanded(bool Expand);
+    Tree& SetExpandedAll(bool Expand);
+    bool IsExpanded() const;
+
+    Tree& SetSelected(bool Selected);
+
+    Tree& SetRowSelect(bool RowSelect);
+    bool ShouldRowSelect() const;
+
+    Tree& SetMetaData(void* MetaData);
+    void* MetaData() const;
+
+    Tree& SetOnSelected(OnTreeSignature&& Fn);
+    Tree& SetOnHovered(OnTreeSignature&& Fn);
+    Tree& SetOnToggled(OnTreeSignature&& Fn);
+
+    Tree& ClearChildren();
+    bool HasChildren() const;
+    std::vector<std::shared_ptr<Tree>> Children() const;
+    const Tree& ForEachChild(OnTreeSignature Callback) const;
+    std::shared_ptr<Tree> GetChild(const char32_t* Text) const;
+
+    const std::weak_ptr<Tree>& ParentTree() const;
+
+    virtual std::weak_ptr<Control> GetControl(const Vector2& Point) const override;
+    virtual Vector2 DesiredSize() const override;
+
+    virtual void OnLoad(const Json& Root) override;
+    virtual void OnSave(Json& Root) const override;
+    virtual void OnPaint(Paint& Brush) const override;
+    virtual void OnThemeLoaded() override;
+
+private:
+    typedef std::function<void(bool, const std::shared_ptr<TreeItem>&)> OnHoveredTreeItemSignature;
+    typedef std::function<void(const std::shared_ptr<TreeItem>&)> OnTreeItemSignature;
+
+    Tree& SetOnHovered(OnHoveredTreeItemSignature&& Fn);
+    Tree& SetOnSelected(OnTreeItemSignature&& Fn);
+
+    std::weak_ptr<Control> GetControl(const Vector2& Point, const Rect& RootBounds) const;
+    void SetHovered(bool Hovered, const std::shared_ptr<TreeItem>& Item);
+    void SetSelected(const std::shared_ptr<TreeItem>& Item);
+    void PaintSelection(Paint& Brush, const std::shared_ptr<TreeItem>& Item) const;
+    bool IsHidden(const std::shared_ptr<TreeItem>& Item) const;
+    void RowSelect(const std::shared_ptr<TreeItem>& Item) const;
+
+    Tree& SetParentTree(const std::weak_ptr<Tree> Parent);
+
+    Tree& UpdateListOffset();
+
+    std::shared_ptr<TreeItem> m_Item { nullptr };
+    std::weak_ptr<Tree> m_ParentTree {};
+    std::shared_ptr<VerticalContainer> m_List { nullptr };
+
+    std::weak_ptr<TreeItem> m_Hovered {};
+    OnHoveredTreeItemSignature m_OnHoveredItem { nullptr };
+
+    std::weak_ptr<TreeItem> m_Selected {};
+    OnTreeItemSignature m_OnItemSelected { nullptr };
+
+    OnTreeSignature m_OnSelected { nullptr };
+    OnTreeSignature m_OnHovered { nullptr };
+    OnTreeSignature m_OnToggled { nullptr };
+
+    bool m_Expand { false };
+    bool m_RowSelect { false };
+
+    void* m_MetaData { nullptr };
+};
+
+}
