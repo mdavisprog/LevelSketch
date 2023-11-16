@@ -23,4 +23,6 @@ target_include_directories(
 target_link_libraries(
     LevelSketch
     OctaneGUI
+    d3d12.lib
+    dxgi.lib
 )
