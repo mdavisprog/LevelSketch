@@ -12,6 +12,15 @@ add_subdirectory(External/OctaneGUI)
 
 set(SOURCE Main.cpp)
 
+if(WIN32)
+    set(SOURCE
+        ${SOURCE}
+        Platform/Windows/Events.cpp
+        Platform/Windows/Platform.cpp
+        Platform/Windows/Window.cpp
+    )
+endif()
+
 add_executable(
     ${TARGET}
     ${SOURCE}
@@ -25,7 +34,13 @@ target_include_directories(
 target_link_libraries(
     ${TARGET}
     OctaneGUI
-    d3d12
-    d3dcompiler
-    dxgi
 )
+
+if(WIN32)
+    target_link_libraries(
+        ${TARGET}
+        d3d12
+        d3dcompiler
+        dxgi
+    )
+endif()

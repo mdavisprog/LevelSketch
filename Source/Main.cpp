@@ -1,5 +1,11 @@
 #include <cstdio>
 #include "OctaneGUI/OctaneGUI.h"
+#include "Core/Defines.hpp"
+#include "Platform/Window.hpp"
+
+#ifdef WINDOWS
+    #include "Platform/Windows/Platform.hpp"
+#endif
 
 #ifndef UNICODE
 #define UNICODE
@@ -18,8 +24,6 @@
 #define CLASS_NAME L"LevelSketch"
 #define FRAME_COUNT 2
 
-static std::unordered_map<OctaneGUI::Window*, HWND> g_Windows {};
-
 static bool g_InitializedDirectX { false };
 static UINT g_FrameIndex { 0 };
 static Microsoft::WRL::ComPtr<ID3D12Device> g_Device;
@@ -37,6 +41,9 @@ static D3D12_VERTEX_BUFFER_VIEW g_VertexBufferView { 0 };
 static UINT g_HeapDescriptorSize { 0 };
 static UINT64 g_FenceValue { 0 };
 static HANDLE g_FenceEvent { nullptr };
+
+static LevelSketch::Platform::Platform* g_Platform { nullptr };
+static std::unordered_map<OctaneGUI::Window*, LevelSketch::Platform::Window*> g_Windows {};
 
 static void WaitForPreviousFrame()
 {
@@ -509,63 +516,32 @@ static bool InitializeDirectX(HWND Window, UINT Width, UINT Height)
     return true;
 }
 
-LRESULT WinProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
-{
-    switch (Msg)
-    {
-    case WM_CLOSE:
-        for (std::unordered_map<OctaneGUI::Window*, HWND>::const_iterator It { g_Windows.begin() }; It != g_Windows.end(); ++It)
-        {
-            if (It->second == hWnd)
-            {
-                g_Windows.erase(It);
-                break;
-            }
-        }
-
-        DestroyWindow(hWnd);
-        break;
-
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        break;
-
-    default: break;
-    }
-    return DefWindowProcW(hWnd, Msg, wParam, lParam);
-}
-
 void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Action)
 {
     switch (Action)
     {
     case OctaneGUI::WindowAction::Create:
     {
-        HWND Handle { CreateWindowExW(
-            WS_EX_CLIENTEDGE,
-            CLASS_NAME,
-            OctaneGUI::String::ToWide(Window->GetTitle()).c_str(),
-            WS_OVERLAPPEDWINDOW,
-            (int)Window->GetPosition().X,
-            (int)Window->GetPosition().Y,
-            (int)Window->GetSize().X,
-            (int)Window->GetSize().Y,
-            nullptr,
-            nullptr,
-            nullptr,
-            nullptr
-        ) };
-
-        if (Handle != INVALID_HANDLE_VALUE)
+        if (g_Windows.find(Window) == g_Windows.end())
         {
-            g_Windows[Window] = Handle;
-            ShowWindow(Handle, SW_NORMAL);
+            LevelSketch::Platform::Window* Win = g_Platform->NewWindow(
+                OctaneGUI::String::ToMultiByte(Window->GetTitle()).c_str(),
+                (int)Window->GetPosition().X,
+                (int)Window->GetPosition().Y,
+                (int)Window->GetSize().X,
+                (int)Window->GetSize().Y
+            );
 
-            InitializeDirectX(Handle, (UINT)Window->GetSize().X, (UINT)Window->GetSize().Y);
-        }
-        else
-        {
-            printf("Failed to create window!\n");
+            if (Win != nullptr)
+            {
+                g_Windows[Window] = Win;
+                Win->Show();
+                InitializeDirectX((HWND)Win->Handle(), (UINT)Window->GetSize().X, (UINT)Window->GetSize().Y);
+            }
+            else
+            {
+                printf("Failed to create window!\n");
+            }
         }
     } break;
 
@@ -573,11 +549,7 @@ void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Action)
     {
         if (g_Windows.find(Window) != g_Windows.end())
         {
-            if (!DestroyWindow(g_Windows[Window]))
-            {
-                printf("Failed to destroy window!\n");
-            }
-
+            g_Platform->CloseWindow(g_Windows[Window]);
             g_Windows.erase(Window);
         }
     } break;
@@ -586,7 +558,7 @@ void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Action)
     {
         if (g_Windows.find(Window) != g_Windows.end())
         {
-            SetForegroundWindow(g_Windows[Window]);
+            g_Windows[Window]->Focus();
         }
     } break;
 
@@ -594,15 +566,7 @@ void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Action)
     {
         if (g_Windows.find(Window) != g_Windows.end())
         {
-            SetWindowPos(
-                g_Windows[Window],
-                HWND_TOP,
-                (int)Window->GetPosition().X,
-                (int)Window->GetPosition().Y,
-                0,
-                0,
-                SWP_NOSIZE
-            );
+            g_Windows[Window]->SetPosition((int)Window->GetPosition().X, (int)Window->GetPosition().Y);
         }
     } break;
 
@@ -622,15 +586,14 @@ OctaneGUI::Event OnEvent(OctaneGUI::Window* Window)
         return { OctaneGUI::Event::Type::WindowClosed };
     }
 
-    HWND Handle { g_Windows[Window] };
-
-    MSG Msg {};
-    while (PeekMessageW(&Msg, Handle, 0, 0, PM_REMOVE))
+    LevelSketch::Platform::Window* Win { g_Windows[Window] };
+    if (!Win->IsOpen())
     {
-        TranslateMessage(&Msg);
-        DispatchMessageW(&Msg);
+        g_Windows.erase(Window);
+        return { OctaneGUI::Event::Type::WindowClosed };
     }
 
+    Win->ProcessEvents();
     Render(Window->GetSize().X, Window->GetSize().Y);
 
     return { OctaneGUI::Event::Type::None };
@@ -647,19 +610,15 @@ int main(int argc, char** argv)
         }
     })";
 
-    WNDCLASSEXW Class;
-    ZeroMemory(&Class, sizeof(WNDCLASSEXW));
-    Class.cbSize = sizeof(Class);
-    Class.style = CS_HREDRAW | CS_VREDRAW;
-    Class.lpszClassName = CLASS_NAME;
-    Class.lpfnWndProc = WinProc;
-    Class.hInstance = GetModuleHandleW(nullptr);
-
-    if (RegisterClassExW(&Class) == 0)
+#ifdef WINDOWS
+    g_Platform = new LevelSketch::Platform::Windows::Platform();
+    
+    if (!g_Platform->Initialize())
     {
-        printf("Failed to register windows class.\n");
+        printf("Failed to initialize platform!\n");
         return -1;
     }
+#endif
 
     OctaneGUI::Application Application;
     Application
@@ -680,7 +639,15 @@ int main(int argc, char** argv)
     int Return { Application.Run() };
 
     CloseHandle(g_FenceEvent);
-    UnregisterClassW(CLASS_NAME, nullptr);
+
+    for (const std::pair<OctaneGUI::Window*, LevelSketch::Platform::Window*> Item : g_Windows)
+    {
+        g_Platform->CloseWindow(Item.second);
+    }
+    g_Windows.clear();
+
+    g_Platform->Shutdown();
+    delete g_Platform;
 
     return Return;
 }
