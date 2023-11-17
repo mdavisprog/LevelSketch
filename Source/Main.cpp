@@ -1,6 +1,10 @@
 #include <cstdio>
 #include "OctaneGUI/OctaneGUI.h"
 
+#ifndef UNICODE
+#define UNICODE
+#endif
+
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -8,6 +12,7 @@
 #include <Windows.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
+#include <d3dcompiler.h>
 #include <wrl.h>
 
 #define CLASS_NAME L"LevelSketch"
@@ -23,7 +28,15 @@ static Microsoft::WRL::ComPtr<ID3D12CommandAllocator> g_CommandAllocator;
 static Microsoft::WRL::ComPtr<IDXGISwapChain3> g_SwapChain;
 static Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> g_Heap;
 static Microsoft::WRL::ComPtr<ID3D12Resource> g_RenderTargets[FRAME_COUNT];
+static Microsoft::WRL::ComPtr<ID3D12RootSignature> g_RootSignature;
+static Microsoft::WRL::ComPtr<ID3D12PipelineState> g_PipelineState;
+static Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList1> g_CommandList;
+static Microsoft::WRL::ComPtr<ID3D12Resource> g_VertexBuffer;
+static Microsoft::WRL::ComPtr<ID3D12Fence> g_Fence;
+static D3D12_VERTEX_BUFFER_VIEW g_VertexBufferView { 0 };
 static UINT g_HeapDescriptorSize { 0 };
+static UINT64 g_FenceValue { 0 };
+static HANDLE g_FenceEvent { nullptr };
 
 static IDXGIAdapter1* GetHardwareAdapter(IDXGIFactory1* Factory)
 {
@@ -166,6 +179,226 @@ static bool LoadPipeline(HWND Window, UINT Width, UINT Height)
     return true;
 }
 
+static bool LoadAssets(float AspectRatio)
+{
+    D3D12_ROOT_SIGNATURE_DESC RootSignatureDescription { 0 };
+    RootSignatureDescription.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+
+    Microsoft::WRL::ComPtr<ID3DBlob> Signature;
+    Microsoft::WRL::ComPtr<ID3DBlob> Error;
+    if (D3D12SerializeRootSignature(&RootSignatureDescription, D3D_ROOT_SIGNATURE_VERSION_1, &Signature, &Error) != S_OK)
+    {
+        printf("Failed to serialize root signature!\n");
+        return false;
+    }
+
+    if (g_Device->CreateRootSignature(0, Signature->GetBufferPointer(), Signature->GetBufferSize(), IID_PPV_ARGS(&g_RootSignature)) != S_OK)
+    {
+        printf("Failed to create root signature!\n");
+        return false;
+    }
+
+    const char* Source = R"(
+        struct PSInput
+        {
+            float4 position : SV_POSITION;
+            float4 color : COLOR;
+        };
+
+        PSInput VSMain(float4 position : POSITION, float4 color : COLOR)
+        {
+            PSInput result;
+
+            result.position = position;
+            result.color = color;
+
+            return result;
+        }
+
+        float4 PSMain(PSInput input) : SV_TARGET
+        {
+            return input.color;
+        }
+    )";
+
+    Microsoft::WRL::ComPtr<ID3DBlob> VertexShader;
+    Microsoft::WRL::ComPtr<ID3DBlob> PixelShader;
+
+    const size_t SourceLength { strlen(Source) };
+    if (D3DCompile(
+        (LPVOID)Source,
+        SourceLength,
+        "Default",
+        nullptr,
+        nullptr,
+        "VSMain",
+        "vs_5_0",
+        0,
+        0,
+        &VertexShader,
+        nullptr
+    ) != S_OK)
+    {
+        printf("Failed to compile vertex shader!\n");
+        return false;
+    }
+
+    if (D3DCompile(
+        (LPVOID)Source,
+        SourceLength,
+        "Default",
+        nullptr,
+        nullptr,
+        "PSMain",
+        "ps_5_0",
+        0,
+        0,
+        &PixelShader,
+        nullptr
+    ) != S_OK)
+    {
+        printf("Failed to compile pixel shader!\n");
+        return false;
+    }
+
+    const D3D12_INPUT_ELEMENT_DESC InputElements[]
+    {
+        {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+    };
+
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC GraphicsDesc { 0 };
+    GraphicsDesc.InputLayout = { InputElements, _countof(InputElements) };
+    GraphicsDesc.pRootSignature = g_RootSignature.Get();
+    GraphicsDesc.VS = { VertexShader->GetBufferPointer(), VertexShader->GetBufferSize() };
+    GraphicsDesc.PS = { PixelShader->GetBufferPointer(), PixelShader->GetBufferSize() };
+    GraphicsDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
+    GraphicsDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
+    GraphicsDesc.RasterizerState.FrontCounterClockwise = FALSE;
+    GraphicsDesc.RasterizerState.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
+    GraphicsDesc.RasterizerState.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
+    GraphicsDesc.RasterizerState.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
+    GraphicsDesc.RasterizerState.DepthClipEnable = TRUE;
+    GraphicsDesc.RasterizerState.MultisampleEnable = FALSE;
+    GraphicsDesc.RasterizerState.AntialiasedLineEnable = FALSE;
+    GraphicsDesc.RasterizerState.ForcedSampleCount = 0;
+    GraphicsDesc.RasterizerState.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+    GraphicsDesc.BlendState.AlphaToCoverageEnable = FALSE;
+    GraphicsDesc.BlendState.IndependentBlendEnable = FALSE;
+
+    for (UINT I = 0; I < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; ++I)
+    {
+        GraphicsDesc.BlendState.RenderTarget[I].BlendEnable = FALSE;
+        GraphicsDesc.BlendState.RenderTarget[I].LogicOpEnable = FALSE;
+        GraphicsDesc.BlendState.RenderTarget[I].SrcBlend = D3D12_BLEND_ONE;
+        GraphicsDesc.BlendState.RenderTarget[I].DestBlend = D3D12_BLEND_ZERO;
+        GraphicsDesc.BlendState.RenderTarget[I].BlendOp = D3D12_BLEND_OP_ADD;
+        GraphicsDesc.BlendState.RenderTarget[I].SrcBlendAlpha = D3D12_BLEND_ONE;
+        GraphicsDesc.BlendState.RenderTarget[I].DestBlendAlpha = D3D12_BLEND_ZERO;
+        GraphicsDesc.BlendState.RenderTarget[I].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+        GraphicsDesc.BlendState.RenderTarget[I].LogicOp = D3D12_LOGIC_OP_NOOP;
+        GraphicsDesc.BlendState.RenderTarget[I].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+    }
+
+    GraphicsDesc.DepthStencilState.DepthEnable = FALSE;
+    GraphicsDesc.DepthStencilState.StencilEnable = FALSE;
+    GraphicsDesc.SampleMask = UINT_MAX;
+    GraphicsDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    GraphicsDesc.NumRenderTargets = 1;
+    GraphicsDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+    GraphicsDesc.SampleDesc.Count = 1;
+
+    if (g_Device->CreateGraphicsPipelineState(&GraphicsDesc, IID_PPV_ARGS(&g_PipelineState)) != S_OK)
+    {
+        printf("Failed to create graphics pipeline state!\n");
+        return false;
+    }
+
+    if (g_Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, g_CommandAllocator.Get(), g_PipelineState.Get(), IID_PPV_ARGS(&g_CommandList)) != S_OK)
+    {
+        printf("Failed to create command list!\n");
+        return false;
+    }
+
+    if (g_CommandList->Close() != S_OK)
+    {
+        printf("Failed to close command list!\n");
+        return false;
+    }
+
+    const float Vertices[] =
+    {
+        0.0f, 0.25f * AspectRatio, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+        0.25f, -0.25f * AspectRatio, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+        -0.25f, -0.25f * AspectRatio, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f
+    };
+    const UINT VerticesSize { sizeof(Vertices) };
+
+    D3D12_HEAP_PROPERTIES HeapProperties { 0 };
+    HeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
+    HeapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    HeapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+    HeapProperties.CreationNodeMask = 1;
+    HeapProperties.VisibleNodeMask = 1;
+
+    D3D12_RESOURCE_DESC ResourceDesc { 0 };
+    ResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+    ResourceDesc.Width = VerticesSize;
+    ResourceDesc.Height = 1;
+    ResourceDesc.DepthOrArraySize = 1;
+    ResourceDesc.MipLevels = 1;
+    ResourceDesc.Format = DXGI_FORMAT_UNKNOWN;
+    ResourceDesc.SampleDesc.Count = 1;
+    ResourceDesc.SampleDesc.Quality = 0;
+    ResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    ResourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+    // Not an efficient way to upload vertex data. Refer to other DX12 samples
+    // for proper way of doing this.
+    if (g_Device->CreateCommittedResource(
+        &HeapProperties,
+        D3D12_HEAP_FLAG_NONE,
+        &ResourceDesc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&g_VertexBuffer)
+    ) != S_OK)
+    {
+        printf("Failed to create committed resource!\n");
+        return false;
+    }
+
+    UINT8* VertexData { nullptr };
+    D3D12_RANGE Range { 0, 0 };
+    if (g_VertexBuffer->Map(0, &Range, reinterpret_cast<void**>(&VertexData)) != S_OK)
+    {
+        printf("Failed to map vertex buffer!\n");
+        return false;
+    }
+    memcpy(VertexData, Vertices, sizeof(Vertices));
+    g_VertexBuffer->Unmap(0, nullptr);
+
+    g_VertexBufferView.BufferLocation = g_VertexBuffer->GetGPUVirtualAddress();
+    g_VertexBufferView.StrideInBytes = sizeof(float) * 7; // 3 floats for position, 4 floats for color.
+    g_VertexBufferView.SizeInBytes = VerticesSize;
+
+    if (g_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&g_Fence)) != S_OK)
+    {
+        printf("Failed to create fence!\n");
+        return false;
+    }
+    g_FenceValue = 1;
+
+    g_FenceEvent = CreateEventW(nullptr, FALSE, FALSE, nullptr);
+    if (g_FenceEvent == nullptr)
+    {
+        printf("Failed to create fence event!\n");
+        return false;
+    }
+
+    return true;
+}
+
 static bool InitializeDirectX(HWND Window, UINT Width, UINT Height)
 {
     if (g_InitializedDirectX)
@@ -174,6 +407,12 @@ static bool InitializeDirectX(HWND Window, UINT Width, UINT Height)
     }
 
     if (!LoadPipeline(Window, Width, Height))
+    {
+        return false;
+    }
+
+    const float AspectRatio { (float)Width / (float)Height };
+    if (!LoadAssets(AspectRatio))
     {
         return false;
     }
@@ -351,6 +590,7 @@ int main(int argc, char** argv)
 
     int Return { Application.Run() };
 
+    CloseHandle(g_FenceEvent);
     UnregisterClassW(CLASS_NAME, nullptr);
 
     return Return;
