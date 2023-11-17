@@ -38,6 +38,91 @@ static UINT g_HeapDescriptorSize { 0 };
 static UINT64 g_FenceValue { 0 };
 static HANDLE g_FenceEvent { nullptr };
 
+static void WaitForPreviousFrame()
+{
+    const UINT64 Fence { g_FenceValue };
+    if (g_CommandQueue->Signal(g_Fence.Get(), Fence) != S_OK)
+    {
+        printf("Failed to signal command queue!\n");
+        return;
+    }
+    g_FenceValue++;
+
+    if (g_Fence->GetCompletedValue() < Fence)
+    {
+        if (g_Fence->SetEventOnCompletion(Fence, g_FenceEvent) == S_OK)
+        {
+            WaitForSingleObject(g_FenceEvent, INFINITE);
+        }
+        else
+        {
+            printf("Failed to set event on completion!\n");
+        }
+    }
+
+    g_FrameIndex = g_SwapChain->GetCurrentBackBufferIndex();
+}
+
+static void Render(float Width, float Height)
+{
+    if (g_CommandAllocator->Reset() != S_OK)
+    {
+        printf("Failed to reset command allocator!\n");
+        return;
+    }
+
+    if (g_CommandList->Reset(g_CommandAllocator.Get(), g_PipelineState.Get()) != S_OK)
+    {
+        printf("Failed to reset command list!\n");
+        return;
+    }
+
+    D3D12_VIEWPORT View { 0.0f, 0.0f, Width, Height, 0.0f, 1.0f };
+    D3D12_RECT Scissor { 0, 0, (LONG)Width, (LONG)Height };
+
+    g_CommandList->SetGraphicsRootSignature(g_RootSignature.Get());
+    g_CommandList->RSSetViewports(1, &View);
+    g_CommandList->RSSetScissorRects(1, &Scissor);
+
+    D3D12_RESOURCE_BARRIER Barrier;
+    Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    Barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    Barrier.Transition.pResource = g_RenderTargets[g_FrameIndex].Get();
+    Barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+    Barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+    Barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+    g_CommandList->ResourceBarrier(1, &Barrier);
+
+    D3D12_CPU_DESCRIPTOR_HANDLE CPUDesc { g_Heap->GetCPUDescriptorHandleForHeapStart() };
+    CPUDesc.ptr = SIZE_T(INT64(CPUDesc.ptr) + INT64(g_FrameIndex) * INT64(g_HeapDescriptorSize));
+    g_CommandList->OMSetRenderTargets(1, &CPUDesc, FALSE, nullptr);
+
+    const float ClearColor[] { 0.0f, 0.2f, 0.4f, 1.0f };
+    g_CommandList->ClearRenderTargetView(CPUDesc, ClearColor, 0, nullptr);
+    g_CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    g_CommandList->IASetVertexBuffers(0, 1, &g_VertexBufferView);
+    g_CommandList->DrawInstanced(3, 1, 0, 0);
+
+    Barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+    Barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+    g_CommandList->ResourceBarrier(1, &Barrier);
+
+    if (g_CommandList->Close() != S_OK)
+    {
+        printf("Failed to close command list!\n");
+    }
+
+    ID3D12CommandList* CommandLists[] { g_CommandList.Get() };
+    g_CommandQueue->ExecuteCommandLists(_countof(CommandLists), CommandLists);
+
+    if (g_SwapChain->Present(1, 0) != S_OK)
+    {
+        printf("Failed to present!\n");
+    }
+
+    WaitForPreviousFrame();
+}
+
 static IDXGIAdapter1* GetHardwareAdapter(IDXGIFactory1* Factory)
 {
     Microsoft::WRL::ComPtr<IDXGIAdapter1> Adapter;
@@ -396,6 +481,8 @@ static bool LoadAssets(float AspectRatio)
         return false;
     }
 
+    WaitForPreviousFrame();
+
     return true;
 }
 
@@ -543,6 +630,8 @@ OctaneGUI::Event OnEvent(OctaneGUI::Window* Window)
         TranslateMessage(&Msg);
         DispatchMessageW(&Msg);
     }
+
+    Render(Window->GetSize().X, Window->GetSize().Y);
 
     return { OctaneGUI::Event::Type::None };
 }
