@@ -10,7 +10,11 @@ set(TARGET LevelSketch)
 
 add_subdirectory(External/OctaneGUI)
 
-set(SOURCE Main.cpp)
+set(SOURCE
+    Render/Renderer.cpp
+
+    Main.cpp
+)
 
 if(WIN32)
     set(SOURCE
@@ -18,6 +22,8 @@ if(WIN32)
         Platform/Windows/Events.cpp
         Platform/Windows/Platform.cpp
         Platform/Windows/Window.cpp
+    
+        Render/DirectX/Renderer.cpp
     )
 endif()
 
