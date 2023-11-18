@@ -26,26 +26,15 @@ SOFTWARE.
 
 #pragma once
 
-#include "../Types.hpp"
+typedef char i8;
+typedef short i16;
+typedef int i32;
+typedef long long i64;
 
-namespace LevelSketch
-{
-namespace Core
-{
-namespace Math
-{
+typedef unsigned char u8;
+typedef unsigned short u16;
+typedef unsigned int u32;
+typedef unsigned long long u64;
 
-template<typename T>
-struct Vector2
-{
-public:
-    T X { 0 };
-    T Y { 0 };
-};
-
-typedef Vector2<i32> Vector2i;
-typedef Vector2<f32> Vector2f;
-
-}
-}
-}
+typedef float f32;
+typedef double f64;
