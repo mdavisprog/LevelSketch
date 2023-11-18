@@ -9,6 +9,10 @@
     #include "Render/DirectX/Renderer.hpp"
 #endif
 
+#ifdef WITH_TESTS
+    #include "Tests/TestSuite.hpp"
+#endif
+
 static LevelSketch::Platform::Platform* g_Platform { nullptr };
 static LevelSketch::Render::Renderer* g_Renderer { nullptr };
 static std::unordered_map<OctaneGUI::Window*, LevelSketch::Platform::Window*> g_Windows {};
@@ -99,6 +103,16 @@ OctaneGUI::Event OnEvent(OctaneGUI::Window* Window)
 
 int main(int argc, char** argv)
 {
+#ifdef WITH_TESTS
+    for (int I = 0; I < argc; I++)
+    {
+        if (std::string{argv[I]} == "--tests")
+        {
+            return LevelSketch::Tests::TestSuite::Instance().Run(argc, argv);
+        }
+    }
+#endif
+
     const char* Stream = R"({
         "Windows": {
             "Main": {"Title": "Level Sketch", "Width": 1280, "Height": 720,

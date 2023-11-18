@@ -27,6 +27,13 @@ if(WIN32)
     )
 endif()
 
+if(WITH_TESTS)
+    set(SOURCE
+        ${SOURCE}
+        Tests/TestSuite.cpp
+    )
+endif()
+
 add_executable(
     ${TARGET}
     ${SOURCE}
@@ -48,5 +55,12 @@ if(WIN32)
         d3d12
         d3dcompiler
         dxgi
+    )
+endif()
+
+if(WITH_TESTS)
+    target_compile_definitions(
+        ${TARGET}
+        PRIVATE WITH_TESTS
     )
 endif()
