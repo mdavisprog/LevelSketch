@@ -28,34 +28,22 @@ SOFTWARE.
 
 namespace LevelSketch
 {
-
-namespace Core::Math
+namespace Core
 {
-    template<typename T>
-    struct Vector2;
-    typedef Vector2<int> Vector2i;
-}
-
-namespace Platform
+namespace Math
 {
 
-class Window
+template<typename T>
+struct Vector2
 {
 public:
-    virtual ~Window() {}
-
-    virtual void* Handle() const = 0;
-    virtual bool Create(const char* Title, int X, int Y, int Width, int Height) = 0;
-    virtual void Close() = 0;
-    virtual void Show() = 0;
-    virtual void Focus() = 0;
-    virtual void SetPosition(int X, int Y) = 0;
-    virtual Core::Math::Vector2i Position() const = 0;
-    virtual Core::Math::Vector2i Size() const = 0;
-    virtual void ProcessEvents() = 0;
-
-    virtual bool IsOpen() const = 0;
+    T X { 0 };
+    T Y { 0 };
 };
 
+typedef Vector2<int> Vector2i;
+typedef Vector2<float> Vector2f;
+
+}
 }
 }

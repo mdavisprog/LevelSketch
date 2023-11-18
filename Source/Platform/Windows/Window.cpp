@@ -25,6 +25,7 @@ SOFTWARE.
 */
 
 #include "Window.hpp"
+#include "../../Core/Math/Vector2.hpp"
 
 #include <string>
 
@@ -128,6 +129,32 @@ void Window::SetPosition(int X, int Y)
         0,
         SWP_NOSIZE
     );
+}
+
+Core::Math::Vector2i Window::Position() const
+{
+    if (!IsOpen())
+    {
+        return {};
+    }
+
+    RECT Rect;
+    GetWindowRect(m_Handle, &Rect);
+
+    return { Rect.left, Rect.top };
+}
+
+Core::Math::Vector2i Window::Size() const
+{
+    if (!IsOpen())
+    {
+        return {};
+    }
+
+    RECT Rect;
+    GetWindowRect(m_Handle, &Rect);
+
+    return { Rect.right - Rect.left, Rect.bottom - Rect.top };
 }
 
 void Window::ProcessEvents()

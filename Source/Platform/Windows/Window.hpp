@@ -47,6 +47,8 @@ public:
     virtual void Show() override;
     virtual void Focus() override;
     virtual void SetPosition(int X, int Y) override;
+    virtual Core::Math::Vector2i Position() const override;
+    virtual Core::Math::Vector2i Size() const override;
     virtual void ProcessEvents() override;
 
     virtual bool IsOpen() const override;
