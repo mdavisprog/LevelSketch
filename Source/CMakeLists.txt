@@ -25,6 +25,11 @@ if(WIN32)
     
         Render/DirectX/Renderer.cpp
     )
+elseif(APPLE)
+    set(SOURCE
+        ${SOURCE}
+        Platform/Mac/Platform.cpp
+    )
 else()
     set(SOURCE
         ${SOURCE}

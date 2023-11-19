@@ -7,6 +7,8 @@
 #if defined(WINDOWS)
     #include "Platform/Windows/Platform.hpp"
     #include "Render/DirectX/Renderer.hpp"
+#elif defined(APPLE)
+    #include "Platform/Mac/Platform.hpp"
 #elif defined(LINUX)
     #include "Platform/Linux/Platform.hpp"
     #include "Render/OpenGL/Renderer.hpp"
@@ -128,6 +130,8 @@ int main(int argc, char** argv)
 #if defined(WINDOWS)
     g_Platform = new LevelSketch::Platform::Windows::Platform();
     g_Renderer = new LevelSketch::Render::DirectX::Renderer();
+#elif defined(APPLE)
+    g_Platform = new LevelSketch::Platform::Mac::Platform();
 #elif defined(LINUX)
     g_Platform = new LevelSketch::Platform::Linux::Platform();
     g_Renderer = new LevelSketch::Render::OpenGL::Renderer();
