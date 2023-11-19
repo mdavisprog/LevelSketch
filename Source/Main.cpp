@@ -4,9 +4,12 @@
 #include "Platform/Window.hpp"
 #include "Render/Renderer.hpp"
 
-#ifdef WINDOWS
+#if defined(WINDOWS)
     #include "Platform/Windows/Platform.hpp"
     #include "Render/DirectX/Renderer.hpp"
+#elif defined(LINUX)
+    #include "Platform/Linux/Platform.hpp"
+    #include "Render/OpenGL/Renderer.hpp"
 #endif
 
 #ifdef WITH_TESTS
@@ -103,7 +106,7 @@ OctaneGUI::Event OnEvent(OctaneGUI::Window* Window)
 
 int main(int argc, char** argv)
 {
-#ifdef WITH_TESTS
+#if defined(WITH_TESTS)
     for (int I = 0; I < argc; I++)
     {
         if (std::string{argv[I]} == "--tests")
@@ -122,8 +125,13 @@ int main(int argc, char** argv)
         }
     })";
 
-#ifdef WINDOWS
+#if defined(WINDOWS)
     g_Platform = new LevelSketch::Platform::Windows::Platform();
+    g_Renderer = new LevelSketch::Render::DirectX::Renderer();
+#elif defined(LINUX)
+    g_Platform = new LevelSketch::Platform::Linux::Platform();
+    g_Renderer = new LevelSketch::Render::OpenGL::Renderer();
+#endif
     
     if (!g_Platform->Initialize())
     {
@@ -131,9 +139,6 @@ int main(int argc, char** argv)
         printf("Failed to initialize platform!\n");
         return -1;
     }
-
-    g_Renderer = new LevelSketch::Render::DirectX::Renderer();
-#endif
 
     OctaneGUI::Application Application;
     Application

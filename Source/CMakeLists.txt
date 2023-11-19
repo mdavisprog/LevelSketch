@@ -25,6 +25,13 @@ if(WIN32)
     
         Render/DirectX/Renderer.cpp
     )
+else()
+    set(SOURCE
+        ${SOURCE}
+        Platform/Linux/Platform.cpp
+
+        Render/OpenGL/Renderer.cpp
+    )
 endif()
 
 if(WITH_TESTS)
