@@ -29,13 +29,13 @@ SOFTWARE.
 namespace OctaneGUI
 {
 
-#if !NDEBUG
+#if !SHIPPING
 bool AssertFunc(const char* File, int Line, bool Condition, const char* Format, ...);
 #endif
 
 }
 
-#if NDEBUG
+#if SHIPPING
     #define Assert(Condition, Format, ...)
 #else
     #if __clang__
