@@ -31,6 +31,7 @@ SOFTWARE.
 #include "../Types.hpp"
 
 #include <initializer_list>
+#include <utility>
 
 #define ARRAY_GRANULARITY 16
 

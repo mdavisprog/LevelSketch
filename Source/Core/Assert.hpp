@@ -29,6 +29,7 @@ SOFTWARE.
 #include "Types.hpp"
 
 #include <cstdio>
+#include <cstdlib>
 
 namespace LevelSketch
 {
