@@ -194,7 +194,7 @@ static bool Objects()
     Objects.Push({});
     VERIFY(Constructed == 1);
     Objects.Remove(0);
-    VERIFY(Constructed== 0);
+    VERIFY(Constructed == 0);
 
     return true;
 }
