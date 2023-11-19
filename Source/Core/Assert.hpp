@@ -53,5 +53,19 @@ static void Assertion(const char* File, u32 Line, bool Condition, const char* Fo
 }
 }
 
-#define LS_ASSERT(Condition) LevelSketch::Core::Assertion(__FILE__, __LINE__, Condition, #Condition)
-#define LS_ASSERTF(Condition, Format, ...) LevelSketch::Core::Assertion(__FILE__, __LINE__, Condition, Format, ##__VA_ARGS__)
+#if defined(SHIPPING)
+    #define LS_ASSERT(Condition)
+    #define LS_ASSERTF(Condition, Format, ...)
+#else
+    #if __clang__
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+    #endif
+
+    #define LS_ASSERT(Condition) LevelSketch::Core::Assertion(__FILE__, __LINE__, Condition, #Condition)
+    #define LS_ASSERTF(Condition, Format, ...) LevelSketch::Core::Assertion(__FILE__, __LINE__, Condition, Format, ##__VA_ARGS__)
+
+    #if __clang__
+        #pragma clang diagnostic pop
+    #endif
+#endif
