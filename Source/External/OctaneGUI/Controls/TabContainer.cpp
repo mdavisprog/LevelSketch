@@ -112,7 +112,7 @@ public:
         return m_Container;
     }
 
-    Tab& Tab::SetSelected(bool Selected)
+    Tab& SetSelected(bool Selected)
     {
         if (m_Selected != Selected)
         {
@@ -123,12 +123,12 @@ public:
         return *this;
     }
 
-    bool Tab::Selected() const
+    bool Selected() const
     {
         return m_Selected;
     }
 
-    Tab& Tab::SetShowClose(bool ShowClose)
+    Tab& SetShowClose(bool ShowClose)
     {
         if (ShowClose)
         {
@@ -137,13 +137,13 @@ public:
         return *this;
     }
 
-    Tab& Tab::SetOnPressed(OnPressedSignature&& Fn)
+    Tab& SetOnPressed(OnPressedSignature&& Fn)
     {
         m_OnPressed = std::move(Fn);
         return *this;
     }
 
-    Tab& Tab::SetOnClosed(OnPressedSignature&& Fn)
+    Tab& SetOnClosed(OnPressedSignature&& Fn)
     {
         m_OnClosed = std::move(Fn);
         return *this;
