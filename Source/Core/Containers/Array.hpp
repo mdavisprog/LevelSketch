@@ -191,7 +191,6 @@ public:
         ConditionalGrow();
 
         new(static_cast<void*>(&m_Data[m_Size])) T(Value);
-        m_Data[m_Size] = Value;
         m_Size++;
 
         return *this;
