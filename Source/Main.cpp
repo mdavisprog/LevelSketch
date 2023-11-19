@@ -10,7 +10,7 @@
 #endif
 
 #ifdef WITH_TESTS
-    #include "Tests/TestSuite.hpp"
+    #include "Tests/System.hpp"
 #endif
 
 static LevelSketch::Platform::Platform* g_Platform { nullptr };
@@ -108,7 +108,7 @@ int main(int argc, char** argv)
     {
         if (std::string{argv[I]} == "--tests")
         {
-            return LevelSketch::Tests::TestSuite::Instance().Run(argc, argv);
+            return LevelSketch::Tests::System::Instance().Run(argc, argv);
         }
     }
 #endif

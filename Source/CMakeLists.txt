@@ -30,6 +30,10 @@ endif()
 if(WITH_TESTS)
     set(SOURCE
         ${SOURCE}
+
+        Tests/Core/Array.cpp
+
+        Tests/System.cpp
         Tests/TestSuite.cpp
     )
 endif()

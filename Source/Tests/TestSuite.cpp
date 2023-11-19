@@ -25,27 +25,47 @@ SOFTWARE.
 */
 
 #include "TestSuite.hpp"
-#include "../Core/Version.hpp"
+
+#include <cstdio>
 
 namespace LevelSketch
 {
 namespace Tests
 {
 
-TestSuite& TestSuite::Instance()
+TestSuite::TestSuite(const char* Name, LevelSketch::Core::Containers::Array<TestCase>&& TestCases)
+    : m_Name(Name)
+    , m_TestCases(std::move(TestCases))
 {
-    static TestSuite Instance;
-    return Instance;
 }
 
-int TestSuite::Instance(int Argc, char** Argv)
+bool TestSuite::Run()
 {
-    printf("Running %s testing framework version %d.%d.%d.\n", APP_NAME, VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION);
-    return 0;
+    printf("Running test suite '%s' with %llu test cases.\n", Name(), m_TestCases.Size());
+
+    u64 Succeeded { 0 };
+    for (const TestCase& Case : m_TestCases)
+    {
+        const bool Result { Case.OnTestCase() };
+
+        if (Result)
+        {
+            Succeeded++;
+        }
+        else
+        {
+            printf("'%s' test case has failed.\n", Case.Name.data());
+        }
+    }
+
+    printf("Test suite was completed with %llu/%llu test cases passed.\n", Succeeded, m_TestCases.Size());
+
+    return true;
 }
 
-TestSuite::TestSuite()
+const char* TestSuite::Name() const
 {
+    return m_Name.data();
 }
 
 }

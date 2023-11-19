@@ -29,32 +29,26 @@ SOFTWARE.
 #include "../Core/Types.hpp"
 #include "../Core/Containers/Array.hpp"
 
-#include <string>
-
 namespace LevelSketch
 {
 namespace Tests
 {
 
-class TestSuite
+class TestSuite;
+
+class System
 {
 public:
-    struct TestCase
-    {
-    public:
-        std::string Name {};
-        bool (*OnTestCase)();
-    };
+    static System& Instance();
 
-    TestSuite(const char* Name, LevelSketch::Core::Containers::Array<TestCase>&& TestCases);
-
-    bool Run();
-
-    const char* Name() const;
+    i32 Run(i32 Argc, char** Argv);
 
 private:
-    std::string m_Name {};
-    LevelSketch::Core::Containers::Array<TestCase> m_TestCases {};
+    System();
+
+    System& Shutdown();
+
+    LevelSketch::Core::Containers::Array<TestSuite*> m_TestSuites {};
 };
 
 }

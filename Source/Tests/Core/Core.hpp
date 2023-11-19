@@ -26,36 +26,19 @@ SOFTWARE.
 
 #pragma once
 
-#include "../Core/Types.hpp"
-#include "../Core/Containers/Array.hpp"
-
-#include <string>
-
 namespace LevelSketch
 {
+
 namespace Tests
 {
 
-class TestSuite
+class TestSuite;
+
+namespace Core
 {
-public:
-    struct TestCase
-    {
-    public:
-        std::string Name {};
-        bool (*OnTestCase)();
-    };
 
-    TestSuite(const char* Name, LevelSketch::Core::Containers::Array<TestCase>&& TestCases);
+TestSuite* Array();
 
-    bool Run();
-
-    const char* Name() const;
-
-private:
-    std::string m_Name {};
-    LevelSketch::Core::Containers::Array<TestCase> m_TestCases {};
-};
-
+}
 }
 }

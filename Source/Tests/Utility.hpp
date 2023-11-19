@@ -26,36 +26,6 @@ SOFTWARE.
 
 #pragma once
 
-#include "../Core/Types.hpp"
-#include "../Core/Containers/Array.hpp"
+#include <cstdio>
 
-#include <string>
-
-namespace LevelSketch
-{
-namespace Tests
-{
-
-class TestSuite
-{
-public:
-    struct TestCase
-    {
-    public:
-        std::string Name {};
-        bool (*OnTestCase)();
-    };
-
-    TestSuite(const char* Name, LevelSketch::Core::Containers::Array<TestCase>&& TestCases);
-
-    bool Run();
-
-    const char* Name() const;
-
-private:
-    std::string m_Name {};
-    LevelSketch::Core::Containers::Array<TestCase> m_TestCases {};
-};
-
-}
-}
+#define VERIFY(Condition) if ((Condition) == false) { printf("'%s' has failed at %s:%d\n", #Condition, __FILE__, __LINE__); }

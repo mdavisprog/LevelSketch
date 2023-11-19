@@ -24,38 +24,57 @@ SOFTWARE.
 
 */
 
-#pragma once
+#include "System.hpp"
+#include "../Core/Version.hpp"
+#include "Core/Core.hpp"
+#include "TestSuite.hpp"
 
-#include "../Core/Types.hpp"
-#include "../Core/Containers/Array.hpp"
-
-#include <string>
+#include <cstdio>
 
 namespace LevelSketch
 {
 namespace Tests
 {
 
-class TestSuite
+System& System::Instance()
 {
-public:
-    struct TestCase
+    static System Instance {};
+    return Instance;
+}
+
+i32 System::Run(i32, char**)
+{
+    printf("\nRunning %s testing framework version %d.%d.%d.\n", APP_NAME, VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION);
+    printf("There are (%llu) test suites to run through.\n\n", m_TestSuites.Size());
+
+    for (TestSuite* Suite : m_TestSuites)
     {
-    public:
-        std::string Name {};
-        bool (*OnTestCase)();
-    };
+        Suite->Run();
+        printf("\n");
+    }
 
-    TestSuite(const char* Name, LevelSketch::Core::Containers::Array<TestCase>&& TestCases);
+    Shutdown();
 
-    bool Run();
+    printf("Finished running tests.\n\n");
+    return 0;
+}
 
-    const char* Name() const;
+System::System()
+{
+    m_TestSuites.Push(Core::Array());
+}
 
-private:
-    std::string m_Name {};
-    LevelSketch::Core::Containers::Array<TestCase> m_TestCases {};
-};
+System& System::Shutdown()
+{
+    for (const TestSuite* Suite : m_TestSuites)
+    {
+        delete Suite;
+    }
+
+    m_TestSuites.Clear();
+
+    return *this;
+}
 
 }
 }
