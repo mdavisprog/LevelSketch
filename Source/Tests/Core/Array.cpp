@@ -186,6 +186,7 @@ static bool Objects()
         Object() { Constructed++; }
         Object(const Object&) { Constructed++; }
         ~Object() { Constructed--; }
+        Object& operator=(const Object&) { Constructed++; return *this; }
     };
 
     LevelSketch::Core::Containers::Array<Object> Objects;
