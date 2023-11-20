@@ -80,3 +80,10 @@ if(WITH_TESTS)
         PRIVATE WITH_TESTS
     )
 endif()
+
+if(SHIPPING)
+    target_compile_definitions(
+        ${TARGET}
+        PRIVATE SHIPPING
+    )
+endif()
