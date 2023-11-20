@@ -34,7 +34,7 @@ SOFTWARE.
 namespace OctaneGUI
 {
 
-#if !SHIPPING
+#if !NDEBUG
 bool AssertFunc(const char* File, int Line, bool Condition, const char* Format, ...)
 {
     if (!Condition)

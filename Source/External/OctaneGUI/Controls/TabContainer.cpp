@@ -32,7 +32,6 @@ SOFTWARE.
 #include "../String.h"
 #include "../Window.h"
 #include "HorizontalContainer.h"
-#include "Image.h"
 #include "ImageButton.h"
 #include "MarginContainer.h"
 #include "Text.h"
@@ -58,15 +57,15 @@ public:
     {
         m_Margins = AddControl<MarginContainer>();
         m_Margins
-            ->SetMargins({ 8.0f * RenderScale().X, 2.0f, 2.0f, 4.0f })
+            ->SetMargins({ 8.0f * RenderScale().X, 2.0f, 2.0f, 8.0f * RenderScale().X })
             .SetExpand(Expand::Both);
 
-        const std::shared_ptr<HorizontalContainer> Row { m_Margins->AddControl<HorizontalContainer>() };
-        Row
+        m_Row = m_Margins->AddControl<HorizontalContainer>();
+        m_Row
             ->SetGrow(Grow::Center)
             .SetExpand(Expand::Both);
 
-        std::shared_ptr<VerticalContainer> Contents { Row->AddControl<VerticalContainer>() };
+        std::shared_ptr<VerticalContainer> Contents { m_Row->AddControl<VerticalContainer>() };
         Contents
             ->SetGrow(Grow::Center)
             .SetExpand(Expand::Height);
@@ -74,18 +73,24 @@ public:
         m_Label = Contents->AddControl<Text>();
         m_Label->SetText(U"New Tab");
 
-        Contents = Row->AddControl<VerticalContainer>();
-        Contents
+        m_CloseContainer = m_Row->AddControl<VerticalContainer>();
+        m_CloseContainer
             ->SetGrow(Grow::Center)
             .SetExpand(Expand::Height);
 
-        m_Close = Contents->AddControl<CloseButton>();
+        m_Close = m_CloseContainer->AddControl<CloseButton>();
         m_Close
             ->SetTab(this)
             .SetOnPressed([this](Button&) -> void
                 {
-                    if (m_OnClosed)
+                    if (m_OnClosed != nullptr)
                     {
+                        // FIXME: m_OnClosed will remove the Tab object from the TabContainer,
+                        // which will destroy this object. Need to prevent the button from
+                        // invalidating itself and calling a callback function which will
+                        // not exist. Would like a more general approach to cleaning up
+                        // destroyed controls.
+                        m_Close->SetOnInvalidate(nullptr);
                         m_OnClosed(*this);
                     }
                 });
@@ -128,10 +133,18 @@ public:
         return m_Selected;
     }
 
-    Tab& SetShowClose(bool ShowClose)
+    Tab& SetShowClose(bool Show)
     {
-        if (ShowClose)
+        if (Show)
         {
+            if (!m_Row->HasControl(m_CloseContainer))
+            {
+                m_Row->InsertControl(m_CloseContainer);
+            }
+        }
+        else
+        {
+            m_Row->RemoveControl(m_CloseContainer);
         }
 
         return *this;
@@ -211,15 +224,8 @@ public:
 
     virtual void OnMouseLeave() override
     {
-        // Could be hovering over the close button. If so, then keep the
-        // original hovered flag.
-        const bool Hovered { Contains(GetWindow()->GetMousePosition()) };
-
-        if (m_Hovered != Hovered)
-        {
-            m_Hovered = Hovered;
-            Invalidate(InvalidateType::Paint);
-        }
+        m_Hovered = false;
+        Invalidate(InvalidateType::Paint);
     }
 
 private:
@@ -242,6 +248,12 @@ private:
             return *this;
         }
 
+        virtual void OnMouseEnter() override
+        {
+            ImageButton::OnMouseEnter();
+            m_Tab->OnMouseEnter();
+        }
+
         virtual void OnMouseLeave() override
         {
             ImageButton::OnMouseLeave();
@@ -253,12 +265,16 @@ private:
     };
 
     std::shared_ptr<MarginContainer> m_Margins { nullptr };
+    std::shared_ptr<HorizontalContainer> m_Row { nullptr };
     std::shared_ptr<Text> m_Label { nullptr };
+    std::shared_ptr<VerticalContainer> m_CloseContainer { nullptr };
     std::shared_ptr<CloseButton> m_Close { nullptr };
     std::shared_ptr<Container> m_Container { nullptr };
     std::shared_ptr<Control> m_Interaction { nullptr };
+
     bool m_Hovered { false };
     bool m_Selected { false };
+
     OnPressedSignature m_OnPressed { nullptr };
     OnPressedSignature m_OnClosed { nullptr };
 };
@@ -288,7 +304,7 @@ TabContainer::TabContainer(Window* InWindow)
             {
                 CreateTab(U"New Tab");
             })
-        .SetProperty(ThemeProperties::Button, Color {})
+        .SetProperty(ThemeProperties::Button, Color{})
         .SetSize({ Height, Height });
 
     if (!m_ShowAdd)
@@ -330,6 +346,18 @@ bool TabContainer::ShowAdd() const
 TabContainer& TabContainer::SetShowClose(bool ShowClose)
 {
     m_ShowClose = ShowClose;
+
+    for (size_t I = 0; I < m_Tabs->NumControls(); I++)
+    {
+        if (m_ShowAdd && I == m_Tabs->NumControls() - 1)
+        {
+            continue;
+        }
+
+        const std::shared_ptr<Tab>& Item { std::static_pointer_cast<Tab>(m_Tabs->Get(I)) };
+        Item->SetShowClose(ShowClose);
+    }
+
     return *this;
 }
 
@@ -375,7 +403,7 @@ std::shared_ptr<Tab> TabContainer::CreateTab(const char32_t* Label)
             })
         .SetOnClosed([this](const Tab& Closed) -> void
             {
-                RemoveTab(Closed.Contents());
+                RemoveTab(Closed.TShare<Tab>());
             });
     return Result;
 }
@@ -421,21 +449,41 @@ TabContainer& TabContainer::SetTabSelected(const std::shared_ptr<Container>& Con
     return *this;
 }
 
-TabContainer& TabContainer::RemoveTab(const std::shared_ptr<Container>& Contents)
+TabContainer& TabContainer::RemoveTab(const std::shared_ptr<Tab const>& Target)
 {
-    if (Contents == nullptr)
-    {
-        return *this;
-    }
-
     for (size_t I = 0; I < m_Tabs->NumControls(); I++)
     {
         const std::shared_ptr<Tab>& Item { std::static_pointer_cast<Tab>(m_Tabs->Get(I)) };
 
-        if (Item->Contents() == Contents)
+        if (Item == Target)
         {
-            // TODO: Causes a crash upon removal for some reason!!!
+            m_Contents->RemoveControl(Item->Contents());
             m_Tabs->RemoveControl(Item);
+
+            const std::shared_ptr<Container> TabContents { m_Tab.lock() };
+            if (Target->Contents() == TabContents && m_Tabs->NumControls() > 0)
+            {
+                I = I < m_Tabs->NumControls() ? I : m_Tabs->NumControls() - 1;
+                if (m_ShowAdd)
+                {
+                    if (m_Tabs->NumControls() == 1)
+                    {
+                        I = m_Tabs->NumControls();
+                    }
+                    else if (I == m_Tabs->NumControls() - 1)
+                    {
+                        // Should have more than one control is this block.
+                        I--;
+                    }
+                }
+
+                if (I < m_Tabs->NumControls())
+                {
+                    const std::shared_ptr<Tab>& Current { std::static_pointer_cast<Tab>(m_Tabs->Get(I)) };
+                    SetTab(Current->Contents());
+                }
+            }
+
             break;
         }
     }
