@@ -10,10 +10,11 @@ set(TARGET LevelSketch)
 
 add_subdirectory(External/OctaneGUI)
 
+# Common source files for all platforms and configurations.
 set(SOURCE
     Render/Renderer.cpp
 
-    Main.cpp
+    Main/Common.cpp
 )
 
 if(WIN32)
@@ -39,6 +40,13 @@ else()
     )
 endif()
 
+# The main function.
+if(APPLE)
+    set(SOURCE ${SOURCE} Main/Main.mm)
+else()
+    set(SOURCE ${SOURCE} Main/Main.cpp)
+endif()
+
 if(WITH_TESTS)
     set(SOURCE
         ${SOURCE}
@@ -56,11 +64,6 @@ add_executable(
     ${SOURCE}
 )
 
-target_include_directories(
-    ${TARGET}
-    PRIVATE External
-)
-
 target_link_libraries(
     ${TARGET}
     OctaneGUI
@@ -72,6 +75,11 @@ if(WIN32)
         d3d12
         d3dcompiler
         dxgi
+    )
+elseif(APPLE)
+    target_link_libraries(
+        ${TARGET}
+        "-framework Foundation"
     )
 endif()
 

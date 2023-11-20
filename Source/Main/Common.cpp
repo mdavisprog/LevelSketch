@@ -1,22 +1,54 @@
+/**
+
+MIT License
+
+Copyright (c) 2023 Mitchell Davis <mdavisprog@gmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+#include "Common.hpp"
 #include <cstdio>
-#include "OctaneGUI/OctaneGUI.h"
-#include "Core/Defines.hpp"
-#include "Platform/Window.hpp"
-#include "Render/Renderer.hpp"
+#include "../External/OctaneGUI/OctaneGUI.h"
+#include "../Core/Defines.hpp"
+#include "../Platform/Window.hpp"
+#include "../Render/Renderer.hpp"
 
 #if defined(WINDOWS)
-    #include "Platform/Windows/Platform.hpp"
-    #include "Render/DirectX/Renderer.hpp"
+    #include "../Platform/Windows/Platform.hpp"
+    #include "../Render/DirectX/Renderer.hpp"
 #elif defined(APPLE)
-    #include "Platform/Mac/Platform.hpp"
+    #include "../Platform/Mac/Platform.hpp"
 #elif defined(LINUX)
-    #include "Platform/Linux/Platform.hpp"
-    #include "Render/OpenGL/Renderer.hpp"
+    #include "../Platform/Linux/Platform.hpp"
+    #include "../Render/OpenGL/Renderer.hpp"
 #endif
 
 #ifdef WITH_TESTS
-    #include "Tests/System.hpp"
+    #include "../Tests/System.hpp"
 #endif
+
+namespace LevelSketch
+{
+namespace Main
+{
 
 static LevelSketch::Platform::Platform* g_Platform { nullptr };
 static LevelSketch::Render::Renderer* g_Renderer { nullptr };
@@ -106,14 +138,14 @@ OctaneGUI::Event OnEvent(OctaneGUI::Window* Window)
     return { OctaneGUI::Event::Type::None };
 }
 
-int main(int argc, char** argv)
+i32 Main(i32 Argc, char** Argv)
 {
 #if defined(WITH_TESTS)
-    for (int I = 0; I < argc; I++)
+    for (int I = 0; I < Argc; I++)
     {
-        if (std::string{argv[I]} == "--tests")
+        if (std::string{Argv[I]} == "--tests")
         {
-            return LevelSketch::Tests::System::Instance().Run(argc, argv);
+            return LevelSketch::Tests::System::Instance().Run(Argc, Argv);
         }
     }
 #endif
@@ -151,7 +183,7 @@ int main(int argc, char** argv)
 
     std::unordered_map<std::string, OctaneGUI::ControlList> List;
     bool Success = Application
-        .SetCommandLine(argc, argv)
+        .SetCommandLine(Argc, Argv)
         .Initialize(Stream, List);
     
     if (!Success)
@@ -175,4 +207,7 @@ int main(int argc, char** argv)
     delete g_Platform;
 
     return Return;
+}
+
+}
 }
