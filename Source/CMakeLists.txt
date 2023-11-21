@@ -30,6 +30,8 @@ elseif(APPLE)
     set(SOURCE
         ${SOURCE}
         Platform/Mac/Platform.cpp
+
+        Render/Metal/Renderer.mm
     )
 else()
     set(SOURCE
