@@ -61,7 +61,9 @@ i32 System::Run(i32, char**)
 
 System::System()
 {
-    m_TestSuites.Push(Core::Array());
+    m_TestSuites
+        .Push(Core::Array())
+        .Push(Core::SharedPtr());
 }
 
 System& System::Shutdown()

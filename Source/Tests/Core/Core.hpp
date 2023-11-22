@@ -38,6 +38,7 @@ namespace Core
 {
 
 TestSuite* Array();
+TestSuite* SharedPtr();
 
 }
 }

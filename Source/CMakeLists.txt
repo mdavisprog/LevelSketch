@@ -44,6 +44,7 @@ if(WITH_TESTS)
         ${SOURCE}
 
         Tests/Core/Array.cpp
+        Tests/Core/SharedPtr.cpp
 
         Tests/System.cpp
         Tests/TestSuite.cpp
