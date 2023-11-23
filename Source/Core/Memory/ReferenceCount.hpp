@@ -59,8 +59,25 @@ public:
         return m_Count;
     }
 
+    ReferenceCount& WeakRef()
+    {
+        m_Weaks++;
+        return *this;
+    }
+
+    u32 WeakDeref()
+    {
+        return --m_Weaks;
+    }
+
+    u32 Weaks() const
+    {
+        return m_Weaks;
+    }
+
 private:
     u32 m_Count { 0 };
+    u32 m_Weaks { 0 };
 };
 
 }

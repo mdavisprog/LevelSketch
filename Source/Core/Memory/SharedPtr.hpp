@@ -41,6 +41,9 @@ namespace Memory
 template<typename T>
 class SharedPtr
 {
+    template<typename U>
+    friend class WeakPtr;
+
 public:
     template<typename... TArguments>
     static SharedPtr<T> New(TArguments&&... Arguments)
@@ -69,7 +72,7 @@ public:
         Move(std::move(Other));
     }
 
-    virtual ~SharedPtr()
+    ~SharedPtr()
     {
         Dereference();
     }
@@ -84,6 +87,11 @@ public:
     {
         Move(std::move(Other));
         return *this;
+    }
+
+    operator bool() const
+    {
+        return Get() != nullptr;
     }
 
     T& operator*()
@@ -110,6 +118,16 @@ public:
         return m_Data;
     }
 
+    T* Get()
+    {
+        return m_Data;
+    }
+
+    T const* Get() const
+    {
+        return m_Data;
+    }
+
     u32 GetReferenceCount() const
     {
         if (m_ReferenceCount == nullptr)
@@ -126,6 +144,16 @@ public:
     }
 
 private:
+    SharedPtr(T* Data, ReferenceCount* RefCount)
+        : m_Data(Data)
+        , m_ReferenceCount(RefCount)
+    {
+        if (m_Data != nullptr)
+        {
+            m_ReferenceCount->Reference();
+        }
+    }
+
     void InitializeReferenceCount()
     {
         if (m_ReferenceCount != nullptr)
@@ -135,6 +163,7 @@ private:
 
         m_ReferenceCount = new ReferenceCount();
         m_ReferenceCount->Reference();
+        m_ReferenceCount->WeakRef();
     }
 
     void Dereference()
@@ -149,6 +178,11 @@ private:
             delete m_Data;
             m_Data = nullptr;
 
+            m_ReferenceCount->WeakDeref();
+        }
+
+        if (m_ReferenceCount->Weaks() == 0)
+        {
             delete m_ReferenceCount;
             m_ReferenceCount = nullptr;
         }
@@ -187,6 +221,30 @@ private:
     T* m_Data { nullptr };
     ReferenceCount* m_ReferenceCount { nullptr };
 };
+
+template<typename T, typename U>
+static bool operator==(const SharedPtr<T>& A, const SharedPtr<U>& B)
+{
+    return A.Get() == B.Get();
+}
+
+template<typename T>
+static bool operator==(const SharedPtr<T>& A, nullptr_t)
+{
+    return A.Get() == nullptr;
+}
+
+template<typename T, typename U>
+static bool operator!=(const SharedPtr<T>& A, const SharedPtr<U>& B)
+{
+    return A.Get() != B.Get();
+}
+
+template<typename T>
+static bool operator!=(const SharedPtr<T>& A, nullptr_t)
+{
+    return A.Get() != nullptr;
+}
 
 }
 }
