@@ -25,8 +25,8 @@ SOFTWARE.
 */
 
 #include "Core.hpp"
-#include "../Core/Containers/Array.hpp"
-#include "../Core/Memory/SharedPtr.hpp"
+#include "../../Core/Containers/Array.hpp"
+#include "../../Core/Memory/SharedPtr.hpp"
 #include "../TestSuite.hpp"
 #include "../Utility.hpp"
 
