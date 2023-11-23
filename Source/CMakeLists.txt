@@ -58,6 +58,7 @@ if(WITH_TESTS)
 
         Tests/Core/Array.cpp
         Tests/Core/SharedPtr.cpp
+        Tests/Core/WeakPtr.cpp
 
         Tests/System.cpp
         Tests/TestSuite.cpp

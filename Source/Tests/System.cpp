@@ -63,7 +63,8 @@ System::System()
 {
     m_TestSuites
         .Push(Core::Array())
-        .Push(Core::SharedPtr());
+        .Push(Core::SharedPtr())
+        .Push(Core::WeakPtr());
 }
 
 System& System::Shutdown()

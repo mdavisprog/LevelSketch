@@ -39,6 +39,7 @@ namespace Core
 
 TestSuite* Array();
 TestSuite* SharedPtr();
+TestSuite* WeakPtr();
 
 }
 }
