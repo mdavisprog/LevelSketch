@@ -12,6 +12,8 @@ add_subdirectory(External/OctaneGUI)
 
 # Common source files for all platforms and configurations.
 set(SOURCE
+    Platform/Platform.cpp
+
     Render/Renderer.cpp
 
     Main/Common.cpp
@@ -29,7 +31,8 @@ if(WIN32)
 elseif(APPLE)
     set(SOURCE
         ${SOURCE}
-        Platform/Mac/Platform.cpp
+        Platform/Mac/Platform.mm
+        Platform/Mac/Window.mm
 
         Render/Metal/Renderer.mm
     )
@@ -81,7 +84,9 @@ if(WIN32)
 elseif(APPLE)
     target_link_libraries(
         ${TARGET}
+        "-framework AppKit"
         "-framework Foundation"
+        "-framework Metal"
     )
 endif()
 
@@ -97,4 +102,9 @@ if(SHIPPING)
         ${TARGET}
         PRIVATE SHIPPING
     )
+endif()
+
+if(APPLE)
+    file(COPY Platform/Mac/Info.plist DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+    file(COPY Platform/Mac/MainMenu.storyboard DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 endif()

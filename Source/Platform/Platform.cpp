@@ -26,41 +26,28 @@ SOFTWARE.
 
 #include "Platform.hpp"
 
+#include <utility>
+
 namespace LevelSketch
 {
 namespace Platform
 {
-namespace Mac
-{
 
-Platform::Platform()
-    : LevelSketch::Platform::Platform()
+int Platform::Run()
 {
+    return -1;
 }
 
-bool Platform::Initialize()
+bool Platform::UseCustomLoop() const
 {
-    return true;
+    return false;
 }
 
-void Platform::Shutdown()
+Platform& Platform::SetOnFrame(OnFrameSignature&& Fn)
 {
+    m_OnFrame = std::move(Fn);
+    return *this;
 }
 
-const char* Platform::Name() const
-{
-    return "Mac";
-}
-
-Window* Platform::NewWindow(const char*, int, int, int, int)
-{
-    return nullptr;
-}
-
-void Platform::CloseWindow(Window*)
-{
-}
-
-}
 }
 }

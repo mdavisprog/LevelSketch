@@ -26,35 +26,36 @@ SOFTWARE.
 
 #pragma once
 
+#include "../Window.hpp"
+
 namespace LevelSketch
 {
 namespace Platform
 {
+namespace Mac
+{
 
-class Window;
-
-class Platform
+class Window : public LevelSketch::Platform::Window
 {
 public:
-    typedef void (*OnFrameSignature)();
+    Window();
 
-    virtual ~Platform() {}
+    virtual void* Handle() const override;
+    virtual bool Create(const char* Title, int X, int Y, int Width, int Height) override;
+    virtual void Close() override;
+    virtual void Show() override;
+    virtual void Focus() override;
+    virtual void SetPosition(int X, int Y) override;
+    virtual Core::Math::Vector2i Position() const override;
+    virtual Core::Math::Vector2i Size() const override;
+    virtual void ProcessEvents() override;
 
-    virtual bool Initialize() = 0;
-    virtual void Shutdown() = 0;
-    virtual const char* Name() const = 0;
-
-    virtual Window* NewWindow(const char* Title, int X, int Y, int Width, int Height) = 0;
-    virtual void CloseWindow(Window* Window) = 0;
-
-    virtual int Run();
-    virtual bool UseCustomLoop() const;
-
-    Platform& SetOnFrame(OnFrameSignature&& Fn);
+    virtual bool IsOpen() const override;
 
 private:
-    OnFrameSignature m_OnFrame { nullptr };
+    void* m_WindowProxy { nullptr };
 };
 
+}
 }
 }
