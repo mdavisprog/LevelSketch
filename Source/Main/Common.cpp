@@ -51,8 +51,9 @@ namespace LevelSketch
 namespace Main
 {
 
-static LevelSketch::Platform::Platform* g_Platform { nullptr };
-static LevelSketch::Render::Renderer* g_Renderer { nullptr };
+static Platform::Platform* g_Platform { nullptr };
+static Render::Renderer* g_Renderer { nullptr };
+static OctaneGUI::Application* g_Application { nullptr };
 static std::unordered_map<OctaneGUI::Window*, LevelSketch::Platform::Window*> g_Windows {};
 
 void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Action)
@@ -139,6 +140,10 @@ OctaneGUI::Event OnEvent(OctaneGUI::Window* Window)
     return { OctaneGUI::Event::Type::None };
 }
 
+void OnPlatformFrame()
+{
+}
+
 i32 Main(i32 Argc, char** Argv)
 {
 #if defined(WITH_TESTS)
@@ -178,14 +183,14 @@ i32 Main(i32 Argc, char** Argv)
         return -1;
     }
 
-    OctaneGUI::Application Application;
-    Application
-        .SetOnWindowAction(OnWindowAction)
+    g_Application = new OctaneGUI::Application();
+    g_Application
+        ->SetOnWindowAction(OnWindowAction)
         .SetOnEvent(OnEvent);
 
     std::unordered_map<std::string, OctaneGUI::ControlList> List;
-    bool Success = Application
-        .SetCommandLine(Argc, Argv)
+    bool Success = g_Application
+        ->SetCommandLine(Argc, Argv)
         .Initialize(Stream, List);
     
     if (!Success)
@@ -194,13 +199,25 @@ i32 Main(i32 Argc, char** Argv)
         return 0;
     }
 
-    int Return { Application.Run() };
+    int Return { 0 };
+    if (g_Platform->UseCustomLoop())
+    {
+        g_Platform->SetOnFrame(OnPlatformFrame);
+        Return = g_Platform->Run();
+    }
+    else
+    {
+        Return = g_Application->Run();
+    }
 
     for (const std::pair<OctaneGUI::Window*, LevelSketch::Platform::Window*> Item : g_Windows)
     {
         g_Platform->CloseWindow(Item.second);
     }
     g_Windows.clear();
+
+    g_Application->Shutdown();
+    delete g_Application;
 
     g_Renderer->Shutdown();
     delete g_Renderer;
