@@ -27,7 +27,7 @@ SOFTWARE.
 #pragma once
 
 #include "../Assert.hpp"
-#include "../Types.hpp"
+#include "ReferenceCount.hpp"
 
 #include <utility>
 
@@ -126,32 +126,6 @@ public:
     }
 
 private:
-    class ReferenceCount
-    {
-    public:
-        ReferenceCount()
-        {
-        }
-
-        void Reference()
-        {
-            m_Count++;
-        }
-
-        u32 Dereference()
-        {
-            return --m_Count;
-        }
-
-        u32 Count() const
-        {
-            return m_Count;
-        }
-    
-    private:
-        u32 m_Count { 0 };
-    };
-
     void InitializeReferenceCount()
     {
         if (m_ReferenceCount != nullptr)
