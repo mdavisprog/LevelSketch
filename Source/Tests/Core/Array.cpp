@@ -201,8 +201,6 @@ static bool Objects()
 
 TestSuite* Array()
 {
-    #define TEST_CASE(Fn) {#Fn, Fn}
-
     return new TestSuite("Array", {
         TEST_CASE(Empty),
         TEST_CASE(Copy),
@@ -216,8 +214,6 @@ TestSuite* Array()
         TEST_CASE(Clear),
         TEST_CASE(Objects)
     });
-
-    #undef TEST_CASE
 }
 
 }

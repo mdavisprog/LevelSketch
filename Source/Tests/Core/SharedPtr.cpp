@@ -115,16 +115,12 @@ static bool Move()
 
 TestSuite* SharedPtr()
 {
-    #define TEST_CASE(Fn) {#Fn, Fn}
-
     return new TestSuite("SharedPtr", {
         TEST_CASE(CreateDestroy),
         TEST_CASE(CreateCopy),
         TEST_CASE(ArrayPtrs),
         TEST_CASE(Move)
     });
-
-    #undef TEST_CASE
 }
 
 }

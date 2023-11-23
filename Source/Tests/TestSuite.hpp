@@ -31,6 +31,13 @@ SOFTWARE.
 
 #include <string>
 
+// Utility initializer for in-place construction of test cases for a test suite for example:
+// return new TestSuite("TestSuite", {
+//     TEST_CASE(Test1),
+//     TEST_CASE(Test2)
+// });
+#define TEST_CASE(Fn) {#Fn, Fn}
+
 namespace LevelSketch
 {
 namespace Tests
