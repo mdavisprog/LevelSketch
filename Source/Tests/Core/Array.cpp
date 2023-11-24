@@ -38,9 +38,15 @@ namespace Tests
 namespace Core
 {
 
+namespace Containers
+{
+    template<typename T>
+    using Array = LevelSketch::Core::Containers::Array<T>;
+}
+
 static bool Empty()
 {
-    LevelSketch::Core::Containers::Array<int> Values;
+    Containers::Array<int> Values;
     VERIFY(Values.Capacity() == 0);
     VERIFY(Values.Size() == 0);
     VERIFY(Values.Data() == nullptr);
@@ -49,8 +55,8 @@ static bool Empty()
 
 static bool Copy()
 {
-    LevelSketch::Core::Containers::Array<int> Values { 1, 2, 3 };
-    LevelSketch::Core::Containers::Array<int> ValuesCopy { Values };
+    Containers::Array<int> Values { 1, 2, 3 };
+    Containers::Array<int> ValuesCopy { Values };
     VERIFY(Values.Size() == 3);
     VERIFY(Values[0] == 1);
     VERIFY(Values[1] == 2);
@@ -65,12 +71,12 @@ static bool Copy()
 
 static bool Move()
 {
-    LevelSketch::Core::Containers::Array<int> Values { 1, 2, 3 };
+    Containers::Array<int> Values { 1, 2, 3 };
     VERIFY(Values.Size() == 3);
     VERIFY(Values[0] == 1);
     VERIFY(Values[1] == 2);
     VERIFY(Values[2] == 3);
-    LevelSketch::Core::Containers::Array<int> ValuesMove { std::move(Values) };
+    Containers::Array<int> ValuesMove { std::move(Values) };
     VERIFY(Values.Capacity() == 0);
     VERIFY(Values.Size() == 0);
     VERIFY(Values.Data() == nullptr);
@@ -83,7 +89,7 @@ static bool Move()
 
 static bool InitializerList()
 {
-    LevelSketch::Core::Containers::Array<int> Values { 1, 2, 3 };
+    Containers::Array<int> Values { 1, 2, 3 };
     VERIFY(Values.Size() == 3);
     VERIFY(Values[0] == 1);
     VERIFY(Values[1] == 2);
@@ -93,9 +99,9 @@ static bool InitializerList()
 
 static bool AssignCopy()
 {
-    LevelSketch::Core::Containers::Array<int> Values { 1, 2, 3 };
+    Containers::Array<int> Values { 1, 2, 3 };
     VERIFY(Values.Size() == 3);
-    LevelSketch::Core::Containers::Array<int> ValuesCopy;
+    Containers::Array<int> ValuesCopy;
     VERIFY(ValuesCopy.Size() == 0);
     ValuesCopy = Values;
     VERIFY(ValuesCopy.Size() == 3 && Values.Size() == 3);
@@ -108,9 +114,9 @@ static bool AssignCopy()
 
 static bool AssignMove()
 {
-    LevelSketch::Core::Containers::Array<int> Values { 1, 2, 3 };
+    Containers::Array<int> Values { 1, 2, 3 };
     VERIFY(Values.Size() == 3);
-    LevelSketch::Core::Containers::Array<int> ValuesMove;
+    Containers::Array<int> ValuesMove;
     VERIFY(ValuesMove.Size() == 0);
     ValuesMove = std::move(Values);
     VERIFY(ValuesMove.Size() == 3 && Values.Size() == 0);
@@ -123,7 +129,7 @@ static bool AssignMove()
 
 static bool Subscript()
 {
-    LevelSketch::Core::Containers::Array<int> Values { 1, 2, 3 };
+    Containers::Array<int> Values { 1, 2, 3 };
     VERIFY(Values.Size() == 3);
     VERIFY(Values[1] == 2);
     Values[1] = 4;
@@ -133,7 +139,7 @@ static bool Subscript()
 
 static bool Push()
 {
-    LevelSketch::Core::Containers::Array<int> Values;
+    Containers::Array<int> Values;
     Values.Push(1);
     VERIFY(Values.Size() == 1);
     VERIFY(Values[0] == 1);
@@ -142,7 +148,7 @@ static bool Push()
 
 static bool Pop()
 {
-    LevelSketch::Core::Containers::Array<int> Values { 1, 2, 3 };
+    Containers::Array<int> Values { 1, 2, 3 };
     VERIFY(Values.Size() == 3);
     VERIFY(Values[0] == 1);
     VERIFY(Values[1] == 2);
@@ -164,7 +170,7 @@ static bool Pop()
 
 static bool Clear()
 {
-    LevelSketch::Core::Containers::Array<int> Values { 1, 2, 3 };
+    Containers::Array<int> Values { 1, 2, 3 };
     VERIFY(Values.Size() == 3);
     VERIFY(Values[0] == 1);
     VERIFY(Values[1] == 2);
@@ -189,7 +195,7 @@ static bool Objects()
         Object& operator=(const Object&) { Constructed++; return *this; }
     };
 
-    LevelSketch::Core::Containers::Array<Object> Objects;
+    Containers::Array<Object> Objects;
     VERIFY(Constructed == 0);
     Objects.Push({});
     VERIFY(Constructed == 1);
