@@ -157,6 +157,11 @@ private:
 
     void InitializeReferenceCount()
     {
+        if (m_Data == nullptr)
+        {
+            return;
+        }
+
         if (m_ReferenceCount != nullptr)
         {
             return;
