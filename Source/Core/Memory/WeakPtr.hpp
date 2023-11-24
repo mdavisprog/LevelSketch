@@ -133,6 +133,8 @@ public:
     }
 
 private:
+    friend SharedPtr;
+
     T* m_Data { nullptr };
     ReferenceCount* m_ReferenceCount { nullptr };
 };

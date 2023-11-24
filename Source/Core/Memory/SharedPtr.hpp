@@ -40,11 +40,14 @@ namespace Memory
 {
 
 template<typename T>
+class WeakPtr;
+
+template<typename T>
+class Shareable;
+
+template<typename T>
 class SharedPtr
 {
-    template<typename U>
-    friend class WeakPtr;
-
 public:
     template<typename... TArguments>
     static SharedPtr<T> New(TArguments&&... Arguments)
@@ -54,7 +57,6 @@ public:
 
     SharedPtr()
     {
-        InitializeReferenceCount();
     }
 
     SharedPtr(const SharedPtr<T>& Other)
@@ -66,11 +68,30 @@ public:
         : m_Data(Data)
     {
         InitializeReferenceCount();
+
+        if constexpr (std::is_base_of<Shareable<T>, T>::value)
+        {
+            Shareable<T>* Share = reinterpret_cast<Shareable<T>*>(m_Data);
+            if (Share != nullptr && !Share->m_Weak.IsValid())
+            {
+                Share->m_Weak = *this;
+            }
+        }
     }
 
     SharedPtr(SharedPtr<T>&& Other)
     {
         Move(std::move(Other));
+    }
+
+    SharedPtr(const WeakPtr<T>& Other)
+    {
+        if (Other.m_ReferenceCount != nullptr)
+        {
+            m_Data = Other.m_Data;
+            m_ReferenceCount = Other.m_ReferenceCount;
+            m_ReferenceCount->Reference();
+        }
     }
 
     ~SharedPtr()
@@ -145,6 +166,8 @@ public:
     }
 
 private:
+    friend WeakPtr;
+
     SharedPtr(T* Data, ReferenceCount* RefCount)
         : m_Data(Data)
         , m_ReferenceCount(RefCount)
