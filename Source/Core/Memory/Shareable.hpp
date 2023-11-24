@@ -59,7 +59,7 @@ protected:
     }
 
 private:
-    friend SharedPtr;
+    friend class SharedPtr<T>;
 
     WeakPtr<T> m_Weak {};
 };

@@ -133,7 +133,7 @@ public:
     }
 
 private:
-    friend SharedPtr;
+    friend class SharedPtr<T>;
 
     T* m_Data { nullptr };
     ReferenceCount* m_ReferenceCount { nullptr };

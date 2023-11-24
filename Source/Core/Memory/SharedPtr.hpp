@@ -166,7 +166,7 @@ public:
     }
 
 private:
-    friend WeakPtr;
+    friend class WeakPtr<T>;
 
     SharedPtr(T* Data, ReferenceCount* RefCount)
         : m_Data(Data)
