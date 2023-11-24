@@ -37,6 +37,18 @@ namespace Tests
 namespace Core
 {
 
+namespace Containers
+{
+    template<typename T>
+    using Array = LevelSketch::Core::Containers::Array<T>;
+}
+
+namespace Memory
+{
+    template<typename T>
+    using SharedPtr = LevelSketch::Core::Memory::SharedPtr<T>;
+}
+
 class Object
 {
 public:
@@ -60,7 +72,7 @@ static bool CreateDestroy()
     Object::s_Counter = 0;
     VERIFY(Object::s_Counter == 0);
     {
-        LevelSketch::Core::Memory::SharedPtr<Object> Object_ { LevelSketch::Core::Memory::SharedPtr<Object>::New() };
+        Memory::SharedPtr<Object> Object_ { Memory::SharedPtr<Object>::New() };
         VERIFY(Object::s_Counter == 1 && Object_.GetReferenceCount() == 1);
     }
     VERIFY(Object::s_Counter == 0);
@@ -72,11 +84,11 @@ static bool CreateCopy()
     Object::s_Counter = 0;
     VERIFY(Object::s_Counter == 0);
     {
-        LevelSketch::Core::Memory::SharedPtr<Object> Object_1 { LevelSketch::Core::Memory::SharedPtr<Object>::New() };
+        Memory::SharedPtr<Object> Object_1 { Memory::SharedPtr<Object>::New() };
         VERIFY(Object::s_Counter == 1);
         VERIFY(Object_1.GetReferenceCount() == 1);
         {
-            LevelSketch::Core::Memory::SharedPtr<Object> Object_2 { Object_1 };
+            Memory::SharedPtr<Object> Object_2 { Object_1 };
             VERIFY(Object::s_Counter == 1);
             VERIFY(Object_1.GetReferenceCount() == 2);
             VERIFY(Object_2.GetReferenceCount() == 2);
@@ -90,9 +102,9 @@ static bool CreateCopy()
 
 static bool ArrayPtrs()
 {
-    LevelSketch::Core::Memory::SharedPtr<int> Value { LevelSketch::Core::Memory::SharedPtr<int>::New(1) };
+    Memory::SharedPtr<int> Value { Memory::SharedPtr<int>::New(1) };
     VERIFY(*Value == 1);
-    LevelSketch::Core::Containers::Array<LevelSketch::Core::Memory::SharedPtr<int>> Values { Value, Value, LevelSketch::Core::Memory::SharedPtr<int>::New(5) };
+    Containers::Array<Memory::SharedPtr<int>> Values { Value, Value, Memory::SharedPtr<int>::New(5) };
     VERIFY(Value.GetReferenceCount() == 3);
     VERIFY(*Values[0] == 1 && Values[0].GetReferenceCount() == 3);
     VERIFY(*Values[1] == 1 && Values[1].GetReferenceCount() == 3);
@@ -104,9 +116,9 @@ static bool ArrayPtrs()
 
 static bool Move()
 {
-    LevelSketch::Core::Memory::SharedPtr<int> Value { LevelSketch::Core::Memory::SharedPtr<int>::New(1) };
+    Memory::SharedPtr<int> Value { Memory::SharedPtr<int>::New(1) };
     VERIFY(*Value == 1 && Value.GetReferenceCount() == 1);
-    LevelSketch::Core::Memory::SharedPtr<int> Moved { std::move(Value) };
+    Memory::SharedPtr<int> Moved { std::move(Value) };
     VERIFY(*Moved == 1 && Moved.GetReferenceCount() == 1);
     VERIFY(Value.IsNull());
     VERIFY(Value.GetReferenceCount() == 0);
