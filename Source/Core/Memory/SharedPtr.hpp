@@ -29,6 +29,7 @@ SOFTWARE.
 #include "../Assert.hpp"
 #include "ReferenceCount.hpp"
 
+#include <cstddef>
 #include <utility>
 
 namespace LevelSketch
