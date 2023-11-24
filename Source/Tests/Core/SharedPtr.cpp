@@ -125,13 +125,36 @@ static bool Move()
     return true;
 }
 
+static bool Equality()
+{
+    Memory::SharedPtr<Object> Value1 { Memory::SharedPtr<Object>::New() };
+    Memory::SharedPtr<Object> Value2 { Value1 };
+    VERIFY(Value1 == Value2);
+    VERIFY(Value1 != nullptr);
+    Value1 = nullptr;
+    VERIFY(Value1 != Value2);
+    VERIFY(Value1 == nullptr);
+    return true;
+}
+
+static bool SelfCopy()
+{
+    Memory::SharedPtr<Object> Value1 { Memory::SharedPtr<Object>::New() };
+    VERIFY(Value1.GetReferenceCount() == 1);
+    Value1 = Value1;
+    VERIFY(Value1.GetReferenceCount() == 1);
+    return true;
+}
+
 TestSuite* SharedPtr()
 {
     return new TestSuite("SharedPtr", {
         TEST_CASE(CreateDestroy),
         TEST_CASE(CreateCopy),
         TEST_CASE(ArrayPtrs),
-        TEST_CASE(Move)
+        TEST_CASE(Move),
+        TEST_CASE(Equality),
+        TEST_CASE(SelfCopy)
     });
 }
 
