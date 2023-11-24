@@ -57,6 +57,7 @@ if(WITH_TESTS)
         ${SOURCE}
 
         Tests/Core/Array.cpp
+        Tests/Core/Shareable.cpp
         Tests/Core/SharedPtr.cpp
         Tests/Core/WeakPtr.cpp
 

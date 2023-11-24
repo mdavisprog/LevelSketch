@@ -24,61 +24,66 @@ SOFTWARE.
 
 */
 
-#include "System.hpp"
-#include "../Core/Version.hpp"
-#include "Core/Core.hpp"
-#include "TestSuite.hpp"
-
-#include <cstdio>
+#include "Core.hpp"
+#include "../../Core/Memory/Shareable.hpp"
+#include "../TestSuite.hpp"
+#include "../Utility.hpp"
 
 namespace LevelSketch
 {
 namespace Tests
 {
-
-System& System::Instance()
+namespace Core
 {
-    static System Instance {};
-    return Instance;
+
+namespace Memory
+{
+    template<typename T>
+    using Shareable = LevelSketch::Core::Memory::Shareable<T>;
+
+    template<typename T>
+    using SharedPtr = LevelSketch::Core::Memory::SharedPtr<T>;
 }
 
-i32 System::Run(i32, char**)
+class ShareableObject : private Memory::Shareable<ShareableObject>
 {
-    printf("\nRunning %s testing framework version %d.%d.%d.\n", APP_NAME, VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION);
-    printf("There are (%llu) test suites to run through.\n\n", m_TestSuites.Size());
-
-    for (TestSuite* Suite : m_TestSuites)
+public:
+    ShareableObject()
     {
-        Suite->Run();
-        printf("\n");
     }
 
-    Shutdown();
-
-    printf("Finished running tests.\n\n");
-    return 0;
-}
-
-System::System()
-{
-    m_TestSuites
-        .Push(Core::Array())
-        .Push(Core::SharedPtr())
-        .Push(Core::WeakPtr())
-        .Push(Core::Shareable());
-}
-
-System& System::Shutdown()
-{
-    for (const TestSuite* Suite : m_TestSuites)
+    Memory::SharedPtr<ShareableObject> Clone() const
     {
-        delete Suite;
+        return Share();
     }
+};
 
-    m_TestSuites.Clear();
-
-    return *this;
+static bool ShareNull()
+{
+    ShareableObject Instance;
+    Memory::SharedPtr<ShareableObject> SharedPtr { Instance.Clone() };
+    VERIFY(SharedPtr.IsNull());
+    return true;
 }
 
+static bool ShareInstance()
+{
+    Memory::SharedPtr<ShareableObject> Instance { Memory::SharedPtr<ShareableObject>::New() };
+    VERIFY(Instance.GetReferenceCount() == 1);
+    Memory::SharedPtr<ShareableObject> Copy { Instance->Clone() };
+    VERIFY(!Copy.IsNull());
+    VERIFY(Instance.GetReferenceCount() == 2);
+    return true;
+}
+
+TestSuite* Shareable()
+{
+    return new TestSuite("Shareable", {
+        TEST_CASE(ShareNull),
+        TEST_CASE(ShareInstance)
+    });
+}
+
+}
 }
 }
