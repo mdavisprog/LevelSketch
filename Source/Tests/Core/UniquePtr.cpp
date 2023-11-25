@@ -24,24 +24,60 @@ SOFTWARE.
 
 */
 
-#pragma once
+#include "Core.hpp"
+#include "../../Core/Memory/UniquePtr.hpp"
+#include "../TestSuite.hpp"
+#include "../Utility.hpp"
 
 namespace LevelSketch
 {
-
 namespace Tests
 {
-
-class TestSuite;
-
 namespace Core
 {
 
-TestSuite* Array();
-TestSuite* SharedPtr();
-TestSuite* WeakPtr();
-TestSuite* Shareable();
-TestSuite* UniquePtr();
+namespace Memory
+{
+    template<typename T>
+    using UniquePtr = LevelSketch::Core::Memory::UniquePtr<T>;
+}
+
+static bool CreateNull()
+{
+    Memory::UniquePtr<int> Instance;
+    VERIFY(Instance.Get() == nullptr);
+    return true;
+}
+
+static bool CreateInstance()
+{
+    Memory::UniquePtr<int> Instance;
+    VERIFY(!Instance.IsValid());
+    Instance = Memory::UniquePtr<int>::New();
+    VERIFY(Instance.IsValid());
+    return true;
+}
+
+static bool Move()
+{
+    Memory::UniquePtr<int> Instance1 { Memory::UniquePtr<int>::New() };
+    VERIFY(Instance1.IsValid());
+    Memory::UniquePtr<int> Instance2;
+    VERIFY(!Instance2.IsValid());
+    Instance2 = std::move(Instance1);
+    VERIFY(!Instance1.IsValid());
+    VERIFY(Instance2.IsValid());
+    return true;
+}
+
+TestSuite* UniquePtr()
+{
+    return new TestSuite("UniquePtr", {
+        TEST_CASE(CreateNull),
+        TEST_CASE(CreateInstance),
+        TEST_CASE(Move)
+    });
+}
 
 }
 }

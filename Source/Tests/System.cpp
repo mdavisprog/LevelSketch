@@ -65,7 +65,8 @@ System::System()
         .Push(Core::Array())
         .Push(Core::SharedPtr())
         .Push(Core::WeakPtr())
-        .Push(Core::Shareable());
+        .Push(Core::Shareable())
+        .Push(Core::UniquePtr());
 }
 
 System& System::Shutdown()
