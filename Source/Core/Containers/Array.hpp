@@ -178,7 +178,14 @@ public:
 
         for (u64 I = 0; I < Math::Min(m_Size, m_Capacity); I++)
         {
-            m_Data[I] = Temp[I];
+            if constexpr (std::is_nothrow_move_constructible_v<T> || !std::is_copy_constructible_v<T>)
+            {
+                m_Data[I] = std::move(Temp[I]);
+            }
+            else
+            {
+                m_Data[I] = Temp[I];
+            }
         }
 
         Free(Temp);
@@ -191,6 +198,16 @@ public:
         ConditionalGrow();
 
         new(static_cast<void*>(&m_Data[m_Size])) T(Value);
+        m_Size++;
+
+        return *this;
+    }
+
+    Array& Push(T&& Value)
+    {
+        ConditionalGrow();
+
+        new(static_cast<void*>(&m_Data[m_Size])) T(std::move(Value));
         m_Size++;
 
         return *this;
