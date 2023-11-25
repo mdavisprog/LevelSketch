@@ -26,8 +26,8 @@ SOFTWARE.
 
 #pragma once
 
-#include "../Core/Types.hpp"
 #include "../Core/Containers/Array.hpp"
+#include "../Core/Memory/UniquePtr.hpp"
 
 namespace LevelSketch
 {
@@ -48,7 +48,7 @@ private:
 
     System& Shutdown();
 
-    LevelSketch::Core::Containers::Array<TestSuite*> m_TestSuites {};
+    LevelSketch::Core::Containers::Array<LevelSketch::Core::Memory::UniquePtr<TestSuite>> m_TestSuites {};
 };
 
 }

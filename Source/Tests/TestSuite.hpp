@@ -40,6 +40,13 @@ SOFTWARE.
 
 namespace LevelSketch
 {
+
+namespace Core::Memory
+{
+    template<typename T>
+    class UniquePtr;
+}
+
 namespace Tests
 {
 
@@ -52,6 +59,8 @@ public:
         std::string Name {};
         bool (*OnTestCase)();
     };
+
+    static LevelSketch::Core::Memory::UniquePtr<TestSuite> New(const char* Name, LevelSketch::Core::Containers::Array<TestCase>&& TestCases);
 
     TestSuite(const char* Name, LevelSketch::Core::Containers::Array<TestCase>&& TestCases);
 

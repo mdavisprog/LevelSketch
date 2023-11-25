@@ -47,7 +47,7 @@ i32 System::Run(i32, char**)
     printf("\nRunning %s testing framework version %d.%d.%d.\n", APP_NAME, VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION);
     printf("There are (%llu) test suites to run through.\n\n", m_TestSuites.Size());
 
-    for (TestSuite* Suite : m_TestSuites)
+    for (LevelSketch::Core::Memory::UniquePtr<TestSuite>& Suite : m_TestSuites)
     {
         Suite->Run();
         printf("\n");
@@ -71,13 +71,7 @@ System::System()
 
 System& System::Shutdown()
 {
-    for (const TestSuite* Suite : m_TestSuites)
-    {
-        delete Suite;
-    }
-
     m_TestSuites.Clear();
-
     return *this;
 }
 

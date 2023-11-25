@@ -187,9 +187,9 @@ static bool SetNull()
     return true;
 }
 
-TestSuite* SharedPtr()
+Memory::UniquePtr<TestSuite> SharedPtr()
 {
-    return new TestSuite("SharedPtr", {
+    return TestSuite::New("SharedPtr", {
         TEST_CASE(CreateNull),
         TEST_CASE(CreateDestroy),
         TEST_CASE(CreateCopy),

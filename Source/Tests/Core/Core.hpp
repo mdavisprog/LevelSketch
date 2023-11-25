@@ -26,6 +26,8 @@ SOFTWARE.
 
 #pragma once
 
+#include "../../Core/Memory/UniquePtr.hpp"
+
 namespace LevelSketch
 {
 
@@ -37,11 +39,17 @@ class TestSuite;
 namespace Core
 {
 
-TestSuite* Array();
-TestSuite* SharedPtr();
-TestSuite* WeakPtr();
-TestSuite* Shareable();
-TestSuite* UniquePtr();
+namespace Memory
+{
+    template<typename T>
+    using UniquePtr = LevelSketch::Core::Memory::UniquePtr<T>;
+}
+
+Memory::UniquePtr<TestSuite> Array();
+Memory::UniquePtr<TestSuite> SharedPtr();
+Memory::UniquePtr<TestSuite> WeakPtr();
+Memory::UniquePtr<TestSuite> Shareable();
+Memory::UniquePtr<TestSuite> UniquePtr();
 
 }
 }

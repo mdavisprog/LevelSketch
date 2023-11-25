@@ -25,6 +25,7 @@ SOFTWARE.
 */
 
 #include "TestSuite.hpp"
+#include "../Core/Memory/UniquePtr.hpp"
 
 #include <cstdio>
 
@@ -32,6 +33,11 @@ namespace LevelSketch
 {
 namespace Tests
 {
+
+LevelSketch::Core::Memory::UniquePtr<TestSuite> TestSuite::New(const char* Name, LevelSketch::Core::Containers::Array<TestSuite::TestCase>&& TestCases)
+{
+    return LevelSketch::Core::Memory::UniquePtr<TestSuite>::New(Name, std::move(TestCases));
+}
 
 TestSuite::TestSuite(const char* Name, LevelSketch::Core::Containers::Array<TestCase>&& TestCases)
     : m_Name(Name)

@@ -29,8 +29,6 @@ SOFTWARE.
 #include "../TestSuite.hpp"
 #include "../Utility.hpp"
 
-#include <vector>
-
 namespace LevelSketch
 {
 namespace Tests
@@ -43,6 +41,26 @@ namespace Containers
     template<typename T>
     using Array = LevelSketch::Core::Containers::Array<T>;
 }
+
+class ArrayElement
+{
+public:
+    ArrayElement(const ArrayElement& Other) = default;
+    ArrayElement& operator=(const ArrayElement& Other) = default;
+
+    ArrayElement()
+    {
+        m_Count++;
+    }
+
+    ArrayElement(ArrayElement&& Other)
+        : m_Count(Other.m_Count)
+    {
+        Other.m_Count = 0;
+    }
+
+    u32 m_Count { 0 };
+};
 
 static bool Empty()
 {
@@ -205,9 +223,28 @@ static bool Objects()
     return true;
 }
 
-TestSuite* Array()
+static bool MoveValue()
 {
-    return new TestSuite("Array", {
+    Containers::Array<ArrayElement> Elements {};
+    ArrayElement Element1;
+    VERIFY(Element1.m_Count == 1);
+
+    Elements.Push(Element1);
+    VERIFY(Element1.m_Count == 1);
+    VERIFY(Elements[0].m_Count == 1);
+
+    ArrayElement Element2;
+    VERIFY(Element2.m_Count == 1);
+
+    Elements.Push(std::move(Element2));
+    VERIFY(Elements[1].m_Count == 1);
+    VERIFY(Element2.m_Count == 0);
+    return true;
+}
+
+Memory::UniquePtr<TestSuite> Array()
+{
+    return TestSuite::New("Array", {
         TEST_CASE(Empty),
         TEST_CASE(Copy),
         TEST_CASE(Move),
@@ -218,7 +255,8 @@ TestSuite* Array()
         TEST_CASE(Push),
         TEST_CASE(Pop),
         TEST_CASE(Clear),
-        TEST_CASE(Objects)
+        TEST_CASE(Objects),
+        TEST_CASE(MoveValue)
     });
 }
 

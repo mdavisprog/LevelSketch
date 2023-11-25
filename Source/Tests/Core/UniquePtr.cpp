@@ -70,9 +70,9 @@ static bool Move()
     return true;
 }
 
-TestSuite* UniquePtr()
+Memory::UniquePtr<TestSuite> UniquePtr()
 {
-    return new TestSuite("UniquePtr", {
+    return TestSuite::New("UniquePtr", {
         TEST_CASE(CreateNull),
         TEST_CASE(CreateInstance),
         TEST_CASE(Move)

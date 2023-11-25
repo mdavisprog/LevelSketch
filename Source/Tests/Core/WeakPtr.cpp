@@ -124,9 +124,9 @@ static bool SelfCopy()
     POP_DISABLE_WARNING
 #endif
 
-TestSuite* WeakPtr()
+Memory::UniquePtr<TestSuite> WeakPtr()
 {
-    return new TestSuite("WeakPtr", {
+    return TestSuite::New("WeakPtr", {
         TEST_CASE(Empty),
         TEST_CASE(WeakLock),
         TEST_CASE(WeakRefDestroyed),

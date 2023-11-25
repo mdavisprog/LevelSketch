@@ -76,9 +76,9 @@ static bool ShareInstance()
     return true;
 }
 
-TestSuite* Shareable()
+Memory::UniquePtr<TestSuite> Shareable()
 {
-    return new TestSuite("Shareable", {
+    return TestSuite::New("Shareable", {
         TEST_CASE(ShareNull),
         TEST_CASE(ShareInstance)
     });
