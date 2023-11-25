@@ -26,6 +26,8 @@ SOFTWARE.
 
 #pragma once
 
+#include <utility>
+
 namespace LevelSketch
 {
 namespace Core
@@ -40,7 +42,7 @@ public:
     template<typename... Arguments>
     static UniquePtr<T> New(Arguments&&... Args)
     {
-        return UniquePtr<T>{ new T(Args...) };
+        return UniquePtr<T>(new T(std::forward<Arguments>(Args)...));
     }
 
     static UniquePtr<T> Adopt(T* Data)
@@ -55,7 +57,7 @@ public:
     {
     }
 
-    UniquePtr(UniquePtr<T>&& Other)
+    UniquePtr(UniquePtr<T>&& Other) noexcept
     {
         m_Data = Other.m_Data;
         Other.m_Data = nullptr;
