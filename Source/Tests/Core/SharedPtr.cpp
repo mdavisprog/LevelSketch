@@ -27,6 +27,7 @@ SOFTWARE.
 #include "Core.hpp"
 #include "../../Core/Containers/Array.hpp"
 #include "../../Core/Memory/SharedPtr.hpp"
+#include "../../Core/Compiler.hpp"
 #include "../TestSuite.hpp"
 #include "../Utility.hpp"
 
@@ -155,6 +156,10 @@ static bool Equality()
     return true;
 }
 
+#if defined(CLANG)
+    PUSH_DISABLE_WARNING(-Wself-assign-overloaded)
+#endif
+
 static bool SelfCopy()
 {
     Memory::SharedPtr<Object> Value1 { Memory::SharedPtr<Object>::New() };
@@ -163,6 +168,10 @@ static bool SelfCopy()
     VERIFY(Value1.GetReferenceCount() == 1);
     return true;
 }
+
+#if defined(CLANG)
+    POP_DISABLE_WARNING
+#endif
 
 static bool SetNull()
 {

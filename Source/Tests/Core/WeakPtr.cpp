@@ -26,6 +26,7 @@ SOFTWARE.
 
 #include "Core.hpp"
 #include "../../Core/Memory/WeakPtr.hpp"
+#include "../../Core/Compiler.hpp"
 #include "../TestSuite.hpp"
 #include "../Utility.hpp"
 
@@ -104,6 +105,10 @@ static bool WeakCopy()
     return true;
 }
 
+#if defined(CLANG)
+    PUSH_DISABLE_WARNING(-Wself-assign-overloaded)
+#endif
+
 static bool SelfCopy()
 {
     Memory::SharedPtr<Object> SharedPtr { Memory::SharedPtr<Object>::New() };
@@ -114,6 +119,10 @@ static bool SelfCopy()
     VERIFY(WeakPtr.GetReferenceCount() == 1);
     return true;
 }
+
+#if defined(CLANG)
+    POP_DISABLE_WARNING
+#endif
 
 TestSuite* WeakPtr()
 {
