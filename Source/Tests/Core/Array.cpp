@@ -242,6 +242,16 @@ static bool MoveValue()
     return true;
 }
 
+static bool Equality()
+{
+    Containers::Array<int> A { 1, 2, 3 };
+    Containers::Array<int> B { 1, 2, 3 };
+    VERIFY(A == B);
+    B.Pop();
+    VERIFY(A != B);
+    return true;
+}
+
 Memory::UniquePtr<TestSuite> Array()
 {
     return TestSuite::New("Array", {
@@ -256,7 +266,8 @@ Memory::UniquePtr<TestSuite> Array()
         TEST_CASE(Pop),
         TEST_CASE(Clear),
         TEST_CASE(Objects),
-        TEST_CASE(MoveValue)
+        TEST_CASE(MoveValue),
+        TEST_CASE(Equality)
     });
 }
 

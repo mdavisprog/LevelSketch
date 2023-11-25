@@ -112,6 +112,11 @@ public:
         return m_Size;
     }
 
+    bool IsEmpty() const
+    {
+        return m_Size == 0;
+    }
+
     T* Data()
     {
         return m_Data;
@@ -339,6 +344,31 @@ private:
     u64 m_Capacity { 0 };
     u64 m_Size { 0 };
 };
+
+template<typename T>
+bool operator==(const Array<T>& A, const Array<T>& B)
+{
+    if (A.Size() != B.Size())
+    {
+        return false;
+    }
+
+    for (u64 I = 0; I < A.Size(); I++)
+    {
+        if (A[I] != B[I])
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+template<typename T>
+bool operator!=(const Array<T>& A, const Array<T>& B)
+{
+    return !(A == B);
+}
 
 }
 }
