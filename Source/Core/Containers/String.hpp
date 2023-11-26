@@ -138,7 +138,7 @@ private:
     {
         Clear();
         m_Data.Resize(Length + 1);
-        std::memcpy(m_Data.Data(), Data, sizeof(T) * Length);
+        std::memcpy(m_Data.Data(), Data, sizeof(T) * (u32)Length);
         m_Data[Length] = 0;
         return *this;
     }
