@@ -242,7 +242,7 @@ public:
             return false;
         }
 
-        Destructor<T>(m_Data);
+        Destructor<T>(static_cast<void*>(&m_Data[Index]));
         m_Size--;
 
         for (u64 I = Index; I < m_Size; I++)
