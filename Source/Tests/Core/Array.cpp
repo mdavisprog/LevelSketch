@@ -252,6 +252,38 @@ static bool Equality()
     return true;
 }
 
+static bool ElementDtor()
+{
+    static u32 s_Counter { 0 };
+    static Containers::Array<u32> s_Deleted {};
+
+    class Object
+    {
+    public:
+        u32 m_Counter { 0 };
+
+        Object()
+            : m_Counter(++s_Counter)
+        {
+        }
+
+        ~Object()
+        {
+            s_Deleted.Push(m_Counter);
+        }
+    };
+
+    Containers::Array<Object> Objects { {}, {} };
+    VERIFY(Objects[0].m_Counter == 1);
+    VERIFY(Objects[1].m_Counter == 2);
+
+    s_Deleted.Clear();
+    Objects.Remove(1);
+    VERIFY(s_Deleted[0] == 2);
+
+    return true;
+}
+
 Memory::UniquePtr<TestSuite> Array()
 {
     return TestSuite::New("Array", {
@@ -267,7 +299,8 @@ Memory::UniquePtr<TestSuite> Array()
         TEST_CASE(Clear),
         TEST_CASE(Objects),
         TEST_CASE(MoveValue),
-        TEST_CASE(Equality)
+        TEST_CASE(Equality),
+        TEST_CASE(ElementDtor)
     });
 }
 
