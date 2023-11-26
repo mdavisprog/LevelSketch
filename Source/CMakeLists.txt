@@ -59,6 +59,7 @@ if(WITH_TESTS)
         Tests/Core/Array.cpp
         Tests/Core/Shareable.cpp
         Tests/Core/SharedPtr.cpp
+        Tests/Core/String.cpp
         Tests/Core/UniquePtr.cpp
         Tests/Core/WeakPtr.cpp
 

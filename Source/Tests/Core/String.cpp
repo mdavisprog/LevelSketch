@@ -24,57 +24,52 @@ SOFTWARE.
 
 */
 
-#include "System.hpp"
-#include "../Core/Version.hpp"
-#include "Core/Core.hpp"
-#include "TestSuite.hpp"
-
-#include <cstdio>
+#include "Core.hpp"
+#include "../../Core/Containers/String.hpp"
+#include "../TestSuite.hpp"
+#include "../Utility.hpp"
 
 namespace LevelSketch
 {
 namespace Tests
 {
-
-System& System::Instance()
+namespace Core
 {
-    static System Instance {};
-    return Instance;
+
+using String = LevelSketch::Core::String;
+
+static bool Empty()
+{
+    String Empty {};
+    VERIFY(Empty.IsEmpty());
+    return true;
 }
 
-i32 System::Run(i32, char**)
+static bool Constructor()
 {
-    printf("\nRunning %s testing framework version %d.%d.%d.\n", APP_NAME, VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION);
-    printf("There are (%llu) test suites to run through.\n\n", m_TestSuites.Size());
-
-    for (LevelSketch::Core::Memory::UniquePtr<TestSuite>& Suite : m_TestSuites)
-    {
-        Suite->Run();
-        printf("\n");
-    }
-
-    Shutdown();
-
-    printf("Finished running tests.\n\n");
-    return 0;
+    String Instance { "Hello" };
+    VERIFY(!Instance.IsEmpty());
+    VERIFY(Instance.Length() == 5);
+    return true;
 }
 
-System::System()
+static bool Equality()
 {
-    m_TestSuites
-        .Push(Core::Array())
-        .Push(Core::Shareable())
-        .Push(Core::SharedPtr())
-        .Push(Core::StringTests())
-        .Push(Core::UniquePtr())
-        .Push(Core::WeakPtr());
+    String Instance { "Hello" };
+    VERIFY(Instance == "Hello");
+    VERIFY(Instance != "World");
+    return true;
 }
 
-System& System::Shutdown()
+Memory::UniquePtr<TestSuite> StringTests()
 {
-    m_TestSuites.Clear();
-    return *this;
+    return TestSuite::New("String", {
+        TEST_CASE(Empty),
+        TEST_CASE(Constructor),
+        TEST_CASE(Equality)
+    });
 }
 
+}
 }
 }

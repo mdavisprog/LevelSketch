@@ -46,10 +46,11 @@ namespace Memory
 }
 
 Memory::UniquePtr<TestSuite> Array();
-Memory::UniquePtr<TestSuite> SharedPtr();
-Memory::UniquePtr<TestSuite> WeakPtr();
 Memory::UniquePtr<TestSuite> Shareable();
+Memory::UniquePtr<TestSuite> SharedPtr();
+Memory::UniquePtr<TestSuite> StringTests();
 Memory::UniquePtr<TestSuite> UniquePtr();
+Memory::UniquePtr<TestSuite> WeakPtr();
 
 }
 }
