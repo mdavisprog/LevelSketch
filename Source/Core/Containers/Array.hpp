@@ -253,6 +253,24 @@ public:
         return true;
     }
 
+    bool Contains(const T& Value) const
+    {
+        if (IsEmpty())
+        {
+            return false;
+        }
+
+        for (u64 I = 0; I < m_Size; I++)
+        {
+            if (m_Data[I] == Value)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     T* begin()
     {
         return m_Data;
