@@ -284,6 +284,34 @@ static bool ElementDtor()
     return true;
 }
 
+static bool RemoveRange()
+{
+    Containers::Array<int> Values { 1, 2, 3, 4, 5, 6, 7, 8 };
+    VERIFY(Values.Size() == 8);
+    Values.RemoveRange(3, 3);
+    VERIFY(Values.Size() == 5);
+    VERIFY(Values[0] == 1);
+    VERIFY(Values[1] == 2);
+    VERIFY(Values[2] == 3);
+    VERIFY(Values[3] == 7);
+    VERIFY(Values[4] == 8);
+    return true;
+}
+
+static bool Resize()
+{
+    Containers::Array<int> Values { 1, 2, 3, 4, 5 };
+    VERIFY(Values.Size() == 5);
+    Values.Resize(3);
+    VERIFY(Values.Size() == 3);
+    VERIFY(Values[0] == 1);
+    VERIFY(Values[1] == 2);
+    VERIFY(Values[2] == 3);
+    Values.Resize(5);
+    VERIFY(Values.Size() == 5);
+    return true;
+}
+
 Memory::UniquePtr<TestSuite> Array()
 {
     return TestSuite::New("Array", {
@@ -300,7 +328,9 @@ Memory::UniquePtr<TestSuite> Array()
         TEST_CASE(Objects),
         TEST_CASE(MoveValue),
         TEST_CASE(Equality),
-        TEST_CASE(ElementDtor)
+        TEST_CASE(ElementDtor),
+        TEST_CASE(RemoveRange),
+        TEST_CASE(Resize)
     });
 }
 

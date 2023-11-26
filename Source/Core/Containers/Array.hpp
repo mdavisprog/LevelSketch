@@ -161,6 +161,27 @@ public:
         return *this;
     }
 
+    Array& Resize(u64 Size)
+    {
+        if (m_Size == Size)
+        {
+            return *this;
+        }
+
+        if (Size < m_Size)
+        {
+            RemoveRange(Size, m_Size - Size);
+        }
+        else
+        {
+            ConditionalGrow(Size - m_Size);
+        }
+
+        m_Size = Size;
+
+        return *this;
+    }
+
     Array& Reserve(u64 Capacity)
     {
         if (Capacity == 0)
@@ -232,7 +253,12 @@ public:
 
     bool Remove(u64 Index)
     {
-        if (m_Data == nullptr)
+        return RemoveRange(Index);
+    }
+
+    bool RemoveRange(u64 Index, u64 Count = 1)
+    {
+        if (Count == 0)
         {
             return false;
         }
@@ -242,13 +268,29 @@ public:
             return false;
         }
 
-        Destructor<T>(static_cast<void*>(&m_Data[Index]));
-        m_Size--;
+        Count = Math::Min(Count, m_Size - Index);
+        const u64 Last { Index + Count };
 
-        for (u64 I = Index; I < m_Size; I++)
+        // Call destructor on each element.
+        for (u64 I = Index; I < Last; I++)
         {
-            m_Data[Index] = m_Data[Index + 1];
+            Destructor<T>(static_cast<void*>(&m_Data[I]));
         }
+
+        // Copy/Move remaining elements down to fill in destroyed slots.
+        for (u64 I = Index, J = Last; J < m_Size; I++, J++)
+        {
+            if constexpr (std::is_nothrow_move_constructible_v<T> || !std::is_copy_constructible_v<T>)
+            {
+                m_Data[I] = std::move(m_Data[J]);
+            }
+            else
+            {
+                m_Data[I] = m_Data[J];
+            }
+        }
+
+        m_Size -= Count;
 
         return true;
     }
