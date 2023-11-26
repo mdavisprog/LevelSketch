@@ -29,3 +29,4 @@ SOFTWARE.
 #include <cstdio>
 
 #define VERIFY(Condition) if ((Condition) == false) { printf("'%s' has failed at %s:%d\n", #Condition, __FILE__, __LINE__); return false; }
+#define VERIFYF(Condition, Format, ...) if ((Condition) == false) { printf("'%s' has failed at %s:%d\n", #Condition, __FILE__, __LINE__); printf(#Format, ##__VA_ARGS__); printf("\n"); return false; }
