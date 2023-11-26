@@ -64,7 +64,7 @@ public:
 
     Array(const std::initializer_list<T>& List)
     {
-        Resize(List.size());
+        Reserve(List.size());
 
         for (const T& Item : List)
         {
@@ -161,7 +161,7 @@ public:
         return *this;
     }
 
-    Array& Resize(u64 Capacity)
+    Array& Reserve(u64 Capacity)
     {
         if (Capacity == 0)
         {
@@ -310,11 +310,12 @@ private:
         return *this;
     }
 
-    Array& ConditionalGrow()
+    Array& ConditionalGrow(u64 AdditionalSpace = 0)
     {
-        if (m_Data == nullptr || m_Capacity == m_Size)
+        if (m_Data == nullptr || m_Capacity == m_Size || m_Size + AdditionalSpace >= m_Capacity)
         {
-            Resize(GrowSize());
+            const u64 Capacity { Math::Max(m_Capacity + AdditionalSpace, GrowSize()) };
+            Reserve(Capacity);
         }
 
         return *this;
