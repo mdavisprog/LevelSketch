@@ -80,32 +80,38 @@ add_executable(
     ${SOURCE}
 )
 
-target_link_libraries(
-    ${TARGET}
-    OctaneGUI
-)
+#
+# Link Libraries
+#
+
+set(LIBS OctaneGUI)
 
 if(WIN32)
-    target_link_libraries(
-        ${TARGET}
+    set(LIBS
+        ${LIBS}
         d3d12
         d3dcompiler
         dxgi
     )
 elseif(APPLE)
-    target_link_libraries(
-        ${TARGET}
+    set(LIBS
+        ${LIBS}
         "-framework AppKit"
         "-framework Foundation"
         "-framework Metal"
     )
 else()
-    target_link_libraries(
-        ${TARGET}
+    set(LIBS
+        ${LIBS}
         ${SDL2_LIBRARIES}
         ${OpenGL_LIBS}
     )
 endif()
+
+target_link_libraries(
+    ${TARGET}
+    ${LIBS}
+)
 
 if(WITH_TESTS)
     target_compile_definitions(
