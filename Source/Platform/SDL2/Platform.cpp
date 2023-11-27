@@ -48,6 +48,10 @@ bool Platform::Initialize()
         return false;
     }
 
+    SDL_version Version {};
+    SDL_GetVersion(&Version);
+    printf("Using SDL version %d.%d.%d\n", Version.major, Version.minor, Version.patch);
+
     return true;
 }
 
