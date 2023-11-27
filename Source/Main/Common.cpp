@@ -38,7 +38,7 @@ SOFTWARE.
     #include "../Platform/Mac/Platform.hpp"
     #include "../Render/Metal/Renderer.hpp"
 #elif defined(LINUX)
-    #include "../Platform/Linux/Platform.hpp"
+    #include "../Platform/SDL2/Platform.hpp"
     #include "../Render/OpenGL/Renderer.hpp"
 #endif
 
@@ -172,7 +172,7 @@ i32 Main(i32 Argc, char** Argv)
     g_Platform = new LevelSketch::Platform::Mac::Platform();
     g_Renderer = new LevelSketch::Render::Metal::Renderer();
 #elif defined(LINUX)
-    g_Platform = new LevelSketch::Platform::Linux::Platform();
+    g_Platform = new LevelSketch::Platform::SDL2::Platform();
     g_Renderer = new LevelSketch::Render::OpenGL::Renderer();
 #endif
     

@@ -8,6 +8,12 @@ endif()
 
 set(TARGET LevelSketch)
 
+# On Linux, SDL2 is used for the platform.
+if(CMAKE_SYSTEM_NAME MATCHES Linux)
+    find_package(SDL2 REQUIRED)
+    find_package(OpenGL REQUIRED)
+endif()
+
 add_subdirectory(External/OctaneGUI)
 
 # Common source files for all platforms and configurations.
@@ -39,7 +45,8 @@ elseif(APPLE)
 else()
     set(SOURCE
         ${SOURCE}
-        Platform/Linux/Platform.cpp
+        Platform/SDL2/Platform.cpp
+        Platform/SDL2/Window.cpp
 
         Render/OpenGL/Renderer.cpp
     )
@@ -91,6 +98,12 @@ elseif(APPLE)
         "-framework AppKit"
         "-framework Foundation"
         "-framework Metal"
+    )
+else()
+    target_link_libraries(
+        ${TARGET}
+        ${SDL2_LIBRARIES}
+        ${OpenGL_LIBS}
     )
 endif()
 
