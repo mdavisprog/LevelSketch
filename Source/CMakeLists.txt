@@ -113,19 +113,54 @@ target_link_libraries(
     ${LIBS}
 )
 
+#
+# Compile Definitions
+#
+
+set(DEFINES "")
+
+if(WIN32)
+    set(DEFINES
+        ${DEFINES}
+        PLATFORM_WINDOWS
+        RENDER_DIRECTX
+    )
+elseif(APPLE)
+    set(DEFINES
+        ${DEFINES}
+        PLATFORM_MAC
+        RENDER_METAL
+    )
+else()
+    set(DEFINES
+        ${DEFINES}
+        PLATFORM_SDL2
+        RENDER_OPENGL
+    )
+endif()
+
 if(WITH_TESTS)
-    target_compile_definitions(
-        ${TARGET}
-        PRIVATE WITH_TESTS
+    set(DEFINES
+        ${DEFINES}
+        WITH_TESTS
     )
 endif()
 
 if(SHIPPING)
-    target_compile_definitions(
-        ${TARGET}
-        PRIVATE SHIPPING
+    set(DEFINES
+        ${DEFINES}
+        SHIPPING
     )
 endif()
+
+target_compile_definitions(
+    ${TARGET}
+    PRIVATE ${DEFINES}
+)
+
+#
+# Post-build step
+#
 
 if(APPLE)
     file(COPY Platform/Mac/Info.plist DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
