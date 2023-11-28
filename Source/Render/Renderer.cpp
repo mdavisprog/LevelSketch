@@ -25,11 +25,38 @@ SOFTWARE.
 */
 
 #include "Renderer.hpp"
+#include "../Core/Memory/UniquePtr.hpp"
+
+#if defined(RENDER_DIRECTX)
+    #include "DirectX/Renderer.hpp"
+#elif defined(RENDER_METAL)
+    #include "Metal/Renderer.hpp"
+#elif defined(RENDER_OPENGL)
+    #include "OpenGL/Renderer.hpp"
+#else
+    #error "Renderer is not supported!"
+#endif
 
 namespace LevelSketch
 {
 namespace Render
 {
+
+const Core::Memory::UniquePtr<Renderer>& Renderer::Instance()
+{
+    static Core::Memory::UniquePtr<Renderer> Instance
+    {
+#if defined(RENDER_DIRECTX)
+        Core::Memory::UniquePtr<DirectX::Renderer>::New()
+#elif defined(RENDER_METAL)
+        Core::Memory::UniquePtr<Metal::Renderer>::New()
+#elif defined(RENDER_OPENGL)
+        Core::Memory::UniquePtr<OpenGL::Renderer>::New()
+#endif
+    };
+
+    return Instance;
+}
 
 Renderer& Renderer::SetWindow(Platform::Window* Window)
 {

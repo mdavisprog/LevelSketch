@@ -29,6 +29,12 @@ SOFTWARE.
 namespace LevelSketch
 {
 
+namespace Core::Memory
+{
+    template<typename T>
+    class UniquePtr;
+}
+
 namespace Platform
 {
     class Window;
@@ -42,6 +48,8 @@ class Context;
 class Renderer
 {
 public:
+    static const Core::Memory::UniquePtr<Renderer>& Instance();
+
     virtual ~Renderer() {}
 
     virtual bool Initialize() = 0;
