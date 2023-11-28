@@ -28,17 +28,15 @@ SOFTWARE.
 #include <cstdio>
 #include "../External/OctaneGUI/OctaneGUI.h"
 #include "../Core/Defines.hpp"
+#include "../Platform/Platform.hpp"
 #include "../Platform/Window.hpp"
 #include "../Render/Renderer.hpp"
 
 #if defined(WINDOWS)
-    #include "../Platform/Windows/Platform.hpp"
     #include "../Render/DirectX/Renderer.hpp"
 #elif defined(APPLE)
-    #include "../Platform/Mac/Platform.hpp"
     #include "../Render/Metal/Renderer.hpp"
 #elif defined(LINUX)
-    #include "../Platform/SDL2/Platform.hpp"
     #include "../Render/OpenGL/Renderer.hpp"
 #endif
 
@@ -51,7 +49,6 @@ namespace LevelSketch
 namespace Main
 {
 
-static Platform::Platform* g_Platform { nullptr };
 static Render::Renderer* g_Renderer { nullptr };
 static OctaneGUI::Application* g_Application { nullptr };
 static std::unordered_map<OctaneGUI::Window*, LevelSketch::Platform::Window*> g_Windows {};
@@ -64,7 +61,7 @@ void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Action)
     {
         if (g_Windows.find(Window) == g_Windows.end())
         {
-            LevelSketch::Platform::Window* Win = g_Platform->NewWindow(
+            LevelSketch::Platform::Window* Win = Platform::Platform::Instance()->NewWindow(
                 OctaneGUI::String::ToMultiByte(Window->GetTitle()).c_str(),
                 (int)Window->GetPosition().X,
                 (int)Window->GetPosition().Y,
@@ -90,7 +87,7 @@ void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Action)
     {
         if (g_Windows.find(Window) != g_Windows.end())
         {
-            g_Platform->CloseWindow(g_Windows[Window]);
+            Platform::Platform::Instance()->CloseWindow(g_Windows[Window]);
             g_Windows.erase(Window);
         }
     } break;
@@ -166,19 +163,16 @@ i32 Main(i32 Argc, char** Argv)
     })";
 
 #if defined(WINDOWS)
-    g_Platform = new LevelSketch::Platform::Windows::Platform();
     g_Renderer = new LevelSketch::Render::DirectX::Renderer();
 #elif defined(APPLE)
-    g_Platform = new LevelSketch::Platform::Mac::Platform();
     g_Renderer = new LevelSketch::Render::Metal::Renderer();
 #elif defined(LINUX)
-    g_Platform = new LevelSketch::Platform::SDL2::Platform();
     g_Renderer = new LevelSketch::Render::OpenGL::Renderer();
 #endif
-    
-    if (!g_Platform->Initialize())
+
+    const Core::Memory::UniquePtr<Platform::Platform>& Platform { Platform::Platform::Instance() };
+    if (!Platform->Initialize())
     {
-        delete g_Platform;
         printf("Failed to initialize platform!\n");
         return -1;
     }
@@ -200,10 +194,10 @@ i32 Main(i32 Argc, char** Argv)
     }
 
     int Return { 0 };
-    if (g_Platform->UseCustomLoop())
+    if (Platform->UseCustomLoop())
     {
-        g_Platform->SetOnFrame(OnPlatformFrame);
-        Return = g_Platform->Run();
+        Platform->SetOnFrame(OnPlatformFrame);
+        Return = Platform->Run();
     }
     else
     {
@@ -212,7 +206,7 @@ i32 Main(i32 Argc, char** Argv)
 
     for (const std::pair<OctaneGUI::Window*, LevelSketch::Platform::Window*> Item : g_Windows)
     {
-        g_Platform->CloseWindow(Item.second);
+        Platform->CloseWindow(Item.second);
     }
     g_Windows.clear();
 
@@ -221,9 +215,6 @@ i32 Main(i32 Argc, char** Argv)
 
     g_Renderer->Shutdown();
     delete g_Renderer;
-
-    g_Platform->Shutdown();
-    delete g_Platform;
 
     return Return;
 }
