@@ -32,14 +32,6 @@ SOFTWARE.
 #include "../Platform/Window.hpp"
 #include "../Render/Renderer.hpp"
 
-#if defined(WINDOWS)
-    #include "../Render/DirectX/Renderer.hpp"
-#elif defined(APPLE)
-    #include "../Render/Metal/Renderer.hpp"
-#elif defined(LINUX)
-    #include "../Render/OpenGL/Renderer.hpp"
-#endif
-
 #ifdef WITH_TESTS
     #include "../Tests/System.hpp"
 #endif
@@ -49,7 +41,6 @@ namespace LevelSketch
 namespace Main
 {
 
-static Render::Renderer* g_Renderer { nullptr };
 static OctaneGUI::Application* g_Application { nullptr };
 static std::unordered_map<OctaneGUI::Window*, LevelSketch::Platform::Window*> g_Windows {};
 
@@ -73,8 +64,8 @@ void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Action)
             {
                 g_Windows[Window] = Win;
                 Win->Show();
-                g_Renderer->SetWindow(Win);
-                g_Renderer->Initialize();
+                Render::Renderer::Instance()->SetWindow(Win);
+                Render::Renderer::Instance()->Initialize();
             }
             else
             {
@@ -132,7 +123,7 @@ OctaneGUI::Event OnEvent(OctaneGUI::Window* Window)
     }
 
     Win->ProcessEvents();
-    g_Renderer->Render();
+    Render::Renderer::Instance()->Render();
 
     return { OctaneGUI::Event::Type::None };
 }
@@ -161,14 +152,6 @@ i32 Main(i32 Argc, char** Argv)
             }
         }
     })";
-
-#if defined(WINDOWS)
-    g_Renderer = new LevelSketch::Render::DirectX::Renderer();
-#elif defined(APPLE)
-    g_Renderer = new LevelSketch::Render::Metal::Renderer();
-#elif defined(LINUX)
-    g_Renderer = new LevelSketch::Render::OpenGL::Renderer();
-#endif
 
     const Core::Memory::UniquePtr<Platform::Platform>& Platform { Platform::Platform::Instance() };
     if (!Platform->Initialize())
@@ -212,9 +195,6 @@ i32 Main(i32 Argc, char** Argv)
 
     g_Application->Shutdown();
     delete g_Application;
-
-    g_Renderer->Shutdown();
-    delete g_Renderer;
 
     return Return;
 }
