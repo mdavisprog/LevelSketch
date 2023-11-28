@@ -53,14 +53,9 @@ public:
     virtual ~Renderer() {}
 
     virtual bool Initialize() = 0;
+    virtual bool Initialize(Platform::Window* Window) = 0;
     virtual void Shutdown() = 0;
-    virtual void Render() = 0;
-
-    Renderer& SetWindow(Platform::Window* Window);
-    Platform::Window* Window() const;
-
-private:
-    Platform::Window* m_Window { nullptr };
+    virtual void Render(Platform::Window* Window) = 0;
 };
 
 }

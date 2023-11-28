@@ -43,11 +43,16 @@ bool Renderer::Initialize()
     return true;
 }
 
+bool Renderer::Initialize(Platform::Window*)
+{
+    return true;
+}
+
 void Renderer::Shutdown()
 {
 }
 
-void Renderer::Render()
+void Renderer::Render(Platform::Window*)
 {
 }
 

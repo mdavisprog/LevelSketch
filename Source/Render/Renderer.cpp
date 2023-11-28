@@ -58,16 +58,5 @@ const Core::Memory::UniquePtr<Renderer>& Renderer::Instance()
     return Instance;
 }
 
-Renderer& Renderer::SetWindow(Platform::Window* Window)
-{
-    m_Window = Window;
-    return *this;
-}
-
-Platform::Window* Renderer::Window() const
-{
-    return m_Window;
-}
-
 }
 }

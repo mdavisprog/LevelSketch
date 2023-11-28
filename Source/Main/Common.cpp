@@ -64,8 +64,7 @@ void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Action)
             {
                 g_Windows[Window] = Win;
                 Win->Show();
-                Render::Renderer::Instance()->SetWindow(Win);
-                Render::Renderer::Instance()->Initialize();
+                Render::Renderer::Instance()->Initialize(Win);
             }
             else
             {
@@ -123,7 +122,7 @@ OctaneGUI::Event OnEvent(OctaneGUI::Window* Window)
     }
 
     Win->ProcessEvents();
-    Render::Renderer::Instance()->Render();
+    Render::Renderer::Instance()->Render(Win);
 
     return { OctaneGUI::Event::Type::None };
 }
@@ -157,6 +156,12 @@ i32 Main(i32 Argc, char** Argv)
     if (!Platform->Initialize())
     {
         printf("Failed to initialize platform!\n");
+        return -1;
+    }
+
+    if (!Render::Renderer::Instance()->Initialize())
+    {
+        printf("Failed to initialize renderer!\n");
         return -1;
     }
 
