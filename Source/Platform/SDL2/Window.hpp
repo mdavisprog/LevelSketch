@@ -29,6 +29,7 @@ SOFTWARE.
 #include "../Window.hpp"
 
 struct SDL_Window;
+struct SDL_WindowEvent;
 
 namespace LevelSketch
 {
@@ -54,6 +55,8 @@ public:
     virtual bool IsOpen() const override;
 
 private:
+    Window& ProcessEvent(const SDL_WindowEvent& Event);
+
     SDL_Window* m_Handle { nullptr };
 };
 

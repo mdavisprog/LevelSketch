@@ -135,6 +135,10 @@ void Window::ProcessEvents()
     {
         switch (Event.type)
         {
+        case SDL_WINDOWEVENT:
+            ProcessEvent(Event.window);
+            break;
+
         default: break;
         }
     }
@@ -143,6 +147,20 @@ void Window::ProcessEvents()
 bool Window::IsOpen() const
 {
     return m_Handle != nullptr;
+}
+
+Window& Window::ProcessEvent(const SDL_WindowEvent& Event)
+{
+    switch (Event.event)
+    {
+    case SDL_WINDOWEVENT_CLOSE:
+        Close();
+        break;
+
+    default: break;
+    }
+
+    return *this;
 }
 
 }
