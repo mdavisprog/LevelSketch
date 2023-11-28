@@ -28,6 +28,13 @@ SOFTWARE.
 
 namespace LevelSketch
 {
+
+namespace Core::Memory
+{
+    template<typename T>
+    class UniquePtr;
+}
+
 namespace Platform
 {
 
@@ -38,6 +45,9 @@ class Platform
 public:
     typedef void (*OnFrameSignature)();
 
+    static const Core::Memory::UniquePtr<Platform>& Instance();
+
+    Platform() {}
     virtual ~Platform() {}
 
     virtual bool Initialize() = 0;

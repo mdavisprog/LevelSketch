@@ -25,6 +25,17 @@ SOFTWARE.
 */
 
 #include "Platform.hpp"
+#include "../Core/Memory/UniquePtr.hpp"
+
+#if defined(PLATFORM_WINDOWS)
+    #include "Windows/Platform.hpp"
+#elif defined(PLATFORM_MAC)
+    #include "Mac/Platform.hpp"
+#elif defined(PLATFORM_SDL2)
+    #include "SDL2/Platform.hpp"
+#else
+    #error "Platform is not supported!"
+#endif
 
 #include <utility>
 
@@ -32,6 +43,22 @@ namespace LevelSketch
 {
 namespace Platform
 {
+
+const Core::Memory::UniquePtr<Platform>& Platform::Instance()
+{
+    static Core::Memory::UniquePtr<Platform> Instance
+    {
+#if defined(PLATFORM_WINDOWS)
+        Core::Memory::UniquePtr<Windows::Platform>::New()
+#elif defined(PLATFORM_MAC)
+        Core::Memory::UniquePtr<Mac::Platform>::New()
+#elif defined(PLATFORM_SDL2)
+        Core::Memory::UniquePtr<SDL2::Platform>::New()
+#endif
+    };
+
+    return Instance;
+}
 
 int Platform::Run()
 {
