@@ -187,6 +187,16 @@ static bool SetNull()
     return true;
 }
 
+static bool Polymorphism()
+{
+    struct Base {};
+    struct Derived : public Base {};
+    Memory::SharedPtr<Base> Object { Memory::SharedPtr<Derived>::New() };
+    // No need for any verifies. This test is meant to verify that SharedPtr is set up
+    // to allow for base types to store pointers to derived types.
+    return true;
+}
+
 Memory::UniquePtr<TestSuite> SharedPtr()
 {
     return TestSuite::New("SharedPtr", {
@@ -197,7 +207,8 @@ Memory::UniquePtr<TestSuite> SharedPtr()
         TEST_CASE(Move),
         TEST_CASE(Equality),
         TEST_CASE(SelfCopy),
-        TEST_CASE(SetNull)
+        TEST_CASE(SetNull),
+        TEST_CASE(Polymorphism)
     });
 }
 

@@ -64,6 +64,12 @@ public:
         Copy(Other);
     }
 
+    template<typename U>
+    SharedPtr(const SharedPtr<U>& Other)
+    {
+        Copy<U>(Other);
+    }
+
     SharedPtr(T* Data)
         : m_Data(Data)
     {
@@ -82,6 +88,12 @@ public:
     SharedPtr(SharedPtr<T>&& Other)
     {
         Move(std::move(Other));
+    }
+
+    template<typename U>
+    SharedPtr(SharedPtr<U>&& Other)
+    {
+        Move<U>(std::move(Other));
     }
 
     SharedPtr(const WeakPtr<T>& Other)
@@ -105,9 +117,23 @@ public:
         return *this;
     }
 
+    template<typename U>
+    SharedPtr<T>& operator=(const SharedPtr<U>& Other)
+    {
+        Copy<U>(Other);
+        return *this;
+    }
+
     SharedPtr<T>& operator=(SharedPtr<T>&& Other)
     {
         Move(std::move(Other));
+        return *this;
+    }
+
+    template<typename U>
+    SharedPtr<T>& operator=(SharedPtr<U>&& Other)
+    {
+        Move<U>(std::move(Other));
         return *this;
     }
 
@@ -168,6 +194,9 @@ public:
 private:
     friend class WeakPtr<T>;
 
+    template<typename U>
+    friend class SharedPtr;
+
     SharedPtr(T* Data, ReferenceCount* RefCount)
         : m_Data(Data)
         , m_ReferenceCount(RefCount)
@@ -217,9 +246,10 @@ private:
         }
     }
 
-    void Copy(const SharedPtr<T>& Other)
+    template<typename U>
+    void Copy(const SharedPtr<U>& Other)
     {
-        if (this == &Other)
+        if ((void*)this == (void*)&Other)
         {
             return;
         }
@@ -231,9 +261,10 @@ private:
         m_ReferenceCount->Reference();
     }
 
-    void Move(SharedPtr<T>&& Other)
+    template<typename U>
+    void Move(SharedPtr<U>&& Other)
     {
-        if (this == &Other)
+        if ((void*)this == (void*)&Other)
         {
             return;
         }
