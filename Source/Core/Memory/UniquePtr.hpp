@@ -86,32 +86,17 @@ public:
         return m_Data != nullptr;
     }
 
-    T& operator*()
+    T& operator*() const
     {
         return *m_Data;
     }
 
-    T const& operator*() const
-    {
-        return *m_Data;
-    }
-
-    T* operator->()
+    T* operator->() const
     {
         return m_Data;
     }
 
-    T const* operator->() const
-    {
-        return m_Data;
-    }
-
-    T* Get()
-    {
-        return m_Data;
-    }
-
-    T const* Get() const
+    T* Get() const
     {
         return m_Data;
     }
