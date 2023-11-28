@@ -70,12 +70,23 @@ static bool Move()
     return true;
 }
 
+static bool Polymorphism()
+{
+    struct Base {};
+    struct Derived : public Base {};
+    Core::Memory::UniquePtr<Base> Object = Core::Memory::UniquePtr<Derived>::New();
+    // No need for any verifies. This test is meant to verify that UniquePtr is set up
+    // to allow for base types to store pointers to derived types.
+    return true;
+}
+
 Memory::UniquePtr<TestSuite> UniquePtr()
 {
     return TestSuite::New("UniquePtr", {
         TEST_CASE(CreateNull),
         TEST_CASE(CreateInstance),
-        TEST_CASE(Move)
+        TEST_CASE(Move),
+        TEST_CASE(Polymorphism)
     });
 }
 

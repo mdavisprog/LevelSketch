@@ -26,6 +26,7 @@ SOFTWARE.
 
 #pragma once
 
+#include <type_traits>
 #include <utility>
 
 namespace LevelSketch
@@ -59,8 +60,14 @@ public:
 
     UniquePtr(UniquePtr<T>&& Other) noexcept
     {
-        m_Data = Other.m_Data;
-        Other.m_Data = nullptr;
+        m_Data = Other.Leak();
+    }
+
+    template<typename U>
+    UniquePtr(UniquePtr<U>&& Other) noexcept
+    {
+        static_assert(std::is_base_of_v<T, U>, "Trying to create a unique pointer of a derived class that does not inherit from base.");
+        m_Data = Other.Leak();
     }
 
     ~UniquePtr()
@@ -71,8 +78,16 @@ public:
     UniquePtr& operator=(UniquePtr<T>&& Other)
     {
         Reset();
-        m_Data = Other.m_Data;
-        Other.m_Data = nullptr;
+        m_Data = Other.Leak();
+        return *this;
+    }
+
+    template<typename U>
+    UniquePtr& operator=(UniquePtr<U>&& Other)
+    {
+        static_assert(std::is_base_of_v<T, U>, "Trying to create a unique pointer of a derived class that does not inherit from base.");
+        Reset();
+        m_Data = Other.Leak();
         return *this;
     }
 
