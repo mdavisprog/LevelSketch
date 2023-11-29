@@ -104,7 +104,7 @@ else()
     set(LIBS
         ${LIBS}
         ${SDL2_LIBRARIES}
-        ${OpenGL_LIBS}
+        ${OPENGL_LIBRARIES}
     )
 endif()
 
