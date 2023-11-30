@@ -28,23 +28,34 @@ SOFTWARE.
 
 #include "Types.hpp"
 
+#include <climits>
+#include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
+#include <string>
 
 namespace LevelSketch
 {
 namespace Core
 {
 
-template<typename... TArgs>
-static void Assertion(const char* File, u32 Line, bool Condition, const char* Format, const TArgs... Args)
+static void Assertion(const char* File, u32 Line, bool Condition, const char* Format, ...)
 {
     if (Condition)
     {
         return;
     }
 
-    printf("%s", Format, &Args...);
+    va_list List;
+    va_start(List, Format);
+
+    std::string Buffer;
+    Buffer.resize(SHRT_MAX);
+    vsnprintf(Buffer.data(), Buffer.size(), Format, List);
+
+    va_end(List);
+
+    printf("%s\n", Buffer.data());
     printf("Assertion failed at %s:%u\n", File, Line);
 
     std::abort();
