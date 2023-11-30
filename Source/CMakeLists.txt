@@ -49,6 +49,7 @@ else()
         Platform/SDL2/Window.cpp
 
         Render/OpenGL/Renderer.cpp
+        Render/OpenGL/SDL2Renderer.cpp
     )
 endif()
 

@@ -24,47 +24,30 @@ SOFTWARE.
 
 */
 
-#include "Renderer.hpp"
-#include "../Core/Memory/UniquePtr.hpp"
+#pragma once
 
-#if defined(RENDER_DIRECTX)
-    #include "DirectX/Renderer.hpp"
-#elif defined(RENDER_METAL)
-    #include "Metal/Renderer.hpp"
-#elif defined(RENDER_OPENGL)
-    #if defined(PLATFORM_SDL2)
-        #include "OpenGL/SDL2Renderer.hpp"
-    #else
-        #include "OpenGL/Renderer.hpp"
-    #endif
-#else
-    #error "Renderer is not supported!"
-#endif
+#include "Renderer.hpp"
 
 namespace LevelSketch
 {
 namespace Render
 {
-
-const Core::Memory::UniquePtr<Renderer>& Renderer::Instance()
+namespace OpenGL
 {
-    static Core::Memory::UniquePtr<Renderer> Instance
-    {
-#if defined(RENDER_DIRECTX)
-        Core::Memory::UniquePtr<DirectX::Renderer>::New()
-#elif defined(RENDER_METAL)
-        Core::Memory::UniquePtr<Metal::Renderer>::New()
-#elif defined(RENDER_OPENGL)
-    #if defined(PLATFORM_SDL2)
-        Core::Memory::UniquePtr<OpenGL::SDL2Renderer>::New()
-    #else
-        Core::Memory::UniquePtr<OpenGL::Renderer>::New()
-    #endif
-#endif
-    };
 
-    return Instance;
+class SDL2Renderer : public Renderer
+{
+public:
+    SDL2Renderer();
+
+    virtual bool Initialize() override;
+    virtual bool Initialize(Platform::Window* Window) override;
+    virtual void Shutdown() override;
+
+private:
+    void* m_Context { nullptr };
+};
+
 }
-
 }
 }
