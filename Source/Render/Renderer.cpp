@@ -66,5 +66,25 @@ const Core::Memory::UniquePtr<Renderer>& Renderer::Instance()
     return Instance;
 }
 
+bool Renderer::Initialized() const
+{
+    return m_Initialized;
+}
+
+const Renderer::DriverSummary& Renderer::Summary() const
+{
+    return m_DriverSummary;
+}
+
+void Renderer::SetInitialized(bool Initialized)
+{
+    m_Initialized = Initialized;
+}
+
+Renderer::DriverSummary& Renderer::SummaryMut()
+{
+    return m_DriverSummary;
+}
+
 }
 }

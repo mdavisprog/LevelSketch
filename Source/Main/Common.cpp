@@ -64,7 +64,20 @@ void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Action)
             {
                 g_Windows[Window] = Win;
                 Win->Show();
-                Render::Renderer::Instance()->Initialize(Win);
+
+                const bool WasInitialized { Render::Renderer::Instance()->Initialized() };
+                if (Render::Renderer::Instance()->Initialize(Win))
+                {
+                    if (WasInitialized != Render::Renderer::Instance()->Initialized())
+                    {
+                        printf("Rendering Driver Summary\n");
+                        printf("Vendor: %s\n", Render::Renderer::Instance()->Summary().Vendor.Data());
+                        printf("Renderer: %s\n", Render::Renderer::Instance()->Summary().Renderer.Data());
+                        printf("Version: %s\n", Render::Renderer::Instance()->Summary().Version.Data());
+                        printf("Shading Language Version: %s\n",
+                            Render::Renderer::Instance()->Summary().ShadingLanguageVersion.Data());
+                    }
+                }
             }
             else
             {

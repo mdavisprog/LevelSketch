@@ -26,6 +26,8 @@ SOFTWARE.
 
 #include "Renderer.hpp"
 
+#include <GL/gl.h>
+
 namespace LevelSketch
 {
 namespace Render
@@ -45,6 +47,20 @@ bool Renderer::Initialize()
 
 bool Renderer::Initialize(Platform::Window*)
 {
+    if (!Initialized())
+    {
+        // Currently, context creation is only handled by the SDL2Renderer. If using other
+        // platforms like glfw or native OS, will need to provide context creation in order
+        // for all gl* calls to work.
+
+        SummaryMut().Vendor = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
+        SummaryMut().Renderer = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
+        SummaryMut().Version = reinterpret_cast<const char*>(glGetString(GL_VERSION));
+        SummaryMut().ShadingLanguageVersion = reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION));
+
+        SetInitialized(true);
+    }
+
     return true;
 }
 

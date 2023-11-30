@@ -26,6 +26,8 @@ SOFTWARE.
 
 #pragma once
 
+#include "../Core/Containers/String.hpp"
+
 namespace LevelSketch
 {
 
@@ -48,6 +50,15 @@ class Context;
 class Renderer
 {
 public:
+    struct DriverSummary
+    {
+    public:
+        Core::String Vendor {};
+        Core::String Renderer {};
+        Core::String Version {};
+        Core::String ShadingLanguageVersion {};
+    };
+
     static const Core::Memory::UniquePtr<Renderer>& Instance();
 
     virtual ~Renderer() {}
@@ -56,6 +67,17 @@ public:
     virtual bool Initialize(Platform::Window* Window) = 0;
     virtual void Shutdown() = 0;
     virtual void Render(Platform::Window* Window) = 0;
+
+    bool Initialized() const;
+    const DriverSummary& Summary() const;
+
+protected:
+    void SetInitialized(bool Initialized);
+    DriverSummary& SummaryMut();
+
+private:
+    bool m_Initialized { false };
+    DriverSummary m_DriverSummary {};
 };
 
 }
