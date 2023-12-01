@@ -50,15 +50,24 @@ i32 System::Run(i32, char**)
     Console::WriteLine("\nRunning %s testing framework version %d.%d.%d.", APP_NAME, VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION);
     Console::WriteLine("There are (%llu) test suites to run through.\n", m_TestSuites.Size());
 
+    bool Success { true };
     for (LevelSketch::Core::Memory::UniquePtr<TestSuite>& Suite : m_TestSuites)
     {
-        Suite->Run();
-        Console::WriteLine("");
+        Success &= Suite->Run();
     }
+    Console::WriteLine("");
 
     Shutdown();
 
-    Console::WriteLine("Finished running tests.\n");
+    if (Success)
+    {
+        Console::WriteLine("Finished running tests.\n");
+    }
+    else
+    {
+        Console::WriteLine(Console::Color::Red, "An error has occurred during testing.\n");
+    }
+
     return 0;
 }
 

@@ -67,6 +67,7 @@ public:
     bool Run();
 
     const char* Name() const;
+    u64 NumTestCases() const;
 
 private:
     std::string m_Name {};

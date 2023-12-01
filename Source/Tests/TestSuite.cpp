@@ -48,8 +48,6 @@ TestSuite::TestSuite(const char* Name, LevelSketch::Core::Containers::Array<Test
 
 bool TestSuite::Run()
 {
-    Core::Console::WriteLine("Running test suite '%s' with %llu test cases.", Name(), m_TestCases.Size());
-
     u64 Succeeded { 0 };
     for (const TestCase& Case : m_TestCases)
     {
@@ -61,18 +59,25 @@ bool TestSuite::Run()
         }
         else
         {
-            Core::Console::WriteLine("'%s' test case has failed.", Case.Name.data());
+            Core::Console::WriteLine(Core::Console::Color::Red, "'%s' test case has failed.", Case.Name.data());
         }
     }
 
-    Core::Console::WriteLine("Test suite was completed with %llu/%llu test cases passed.", Succeeded, m_TestCases.Size());
+    const bool Result { Succeeded == NumTestCases() };
+    const Core::Console::Color Color { Result ? Core::Console::Color::Green : Core::Console::Color::Red };
+    Core::Console::WriteLine(Color, "'%s' was completed with %llu/%llu test cases passed.", Name(), Succeeded, m_TestCases.Size());
 
-    return true;
+    return Result;
 }
 
 const char* TestSuite::Name() const
 {
     return m_Name.data();
+}
+
+u64 TestSuite::NumTestCases() const
+{
+    return m_TestCases.Size();
 }
 
 }
