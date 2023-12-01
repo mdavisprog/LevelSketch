@@ -25,6 +25,7 @@ SOFTWARE.
 */
 
 #include "TestSuite.hpp"
+#include "../Core/Console.hpp"
 #include "../Core/Memory/UniquePtr.hpp"
 
 #include <cstdio>
@@ -47,7 +48,7 @@ TestSuite::TestSuite(const char* Name, LevelSketch::Core::Containers::Array<Test
 
 bool TestSuite::Run()
 {
-    printf("Running test suite '%s' with %llu test cases.\n", Name(), m_TestCases.Size());
+    Core::Console::WriteLine("Running test suite '%s' with %llu test cases.", Name(), m_TestCases.Size());
 
     u64 Succeeded { 0 };
     for (const TestCase& Case : m_TestCases)
@@ -60,11 +61,11 @@ bool TestSuite::Run()
         }
         else
         {
-            printf("'%s' test case has failed.\n", Case.Name.data());
+            Core::Console::WriteLine("'%s' test case has failed.", Case.Name.data());
         }
     }
 
-    printf("Test suite was completed with %llu/%llu test cases passed.\n", Succeeded, m_TestCases.Size());
+    Core::Console::WriteLine("Test suite was completed with %llu/%llu test cases passed.", Succeeded, m_TestCases.Size());
 
     return true;
 }

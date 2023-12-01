@@ -25,6 +25,7 @@ SOFTWARE.
 */
 
 #include "System.hpp"
+#include "../Core/Console.hpp"
 #include "../Core/Version.hpp"
 #include "Core/Core.hpp"
 #include "TestSuite.hpp"
@@ -36,6 +37,8 @@ namespace LevelSketch
 namespace Tests
 {
 
+using Console = LevelSketch::Core::Console;
+
 System& System::Instance()
 {
     static System Instance {};
@@ -44,18 +47,18 @@ System& System::Instance()
 
 i32 System::Run(i32, char**)
 {
-    printf("\nRunning %s testing framework version %d.%d.%d.\n", APP_NAME, VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION);
-    printf("There are (%llu) test suites to run through.\n\n", m_TestSuites.Size());
+    Console::WriteLine("\nRunning %s testing framework version %d.%d.%d.", APP_NAME, VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION);
+    Console::WriteLine("There are (%llu) test suites to run through.\n", m_TestSuites.Size());
 
     for (LevelSketch::Core::Memory::UniquePtr<TestSuite>& Suite : m_TestSuites)
     {
         Suite->Run();
-        printf("\n");
+        Console::WriteLine("");
     }
 
     Shutdown();
 
-    printf("Finished running tests.\n\n");
+    Console::WriteLine("Finished running tests.\n");
     return 0;
 }
 
