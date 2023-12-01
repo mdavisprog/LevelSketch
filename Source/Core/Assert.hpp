@@ -26,6 +26,13 @@ SOFTWARE.
 
 #pragma once
 
+#if defined(SHIPPING)
+    #define LS_ASSERT(Condition)
+    #define LS_ASSERTFEMPTY(Condition, Format, ...)
+    #define LS_ASSERTF(Condition, Format, ...) LSASSERTFEMPTY(Condition, Format, NULL, ##__VA_ARGS__)
+#else
+
+#include "Compiler.hpp"
 #include "Types.hpp"
 
 #include <climits>
@@ -38,6 +45,11 @@ namespace LevelSketch
 {
 namespace Core
 {
+
+#if defined(MSVC)
+    #pragma warning(push)
+    #pragma warning(disable : 4505)
+#endif
 
 static void Assertion(const char* File, u32 Line, bool Condition, const char* Format, ...)
 {
@@ -61,23 +73,23 @@ static void Assertion(const char* File, u32 Line, bool Condition, const char* Fo
     std::abort();
 }
 
+#if defined(MSVC)
+    #pragma warning(pop)
+#endif
+
 }
 }
 
-#if __clang__
+#if defined(CLANG)
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
 #endif
 
-#if defined(SHIPPING)
-    #define LS_ASSERT(Condition)
-    #define LS_ASSERTFEMPTY(Condition, Format, ...)
-    #define LS_ASSERTF(Condition, Format, ...) LSASSERTFEMPTY(Condition, Format, NULL, ##__VA_ARGS__)
-#else
-    #define LS_ASSERT(Condition) LevelSketch::Core::Assertion(__FILE__, __LINE__, Condition, #Condition)
-    #define LS_ASSERTF(Condition, Format, ...) LevelSketch::Core::Assertion(__FILE__, __LINE__, Condition, Format, ##__VA_ARGS__)
-#endif
+#define LS_ASSERT(Condition) LevelSketch::Core::Assertion(__FILE__, __LINE__, Condition, #Condition)
+#define LS_ASSERTF(Condition, Format, ...) LevelSketch::Core::Assertion(__FILE__, __LINE__, Condition, Format, ##__VA_ARGS__)
 
-#if __clang__
+#if defined(CLANG)
     #pragma clang diagnostic pop
 #endif
+
+#endif // SHIPPING
