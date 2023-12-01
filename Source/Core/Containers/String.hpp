@@ -110,6 +110,11 @@ public:
         return Length();
     }
 
+    u64 Capacity() const
+    {
+        return m_Data.Capacity();
+    }
+
     TString<T>& Clear()
     {
         m_Data.Clear();
@@ -119,6 +124,12 @@ public:
     bool IsEmpty() const
     {
         return m_Data.IsEmpty();
+    }
+
+    TString<T>& Reserve(u64 Size)
+    {
+        m_Data.Reserve(Size);
+        return *this;
     }
 
 private:
