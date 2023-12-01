@@ -75,6 +75,10 @@ bool SDL2Renderer::Initialize(Platform::Window* Window)
         SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &Minor);
 
         printf("SDL OpenGL Context Version: %d.%d\n", Major, Minor);
+
+        SDL_GL_MakeCurrent(Handle, m_Context);
+        // TODO: Check for VSync/Adaptive Sync property.
+        SDL_GL_SetSwapInterval(0);
     }
 
     return Renderer::Initialize(Window);
