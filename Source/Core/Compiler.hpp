@@ -30,6 +30,10 @@ SOFTWARE.
     #ifndef CLANG
     #define CLANG
     #endif
+#elif _MSC_VER
+    #ifndef MSVC
+    #define MSVC
+    #endif
 #endif
 
 #ifndef PRAGMA_STRINGIFY
