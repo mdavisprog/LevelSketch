@@ -116,12 +116,12 @@ static const char* AsciiEscape(Console::Color Color, bool Foreground)
     return "0";
 }
 
-Console& Console::Write(const char* Format, const va_list& List)
+Console& Console::Write(const char* Format, va_list List)
 {
 #if defined(MSVC)
     vsnprintf_s(m_Buffer.Data(), m_Buffer.Capacity(), _TRUNCATE, Format, List);
 #else
-    vsprintf(m_Buffer.Data(), m_Buffer.Capacity(), Format, List);
+    vsnprintf(m_Buffer.Data(), m_Buffer.Capacity(), Format, List);
 #endif
 
     if (!m_ForegroundColorStack.IsEmpty())

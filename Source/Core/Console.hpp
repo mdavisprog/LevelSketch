@@ -64,7 +64,7 @@ public:
 private:
     Console();
 
-    Console& Write(const char* Format, const va_list& List);
+    Console& Write(const char* Format, va_list List);
 
     String m_Buffer {};
     Containers::Array<Color> m_ForegroundColorStack {};
