@@ -28,6 +28,7 @@ SOFTWARE.
 #include "../../Core/Containers/Array.hpp"
 #include "Extensions.hpp"
 
+#include <cstdio>
 #include <GL/gl.h>
 
 namespace LevelSketch
