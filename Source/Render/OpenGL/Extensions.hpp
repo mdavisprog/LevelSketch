@@ -26,7 +26,8 @@ SOFTWARE.
 
 #pragma once
 
-#include "../Renderer.hpp"
+#include <GL/gl.h>
+#include <GL/glext.h>
 
 namespace LevelSketch
 {
@@ -35,23 +36,21 @@ namespace Render
 namespace OpenGL
 {
 
-class Renderer : public LevelSketch::Render::Renderer
-{
-public:
-    Renderer();
+extern PFNGLCREATESHADERPROC glCreateShader;
+extern PFNGLDELETESHADERPROC glDeleteShader;
+extern PFNGLSHADERSOURCEPROC glShaderSource;
+extern PFNGLCOMPILESHADERPROC glCompileShader;
+extern PFNGLGETSHADERIVPROC glGetShaderiv;
+extern PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
+extern PFNGLCREATEPROGRAMPROC glCreateProgram;
+extern PFNGLDELETEPROGRAMPROC glDeleteProgram;
+extern PFNGLATTACHSHADERPROC glAttachShader;
+extern PFNGLDETACHSHADERPROC glDetachShader;
+extern PFNGLLINKPROGRAMPROC glLinkProgram;
+extern PFNGLGETPROGRAMIVPROC glGetProgramiv;
+extern PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
 
-    virtual bool Initialize() override;
-    virtual bool Initialize(Platform::Window* Window) override;
-    virtual void Shutdown() override;
-    virtual void Render(Platform::Window* Window) override;
-
-private:
-    bool CompileShaders();
-    bool CompileShader(u32 Shader) const;
-    bool LinkProgram(u32 Program) const;
-
-    u32 m_Program { 0 };
-};
+bool LoadExtensions();
 
 }
 }

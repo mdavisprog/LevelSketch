@@ -25,6 +25,8 @@ SOFTWARE.
 */
 
 #include "Renderer.hpp"
+#include "../../Core/Containers/Array.hpp"
+#include "Extensions.hpp"
 
 #include <GL/gl.h>
 
@@ -58,6 +60,9 @@ bool Renderer::Initialize(Platform::Window*)
         SummaryMut().Version = reinterpret_cast<const char*>(glGetString(GL_VERSION));
         SummaryMut().ShadingLanguageVersion = reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION));
 
+        LoadExtensions();
+        CompileShaders();
+
         SetInitialized(true);
     }
 
@@ -66,10 +71,124 @@ bool Renderer::Initialize(Platform::Window*)
 
 void Renderer::Shutdown()
 {
+    if (m_Program != 0)
+    {
+        glDeleteProgram(m_Program);
+        m_Program = 0;
+    }
 }
 
 void Renderer::Render(Platform::Window*)
 {
+}
+
+bool Renderer::CompileShaders()
+{
+    const GLchar* Version = "#version 450\n";
+    const GLchar* VertexShader =
+        "uniform mat4 Projection;\n"
+        "in vec2 Position;\n"
+        "in vec2 UV;\n"
+        "in vec4 Color;\n"
+        "out vec2 Fragment_UV;\n"
+        "out vec4 Fragment_Color;\n"
+        "void main()\n"
+        "{\n"
+        "	Fragment_UV = UV;\n"
+        "	Fragment_Color = Color;\n"
+        "	gl_Position = Projection * vec4(Position.xy, 0, 1);\n"
+        "}\n";
+
+    const GLchar* FragmentShader =
+        "uniform sampler2D Texture;\n"
+        "in vec2 Fragment_UV;\n"
+        "in vec4 Fragment_Color;\n"
+        "out vec4 Out_Color;\n"
+        "void main()\n"
+        "{\n"
+        "	Out_Color = Fragment_Color * texture(Texture, Fragment_UV.st);\n"
+        "}\n";
+
+    const GLchar* VertexShaderInfo[2] = { Version, VertexShader };
+    GLuint VertexID = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(VertexID, 2, VertexShaderInfo, nullptr);
+    LS_ASSERT(CompileShader(VertexID));
+
+    const GLchar* FragmentShaderInfo[2] = { Version, FragmentShader };
+    GLuint FragmentID = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(FragmentID, 2, FragmentShaderInfo, nullptr);
+    LS_ASSERT(CompileShader(FragmentID));
+
+    m_Program = glCreateProgram();
+    glAttachShader(m_Program, VertexID);
+    glAttachShader(m_Program, FragmentID);
+    LS_ASSERT(LinkProgram(m_Program));
+
+    glDetachShader(m_Program, VertexID);
+    glDetachShader(m_Program, FragmentID);
+    glDeleteShader(VertexID);
+    glDeleteShader(FragmentID);
+
+    return true;
+}
+
+bool Renderer::CompileShader(u32 Shader) const
+{
+    if (Shader == 0)
+    {
+        return false;
+    }
+
+    glCompileShader(Shader);
+
+    GLint CompileStatus;
+    glGetShaderiv(Shader, GL_COMPILE_STATUS, &CompileStatus);
+
+    if ((GLboolean)CompileStatus == GL_FALSE)
+    {
+        GLint Length;
+        glGetShaderiv(Shader, GL_INFO_LOG_LENGTH, &Length);
+
+        Core::Containers::Array<GLchar> Buffer;
+        Buffer.Resize(Length);
+
+        GLsizei Size;
+        glGetShaderInfoLog(Shader, (GLsizei)Buffer.Size(), &Size, Buffer.Data());
+
+        printf("Failed to compile shader! Error:\n%s\n", Buffer.Data());
+        return false;
+    }
+
+    return true;
+}
+
+bool Renderer::LinkProgram(u32 Program) const
+{
+    if (Program == 0)
+    {
+        return false;
+    }
+
+    glLinkProgram(Program);
+
+    GLint LinkStatus { 0 };
+    glGetProgramiv(Program, GL_LINK_STATUS, &LinkStatus);
+    if ((GLboolean)LinkStatus == GL_FALSE)
+    {
+        GLint Length;
+        glGetProgramiv(Program, GL_INFO_LOG_LENGTH, &Length);
+
+        Core::Containers::Array<GLchar> Buffer;
+        Buffer.Resize(Length);
+
+        GLsizei Size;
+        glGetProgramInfoLog(Program, (GLsizei)Buffer.Size(), &Size, Buffer.Data());
+
+        printf("Failed to link program. Error:\n%s\n", Buffer.Data());
+        return false;
+    }
+
+    return true;
 }
 
 }

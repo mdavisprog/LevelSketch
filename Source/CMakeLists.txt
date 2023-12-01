@@ -48,6 +48,7 @@ else()
         Platform/SDL2/Platform.cpp
         Platform/SDL2/Window.cpp
 
+        Render/OpenGL/Extensions.cpp
         Render/OpenGL/Renderer.cpp
         Render/OpenGL/SDL2Renderer.cpp
     )
