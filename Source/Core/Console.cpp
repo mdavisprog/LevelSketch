@@ -40,14 +40,30 @@ Console& Console::Instance()
     return Instance;
 }
 
-void Console::WriteLine(const char* Format, ...)
+Console& Console::Write(const char* Format, ...)
 {
     va_list List;
     va_start(List, Format);
 
-    Instance().WriteLine(Format, List);
+    Instance().Write(Format, List);
 
     va_end(List);
+
+    return Instance();
+}
+
+Console& Console::WriteLine(const char* Format, ...)
+{
+    va_list List;
+    va_start(List, Format);
+
+    Instance().Write(Format, List);
+    printf("\n");
+
+    va_end(List);
+
+    return Instance();
+}
 }
 
 Console::Console()
@@ -55,7 +71,7 @@ Console::Console()
     m_Buffer.Reserve(SHRT_MAX);
 }
 
-Console& Console::WriteLine(const char* Format, const va_list& List)
+Console& Console::Write(const char* Format, const va_list& List)
 {
 #if defined(MSVC)
     vsnprintf_s(m_Buffer.Data(), m_Buffer.Capacity(), _TRUNCATE, Format, List);
@@ -63,7 +79,7 @@ Console& Console::WriteLine(const char* Format, const va_list& List)
     vsprintf(m_Buffer.Data(), m_Buffer.Capacity(), Format, List);
 #endif
 
-    printf("%s\n", m_Buffer.Data());
+    printf("%s", m_Buffer.Data());
 
     return *this;
 }

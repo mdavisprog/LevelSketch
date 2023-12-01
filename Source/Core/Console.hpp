@@ -40,12 +40,13 @@ class Console
 public:
     static Console& Instance();
 
-    static void WriteLine(const char* Format, ...);
+    static Console& Write(const char* Format, ...);
+    static Console& WriteLine(const char* Format, ...);
 
 private:
     Console();
 
-    Console& WriteLine(const char* Format, const va_list& List);
+    Console& Write(const char* Format, const va_list& List);
 
     String m_Buffer {};
 };
