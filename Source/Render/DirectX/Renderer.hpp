@@ -49,8 +49,9 @@ public:
     Renderer();
 
     virtual bool Initialize() override;
+    virtual bool Initialize(Platform::Window* Window) override;
     virtual void Shutdown() override;
-    virtual void Render() override;
+    virtual void Render(Platform::Window* Window) override;
 
 private:
     bool LoadPipeline(Platform::Window* Window);

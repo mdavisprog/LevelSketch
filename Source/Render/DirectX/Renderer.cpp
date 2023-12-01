@@ -44,12 +44,17 @@ Renderer::Renderer()
 
 bool Renderer::Initialize()
 {
-    if (!LoadPipeline(Window()))
+    return true;
+}
+
+bool Renderer::Initialize(Platform::Window* Window)
+{
+    if (!LoadPipeline(Window))
     {
         return false;
     }
 
-    if (!LoadAssets(Window()))
+    if (!LoadAssets(Window))
     {
         return false;
     }
@@ -61,7 +66,7 @@ void Renderer::Shutdown()
 {
 }
 
-void Renderer::Render()
+void Renderer::Render(Platform::Window* Window)
 {
     if (m_CommandAllocator->Reset() != S_OK)
     {
@@ -75,7 +80,7 @@ void Renderer::Render()
         return;
     }
 
-    const Core::Math::Vector2i Size { Window()->Size() };
+    const Core::Math::Vector2i Size { Window->Size() };
     D3D12_VIEWPORT View { 0.0f, 0.0f, (FLOAT)Size.X, (FLOAT)Size.Y, 0.0f, 1.0f };
     D3D12_RECT Scissor { 0, 0, (LONG)Size.X, (LONG)Size.Y };
 
