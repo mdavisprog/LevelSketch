@@ -28,6 +28,8 @@ SOFTWARE.
 #include "Compiler.hpp"
 
 #include <climits>
+#include <cstdarg>
+#include <cstdio>
 
 namespace LevelSketch
 {
