@@ -27,6 +27,14 @@ set(SOURCE
     Main/Common.cpp
 )
 
+# Files needed in non-shipping builds
+if(NOT SHIPPING)
+    set(SOURCE
+        ${SOURCE}
+        Core/Assert.cpp
+    )
+endif()
+
 if(WIN32)
     set(SOURCE
         ${SOURCE}

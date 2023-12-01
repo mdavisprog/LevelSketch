@@ -24,46 +24,40 @@ SOFTWARE.
 
 */
 
-#pragma once
+#include "Assert.hpp"
 
-#if defined(SHIPPING)
-    #define LS_ASSERT(Condition)
-    #define LS_ASSERTFEMPTY(Condition, Format, ...)
-    #define LS_ASSERTF(Condition, Format, ...) LSASSERTFEMPTY(Condition, Format, NULL, ##__VA_ARGS__)
-#else
-
-#include "Compiler.hpp"
-#include "Types.hpp"
+#include <climits>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <string>
 
 namespace LevelSketch
 {
 namespace Core
 {
 
-#if defined(MSVC)
-    #pragma warning(push)
-    #pragma warning(disable : 4505)
-#endif
+void Assertion(const char* File, u32 Line, bool Condition, const char* Format, ...)
+{
+    if (Condition)
+    {
+        return;
+    }
 
-void Assertion(const char* File, u32 Line, bool Condition, const char* Format, ...);
+    va_list List;
+    va_start(List, Format);
 
-#if defined(MSVC)
-    #pragma warning(pop)
-#endif
+    std::string Buffer;
+    Buffer.resize(SHRT_MAX);
+    vsnprintf(Buffer.data(), Buffer.size(), Format, List);
+
+    va_end(List);
+
+    printf("%s\n", Buffer.data());
+    printf("Assertion failed at %s:%u\n", File, Line);
+
+    std::abort();
+}
 
 }
 }
-
-#if defined(CLANG)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
-#endif
-
-#define LS_ASSERT(Condition) LevelSketch::Core::Assertion(__FILE__, __LINE__, Condition, #Condition)
-#define LS_ASSERTF(Condition, Format, ...) LevelSketch::Core::Assertion(__FILE__, __LINE__, Condition, Format, ##__VA_ARGS__)
-
-#if defined(CLANG)
-    #pragma clang diagnostic pop
-#endif
-
-#endif // SHIPPING

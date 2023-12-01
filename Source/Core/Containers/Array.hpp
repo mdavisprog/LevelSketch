@@ -30,7 +30,9 @@ SOFTWARE.
 #include "../Math/Math.hpp"
 #include "../Types.hpp"
 
+#include <cstdlib>
 #include <initializer_list>
+#include <new>
 #include <utility>
 
 #define ARRAY_GRANULARITY 16
