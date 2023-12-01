@@ -38,10 +38,27 @@ namespace Core
 class Console
 {
 public:
+    enum class Color
+    {
+        Black,
+        Red,
+        Green,
+        Yellow,
+        Blue,
+        Magenta,
+        Cyan,
+        White,
+        Default,
+        Reset
+    };
+
     static Console& Instance();
 
     static Console& Write(const char* Format, ...);
     static Console& WriteLine(const char* Format, ...);
+
+    static Console& PushForegroundColor(Color Foreground);
+    static Console& PopForegroundColor();
 
 private:
     Console();
@@ -49,6 +66,7 @@ private:
     Console& Write(const char* Format, const va_list& List);
 
     String m_Buffer {};
+    Containers::Array<Color> m_ForegroundColorStack {};
 };
 
 }

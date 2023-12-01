@@ -313,6 +313,18 @@ public:
         return false;
     }
 
+    T& Back()
+    {
+        LS_ASSERT(!IsEmpty());
+        return m_Data[Size() - 1];
+    }
+
+    T const& Back() const
+    {
+        LS_ASSERT(!IsEmpty());
+        return m_Data[Size() - 1];
+    }
+
     T* begin()
     {
         return m_Data;
