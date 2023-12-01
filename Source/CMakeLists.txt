@@ -8,6 +8,15 @@ endif()
 
 set(TARGET LevelSketch)
 
+# List of options that can be set.
+option(SHIPPING "Enables the SHIPPING configuration." OFF)
+option(WITH_TESTS "Compiles the testing framework when ON." OFF)
+
+if(SHIPPING)
+    message("Compiling with shipping configuration.")
+    set(WITH_TESTS OFF CACHE BOOL "Disabling WITH_TESTS when SHIPPING configuration is enabled." FORCE)
+endif()
+
 # On Linux, SDL2 is used for the platform.
 if(CMAKE_SYSTEM_NAME MATCHES Linux)
     find_package(SDL2 REQUIRED)

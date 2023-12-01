@@ -28,6 +28,7 @@ SOFTWARE.
 #include <cstdio>
 #include "../External/OctaneGUI/OctaneGUI.h"
 #include "../Core/Defines.hpp"
+#include "../Core/Memory/UniquePtr.hpp"
 #include "../Platform/Platform.hpp"
 #include "../Platform/Window.hpp"
 #include "../Render/Renderer.hpp"
