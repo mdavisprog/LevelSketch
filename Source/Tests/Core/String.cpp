@@ -36,6 +36,7 @@ namespace Tests
 namespace Core
 {
 
+namespace Containers = LevelSketch::Core::Containers;
 using String = LevelSketch::Core::String;
 
 static bool Empty()
@@ -61,12 +62,40 @@ static bool Equality()
     return true;
 }
 
+static bool Conversions()
+{
+    String Ascii { "Hello" };
+    Containers::WString Wide { Containers::ToWString(Ascii) };
+    VERIFY(Wide == L"Hello");
+    VERIFY(Wide.Length() == 5);
+
+    Ascii = Containers::ToString(Wide);
+    VERIFY(Ascii == "Hello");
+    VERIFY(Ascii.Length() == 5);
+    return true;
+}
+
+static bool Reserve()
+{
+    String Instance;
+    VERIFY(Instance.Capacity() == 0);
+    Instance.Reserve(5);
+    VERIFY(Instance.Size() == 0);
+    VERIFY(Instance.Capacity() == 5);
+    Instance = "Hello";
+    VERIFY(Instance.Size() == 5);
+    VERIFY(Instance.Capacity() > 5);
+    return true;
+}
+
 Memory::UniquePtr<TestSuite> StringTests()
 {
     return TestSuite::New("String", {
         TEST_CASE(Empty),
         TEST_CASE(Constructor),
-        TEST_CASE(Equality)
+        TEST_CASE(Equality),
+        TEST_CASE(Conversions),
+        TEST_CASE(Reserve)
     });
 }
 

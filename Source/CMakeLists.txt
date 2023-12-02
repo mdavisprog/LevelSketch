@@ -27,6 +27,7 @@ add_subdirectory(External/OctaneGUI)
 
 # Common source files for all platforms and configurations.
 set(SOURCE
+    Core/Containers/String.cpp
     Core/Console.cpp
 
     Platform/Platform.cpp

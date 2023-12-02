@@ -132,6 +132,12 @@ public:
         return *this;
     }
 
+    TString<T>& Resize(u64 Size)
+    {
+        m_Data.Resize(Size);
+        return *this;
+    }
+
 private:
     TString<T>& Copy(const T* Data)
     {
@@ -184,6 +190,9 @@ static bool operator!=(const TString<T>& A, const T* B)
 
 typedef TString<char> String;
 typedef TString<wchar_t> WString;
+
+String ToString(const WString& Value);
+WString ToWString(const String& Value);
 
 }
 
