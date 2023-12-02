@@ -77,7 +77,7 @@ Platform& Platform::SetOnFrame(OnFrameSignature&& Fn)
     return *this;
 }
 
-const Core::Memory::UniquePtr<Window>& Platform::NewWindow(const char* Title, i32 X, i32 Y, i32 Width, i32 Height)
+Window* Platform::NewWindow(const char* Title, i32 X, i32 Y, i32 Width, i32 Height)
 {
     Core::Memory::UniquePtr<Window> Result { InternalNewWindow() };
 
@@ -93,7 +93,7 @@ const Core::Memory::UniquePtr<Window>& Platform::NewWindow(const char* Title, i3
 
     m_Windows.Push(std::move(Result));
 
-    return m_Windows.Back();
+    return m_Windows.Back().Get();
 }
 
 Platform& Platform::CloseWindow(Window* Window)

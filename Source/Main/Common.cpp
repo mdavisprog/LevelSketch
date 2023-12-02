@@ -28,7 +28,6 @@ SOFTWARE.
 #include <cstdio>
 #include "../External/OctaneGUI/OctaneGUI.h"
 #include "../Core/Defines.hpp"
-#include "../Core/Memory/UniquePtr.hpp"
 #include "../Platform/Platform.hpp"
 #include "../Platform/Window.hpp"
 #include "../Render/Renderer.hpp"
@@ -53,7 +52,7 @@ void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Action)
     {
         if (g_Windows.find(Window) == g_Windows.end())
         {
-            const Core::Memory::UniquePtr<LevelSketch::Platform::Window>& Win = Platform::Platform::Instance()->NewWindow(
+            Platform::Window* Win = Platform::Platform::Instance()->NewWindow(
                 OctaneGUI::String::ToMultiByte(Window->GetTitle()).c_str(),
                 (int)Window->GetPosition().X,
                 (int)Window->GetPosition().Y,
@@ -63,11 +62,11 @@ void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Action)
 
             if (Win != nullptr)
             {
-                g_Windows[Window] = Win.Get();
+                g_Windows[Window] = Win;
                 Win->Show();
 
                 const bool WasInitialized { Render::Renderer::Instance()->Initialized() };
-                if (Render::Renderer::Instance()->Initialize(Win.Get()))
+                if (Render::Renderer::Instance()->Initialize(Win))
                 {
                     if (WasInitialized != Render::Renderer::Instance()->Initialized())
                     {

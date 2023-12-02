@@ -56,7 +56,7 @@ public:
 
     Platform& SetOnFrame(OnFrameSignature&& Fn);
 
-    const Core::Memory::UniquePtr<Window>& NewWindow(const char* Title, i32 X, i32 Y, i32 Width, i32 Height);
+    Window* NewWindow(const char* Title, i32 X, i32 Y, i32 Width, i32 Height);
     Platform& CloseWindow(Window* Window);
 
 protected:
