@@ -284,6 +284,16 @@ static bool ElementDtor()
     return true;
 }
 
+static bool RemoveItem()
+{
+    Containers::Array<int> Values { 100, 200, 300 };
+    Values.Remove(200);
+    VERIFY(Values.Size() == 2);
+    VERIFY(Values[0] == 100);
+    VERIFY(Values[1] == 300);
+    return true;
+}
+
 static bool RemoveRange()
 {
     Containers::Array<int> Values { 1, 2, 3, 4, 5, 6, 7, 8 };
@@ -329,6 +339,7 @@ Memory::UniquePtr<TestSuite> Array()
         TEST_CASE(MoveValue),
         TEST_CASE(Equality),
         TEST_CASE(ElementDtor),
+        TEST_CASE(RemoveItem),
         TEST_CASE(RemoveRange),
         TEST_CASE(Resize)
     });

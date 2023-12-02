@@ -258,6 +258,19 @@ public:
         return RemoveRange(Index);
     }
 
+    bool Remove(const T& Item)
+    {
+        for (u64 I = 0; I < m_Size; I++)
+        {
+            if (m_Data[I] == Item)
+            {
+                return RemoveRange(I);
+            }
+        }
+
+        return false;
+    }
+
     bool RemoveRange(u64 Index, u64 Count = 1)
     {
         if (Count == 0)
