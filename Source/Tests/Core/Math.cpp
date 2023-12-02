@@ -24,34 +24,54 @@ SOFTWARE.
 
 */
 
-#pragma once
-
-#include "../../Core/Memory/UniquePtr.hpp"
+#include "Core.hpp"
+#include "../../Core/Math/Math.hpp"
+#include "../../Core/Math/Vector2.hpp"
+#include "../../Core/Math/Vector3.hpp"
+#include "../TestSuite.hpp"
+#include "../Utility.hpp"
 
 namespace LevelSketch
 {
-
 namespace Tests
 {
-
-class TestSuite;
-
 namespace Core
 {
 
-namespace Memory
+namespace Math = LevelSketch::Core::Math;
+
+static bool CommonOps()
 {
-    template<typename T>
-    using UniquePtr = LevelSketch::Core::Memory::UniquePtr<T>;
+    VERIFY(Math::Min<i32>(3, 5) == 3);
+    VERIFY(Math::Max<i32>(3, 5) == 5);
+    return true;
 }
 
-Memory::UniquePtr<TestSuite> Array();
-Memory::UniquePtr<TestSuite> MathTests();
-Memory::UniquePtr<TestSuite> Shareable();
-Memory::UniquePtr<TestSuite> SharedPtr();
-Memory::UniquePtr<TestSuite> StringTests();
-Memory::UniquePtr<TestSuite> UniquePtr();
-Memory::UniquePtr<TestSuite> WeakPtr();
+static bool Vector2()
+{
+    Math::Vector2i Vector { 3, 5 };
+    VERIFY(Vector.X == 3);
+    VERIFY(Vector.Y == 5);
+    return true;
+}
+
+static bool Vector3()
+{
+    Math::Vector3f Vector { 3.0f, 5.0f, 7.0f };
+    VERIFY(Vector.X == 3.0f);
+    VERIFY(Vector.Y == 5.0f);
+    VERIFY(Vector.Z == 7.0f);
+    return true;
+}
+
+Memory::UniquePtr<TestSuite> MathTests()
+{
+    return TestSuite::New("Math", {
+        TEST_CASE(CommonOps),
+        TEST_CASE(Vector2),
+        TEST_CASE(Vector3)
+    });
+}
 
 }
 }
