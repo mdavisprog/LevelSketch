@@ -25,6 +25,7 @@ SOFTWARE.
 */
 
 #include "Core.hpp"
+#include "../../Core/Math/Color.hpp"
 #include "../../Core/Math/Math.hpp"
 #include "../../Core/Math/Vector2.hpp"
 #include "../../Core/Math/Vector3.hpp"
@@ -64,12 +65,30 @@ static bool Vector3()
     return true;
 }
 
+static bool Color()
+{
+    Math::Colorb Colorb { 255, 0, 0, 255 };
+    VERIFY(Colorb.R == 255);
+    VERIFY(Colorb.G == 0);
+    VERIFY(Colorb.B == 0);
+    VERIFY(Colorb.A == 255);
+
+    Math::Colorf Colorf { 0.0f, 1.0f, 0.0f, 1.0f };
+    VERIFY(Colorf.R == 0.0f);
+    VERIFY(Colorf.G == 1.0f);
+    VERIFY(Colorf.B == 0.0f);
+    VERIFY(Colorf.A == 1.0f);
+
+    return true;
+}
+
 Memory::UniquePtr<TestSuite> MathTests()
 {
     return TestSuite::New("Math", {
         TEST_CASE(CommonOps),
         TEST_CASE(Vector2),
-        TEST_CASE(Vector3)
+        TEST_CASE(Vector3),
+        TEST_CASE(Color)
     });
 }
 
