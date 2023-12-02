@@ -65,27 +65,9 @@ const char* Platform::Name() const
     return "SDL2";
 }
 
-LevelSketch::Platform::Window* Platform::NewWindow(const char* Title, int X, int Y, int Width, int Height)
+Core::Memory::UniquePtr<LevelSketch::Platform::Window> Platform::InternalNewWindow() const
 {
-    Window* Result { new Window() };
-
-    if (!Result->Create(Title, X, Y, Width, Height))
-    {
-        delete Result;
-        Result = nullptr;
-    }
-
-    return Result;
-}
-
-void Platform::CloseWindow(LevelSketch::Platform::Window* Window)
-{
-    if (Window == nullptr)
-    {
-        return;
-    }
-
-    Window->Close();
+    return Core::Memory::UniquePtr<Window>::New();
 }
 
 }

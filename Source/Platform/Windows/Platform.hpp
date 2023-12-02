@@ -44,8 +44,8 @@ public:
     virtual void Shutdown() override;
     virtual const char* Name() const override;
 
-    virtual LevelSketch::Platform::Window* NewWindow(const char* Title, int X, int Y, int Width, int Height) override;
-    virtual void CloseWindow(LevelSketch::Platform::Window* Window) override;
+protected:
+    virtual Core::Memory::UniquePtr<LevelSketch::Platform::Window> InternalNewWindow() const override;
 };
 
 }

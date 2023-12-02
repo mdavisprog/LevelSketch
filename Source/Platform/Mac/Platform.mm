@@ -81,23 +81,6 @@ const char* Platform::Name() const
     return "Mac";
 }
 
-LevelSketch::Platform::Window* Platform::NewWindow(const char* Title, int X, int Y, int Width, int Height)
-{
-    Window* Result { new Window() };
-
-    if (!Result->Create(Title, X, Y, Width, Height))
-    {
-        delete Result;
-        Result = nullptr;
-    }
-
-    return Result;
-}
-
-void Platform::CloseWindow(LevelSketch::Platform::Window*)
-{
-}
-
 int Platform::Run()
 {
     [NSApp run];
@@ -107,6 +90,11 @@ int Platform::Run()
 bool Platform::UseCustomLoop() const
 {
     return true;
+}
+
+Core::Memory::UniquePtr<LevelSketch::Platform::Window> Platform::InternalNewWindow() const
+{
+    return Core::Memory::UniquePtr<Window>::New();
 }
 
 }

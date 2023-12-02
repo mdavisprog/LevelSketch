@@ -53,7 +53,7 @@ void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Action)
     {
         if (g_Windows.find(Window) == g_Windows.end())
         {
-            LevelSketch::Platform::Window* Win = Platform::Platform::Instance()->NewWindow(
+            const Core::Memory::UniquePtr<LevelSketch::Platform::Window>& Win = Platform::Platform::Instance()->NewWindow(
                 OctaneGUI::String::ToMultiByte(Window->GetTitle()).c_str(),
                 (int)Window->GetPosition().X,
                 (int)Window->GetPosition().Y,
@@ -63,11 +63,11 @@ void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Action)
 
             if (Win != nullptr)
             {
-                g_Windows[Window] = Win;
+                g_Windows[Window] = Win.Get();
                 Win->Show();
 
                 const bool WasInitialized { Render::Renderer::Instance()->Initialized() };
-                if (Render::Renderer::Instance()->Initialize(Win))
+                if (Render::Renderer::Instance()->Initialize(Win.Get()))
                 {
                     if (WasInitialized != Render::Renderer::Instance()->Initialized())
                     {

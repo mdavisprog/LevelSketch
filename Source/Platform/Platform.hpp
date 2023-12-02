@@ -26,14 +26,11 @@ SOFTWARE.
 
 #pragma once
 
+#include "../Core/Containers/Array.hpp"
+#include "../Core/Memory/UniquePtr.hpp"
+
 namespace LevelSketch
 {
-
-namespace Core::Memory
-{
-    template<typename T>
-    class UniquePtr;
-}
 
 namespace Platform
 {
@@ -54,16 +51,20 @@ public:
     virtual void Shutdown() = 0;
     virtual const char* Name() const = 0;
 
-    virtual Window* NewWindow(const char* Title, int X, int Y, int Width, int Height) = 0;
-    virtual void CloseWindow(Window* Window) = 0;
-
     virtual int Run();
     virtual bool UseCustomLoop() const;
 
     Platform& SetOnFrame(OnFrameSignature&& Fn);
 
+    const Core::Memory::UniquePtr<Window>& NewWindow(const char* Title, i32 X, i32 Y, i32 Width, i32 Height);
+    Platform& CloseWindow(Window* Window);
+
+protected:
+    virtual Core::Memory::UniquePtr<Window> InternalNewWindow() const = 0;
+
 private:
     OnFrameSignature m_OnFrame { nullptr };
+    Core::Containers::Array<Core::Memory::UniquePtr<Window>> m_Windows {};
 };
 
 }

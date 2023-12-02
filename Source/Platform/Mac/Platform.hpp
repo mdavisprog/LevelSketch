@@ -44,11 +44,11 @@ public:
     virtual void Shutdown() override;
     virtual const char* Name() const override;
 
-    virtual Window* NewWindow(const char* Title, int X, int Y, int Width, int Height) override;
-    virtual void CloseWindow(Window* Window) override;
-
     virtual int Run() override;
     virtual bool UseCustomLoop() const override;
+
+protected:
+    virtual Core::Memory::UniquePtr<LevelSketch::Platform::Window> InternalNewWindow() const override;
 };
 
 }
