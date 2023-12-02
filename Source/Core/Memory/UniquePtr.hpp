@@ -58,6 +58,10 @@ public:
     {
     }
 
+    UniquePtr(nullptr_t)
+    {
+    }
+
     UniquePtr(UniquePtr<T>&& Other) noexcept
     {
         m_Data = Other.Leak();
@@ -88,6 +92,12 @@ public:
         static_assert(std::is_base_of_v<T, U>, "Trying to create a unique pointer of a derived class that does not inherit from base.");
         Reset();
         m_Data = Other.Leak();
+        return *this;
+    }
+
+    UniquePtr<T>& operator=(nullptr_t)
+    {
+        Reset();
         return *this;
     }
 
@@ -145,6 +155,42 @@ private:
 
     T* m_Data { nullptr };
 };
+
+template<typename T, typename U>
+bool operator==(const UniquePtr<T>& A, const UniquePtr<U>& B)
+{
+    return A.Get() == B.Get();
+}
+
+template<typename T, typename U>
+bool operator!=(const UniquePtr<T>& A, const UniquePtr<U>& B)
+{
+    return A.Get() != B.Get();
+}
+
+template<typename T, typename U>
+bool operator==(const UniquePtr<T>& A, const U& B)
+{
+    return A.Get() == B;
+}
+
+template<typename T, typename U>
+bool operator!=(const UniquePtr<T>& A, const U& B)
+{
+    return A.Get() != B;
+}
+
+template<typename T>
+bool operator==(const UniquePtr<T>& A, nullptr_t)
+{
+    return A.Get() == nullptr;
+}
+
+template<typename T>
+bool operator!=(const UniquePtr<T>& A, nullptr_t)
+{
+    return A.Get() != nullptr;
+}
 
 }
 }

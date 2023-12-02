@@ -45,7 +45,9 @@ namespace Memory
 static bool CreateNull()
 {
     Memory::UniquePtr<int> Instance;
-    VERIFY(Instance.Get() == nullptr);
+    VERIFY(Instance == nullptr);
+    Memory::UniquePtr<int> Instance2 { nullptr };
+    VERIFY(Instance2 == nullptr);
     return true;
 }
 
@@ -55,6 +57,24 @@ static bool CreateInstance()
     VERIFY(!Instance.IsValid());
     Instance = Memory::UniquePtr<int>::New();
     VERIFY(Instance.IsValid());
+    return true;
+}
+
+static bool Adopt()
+{
+    int* Value = new int(5);
+    VERIFY(*Value == 5);
+    Memory::UniquePtr<int> Adopted { Memory::UniquePtr<int>::Adopt(Value) };
+    VERIFY(*Adopted == 5);
+    return true;
+}
+
+static bool NullAssignment()
+{
+    Memory::UniquePtr<int> Instance { Memory::UniquePtr<int>::New(5) };
+    VERIFY(*Instance == 5);
+    Instance = nullptr;
+    VERIFY(!Instance.IsValid());
     return true;
 }
 
@@ -80,13 +100,34 @@ static bool Polymorphism()
     return true;
 }
 
+static bool Equality()
+{
+    Memory::UniquePtr<int> A { Memory::UniquePtr<int>::New(5) };
+    Memory::UniquePtr<int> B { Memory::UniquePtr<int>::New(6) };
+    VERIFY(A.IsValid());
+    VERIFY(B.IsValid());
+    VERIFY(A != B);
+    VERIFY(*A != *B);
+    Memory::UniquePtr<int>& C { A };
+    int* D { B.Get() };
+    VERIFY(A == C);
+    VERIFY(*A == *C);
+    VERIFY(A != D);
+    VERIFY(B == D);
+    VERIFY(C != B);
+    return true;
+}
+
 Memory::UniquePtr<TestSuite> UniquePtr()
 {
     return TestSuite::New("UniquePtr", {
         TEST_CASE(CreateNull),
         TEST_CASE(CreateInstance),
+        TEST_CASE(Adopt),
+        TEST_CASE(NullAssignment),
         TEST_CASE(Move),
-        TEST_CASE(Polymorphism)
+        TEST_CASE(Polymorphism),
+        TEST_CASE(Equality)
     });
 }
 
