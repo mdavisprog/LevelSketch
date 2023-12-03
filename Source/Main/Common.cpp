@@ -140,6 +140,11 @@ OctaneGUI::Event OnEvent(OctaneGUI::Window* Window)
     return { OctaneGUI::Event::Type::None };
 }
 
+u32 OnLoadTexture(const std::vector<u8>&, u32, u32)
+{
+    return 1;
+}
+
 void OnPlatformFrame()
 {
 }
@@ -157,6 +162,9 @@ i32 Main(i32 Argc, char** Argv)
 #endif
 
     const char* Stream = R"({
+        "Theme": {
+            "FontPath": "Content/Fonts/Roboto-Regular.ttf"
+        },
         "Windows": {
             "Main": {"Title": "Level Sketch", "Width": 1280, "Height": 720,
                 "MenuBar": {},
@@ -181,7 +189,8 @@ i32 Main(i32 Argc, char** Argv)
     g_Application = new OctaneGUI::Application();
     g_Application
         ->SetOnWindowAction(OnWindowAction)
-        .SetOnEvent(OnEvent);
+        .SetOnEvent(OnEvent)
+        .SetOnLoadTexture(OnLoadTexture);
 
     std::unordered_map<std::string, OctaneGUI::ControlList> List;
     bool Success = g_Application
