@@ -49,6 +49,11 @@ bool Renderer::Initialize()
 
 bool Renderer::Initialize(Platform::Window* Window)
 {
+    if (m_Device != nullptr)
+    {
+        return true;
+    }
+
     if (!LoadPipeline(Window))
     {
         return false;
@@ -59,6 +64,7 @@ bool Renderer::Initialize(Platform::Window* Window)
         return false;
     }
 
+    SetInitialized(true);
     return true;
 }
 
