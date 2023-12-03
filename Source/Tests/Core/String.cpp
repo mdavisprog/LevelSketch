@@ -78,7 +78,8 @@ static bool Conversions()
 static bool Reserve()
 {
     String Instance;
-    VERIFY(Instance.Capacity() == 0);
+    // Empty string will have an allocation with the null terminator.
+    VERIFY(Instance.Capacity() != 0);
     Instance.Reserve(5);
     VERIFY(Instance.Size() == 0);
     VERIFY(Instance.Capacity() == 5);

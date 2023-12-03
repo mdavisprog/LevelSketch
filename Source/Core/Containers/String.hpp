@@ -57,6 +57,7 @@ public:
 
     TString()
     {
+        Copy(nullptr);
     }
 
     TString(const T* Data)
@@ -123,7 +124,7 @@ public:
 
     bool IsEmpty() const
     {
-        return m_Data.IsEmpty();
+        return Length() == 0;
     }
 
     TString<T>& Reserve(u64 Size)
@@ -142,12 +143,6 @@ private:
     TString<T>& Copy(const T* Data)
     {
         Clear();
-
-        if (Data == nullptr)
-        {
-            return *this;
-        }
-
         return Copy(Data, LengthFromPtr(Data));
     }
 
