@@ -135,7 +135,6 @@ OctaneGUI::Event OnEvent(OctaneGUI::Window* Window)
     }
 
     Win->ProcessEvents();
-    Render::Renderer::Instance()->Render(Win);
 
     return { OctaneGUI::Event::Type::None };
 }
@@ -145,8 +144,21 @@ u32 OnLoadTexture(const std::vector<u8>&, u32, u32)
     return 1;
 }
 
-void OnPlatformFrame()
+bool OnPlatformFrame()
 {
+    if (!g_Application->IsRunning())
+    {
+        return false;
+    }
+
+    g_Application->RunFrame();
+
+    for (const Core::Memory::UniquePtr<Platform::Window>& Window : Platform::Platform::Instance()->Windows())
+    {
+        Render::Renderer::Instance()->Render(Window.Get());
+    }
+
+    return true;
 }
 
 i32 Main(i32 Argc, char** Argv)
@@ -203,16 +215,7 @@ i32 Main(i32 Argc, char** Argv)
         return 0;
     }
 
-    int Return { 0 };
-    if (Platform->UseCustomLoop())
-    {
-        Platform->SetOnFrame(OnPlatformFrame);
-        Return = Platform->Run();
-    }
-    else
-    {
-        Return = g_Application->Run();
-    }
+    int Return = Platform->SetOnFrame(OnPlatformFrame).Run();
 
     for (const std::pair<OctaneGUI::Window*, LevelSketch::Platform::Window*> Item : g_Windows)
     {

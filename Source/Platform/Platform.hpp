@@ -40,7 +40,7 @@ class Window;
 class Platform
 {
 public:
-    typedef void (*OnFrameSignature)();
+    typedef bool (*OnFrameSignature)();
 
     static const Core::Memory::UniquePtr<Platform>& Instance();
 
@@ -52,12 +52,12 @@ public:
     virtual const char* Name() const = 0;
 
     virtual int Run();
-    virtual bool UseCustomLoop() const;
 
     Platform& SetOnFrame(OnFrameSignature&& Fn);
 
     Window* NewWindow(const char* Title, i32 X, i32 Y, i32 Width, i32 Height);
     Platform& CloseWindow(Window* Window);
+    const Core::Containers::Array<Core::Memory::UniquePtr<Window>>& Windows() const;
 
 protected:
     virtual Core::Memory::UniquePtr<Window> InternalNewWindow() const = 0;

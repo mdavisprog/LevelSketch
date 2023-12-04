@@ -87,11 +87,6 @@ int Platform::Run()
     return 0;
 }
 
-bool Platform::UseCustomLoop() const
-{
-    return true;
-}
-
 Core::Memory::UniquePtr<LevelSketch::Platform::Window> Platform::InternalNewWindow() const
 {
     return Core::Memory::UniquePtr<Window>::New();

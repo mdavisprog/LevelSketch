@@ -45,7 +45,6 @@ public:
     virtual const char* Name() const override;
 
     virtual int Run() override;
-    virtual bool UseCustomLoop() const override;
 
 protected:
     virtual Core::Memory::UniquePtr<LevelSketch::Platform::Window> InternalNewWindow() const override;

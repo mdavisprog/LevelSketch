@@ -63,12 +63,24 @@ const Core::Memory::UniquePtr<Platform>& Platform::Instance()
 
 int Platform::Run()
 {
-    return -1;
-}
+    if (m_OnFrame == nullptr)
+    {
+        return -1;
+    }
 
-bool Platform::UseCustomLoop() const
-{
-    return false;
+    while (true)
+    {
+        // TODO: Calculate frame time here.
+
+        if (!m_OnFrame())
+        {
+            break;
+        }
+
+        // TODO: Sleep if there is extra time remaining.
+    }
+
+    return 0;
 }
 
 Platform& Platform::SetOnFrame(OnFrameSignature&& Fn)
@@ -115,6 +127,11 @@ Platform& Platform::CloseWindow(Window* Window)
     }
 
     return *this;
+}
+
+const Core::Containers::Array<Core::Memory::UniquePtr<Window>>& Platform::Windows() const
+{
+    return m_Windows;
 }
 
 }
