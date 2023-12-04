@@ -70,9 +70,10 @@ int Platform::Run()
 
     while (true)
     {
-        // TODO: Calculate frame time here.
+        UpdateTimingData(m_TimingData);
+        m_TimingData.TotalTimeSeconds += m_TimingData.DeltaSeconds;
 
-        if (!m_OnFrame())
+        if (!m_OnFrame(m_TimingData))
         {
             break;
         }
@@ -132,6 +133,10 @@ Platform& Platform::CloseWindow(Window* Window)
 const Core::Containers::Array<Core::Memory::UniquePtr<Window>>& Platform::Windows() const
 {
     return m_Windows;
+}
+
+void Platform::UpdateTimingData(TimingData&)
+{
 }
 
 }

@@ -31,16 +31,22 @@ SOFTWARE.
 
 namespace LevelSketch
 {
-
 namespace Platform
 {
 
 class Window;
 
+struct TimingData
+{
+public:
+    f32 DeltaSeconds { 0.0f };
+    f32 TotalTimeSeconds { 0.0f };
+};
+
 class Platform
 {
 public:
-    typedef bool (*OnFrameSignature)();
+    typedef bool (*OnFrameSignature)(const TimingData&);
 
     static const Core::Memory::UniquePtr<Platform>& Instance();
 
@@ -61,10 +67,12 @@ public:
 
 protected:
     virtual Core::Memory::UniquePtr<Window> InternalNewWindow() const = 0;
+    virtual void UpdateTimingData(TimingData& Data);
 
 private:
     OnFrameSignature m_OnFrame { nullptr };
     Core::Containers::Array<Core::Memory::UniquePtr<Window>> m_Windows {};
+    TimingData m_TimingData {};
 };
 
 }

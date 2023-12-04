@@ -144,7 +144,7 @@ u32 OnLoadTexture(const std::vector<u8>&, u32, u32)
     return 1;
 }
 
-bool OnPlatformFrame()
+bool OnPlatformFrame(const Platform::TimingData&)
 {
     if (!g_Application->IsRunning())
     {

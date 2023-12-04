@@ -25,6 +25,8 @@ SOFTWARE.
 */
 
 #include "Platform.hpp"
+#include "../../Core/Console.hpp"
+#include "../../Core/Math/Math.hpp"
 #include "Events.hpp"
 #include "Window.hpp"
 
@@ -54,9 +56,14 @@ bool Platform::Initialize()
 
     if (RegisterClassExW(&Class) == 0)
     {
-        printf("Failed to register Window class!\n");
+        Core::Console::Error("Failed to register Window class!");
         return false;
     }
+
+    QueryPerformanceFrequency(&m_Frequency);
+    QueryPerformanceCounter(&m_LastTime);
+
+    m_MaxDeltaTicks = static_cast<u64>(m_Frequency.QuadPart / 10);
 
     return true;
 }
@@ -74,6 +81,22 @@ const char* Platform::Name() const
 Core::Memory::UniquePtr<LevelSketch::Platform::Window> Platform::InternalNewWindow() const
 {
     return Core::Memory::UniquePtr<Window>::New();
+}
+
+void Platform::UpdateTimingData(TimingData& Data)
+{
+    static constexpr u64 TicksPerSecond { 10000000 };
+
+    LARGE_INTEGER Current;
+    QueryPerformanceCounter(&Current);
+
+    u64 DeltaTicks = Core::Math::Min(static_cast<u64>(Current.QuadPart - m_LastTime.QuadPart), m_MaxDeltaTicks);
+    m_LastTime = Current;
+
+    DeltaTicks *= TicksPerSecond;
+    DeltaTicks /= static_cast<u64>(m_Frequency.QuadPart);
+
+    Data.DeltaSeconds = ((float)DeltaTicks / 1000.0f) / 1000.0f;
 }
 
 }

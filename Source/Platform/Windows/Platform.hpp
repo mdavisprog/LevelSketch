@@ -27,6 +27,7 @@ SOFTWARE.
 #pragma once
 
 #include "../Platform.hpp"
+#include "Common.hpp"
 
 namespace LevelSketch
 {
@@ -46,6 +47,12 @@ public:
 
 protected:
     virtual Core::Memory::UniquePtr<LevelSketch::Platform::Window> InternalNewWindow() const override;
+    virtual void UpdateTimingData(TimingData& Data) override;
+
+private:
+    LARGE_INTEGER m_Frequency {};
+    LARGE_INTEGER m_LastTime {};
+    u64 m_MaxDeltaTicks { 0 };
 };
 
 }
