@@ -82,6 +82,36 @@ Console& Console::WriteLine(Color Foreground, const char* Format, ...)
     return Instance();
 }
 
+Console& Console::Warning(const char* Format, ...)
+{
+    va_list List;
+    va_start(List, Format);
+
+    PushForegroundColor(Color::Yellow);
+    Instance().Write(Format, List);
+    printf("\n");
+    PopForegroundColor();
+
+    va_end(List);
+
+    return Instance();
+}
+
+Console& Console::Error(const char* Format, ...)
+{
+    va_list List;
+    va_start(List, Format);
+
+    PushForegroundColor(Color::Red);
+    Instance().Write(Format, List);
+    printf("\n");
+    PopForegroundColor();
+
+    va_end(List);
+
+    return Instance();
+}
+
 Console& Console::PushForegroundColor(Color Foreground)
 {
     Instance().m_ForegroundColorStack.Push(Foreground);

@@ -57,6 +57,8 @@ public:
     static Console& Write(const char* Format, ...);
     static Console& WriteLine(const char* Format, ...);
     static Console& WriteLine(Color Foreground, const char* Format, ...);
+    static Console& Warning(const char* Format, ...);
+    static Console& Error(const char* Format, ...);
 
     static Console& PushForegroundColor(Color Foreground);
     static Console& PopForegroundColor();
