@@ -70,10 +70,7 @@ int Platform::Run()
 
     while (true)
     {
-        UpdateTimingData(m_TimingData);
-        m_TimingData.TotalTimeSeconds += m_TimingData.DeltaSeconds;
-
-        if (!m_OnFrame(m_TimingData))
+        if (!RunFrame())
         {
             break;
         }
@@ -82,6 +79,24 @@ int Platform::Run()
     }
 
     return 0;
+}
+
+bool Platform::RunFrame()
+{
+    if (m_OnFrame == nullptr)
+    {
+        return false;
+    }
+
+    UpdateTimingData(m_TimingData);
+    m_TimingData.TotalTimeSeconds += m_TimingData.DeltaSeconds;
+
+    if (!m_OnFrame(m_TimingData))
+    {
+        return false;
+    }
+
+    return true;
 }
 
 Platform& Platform::SetOnFrame(OnFrameSignature&& Fn)

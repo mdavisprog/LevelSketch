@@ -58,6 +58,7 @@ public:
     virtual const char* Name() const = 0;
 
     virtual int Run();
+    bool RunFrame();
 
     Platform& SetOnFrame(OnFrameSignature&& Fn);
 
