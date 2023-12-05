@@ -222,6 +222,7 @@ i32 Main(i32 Argc, char** Argv)
         Platform->CloseWindow(Item.second);
     }
     g_Windows.clear();
+    Platform->Shutdown();
 
     g_Application->Shutdown();
     delete g_Application;
