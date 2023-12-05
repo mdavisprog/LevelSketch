@@ -85,18 +85,12 @@ Core::Memory::UniquePtr<LevelSketch::Platform::Window> Platform::InternalNewWind
 
 void Platform::UpdateTimingData(TimingData& Data)
 {
-    static constexpr u64 TicksPerSecond { 10000000 };
-
     LARGE_INTEGER Current;
     QueryPerformanceCounter(&Current);
 
-    u64 DeltaTicks = Core::Math::Min(static_cast<u64>(Current.QuadPart - m_LastTime.QuadPart), m_MaxDeltaTicks);
+    const u64 DeltaTicks = Core::Math::Min(static_cast<u64>(Current.QuadPart - m_LastTime.QuadPart), m_MaxDeltaTicks);
     m_LastTime = Current;
-
-    DeltaTicks *= TicksPerSecond;
-    DeltaTicks /= static_cast<u64>(m_Frequency.QuadPart);
-
-    Data.DeltaSeconds = ((float)DeltaTicks / 1000.0f) / 1000.0f;
+    Data.DeltaSeconds = static_cast<float>(DeltaTicks) / static_cast<float>(m_Frequency.QuadPart);
 }
 
 }
