@@ -70,6 +70,15 @@ Core::Memory::UniquePtr<LevelSketch::Platform::Window> Platform::InternalNewWind
     return Core::Memory::UniquePtr<Window>::New();
 }
 
+void Platform::UpdateTimingData(TimingData& Data)
+{
+    const u64 Current { SDL_GetPerformanceCounter() };
+    const u64 Delta { Current - m_LastTime };
+    m_LastTime = Current;
+
+    Data.DeltaSeconds = static_cast<float>(Delta) / static_cast<float>(SDL_GetPerformanceFrequency());
+}
+
 }
 }
 }

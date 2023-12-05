@@ -48,6 +48,10 @@ public:
 
 protected:
     virtual Core::Memory::UniquePtr<LevelSketch::Platform::Window> InternalNewWindow() const override;
+    virtual void UpdateTimingData(TimingData& Data) override;
+
+private:
+    u64 m_LastTime { 0 };
 };
 
 }
