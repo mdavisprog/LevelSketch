@@ -98,10 +98,28 @@ if(WITH_TESTS)
     )
 endif()
 
-add_executable(
-    ${TARGET}
-    ${SOURCE}
-)
+if(APPLE)
+    add_executable(
+        ${TARGET}
+        MACOSX_BUNDLE
+        ${SOURCE}
+    )
+
+    set_target_properties(
+        ${TARGET}
+        PROPERTIES
+        MACOSX_BUNDLE_GUI_IDENTIFIER my.domain.style.identifier.${TARGET}
+        MACOSX_BUNDLE_BUNDLE_NAME ${TARGET}
+        MACOSX_BUNDLE_BUNDLE_VERSION "0.1"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "0.1"
+        MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Platform/Mac/Info.plist
+    )
+else()
+    add_executable(
+        ${TARGET}
+        ${SOURCE}
+    )
+endif()
 
 #
 # Link Libraries
@@ -180,12 +198,3 @@ target_compile_definitions(
     ${TARGET}
     PRIVATE ${DEFINES}
 )
-
-#
-# Post-build step
-#
-
-if(APPLE)
-    file(COPY Platform/Mac/Info.plist DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-    file(COPY Platform/Mac/MainMenu.storyboard DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-endif()
