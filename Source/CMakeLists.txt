@@ -17,12 +17,6 @@ if(SHIPPING)
     set(WITH_TESTS OFF CACHE BOOL "Disabling WITH_TESTS when SHIPPING configuration is enabled." FORCE)
 endif()
 
-# On Linux, SDL2 is used for the platform.
-if(CMAKE_SYSTEM_NAME MATCHES Linux)
-    find_package(SDL2 REQUIRED)
-    find_package(OpenGL REQUIRED)
-endif()
-
 add_subdirectory(External/OctaneGUI)
 
 # Common source files for all platforms and configurations.
@@ -143,6 +137,9 @@ elseif(APPLE)
         "-framework MetalKit"
     )
 else()
+    find_package(SDL2 REQUIRED)
+    find_package(OpenGL REQUIRED)
+
     set(LIBS
         ${LIBS}
         ${SDL2_LIBRARIES}
