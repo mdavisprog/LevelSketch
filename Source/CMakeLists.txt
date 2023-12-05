@@ -199,3 +199,15 @@ target_compile_definitions(
     ${TARGET}
     PRIVATE ${DEFINES}
 )
+
+if(APPLE)
+    message("Resources are copied into the binary directory for now.")
+endif()
+
+add_custom_command(
+    TARGET ${TARGET}
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_CURRENT_SOURCE_DIR}/../Content"
+    "$<TARGET_FILE_DIR:${TARGET}>/Content"
+)
