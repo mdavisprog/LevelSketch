@@ -140,6 +140,7 @@ elseif(APPLE)
         "-framework AppKit"
         "-framework Foundation"
         "-framework Metal"
+        "-framework MetalKit"
     )
 else()
     set(LIBS

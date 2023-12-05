@@ -92,6 +92,13 @@ Core::Memory::UniquePtr<LevelSketch::Platform::Window> Platform::InternalNewWind
     return Core::Memory::UniquePtr<Window>::New();
 }
 
+void Platform::UpdateTimingData(TimingData& Data)
+{
+    CFTimeInterval Current { (double)clock_gettime_nsec_np(CLOCK_UPTIME_RAW) / 1e9 };
+    Data.DeltaSeconds = (float)(Current - m_LastTime);
+    m_LastTime = Current;
+}
+
 }
 }
 }
