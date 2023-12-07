@@ -149,6 +149,10 @@ bool Renderer::LoadPipeline(Platform::Window* Window)
         return false;
     }
 
+    DXGI_ADAPTER_DESC1 Description;
+    Adapter->GetDesc1(&Description);
+    SummaryMut().Vendor = Core::Containers::ToString(Description.Description);
+
     D3D12_COMMAND_QUEUE_DESC CommandQueueDescription { 0 };
     CommandQueueDescription.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
     CommandQueueDescription.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
@@ -470,7 +474,8 @@ IDXGIAdapter1* Renderer::GetHardwareAdapter(IDXGIFactory1* Factory) const
                 continue;
             }
 
-            if (D3D12CreateDevice(Adapter.Get(), D3D_FEATURE_LEVEL_12_0, _uuidof(ID3D12Device), nullptr) == S_OK)
+            // D3D12CreateDevice will return S_FALSE if ppDevice is null.
+            if (D3D12CreateDevice(Adapter.Get(), D3D_FEATURE_LEVEL_12_0, _uuidof(ID3D12Device), nullptr) == S_FALSE)
             {
                 break;
             }
@@ -489,7 +494,8 @@ IDXGIAdapter1* Renderer::GetHardwareAdapter(IDXGIFactory1* Factory) const
                 continue;
             }
 
-            if (D3D12CreateDevice(Adapter.Get(), D3D_FEATURE_LEVEL_12_0, _uuidof(ID3D12Device), nullptr) == S_OK)
+            // D3D12CreateDevice will return S_FALSE if ppDevice is null.
+            if (D3D12CreateDevice(Adapter.Get(), D3D_FEATURE_LEVEL_12_0, _uuidof(ID3D12Device), nullptr) == S_FALSE)
             {
                 break;
             }
