@@ -24,42 +24,25 @@ SOFTWARE.
 
 */
 
-#pragma once
-
-#include "../Core/Types.hpp"
+#include "Window.hpp"
+#include "../Core/Math/Vector2.hpp"
 
 namespace LevelSketch
 {
-
-namespace Core::Math
-{
-    template<typename T>
-    struct Vector2;
-    typedef Vector2<i32> Vector2i;
-}
-
 namespace Platform
 {
 
-class Window
+f32 Window::AspectRatio() const
 {
-public:
-    virtual ~Window() {}
+    const Core::Math::Vector2i Size { this->Size() };
 
-    virtual void* Handle() const = 0;
-    virtual bool Create(const char* Title, i32 X, i32 Y, i32 Width, i32 Height) = 0;
-    virtual void Close() = 0;
-    virtual void Show() = 0;
-    virtual void Focus() = 0;
-    virtual void SetPosition(i32 X, i32 Y) = 0;
-    virtual Core::Math::Vector2i Position() const = 0;
-    virtual Core::Math::Vector2i Size() const = 0;
-    virtual void ProcessEvents() = 0;
+    if (Size.Y == 0.0f)
+    {
+        return 0.0f;
+    }
 
-    virtual bool IsOpen() const = 0;
-
-    f32 AspectRatio() const;
-};
+    return { (f32)Size.X / (f32)Size.Y };
+}
 
 }
 }

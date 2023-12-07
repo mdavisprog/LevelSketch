@@ -25,6 +25,7 @@ set(SOURCE
     Core/Console.cpp
 
     Platform/Platform.cpp
+    Platform/Window.cpp
 
     Render/Renderer.cpp
 

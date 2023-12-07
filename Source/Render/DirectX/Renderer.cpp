@@ -405,13 +405,13 @@ bool Renderer::LoadAssets(Platform::Window* Window)
 
     // Vertex Buffer
     {
-        const float AspectRatio { (float)Window->Size().X / (float)Window->Size().Y };
         const float Vertices[] =
         {
             0.0f, 0.25f * AspectRatio, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
             0.25f, -0.25f * AspectRatio, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
             -0.25f, -0.25f * AspectRatio, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f
         };
+        const float AspectRatio { Window->AspectRatio() };
         const UINT VerticesSize { sizeof(Vertices) };
 
         ResourceDescription.Width = VerticesSize;
