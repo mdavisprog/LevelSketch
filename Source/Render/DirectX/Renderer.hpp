@@ -70,8 +70,10 @@ private:
     Microsoft::WRL::ComPtr<ID3D12PipelineState> m_PipelineState;
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList1> m_CommandList;
     Microsoft::WRL::ComPtr<ID3D12Resource> m_VertexBuffer;
+    Microsoft::WRL::ComPtr<ID3D12Resource> m_IndexBuffer;
     Microsoft::WRL::ComPtr<ID3D12Fence> m_Fence;
     D3D12_VERTEX_BUFFER_VIEW m_VertexBufferView { 0 };
+    D3D12_INDEX_BUFFER_VIEW m_IndexBufferView { 0 };
     UINT m_HeapDescriptorSize { 0 };
     UINT64 m_FenceValue { 0 };
     HANDLE m_FenceEvent { nullptr };

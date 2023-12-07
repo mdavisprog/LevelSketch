@@ -111,7 +111,8 @@ void Renderer::Render(Platform::Window* Window)
     m_CommandList->ClearRenderTargetView(CPUDesc, ClearColor, 0, nullptr);
     m_CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     m_CommandList->IASetVertexBuffers(0, 1, &m_VertexBufferView);
-    m_CommandList->DrawInstanced(3, 1, 0, 0);
+    m_CommandList->IASetIndexBuffer(&m_IndexBufferView);
+    m_CommandList->DrawIndexedInstanced(3, 1, 0, 0, 0);
 
     Barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
     Barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
@@ -382,15 +383,6 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         return false;
     }
 
-    const float AspectRatio { (float)Window->Size().X / (float)Window->Size().Y };
-    const float Vertices[] =
-    {
-        0.0f, 0.25f * AspectRatio, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-        0.25f, -0.25f * AspectRatio, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-        -0.25f, -0.25f * AspectRatio, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f
-    };
-    const UINT VerticesSize { sizeof(Vertices) };
-
     D3D12_HEAP_PROPERTIES HeapProperties { 0 };
     HeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
     HeapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
@@ -398,46 +390,95 @@ bool Renderer::LoadAssets(Platform::Window* Window)
     HeapProperties.CreationNodeMask = 1;
     HeapProperties.VisibleNodeMask = 1;
 
-    D3D12_RESOURCE_DESC ResourceDesc { 0 };
-    ResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-    ResourceDesc.Width = VerticesSize;
-    ResourceDesc.Height = 1;
-    ResourceDesc.DepthOrArraySize = 1;
-    ResourceDesc.MipLevels = 1;
-    ResourceDesc.Format = DXGI_FORMAT_UNKNOWN;
-    ResourceDesc.SampleDesc.Count = 1;
-    ResourceDesc.SampleDesc.Quality = 0;
-    ResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    ResourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+    D3D12_RESOURCE_DESC ResourceDescription { 0 };
+    ResourceDescription.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+    ResourceDescription.Alignment = 0;
+    ResourceDescription.Width = 0;
+    ResourceDescription.Height = 1;
+    ResourceDescription.DepthOrArraySize = 1;
+    ResourceDescription.MipLevels = 1;
+    ResourceDescription.Format = DXGI_FORMAT_UNKNOWN;
+    ResourceDescription.SampleDesc.Count = 1;
+    ResourceDescription.SampleDesc.Quality = 0;
+    ResourceDescription.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    ResourceDescription.Flags = D3D12_RESOURCE_FLAG_NONE;
 
-    // Not an efficient way to upload vertex data. Refer to other DX12 samples
-    // for proper way of doing this.
-    if (m_Device->CreateCommittedResource(
-        &HeapProperties,
-        D3D12_HEAP_FLAG_NONE,
-        &ResourceDesc,
-        D3D12_RESOURCE_STATE_GENERIC_READ,
-        nullptr,
-        IID_PPV_ARGS(&m_VertexBuffer)
-    ) != S_OK)
+    // Vertex Buffer
     {
-        printf("Failed to create committed resource!\n");
-        return false;
+        const float AspectRatio { (float)Window->Size().X / (float)Window->Size().Y };
+        const float Vertices[] =
+        {
+            0.0f, 0.25f * AspectRatio, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+            0.25f, -0.25f * AspectRatio, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+            -0.25f, -0.25f * AspectRatio, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f
+        };
+        const UINT VerticesSize { sizeof(Vertices) };
+
+        ResourceDescription.Width = VerticesSize;
+
+        if (m_Device->CreateCommittedResource(
+            &HeapProperties,
+            D3D12_HEAP_FLAG_NONE,
+            &ResourceDescription,
+            D3D12_RESOURCE_STATE_GENERIC_READ,
+            nullptr,
+            IID_PPV_ARGS(&m_VertexBuffer)
+        ) != S_OK)
+        {
+            printf("Failed to create vertex buffer!\n");
+            return false;
+        }
+
+        UINT8* VertexData { nullptr };
+        D3D12_RANGE Range { 0, 0 };
+        if (m_VertexBuffer->Map(0, &Range, reinterpret_cast<void**>(&VertexData)) != S_OK)
+        {
+            printf("Failed to map vertex buffer!\n");
+            return false;
+        }
+        memcpy(VertexData, Vertices, sizeof(Vertices));
+        m_VertexBuffer->Unmap(0, nullptr);
+
+        m_VertexBufferView.BufferLocation = m_VertexBuffer->GetGPUVirtualAddress();
+        m_VertexBufferView.StrideInBytes = sizeof(float) * 7; // 3 floats for position, 4 floats for color.
+        m_VertexBufferView.SizeInBytes = VerticesSize;
     }
 
-    UINT8* VertexData { nullptr };
-    D3D12_RANGE Range { 0, 0 };
-    if (m_VertexBuffer->Map(0, &Range, reinterpret_cast<void**>(&VertexData)) != S_OK)
+    // Index Buffer
     {
-        printf("Failed to map vertex buffer!\n");
-        return false;
-    }
-    memcpy(VertexData, Vertices, sizeof(Vertices));
-    m_VertexBuffer->Unmap(0, nullptr);
+        const u32 IndexBufferData[] = { 0, 1, 2 };
+        const u32 IndexBufferSize = sizeof(IndexBufferData);
 
-    m_VertexBufferView.BufferLocation = m_VertexBuffer->GetGPUVirtualAddress();
-    m_VertexBufferView.StrideInBytes = sizeof(float) * 7; // 3 floats for position, 4 floats for color.
-    m_VertexBufferView.SizeInBytes = VerticesSize;
+        ResourceDescription.Width = IndexBufferSize;
+
+        if (m_Device->CreateCommittedResource(
+            &HeapProperties,
+            D3D12_HEAP_FLAG_NONE,
+            &ResourceDescription,
+            D3D12_RESOURCE_STATE_GENERIC_READ,
+            nullptr,
+            IID_PPV_ARGS(&m_IndexBuffer)
+        ) != S_OK)
+        {
+            printf("Failed to create index buffer!\n");
+            return false;
+        }
+
+        u8* Data { nullptr };
+        D3D12_RANGE Range { 0, 0 };
+
+        if (m_IndexBuffer->Map(0, &Range, reinterpret_cast<void**>(&Data)) != S_OK)
+        {
+            printf("Failed to map to index buffer!\n");
+            return false;
+        }
+        memcpy(Data, IndexBufferData, IndexBufferSize);
+        m_IndexBuffer->Unmap(0, nullptr);
+
+        m_IndexBufferView.BufferLocation = m_IndexBuffer->GetGPUVirtualAddress();
+        m_IndexBufferView.Format = DXGI_FORMAT_R32_UINT;
+        m_IndexBufferView.SizeInBytes = IndexBufferSize;
+    }
 
     if (m_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence)) != S_OK)
     {
