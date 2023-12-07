@@ -26,6 +26,11 @@ SOFTWARE.
 
 #pragma once
 
+#include "../Types.hpp"
+
+#include <cmath>
+#include <type_traits>
+
 namespace LevelSketch
 {
 namespace Core
@@ -33,18 +38,71 @@ namespace Core
 namespace Math
 {
 
+static const f32 PI { 3.14159265359f };
+static constexpr const f32 DEG2RAD { PI / 180.0f };
+static constexpr const f32 RAD2DEG { 180.0f / PI };
+
 template<typename T>
-T Min(const T& A, const T& B)
+static T Min(const T& A, const T& B)
 {
     return A < B ? A : B;
 }
 
 template<typename T>
-T Max(const T& A, const T& B)
+static T Max(const T& A, const T& B)
 {
     return A > B ? A : B;
+} 
+
+template<typename T>
+static T Sin(T Radians)
+{
+    if constexpr (std::is_same<T, f32>::value)
+    {
+        return std::sinf(Radians);
+    }
+    else if constexpr (std::is_same<T, f64>::value)
+    {
+        return std::sin(Radians);
+    }
+}
+
+template<typename T>
+static T Cos(T Radians)
+{
+    if constexpr (std::is_same<T, f32>::value)
+    {
+        return std::cosf(Radians);
+    }
+    else if constexpr (std::is_same<T, f64>::value)
+    {
+        return std::cos(Radians);
+    }
+}
+
+template<typename T>
+static T FMod(T X, T Y)
+{
+    if constexpr (std::is_same<T, f32>::value)
+    {
+        return std::fmodf(X, Y);
+    }
+    else if constexpr (std::is_same<T, f64>::value)
+    {
+        return std::fmod(X, Y);
+    }
 }
 
 }
 }
+
+static const auto& PI = Core::Math::PI;
+static const auto& DEG2RAD = Core::Math::DEG2RAD;
+static const auto& RAD2DEG = Core::Math::RAD2DEG;
+template<typename T> static const auto& Min = Core::Math::Min<T>;
+template<typename T> static const auto& Max = Core::Math::Max<T>;
+template<typename T> static const auto& Sin = Core::Math::Sin<T>;
+template<typename T> static const auto& Cos = Core::Math::Cos<T>;
+template<typename T> static const auto& FMod = Core::Math::FMod<T>;
+
 }
