@@ -26,6 +26,7 @@ SOFTWARE.
 
 #include "Renderer.hpp"
 #include "../../Core/Math/Vector2.hpp"
+#include "../../Core/Math/Vertex.hpp"
 #include "../../Platform/Window.hpp"
 
 #include <cstdio>
@@ -71,6 +72,8 @@ bool Renderer::Initialize(Platform::Window* Window)
 void Renderer::Shutdown()
 {
 }
+
+static Vertex3 Vertices[3];
 
 void Renderer::Render(Platform::Window* Window)
 {
@@ -405,13 +408,10 @@ bool Renderer::LoadAssets(Platform::Window* Window)
 
     // Vertex Buffer
     {
-        const float Vertices[] =
-        {
-            0.0f, 0.25f * AspectRatio, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-            0.25f, -0.25f * AspectRatio, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-            -0.25f, -0.25f * AspectRatio, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f
-        };
         const float AspectRatio { Window->AspectRatio() };
+        Vertices[0] = { {0.0f, 0.25f * AspectRatio, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f} };
+        Vertices[1] = { {0.25f, -0.25f * AspectRatio, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f} };
+        Vertices[2] = { {-0.25f, -0.25f * AspectRatio, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f} };
         const UINT VerticesSize { sizeof(Vertices) };
 
         ResourceDescription.Width = VerticesSize;
