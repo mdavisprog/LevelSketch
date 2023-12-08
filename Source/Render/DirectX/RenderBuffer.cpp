@@ -54,7 +54,7 @@ bool RenderBuffer::Initialize(ID3D12Device* Device, u64 VertexBufferSize, u64 In
 
     D3D12_HEAP_PROPERTIES HeapProperties { Utility::MakeHeapProperties(D3D12_HEAP_TYPE_UPLOAD) };
     D3D12_RESOURCE_DESC ResourceDescription { Utility::MakeResourceDescription() };
-
+    ResourceDescription.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
     ResourceDescription.Width = VertexBufferSize;
     HRESULT Result = Device->CreateCommittedResource(
         &HeapProperties,
@@ -67,7 +67,7 @@ bool RenderBuffer::Initialize(ID3D12Device* Device, u64 VertexBufferSize, u64 In
 
     if (Result != S_OK)
     {
-        Core::Console::Error("Failed to create committed resource for vertex buffer! Error Code: %d", Result);
+        Core::Console::Error("Failed to create committed resource for vertex buffer! Error Code: 0x%08X", Result);
         return false;
     }
 

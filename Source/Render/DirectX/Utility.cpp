@@ -58,7 +58,7 @@ D3D12_RESOURCE_DESC MakeResourceDescription(D3D12_RESOURCE_DIMENSION Dimension, 
     Result.Format = Format;
     Result.SampleDesc.Count = 1;
     Result.SampleDesc.Quality = 0;
-    Result.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    Result.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
     Result.Flags = D3D12_RESOURCE_FLAG_NONE;
     return Result;
 }
