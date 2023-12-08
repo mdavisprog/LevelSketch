@@ -99,6 +99,11 @@ bool Platform::RunFrame()
     return true;
 }
 
+TimingData Platform::GetTimingData() const
+{
+    return m_TimingData;
+}
+
 Platform& Platform::SetOnFrame(OnFrameSignature&& Fn)
 {
     m_OnFrame = std::move(Fn);

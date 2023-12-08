@@ -60,6 +60,8 @@ public:
     virtual int Run();
     bool RunFrame();
 
+    TimingData GetTimingData() const;
+
     Platform& SetOnFrame(OnFrameSignature&& Fn);
 
     Window* NewWindow(const char* Title, i32 X, i32 Y, i32 Width, i32 Height);
