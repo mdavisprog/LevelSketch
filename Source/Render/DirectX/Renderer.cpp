@@ -132,8 +132,19 @@ void Renderer::Render(Platform::Window* Window)
 
 bool Renderer::LoadPipeline(Platform::Window* Window)
 {
+    u32 FactoryFlags { 0 };
+
+#if defined(_DEBUG)
+    Microsoft::WRL::ComPtr<ID3D12Debug> DebugController;
+    if (D3D12GetDebugInterface(IID_PPV_ARGS(&DebugController)) == S_OK)
+    {
+        DebugController->EnableDebugLayer();
+        FactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
+    }
+#endif
+
     Microsoft::WRL::ComPtr<IDXGIFactory4> Factory;
-    if (CreateDXGIFactory2(0, IID_PPV_ARGS(&Factory)) != S_OK)
+    if (CreateDXGIFactory2(FactoryFlags, IID_PPV_ARGS(&Factory)) != S_OK)
     {
         printf("Failed in CreateDXGIFactor2!\n");
         return false;
@@ -277,6 +288,12 @@ bool Renderer::LoadAssets(Platform::Window* Window)
     Microsoft::WRL::ComPtr<ID3DBlob> VertexShader;
     Microsoft::WRL::ComPtr<ID3DBlob> PixelShader;
 
+    u32 CompileFlags { 0 };
+
+#if defined(_DEBUG)
+    CompileFlags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#endif
+
     const size_t SourceLength { strlen(Source) };
     if (D3DCompile(
         (LPVOID)Source,
@@ -286,7 +303,7 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         nullptr,
         "VSMain",
         "vs_5_0",
-        0,
+        CompileFlags,
         0,
         &VertexShader,
         nullptr
@@ -304,7 +321,7 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         nullptr,
         "PSMain",
         "ps_5_0",
-        0,
+        CompileFlags,
         0,
         &PixelShader,
         nullptr
