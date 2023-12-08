@@ -48,4 +48,8 @@ typedef Vector2<f32> Vector2f;
 
 }
 }
+
+using Vector2 = Core::Math::Vector2f;
+using Vector2i = Core::Math::Vector2i;
+
 }

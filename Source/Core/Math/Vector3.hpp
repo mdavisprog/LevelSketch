@@ -48,9 +48,8 @@ typedef Vector3<f32> Vector3f;
 typedef Vector3<f64> Vector3d; // double
 
 }
-
-// Alias Vector3f. Use 32-bits by default.
-using Vector3 = Math::Vector3f;
-
 }
+
+using Vector3 = Core::Math::Vector3f;
+
 }

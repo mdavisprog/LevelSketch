@@ -49,8 +49,9 @@ typedef Color<u8> Colorb;
 typedef Color<f32> Colorf;
 
 }
-
-using Color = Math::Colorb;
-
 }
+
+using Color = Core::Math::Colorb;
+using Colorf = Core::Math::Colorf;
+
 }

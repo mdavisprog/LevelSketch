@@ -39,41 +39,39 @@ namespace Tests
 namespace Core
 {
 
-namespace Math = LevelSketch::Core::Math;
-
 static bool CommonOps()
 {
-    VERIFY(Math::Min<i32>(3, 5) == 3);
-    VERIFY(Math::Max<i32>(3, 5) == 5);
+    VERIFY(Min<i32>(3, 5) == 3);
+    VERIFY(Max<i32>(3, 5) == 5);
     return true;
 }
 
-static bool Vector2()
+static bool Vector2Ops()
 {
-    Math::Vector2i Vector { 3, 5 };
+    Vector2i Vector { 3, 5 };
     VERIFY(Vector.X == 3);
     VERIFY(Vector.Y == 5);
     return true;
 }
 
-static bool Vector3()
+static bool Vector3Ops()
 {
-    Math::Vector3f Vector { 3.0f, 5.0f, 7.0f };
+    Vector3 Vector { 3.0f, 5.0f, 7.0f };
     VERIFY(Vector.X == 3.0f);
     VERIFY(Vector.Y == 5.0f);
     VERIFY(Vector.Z == 7.0f);
     return true;
 }
 
-static bool Color()
+static bool ColorOps()
 {
-    Math::Colorb Colorb { 255, 0, 0, 255 };
+    Color Colorb { 255, 0, 0, 255 };
     VERIFY(Colorb.R == 255);
     VERIFY(Colorb.G == 0);
     VERIFY(Colorb.B == 0);
     VERIFY(Colorb.A == 255);
 
-    Math::Colorf Colorf { 0.0f, 1.0f, 0.0f, 1.0f };
+    Colorf Colorf { 0.0f, 1.0f, 0.0f, 1.0f };
     VERIFY(Colorf.R == 0.0f);
     VERIFY(Colorf.G == 1.0f);
     VERIFY(Colorf.B == 0.0f);
@@ -86,9 +84,9 @@ Memory::UniquePtr<TestSuite> MathTests()
 {
     return TestSuite::New("Math", {
         TEST_CASE(CommonOps),
-        TEST_CASE(Vector2),
-        TEST_CASE(Vector3),
-        TEST_CASE(Color)
+        TEST_CASE(Vector2Ops),
+        TEST_CASE(Vector3Ops),
+        TEST_CASE(ColorOps)
     });
 }
 
