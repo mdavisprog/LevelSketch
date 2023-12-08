@@ -63,6 +63,23 @@ D3D12_RESOURCE_DESC MakeResourceDescription(D3D12_RESOURCE_DIMENSION Dimension, 
     return Result;
 }
 
+D3D12_RESOURCE_BARRIER MakeResourceBarrierTransition(
+    ID3D12Resource* Resource,
+    D3D12_RESOURCE_STATES Before,
+    D3D12_RESOURCE_STATES After,
+    UINT Subresource,
+    D3D12_RESOURCE_BARRIER_FLAGS Flags)
+{
+    D3D12_RESOURCE_BARRIER Result { 0 };
+    Result.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    Result.Transition.StateBefore = Before;
+    Result.Transition.StateAfter = After;
+    Result.Transition.pResource = Resource;
+    Result.Transition.Subresource = Subresource;
+    Result.Flags = Flags;
+    return Result;
+}
+
 }
 }
 }
