@@ -27,6 +27,7 @@ SOFTWARE.
 #include "RenderBuffer.hpp"
 #include "../../Core/Assert.hpp"
 #include "../../Core/Console.hpp"
+#include "Utility.hpp"
 
 namespace LevelSketch
 {
@@ -51,25 +52,8 @@ bool RenderBuffer::Initialize(ID3D12Device* Device, u64 VertexBufferSize, u64 In
         return false;
     }
 
-    D3D12_HEAP_PROPERTIES HeapProperties { 0 };
-    HeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
-    HeapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-    HeapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-    HeapProperties.CreationNodeMask = 1;
-    HeapProperties.VisibleNodeMask = 1;
-
-    D3D12_RESOURCE_DESC ResourceDescription { 0 };
-    ResourceDescription.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-    ResourceDescription.Alignment = 0;
-    ResourceDescription.Width = 0;
-    ResourceDescription.Height = 1;
-    ResourceDescription.DepthOrArraySize = 1;
-    ResourceDescription.MipLevels = 1;
-    ResourceDescription.Format = DXGI_FORMAT_UNKNOWN;
-    ResourceDescription.SampleDesc.Count = 1;
-    ResourceDescription.SampleDesc.Quality = 0;
-    ResourceDescription.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    ResourceDescription.Flags = D3D12_RESOURCE_FLAG_NONE;
+    D3D12_HEAP_PROPERTIES HeapProperties { Utility::MakeHeapProperties(D3D12_HEAP_TYPE_UPLOAD) };
+    D3D12_RESOURCE_DESC ResourceDescription { Utility::MakeResourceDescription() };
 
     ResourceDescription.Width = VertexBufferSize;
     HRESULT Result = Device->CreateCommittedResource(
