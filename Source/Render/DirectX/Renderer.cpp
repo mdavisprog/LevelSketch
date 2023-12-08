@@ -28,6 +28,7 @@ SOFTWARE.
 #include "../../Core/Math/Vector2.hpp"
 #include "../../Core/Math/Vertex.hpp"
 #include "../../Platform/Window.hpp"
+#include "Utility.hpp"
 
 #include <cstdio>
 
@@ -97,16 +98,14 @@ void Renderer::Render(Platform::Window* Window)
     m_CommandList->RSSetViewports(1, &View);
     m_CommandList->RSSetScissorRects(1, &Scissor);
 
-    D3D12_RESOURCE_BARRIER Barrier;
-    Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    Barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    Barrier.Transition.pResource = m_RenderTargets[m_FrameIndex].Get();
-    Barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-    Barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-    Barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+    D3D12_RESOURCE_BARRIER Barrier { Utility::MakeResourceBarrierTransition(
+        m_RenderTargets[m_FrameIndex].Get(),
+        D3D12_RESOURCE_STATE_PRESENT,
+        D3D12_RESOURCE_STATE_RENDER_TARGET
+    )};
     m_CommandList->ResourceBarrier(1, &Barrier);
 
-    D3D12_CPU_DESCRIPTOR_HANDLE CPUDesc { m_Heap->GetCPUDescriptorHandleForHeapStart() };
+    D3D12_CPU_DESCRIPTOR_HANDLE CPUDesc { m_RTVHeap->GetCPUDescriptorHandleForHeapStart() };
     CPUDesc.ptr = SIZE_T(INT64(CPUDesc.ptr) + INT64(m_FrameIndex) * INT64(m_HeapDescriptorSize));
     m_CommandList->OMSetRenderTargets(1, &CPUDesc, FALSE, nullptr);
 
@@ -209,11 +208,11 @@ bool Renderer::LoadPipeline(Platform::Window* Window)
 
     m_FrameIndex = m_SwapChain->GetCurrentBackBufferIndex();
 
-    D3D12_DESCRIPTOR_HEAP_DESC HeapDescription { 0 };
-    HeapDescription.NumDescriptors = FRAME_COUNT;
-    HeapDescription.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-    HeapDescription.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    if (m_Device->CreateDescriptorHeap(&HeapDescription, IID_PPV_ARGS(&m_Heap)) != S_OK)
+    D3D12_DESCRIPTOR_HEAP_DESC RTVHeapDesc { 0 };
+    RTVHeapDesc.NumDescriptors = FRAME_COUNT;
+    RTVHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+    RTVHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    if (m_Device->CreateDescriptorHeap(&RTVHeapDesc, IID_PPV_ARGS(&m_RTVHeap)) != S_OK)
     {
         printf("Failed to create descriptor heap!\n");
         return false;
@@ -221,7 +220,7 @@ bool Renderer::LoadPipeline(Platform::Window* Window)
 
     m_HeapDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
-    D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle { m_Heap->GetCPUDescriptorHandleForHeapStart() };
+    D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle { m_RTVHeap->GetCPUDescriptorHandleForHeapStart() };
     for (UINT I = 0; I < FRAME_COUNT; ++I)
     {
         if (m_SwapChain->GetBuffer(I, IID_PPV_ARGS(&m_RenderTargets[I])) != S_OK)
