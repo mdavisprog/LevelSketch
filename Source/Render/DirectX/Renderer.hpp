@@ -59,6 +59,7 @@ private:
     bool LoadAssets(Platform::Window* Window);
     IDXGIAdapter1* GetHardwareAdapter(IDXGIFactory1* Factory) const;
     void WaitForPreviousFrame();
+    bool ExecuteCommands();
 
     UINT m_FrameIndex { 0 };
     Microsoft::WRL::ComPtr<ID3D12Device> m_Device;

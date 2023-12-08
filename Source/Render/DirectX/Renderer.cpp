@@ -120,13 +120,7 @@ void Renderer::Render(Platform::Window* Window)
     Barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
     m_CommandList->ResourceBarrier(1, &Barrier);
 
-    if (m_CommandList->Close() != S_OK)
-    {
-        printf("Failed to close command list!\n");
-    }
-
-    ID3D12CommandList* CommandLists[] { m_CommandList.Get() };
-    m_CommandQueue->ExecuteCommandLists(_countof(CommandLists), CommandLists);
+    ExecuteCommands();
 
     if (m_SwapChain->Present(1, 0) != S_OK)
     {
@@ -498,6 +492,20 @@ void Renderer::WaitForPreviousFrame()
     }
 
     m_FrameIndex = m_SwapChain->GetCurrentBackBufferIndex();
+}
+
+bool Renderer::ExecuteCommands()
+{
+    if (m_CommandList->Close() != S_OK)
+    {
+        Core::Console::Warning("Failed to close command list.");
+        return false;
+    }
+
+    ID3D12CommandList* CommandLists[] { m_CommandList.Get() };
+    m_CommandQueue->ExecuteCommandLists(_countof(CommandLists), CommandLists);
+
+    return true;
 }
 
 }
