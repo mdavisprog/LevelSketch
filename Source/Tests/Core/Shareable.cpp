@@ -39,13 +39,10 @@ namespace Core
 namespace Memory
 {
     template<typename T>
-    using Shareable = LevelSketch::Core::Memory::Shareable<T>;
-
-    template<typename T>
     using SharedPtr = LevelSketch::Core::Memory::SharedPtr<T>;
 }
 
-class ShareableObject : private Memory::Shareable<ShareableObject>
+class ShareableObject : private Shareable<ShareableObject>
 {
 public:
     ShareableObject()
@@ -76,7 +73,7 @@ static bool ShareInstance()
     return true;
 }
 
-Memory::UniquePtr<TestSuite> Shareable()
+Memory::UniquePtr<TestSuite> ShareableTests()
 {
     return TestSuite::New("Shareable", {
         TEST_CASE(ShareNull),

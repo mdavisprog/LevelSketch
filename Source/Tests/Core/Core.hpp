@@ -47,7 +47,7 @@ namespace Memory
 
 Memory::UniquePtr<TestSuite> ArrayTests();
 Memory::UniquePtr<TestSuite> MathTests();
-Memory::UniquePtr<TestSuite> Shareable();
+Memory::UniquePtr<TestSuite> ShareableTests();
 Memory::UniquePtr<TestSuite> SharedPtr();
 Memory::UniquePtr<TestSuite> StringTests();
 Memory::UniquePtr<TestSuite> UniquePtr();

@@ -66,4 +66,8 @@ private:
 
 }
 }
+
+template<typename T>
+using Shareable = Core::Memory::Shareable<T>;
+
 }
