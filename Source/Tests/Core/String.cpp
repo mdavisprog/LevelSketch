@@ -36,9 +36,6 @@ namespace Tests
 namespace Core
 {
 
-namespace Containers = LevelSketch::Core::Containers;
-using String = LevelSketch::Core::String;
-
 static bool Empty()
 {
     String Empty {};
@@ -65,11 +62,11 @@ static bool Equality()
 static bool Conversions()
 {
     String Ascii { "Hello" };
-    Containers::WString Wide { Containers::ToWString(Ascii) };
+    WString Wide { LevelSketch::Core::Containers::ToWString(Ascii) };
     VERIFY(Wide == L"Hello");
     VERIFY(Wide.Length() == 5);
 
-    Ascii = Containers::ToString(Wide);
+    Ascii = LevelSketch::Core::Containers::ToString(Wide);
     VERIFY(Ascii == "Hello");
     VERIFY(Ascii.Length() == 5);
     return true;

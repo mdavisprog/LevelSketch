@@ -190,10 +190,9 @@ String ToString(const WString& Value);
 WString ToWString(const String& Value);
 
 }
-
-// Use an alias here so that the String class can be referred to as Core::String
-using String = Containers::String;
-using WString = Containers::WString;
-
 }
+
+using String = Core::Containers::String;
+using WString = Core::Containers::WString;
+
 }

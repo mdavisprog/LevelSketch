@@ -53,10 +53,10 @@ public:
     struct DriverSummary
     {
     public:
-        Core::String Vendor {};
-        Core::String Renderer {};
-        Core::String Version {};
-        Core::String ShadingLanguageVersion {};
+        String Vendor {};
+        String Renderer {};
+        String Version {};
+        String ShadingLanguageVersion {};
     };
 
     static const Core::Memory::UniquePtr<Renderer>& Instance();
