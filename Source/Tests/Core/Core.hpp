@@ -39,19 +39,13 @@ class TestSuite;
 namespace Core
 {
 
-namespace Memory
-{
-    template<typename T>
-    using UniquePtr = LevelSketch::Core::Memory::UniquePtr<T>;
-}
-
-Memory::UniquePtr<TestSuite> ArrayTests();
-Memory::UniquePtr<TestSuite> MathTests();
-Memory::UniquePtr<TestSuite> ShareableTests();
-Memory::UniquePtr<TestSuite> SharedPtr();
-Memory::UniquePtr<TestSuite> StringTests();
-Memory::UniquePtr<TestSuite> UniquePtr();
-Memory::UniquePtr<TestSuite> WeakPtr();
+UniquePtr<TestSuite> ArrayTests();
+UniquePtr<TestSuite> MathTests();
+UniquePtr<TestSuite> ShareableTests();
+UniquePtr<TestSuite> SharedPtrTests();
+UniquePtr<TestSuite> StringTests();
+UniquePtr<TestSuite> UniquePtrTests();
+UniquePtr<TestSuite> WeakPtrTests();
 
 }
 }

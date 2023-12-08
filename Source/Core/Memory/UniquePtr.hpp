@@ -195,5 +195,9 @@ bool operator!=(const UniquePtr<T>& A, nullptr_t)
 
 }
 }
+
+template<typename T>
+using UniquePtr = Core::Memory::UniquePtr<T>;
+
 }
 

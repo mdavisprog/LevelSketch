@@ -48,7 +48,7 @@ class Platform
 public:
     typedef bool (*OnFrameSignature)(const TimingData&);
 
-    static const Core::Memory::UniquePtr<Platform>& Instance();
+    static const UniquePtr<Platform>& Instance();
 
     Platform() {}
     virtual ~Platform() {}
@@ -66,15 +66,15 @@ public:
 
     Window* NewWindow(const char* Title, i32 X, i32 Y, i32 Width, i32 Height);
     Platform& CloseWindow(Window* Window);
-    const Array<Core::Memory::UniquePtr<Window>>& Windows() const;
+    const Array<UniquePtr<Window>>& Windows() const;
 
 protected:
-    virtual Core::Memory::UniquePtr<Window> InternalNewWindow() const = 0;
+    virtual UniquePtr<Window> InternalNewWindow() const = 0;
     virtual void UpdateTimingData(TimingData& Data);
 
 private:
     OnFrameSignature m_OnFrame { nullptr };
-    Array<Core::Memory::UniquePtr<Window>> m_Windows {};
+    Array<UniquePtr<Window>> m_Windows {};
     TimingData m_TimingData {};
 };
 

@@ -51,7 +51,7 @@ i32 System::Run(i32, char**)
     Console::WriteLine("There are (%llu) test suites to run through.\n", m_TestSuites.Size());
 
     bool Success { true };
-    for (LevelSketch::Core::Memory::UniquePtr<TestSuite>& Suite : m_TestSuites)
+    for (UniquePtr<TestSuite>& Suite : m_TestSuites)
     {
         Success &= Suite->Run();
     }
@@ -77,10 +77,10 @@ System::System()
         .Push(Core::ArrayTests())
         .Push(Core::MathTests())
         .Push(Core::ShareableTests())
-        .Push(Core::SharedPtr())
+        .Push(Core::SharedPtrTests())
         .Push(Core::StringTests())
-        .Push(Core::UniquePtr())
-        .Push(Core::WeakPtr());
+        .Push(Core::UniquePtrTests())
+        .Push(Core::WeakPtrTests());
 }
 
 System& System::Shutdown()

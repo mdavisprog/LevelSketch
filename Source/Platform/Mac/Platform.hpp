@@ -47,7 +47,7 @@ public:
     virtual int Run() override;
 
 protected:
-    virtual Core::Memory::UniquePtr<LevelSketch::Platform::Window> InternalNewWindow() const override;
+    virtual UniquePtr<LevelSketch::Platform::Window> InternalNewWindow() const override;
     virtual void UpdateTimingData(TimingData& Data) override;
 
 private:

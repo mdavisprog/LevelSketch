@@ -36,12 +36,6 @@ namespace Tests
 namespace Core
 {
 
-namespace Memory
-{
-    template<typename T>
-    using SharedPtr = LevelSketch::Core::Memory::SharedPtr<T>;
-}
-
 class ShareableObject : private Shareable<ShareableObject>
 {
 public:
@@ -49,7 +43,7 @@ public:
     {
     }
 
-    Memory::SharedPtr<ShareableObject> Clone() const
+    SharedPtr<ShareableObject> Clone() const
     {
         return Share();
     }
@@ -58,22 +52,22 @@ public:
 static bool ShareNull()
 {
     ShareableObject Instance;
-    Memory::SharedPtr<ShareableObject> SharedPtr { Instance.Clone() };
+    SharedPtr<ShareableObject> SharedPtr { Instance.Clone() };
     VERIFY(SharedPtr.IsNull());
     return true;
 }
 
 static bool ShareInstance()
 {
-    Memory::SharedPtr<ShareableObject> Instance { Memory::SharedPtr<ShareableObject>::New() };
+    SharedPtr<ShareableObject> Instance { SharedPtr<ShareableObject>::New() };
     VERIFY(Instance.GetReferenceCount() == 1);
-    Memory::SharedPtr<ShareableObject> Copy { Instance->Clone() };
+    SharedPtr<ShareableObject> Copy { Instance->Clone() };
     VERIFY(!Copy.IsNull());
     VERIFY(Instance.GetReferenceCount() == 2);
     return true;
 }
 
-Memory::UniquePtr<TestSuite> ShareableTests()
+UniquePtr<TestSuite> ShareableTests()
 {
     return TestSuite::New("Shareable", {
         TEST_CASE(ShareNull),

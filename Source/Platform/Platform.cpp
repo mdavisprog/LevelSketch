@@ -45,16 +45,16 @@ namespace LevelSketch
 namespace Platform
 {
 
-const Core::Memory::UniquePtr<Platform>& Platform::Instance()
+const UniquePtr<Platform>& Platform::Instance()
 {
-    static Core::Memory::UniquePtr<Platform> Instance
+    static UniquePtr<Platform> Instance
     {
 #if defined(PLATFORM_WINDOWS)
-        Core::Memory::UniquePtr<Windows::Platform>::New()
+        UniquePtr<Windows::Platform>::New()
 #elif defined(PLATFORM_MAC)
-        Core::Memory::UniquePtr<Mac::Platform>::New()
+        UniquePtr<Mac::Platform>::New()
 #elif defined(PLATFORM_SDL2)
-        Core::Memory::UniquePtr<SDL2::Platform>::New()
+        UniquePtr<SDL2::Platform>::New()
 #endif
     };
 
@@ -112,7 +112,7 @@ Platform& Platform::SetOnFrame(OnFrameSignature&& Fn)
 
 Window* Platform::NewWindow(const char* Title, i32 X, i32 Y, i32 Width, i32 Height)
 {
-    Core::Memory::UniquePtr<Window> Result { InternalNewWindow() };
+    UniquePtr<Window> Result { InternalNewWindow() };
 
     if (Result == nullptr)
     {
@@ -138,7 +138,7 @@ Platform& Platform::CloseWindow(Window* Window)
 
     Window->Close();
     
-    for (const Core::Memory::UniquePtr<LevelSketch::Platform::Window>& Item : m_Windows)
+    for (const UniquePtr<LevelSketch::Platform::Window>& Item : m_Windows)
     {
         if (Item == Window)
         {
@@ -150,7 +150,7 @@ Platform& Platform::CloseWindow(Window* Window)
     return *this;
 }
 
-const Array<Core::Memory::UniquePtr<Window>>& Platform::Windows() const
+const Array<UniquePtr<Window>>& Platform::Windows() const
 {
     return m_Windows;
 }

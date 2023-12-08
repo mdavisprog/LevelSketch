@@ -86,7 +86,7 @@ static bool Reserve()
     return true;
 }
 
-Memory::UniquePtr<TestSuite> StringTests()
+UniquePtr<TestSuite> StringTests()
 {
     return TestSuite::New("String", {
         TEST_CASE(Empty),

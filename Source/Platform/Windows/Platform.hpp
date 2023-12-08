@@ -46,7 +46,7 @@ public:
     virtual const char* Name() const override;
 
 protected:
-    virtual Core::Memory::UniquePtr<LevelSketch::Platform::Window> InternalNewWindow() const override;
+    virtual UniquePtr<LevelSketch::Platform::Window> InternalNewWindow() const override;
     virtual void UpdateTimingData(TimingData& Data) override;
 
 private:

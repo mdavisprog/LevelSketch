@@ -316,7 +316,7 @@ static bool Resize()
     return true;
 }
 
-Memory::UniquePtr<TestSuite> ArrayTests()
+UniquePtr<TestSuite> ArrayTests()
 {
     return TestSuite::New("Array", {
         TEST_CASE(Empty),

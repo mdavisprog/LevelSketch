@@ -65,9 +65,9 @@ const char* Platform::Name() const
     return "SDL2";
 }
 
-Core::Memory::UniquePtr<LevelSketch::Platform::Window> Platform::InternalNewWindow() const
+UniquePtr<LevelSketch::Platform::Window> Platform::InternalNewWindow() const
 {
-    return Core::Memory::UniquePtr<Window>::New();
+    return UniquePtr<Window>::New();
 }
 
 void Platform::UpdateTimingData(TimingData& Data)

@@ -80,7 +80,7 @@ static bool ColorOps()
     return true;
 }
 
-Memory::UniquePtr<TestSuite> MathTests()
+UniquePtr<TestSuite> MathTests()
 {
     return TestSuite::New("Math", {
         TEST_CASE(CommonOps),

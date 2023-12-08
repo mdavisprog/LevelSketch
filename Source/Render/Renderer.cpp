@@ -46,19 +46,19 @@ namespace LevelSketch
 namespace Render
 {
 
-const Core::Memory::UniquePtr<Renderer>& Renderer::Instance()
+const UniquePtr<Renderer>& Renderer::Instance()
 {
-    static Core::Memory::UniquePtr<Renderer> Instance
+    static UniquePtr<Renderer> Instance
     {
 #if defined(RENDER_DIRECTX)
-        Core::Memory::UniquePtr<DirectX::Renderer>::New()
+        UniquePtr<DirectX::Renderer>::New()
 #elif defined(RENDER_METAL)
-        Core::Memory::UniquePtr<Metal::Renderer>::New()
+        UniquePtr<Metal::Renderer>::New()
 #elif defined(RENDER_OPENGL)
     #if defined(PLATFORM_SDL2)
-        Core::Memory::UniquePtr<OpenGL::SDL2Renderer>::New()
+        UniquePtr<OpenGL::SDL2Renderer>::New()
     #else
-        Core::Memory::UniquePtr<OpenGL::Renderer>::New()
+        UniquePtr<OpenGL::Renderer>::New()
     #endif
 #endif
     };

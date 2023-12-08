@@ -27,15 +27,10 @@ SOFTWARE.
 #pragma once
 
 #include "../Core/Containers/String.hpp"
+#include "../Core/Memory/UniquePtr.hpp"
 
 namespace LevelSketch
 {
-
-namespace Core::Memory
-{
-    template<typename T>
-    class UniquePtr;
-}
 
 namespace Platform
 {
@@ -59,7 +54,7 @@ public:
         String ShadingLanguageVersion {};
     };
 
-    static const Core::Memory::UniquePtr<Renderer>& Instance();
+    static const UniquePtr<Renderer>& Instance();
 
     virtual ~Renderer() {}
 

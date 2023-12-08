@@ -308,4 +308,8 @@ static bool operator!=(const SharedPtr<T>& A, nullptr_t)
 
 }
 }
+
+template<typename T>
+using SharedPtr = Core::Memory::SharedPtr<T>;
+
 }

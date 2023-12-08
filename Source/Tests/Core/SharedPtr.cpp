@@ -38,18 +38,6 @@ namespace Tests
 namespace Core
 {
 
-namespace Containers
-{
-    template<typename T>
-    using Array = LevelSketch::Core::Containers::Array<T>;
-}
-
-namespace Memory
-{
-    template<typename T>
-    using SharedPtr = LevelSketch::Core::Memory::SharedPtr<T>;
-}
-
 class Object
 {
 public:
@@ -70,11 +58,11 @@ u32 Object::s_Counter { 0 };
 
 static bool CreateNull()
 {
-    Memory::SharedPtr<Object> Instance1 {};
+    SharedPtr<Object> Instance1 {};
     VERIFY(Instance1.IsNull());
     VERIFY(Instance1.GetReferenceCount() == 0);
 
-    Memory::SharedPtr<Object> Instance2 { nullptr };
+    SharedPtr<Object> Instance2 { nullptr };
     VERIFY(Instance2.IsNull());
     VERIFY(Instance2.GetReferenceCount() == 0);
     return true;
@@ -85,7 +73,7 @@ static bool CreateDestroy()
     Object::s_Counter = 0;
     VERIFY(Object::s_Counter == 0);
     {
-        Memory::SharedPtr<Object> Object_ { Memory::SharedPtr<Object>::New() };
+        SharedPtr<Object> Object_ { SharedPtr<Object>::New() };
         VERIFY(Object::s_Counter == 1);
         VERIFY(Object_.GetReferenceCount() == 1);
     }
@@ -98,11 +86,11 @@ static bool CreateCopy()
     Object::s_Counter = 0;
     VERIFY(Object::s_Counter == 0);
     {
-        Memory::SharedPtr<Object> Object_1 { Memory::SharedPtr<Object>::New() };
+        SharedPtr<Object> Object_1 { SharedPtr<Object>::New() };
         VERIFY(Object::s_Counter == 1);
         VERIFY(Object_1.GetReferenceCount() == 1);
         {
-            Memory::SharedPtr<Object> Object_2 { Object_1 };
+            SharedPtr<Object> Object_2 { Object_1 };
             VERIFY(Object::s_Counter == 1);
             VERIFY(Object_1.GetReferenceCount() == 2);
             VERIFY(Object_2.GetReferenceCount() == 2);
@@ -116,9 +104,9 @@ static bool CreateCopy()
 
 static bool ArrayPtrs()
 {
-    Memory::SharedPtr<int> Value { Memory::SharedPtr<int>::New(1) };
+    SharedPtr<int> Value { SharedPtr<int>::New(1) };
     VERIFY(*Value == 1);
-    Containers::Array<Memory::SharedPtr<int>> Values { Value, Value, Memory::SharedPtr<int>::New(5) };
+    Array<SharedPtr<int>> Values { Value, Value, SharedPtr<int>::New(5) };
     VERIFY(Value.GetReferenceCount() == 3);
     VERIFY(*Values[0] == 1);
     VERIFY(*Values[1] == 1);
@@ -133,10 +121,10 @@ static bool ArrayPtrs()
 
 static bool Move()
 {
-    Memory::SharedPtr<int> Value { Memory::SharedPtr<int>::New(1) };
+    SharedPtr<int> Value { SharedPtr<int>::New(1) };
     VERIFY(*Value == 1);
     VERIFY(Value.GetReferenceCount() == 1);
-    Memory::SharedPtr<int> Moved { std::move(Value) };
+    SharedPtr<int> Moved { std::move(Value) };
     VERIFY(*Moved == 1);
     VERIFY(Moved.GetReferenceCount() == 1);
     VERIFY(Value.IsNull());
@@ -146,8 +134,8 @@ static bool Move()
 
 static bool Equality()
 {
-    Memory::SharedPtr<Object> Value1 { Memory::SharedPtr<Object>::New() };
-    Memory::SharedPtr<Object> Value2 { Value1 };
+    SharedPtr<Object> Value1 { SharedPtr<Object>::New() };
+    SharedPtr<Object> Value2 { Value1 };
     VERIFY(Value1 == Value2);
     VERIFY(Value1 != nullptr);
     Value1 = nullptr;
@@ -162,7 +150,7 @@ static bool Equality()
 
 static bool SelfCopy()
 {
-    Memory::SharedPtr<Object> Value1 { Memory::SharedPtr<Object>::New() };
+    SharedPtr<Object> Value1 { SharedPtr<Object>::New() };
     VERIFY(Value1.GetReferenceCount() == 1);
     Value1 = Value1;
     VERIFY(Value1.GetReferenceCount() == 1);
@@ -175,9 +163,9 @@ static bool SelfCopy()
 
 static bool SetNull()
 {
-    Memory::SharedPtr<Object> Value1;
+    SharedPtr<Object> Value1;
     VERIFY(Value1.GetReferenceCount() == 0);
-    Memory::SharedPtr<Object> Value2 { Memory::SharedPtr<Object>::New() };
+    SharedPtr<Object> Value2 { SharedPtr<Object>::New() };
     VERIFY(Value2.GetReferenceCount() == 1);
     Value1 = Value2;
     VERIFY(Value1.GetReferenceCount() == 2);
@@ -191,13 +179,13 @@ static bool Polymorphism()
 {
     struct Base {};
     struct Derived : public Base {};
-    Memory::SharedPtr<Base> Object { Memory::SharedPtr<Derived>::New() };
+    SharedPtr<Base> Object { SharedPtr<Derived>::New() };
     // No need for any verifies. This test is meant to verify that SharedPtr is set up
     // to allow for base types to store pointers to derived types.
     return true;
 }
 
-Memory::UniquePtr<TestSuite> SharedPtr()
+UniquePtr<TestSuite> SharedPtrTests()
 {
     return TestSuite::New("SharedPtr", {
         TEST_CASE(CreateNull),

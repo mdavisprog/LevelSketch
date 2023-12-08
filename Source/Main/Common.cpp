@@ -153,7 +153,7 @@ bool OnPlatformFrame(const Platform::TimingData&)
 
     g_Application->RunFrame();
 
-    for (const Core::Memory::UniquePtr<Platform::Window>& Window : Platform::Platform::Instance()->Windows())
+    for (const UniquePtr<Platform::Window>& Window : Platform::Platform::Instance()->Windows())
     {
         Render::Renderer::Instance()->Render(Window.Get());
     }
@@ -185,7 +185,7 @@ i32 Main(i32 Argc, char** Argv)
         }
     })";
 
-    const Core::Memory::UniquePtr<Platform::Platform>& Platform { Platform::Platform::Instance() };
+    const UniquePtr<Platform::Platform>& Platform { Platform::Platform::Instance() };
     if (!Platform->Initialize())
     {
         printf("Failed to initialize platform!\n");

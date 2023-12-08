@@ -36,26 +36,20 @@ namespace Tests
 namespace Core
 {
 
-namespace Memory
-{
-    template<typename T>
-    using UniquePtr = LevelSketch::Core::Memory::UniquePtr<T>;
-}
-
 static bool CreateNull()
 {
-    Memory::UniquePtr<int> Instance;
+    UniquePtr<int> Instance;
     VERIFY(Instance == nullptr);
-    Memory::UniquePtr<int> Instance2 { nullptr };
+    UniquePtr<int> Instance2 { nullptr };
     VERIFY(Instance2 == nullptr);
     return true;
 }
 
 static bool CreateInstance()
 {
-    Memory::UniquePtr<int> Instance;
+    UniquePtr<int> Instance;
     VERIFY(!Instance.IsValid());
-    Instance = Memory::UniquePtr<int>::New();
+    Instance = UniquePtr<int>::New();
     VERIFY(Instance.IsValid());
     return true;
 }
@@ -64,14 +58,14 @@ static bool Adopt()
 {
     int* Value = new int(5);
     VERIFY(*Value == 5);
-    Memory::UniquePtr<int> Adopted { Memory::UniquePtr<int>::Adopt(Value) };
+    UniquePtr<int> Adopted { UniquePtr<int>::Adopt(Value) };
     VERIFY(*Adopted == 5);
     return true;
 }
 
 static bool NullAssignment()
 {
-    Memory::UniquePtr<int> Instance { Memory::UniquePtr<int>::New(5) };
+    UniquePtr<int> Instance { UniquePtr<int>::New(5) };
     VERIFY(*Instance == 5);
     Instance = nullptr;
     VERIFY(!Instance.IsValid());
@@ -80,9 +74,9 @@ static bool NullAssignment()
 
 static bool Move()
 {
-    Memory::UniquePtr<int> Instance1 { Memory::UniquePtr<int>::New() };
+    UniquePtr<int> Instance1 { UniquePtr<int>::New() };
     VERIFY(Instance1.IsValid());
-    Memory::UniquePtr<int> Instance2;
+    UniquePtr<int> Instance2;
     VERIFY(!Instance2.IsValid());
     Instance2 = std::move(Instance1);
     VERIFY(!Instance1.IsValid());
@@ -94,7 +88,7 @@ static bool Polymorphism()
 {
     struct Base {};
     struct Derived : public Base {};
-    Core::Memory::UniquePtr<Base> Object = Core::Memory::UniquePtr<Derived>::New();
+    UniquePtr<Base> Object = UniquePtr<Derived>::New();
     // No need for any verifies. This test is meant to verify that UniquePtr is set up
     // to allow for base types to store pointers to derived types.
     return true;
@@ -102,13 +96,13 @@ static bool Polymorphism()
 
 static bool Equality()
 {
-    Memory::UniquePtr<int> A { Memory::UniquePtr<int>::New(5) };
-    Memory::UniquePtr<int> B { Memory::UniquePtr<int>::New(6) };
+    UniquePtr<int> A { UniquePtr<int>::New(5) };
+    UniquePtr<int> B { UniquePtr<int>::New(6) };
     VERIFY(A.IsValid());
     VERIFY(B.IsValid());
     VERIFY(A != B);
     VERIFY(*A != *B);
-    Memory::UniquePtr<int>& C { A };
+    UniquePtr<int>& C { A };
     int* D { B.Get() };
     VERIFY(A == C);
     VERIFY(*A == *C);
@@ -118,7 +112,7 @@ static bool Equality()
     return true;
 }
 
-Memory::UniquePtr<TestSuite> UniquePtr()
+UniquePtr<TestSuite> UniquePtrTests()
 {
     return TestSuite::New("UniquePtr", {
         TEST_CASE(CreateNull),

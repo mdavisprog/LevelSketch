@@ -28,6 +28,7 @@ SOFTWARE.
 
 #include "../Core/Types.hpp"
 #include "../Core/Containers/Array.hpp"
+#include "../Core/Memory/UniquePtr.hpp"
 
 #include <string>
 
@@ -40,12 +41,6 @@ SOFTWARE.
 
 namespace LevelSketch
 {
-
-namespace Core::Memory
-{
-    template<typename T>
-    class UniquePtr;
-}
 
 namespace Tests
 {
@@ -60,7 +55,7 @@ public:
         bool (*OnTestCase)();
     };
 
-    static LevelSketch::Core::Memory::UniquePtr<TestSuite> New(const char* Name, Array<TestCase>&& TestCases);
+    static UniquePtr<TestSuite> New(const char* Name, Array<TestCase>&& TestCases);
 
     TestSuite(const char* Name, Array<TestCase>&& TestCases);
 

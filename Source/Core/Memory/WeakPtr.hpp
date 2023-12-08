@@ -141,4 +141,8 @@ private:
 
 }
 }
+
+template<typename T>
+using WeakPtr = Core::Memory::WeakPtr<T>;
+
 }

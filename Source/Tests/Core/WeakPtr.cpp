@@ -37,15 +37,6 @@ namespace Tests
 namespace Core
 {
 
-namespace Memory
-{
-    template<typename T>
-    using SharedPtr = LevelSketch::Core::Memory::SharedPtr<T>;
-
-    template<typename T>
-    using WeakPtr = LevelSketch::Core::Memory::WeakPtr<T>;
-}
-
 class Object
 {
 public:
@@ -54,7 +45,7 @@ public:
 
 static bool Empty()
 {
-    Memory::WeakPtr<Object> WeakPtr;
+    WeakPtr<Object> WeakPtr;
     VERIFY(!WeakPtr.IsValid());
     VERIFY(WeakPtr.GetReferenceCount() == 0);
     VERIFY(WeakPtr.Lock() == nullptr);
@@ -63,38 +54,38 @@ static bool Empty()
 
 static bool WeakLock()
 {
-    Memory::WeakPtr<Object> WeakPtr;
-    VERIFY(WeakPtr.Lock() == nullptr);
-    Memory::SharedPtr<Object> SharedPtr { Memory::SharedPtr<Object>::New() };
-    WeakPtr = SharedPtr;
-    VERIFY(WeakPtr.IsValid());
-    VERIFY(WeakPtr.GetReferenceCount() == 1);
-    VERIFY(WeakPtr.Lock() != nullptr);
+    WeakPtr<Object> Weak;
+    VERIFY(Weak.Lock() == nullptr);
+    SharedPtr<Object> Shared { SharedPtr<Object>::New() };
+    Weak = Shared;
+    VERIFY(Weak.IsValid());
+    VERIFY(Weak.GetReferenceCount() == 1);
+    VERIFY(Weak.Lock() != nullptr);
     return true;
 }
 
 static bool WeakRefDestroyed()
 {
-    Memory::WeakPtr<Object> WeakPtr;
-    VERIFY(!WeakPtr.IsValid());
+    WeakPtr<Object> Weak;
+    VERIFY(!Weak.IsValid());
     {
-        Memory::SharedPtr<Object> SharedPtr { Memory::SharedPtr<Object>::New() };
-        WeakPtr = SharedPtr;
-        VERIFY(WeakPtr.IsValid());
+        SharedPtr<Object> Shared { SharedPtr<Object>::New() };
+        Weak = Shared;
+        VERIFY(Weak.IsValid());
     }
-    VERIFY(!WeakPtr.IsValid());
+    VERIFY(!Weak.IsValid());
     return true;
 }
 
 static bool WeakCopy()
 {
-    Memory::WeakPtr<Object> WeakPtr1;
+    WeakPtr<Object> WeakPtr1;
     VERIFY(!WeakPtr1.IsValid());
     {
-        Memory::SharedPtr<Object> SharedPtr { Memory::SharedPtr<Object>::New() };
+        SharedPtr<Object> Shared { SharedPtr<Object>::New() };
         VERIFY(!WeakPtr1.IsValid());
         {
-            Memory::WeakPtr<Object> WeakPtr2 { SharedPtr };
+            WeakPtr<Object> WeakPtr2 { Shared };
             VERIFY(WeakPtr2.IsValid());
             WeakPtr1 = WeakPtr2;
             VERIFY(WeakPtr1.IsValid());
@@ -111,12 +102,12 @@ static bool WeakCopy()
 
 static bool SelfCopy()
 {
-    Memory::SharedPtr<Object> SharedPtr { Memory::SharedPtr<Object>::New() };
-    Memory::WeakPtr<Object> WeakPtr { SharedPtr };
-    VERIFY(WeakPtr.IsValid());
-    WeakPtr = WeakPtr;
-    VERIFY(WeakPtr.IsValid());
-    VERIFY(WeakPtr.GetReferenceCount() == 1);
+    SharedPtr<Object> Shared { SharedPtr<Object>::New() };
+    WeakPtr<Object> Weak { Shared };
+    VERIFY(Weak.IsValid());
+    Weak = Weak;
+    VERIFY(Weak.IsValid());
+    VERIFY(Weak.GetReferenceCount() == 1);
     return true;
 }
 
@@ -124,7 +115,7 @@ static bool SelfCopy()
     POP_DISABLE_WARNING
 #endif
 
-Memory::UniquePtr<TestSuite> WeakPtr()
+UniquePtr<TestSuite> WeakPtrTests()
 {
     return TestSuite::New("WeakPtr", {
         TEST_CASE(Empty),
