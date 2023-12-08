@@ -27,8 +27,9 @@ SOFTWARE.
 #pragma once
 
 #include "../Renderer.hpp"
-#include "RenderBuffer.hpp"
 #include "../../Platform/Windows/Common.hpp"
+#include "RenderBuffer.hpp"
+#include "Texture.hpp"
 
 #include <d3d12.h>
 #include <wrl.h>
@@ -67,6 +68,7 @@ private:
     Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_CommandAllocator;
     Microsoft::WRL::ComPtr<IDXGISwapChain3> m_SwapChain;
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_RTVHeap; // Render Target View
+    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_SRVHeap; // Shader Target View
     Microsoft::WRL::ComPtr<ID3D12Resource> m_RenderTargets[FRAME_COUNT];
     Microsoft::WRL::ComPtr<ID3D12RootSignature> m_RootSignature;
     Microsoft::WRL::ComPtr<ID3D12PipelineState> m_PipelineState;
@@ -77,6 +79,7 @@ private:
     HANDLE m_FenceEvent { nullptr };
 
     RenderBuffer m_RenderBuffer {};
+    Texture m_Texture {};
 };
 
 }

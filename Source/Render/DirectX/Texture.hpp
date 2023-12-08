@@ -26,29 +26,38 @@ SOFTWARE.
 
 #pragma once
 
-#include "Color.hpp"
-#include "Vector2.hpp"
-#include "Vector3.hpp"
+#include "../../Core/Types.hpp"
+
+#include <d3d12.h>
+#include <wrl.h>
 
 namespace LevelSketch
 {
-namespace Core
+namespace Render
 {
-namespace Math
+namespace DirectX
 {
 
-template<typename T>
-struct Vertex3
+class Texture
 {
 public:
-    Vector3<T> Position {};
-    Vector2<T> UV {};
-    Colorf Color {};
+    Texture();
+
+    bool Create(ID3D12Device* Device, u32 Width, u32 Height);
+    bool Upload(
+        ID3D12GraphicsCommandList* CommandList,
+        ID3D12DescriptorHeap* Heap,
+        const void* Data,
+        Microsoft::WRL::ComPtr<ID3D12Resource>& UploadResource);
+
+    bool Initialized() const;
+
+private:
+    Microsoft::WRL::ComPtr<ID3D12Resource> m_Texture {};
+    u32 m_Width { 0 };
+    u32 m_Height { 0 };
 };
 
 }
 }
-
-using Vertex3 = Core::Math::Vertex3<f32>;
-
 }

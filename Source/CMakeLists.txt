@@ -49,6 +49,7 @@ if(WIN32)
     
         Render/DirectX/RenderBuffer.cpp
         Render/DirectX/Renderer.cpp
+        Render/DirectX/Texture.cpp
         Render/DirectX/Utility.cpp
     )
 elseif(APPLE)

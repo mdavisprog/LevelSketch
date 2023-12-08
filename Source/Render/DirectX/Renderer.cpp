@@ -25,6 +25,8 @@ SOFTWARE.
 */
 
 #include "Renderer.hpp"
+#include "../../Core/Console.hpp"
+#include "../../Core/Containers/Array.hpp"
 #include "../../Core/Math/Vector2.hpp"
 #include "../../Core/Math/Vertex.hpp"
 #include "../../Platform/Window.hpp"
@@ -38,6 +40,42 @@ namespace Render
 {
 namespace DirectX
 {
+
+static Array<u8> GenerateTexture(u32 Width, u32 Height)
+{
+    const u32 RowPitch { Width * 4 };
+    const u32 CellPitch { RowPitch >> 3 };
+    const u32 CellHeight { Width >> 3 };
+
+    Array<u8> Result;
+    Result.Resize(RowPitch * Height);
+
+    u8* Data = Result.Data();
+    for (u32 I = 0; I < Result.Size(); I += 4)
+    {
+        const u32 X { I % RowPitch };
+        const u32 Y { I / RowPitch };
+        const u32 U { X / CellPitch };
+        const u32 V { Y / CellHeight };
+
+        if (U % 2 == V % 2)
+        {
+            Data[I] = 0x00;
+            Data[I + 1] = 0x00;
+            Data[I + 2] = 0x00;
+            Data[I + 3] = 0xFF;
+        }
+        else
+        {
+            Data[I] = 0xFF;
+            Data[I + 1] = 0xFF;
+            Data[I + 2] = 0xFF;
+            Data[I + 3] = 0xFF;
+        }
+    }
+
+    return Result;
+}
 
 Renderer::Renderer()
     : LevelSketch::Render::Renderer()
@@ -90,11 +128,16 @@ void Renderer::Render(Platform::Window* Window)
         return;
     }
 
+    m_CommandList->SetGraphicsRootSignature(m_RootSignature.Get());
+
+    ID3D12DescriptorHeap* Heaps[] = { m_SRVHeap.Get() };
+    m_CommandList->SetDescriptorHeaps(_countof(Heaps), Heaps);
+    m_CommandList->SetGraphicsRootDescriptorTable(0, m_SRVHeap->GetGPUDescriptorHandleForHeapStart());
+
     const Core::Math::Vector2i Size { Window->Size() };
     D3D12_VIEWPORT View { 0.0f, 0.0f, (FLOAT)Size.X, (FLOAT)Size.Y, 0.0f, 1.0f };
     D3D12_RECT Scissor { 0, 0, (LONG)Size.X, (LONG)Size.Y };
 
-    m_CommandList->SetGraphicsRootSignature(m_RootSignature.Get());
     m_CommandList->RSSetViewports(1, &View);
     m_CommandList->RSSetScissorRects(1, &Scissor);
 
@@ -218,6 +261,16 @@ bool Renderer::LoadPipeline(Platform::Window* Window)
         return false;
     }
 
+    D3D12_DESCRIPTOR_HEAP_DESC SRVHeapDesc { 0 };
+    SRVHeapDesc.NumDescriptors = 1;
+    SRVHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    SRVHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    if (m_Device->CreateDescriptorHeap(&SRVHeapDesc, IID_PPV_ARGS(&m_SRVHeap)) != S_OK)
+    {
+        Core::Console::WriteLine("Failed to create SRV descriptor heap.");
+        return false;
+    }
+
     m_HeapDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
     D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle { m_RTVHeap->GetCPUDescriptorHandleForHeapStart() };
@@ -244,35 +297,83 @@ bool Renderer::LoadPipeline(Platform::Window* Window)
 
 bool Renderer::LoadAssets(Platform::Window* Window)
 {
-    D3D12_ROOT_SIGNATURE_DESC RootSignatureDescription { 0 };
-    RootSignatureDescription.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-
-    Microsoft::WRL::ComPtr<ID3DBlob> Signature;
-    Microsoft::WRL::ComPtr<ID3DBlob> Error;
-    if (D3D12SerializeRootSignature(&RootSignatureDescription, D3D_ROOT_SIGNATURE_VERSION_1, &Signature, &Error) != S_OK)
     {
-        printf("Failed to serialize root signature!\n");
-        return false;
-    }
+        D3D12_FEATURE_DATA_ROOT_SIGNATURE FeatureData { D3D_ROOT_SIGNATURE_VERSION_1_1 };
+        if (m_Device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &FeatureData, sizeof(FeatureData)) != S_OK)
+        {
+            Core::Console::WriteLine("Root signature version 1.1 is not supported.");
+            FeatureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
+        }
 
-    if (m_Device->CreateRootSignature(0, Signature->GetBufferPointer(), Signature->GetBufferSize(), IID_PPV_ARGS(&m_RootSignature)) != S_OK)
-    {
-        printf("Failed to create root signature!\n");
-        return false;
+        D3D12_DESCRIPTOR_RANGE1 DescRange[1];
+        DescRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        DescRange[0].NumDescriptors = 1;
+        DescRange[0].BaseShaderRegister = 0;
+        DescRange[0].RegisterSpace = 0;
+        DescRange[0].Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC;
+        DescRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+        D3D12_ROOT_PARAMETER1 RootParameters[1];
+        RootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        RootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        RootParameters[0].DescriptorTable.NumDescriptorRanges = 1;
+        RootParameters[0].DescriptorTable.pDescriptorRanges = &DescRange[0];
+
+        D3D12_STATIC_SAMPLER_DESC Sampler = { 0 };
+        Sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+        Sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+        Sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+        Sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+        Sampler.MipLODBias = 0;
+        Sampler.MaxAnisotropy = 0;
+        Sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+        Sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+        Sampler.MinLOD = 0.0f;
+        Sampler.MaxLOD = D3D12_FLOAT32_MAX;
+        Sampler.ShaderRegister = 0;
+        Sampler.RegisterSpace = 0;
+        Sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+        D3D12_VERSIONED_ROOT_SIGNATURE_DESC RootSignatureDesc { 0 };
+        RootSignatureDesc.Version = D3D_ROOT_SIGNATURE_VERSION_1_1;
+        RootSignatureDesc.Desc_1_1.NumParameters = _countof(RootParameters);
+        RootSignatureDesc.Desc_1_1.pParameters = RootParameters;
+        RootSignatureDesc.Desc_1_1.NumStaticSamplers = 1;
+        RootSignatureDesc.Desc_1_1.pStaticSamplers = &Sampler;
+        RootSignatureDesc.Desc_1_1.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+
+        Microsoft::WRL::ComPtr<ID3DBlob> Signature;
+        Microsoft::WRL::ComPtr<ID3DBlob> Error;
+        if (D3D12SerializeVersionedRootSignature(&RootSignatureDesc, &Signature, &Error) != S_OK)
+        {
+            printf("Failed to serialize root signature!\n");
+            return false;
+        }
+
+        if (m_Device->CreateRootSignature(0, Signature->GetBufferPointer(), Signature->GetBufferSize(), IID_PPV_ARGS(&m_RootSignature)) != S_OK)
+        {
+            printf("Failed to create root signature!\n");
+            return false;
+        }
     }
 
     const char* Source = R"(
         struct PSInput
         {
             float4 position : SV_POSITION;
+            float2 uv : TEXCOORD;
             float4 color : COLOR;
         };
 
-        PSInput VSMain(float4 position : POSITION, float4 color : COLOR)
+        Texture2D g_Texture : register(t0);
+        SamplerState g_Sampler : register(s0);
+
+        PSInput VSMain(float4 position : POSITION, float2 uv : TEXCOORD, float4 color : COLOR)
         {
             PSInput result;
 
             result.position = position;
+            result.uv = uv;
             result.color = color;
 
             return result;
@@ -280,7 +381,7 @@ bool Renderer::LoadAssets(Platform::Window* Window)
 
         float4 PSMain(PSInput input) : SV_TARGET
         {
-            return input.color;
+            return g_Texture.Sample(g_Sampler, input.uv) * input.color;
         }
     )";
 
@@ -333,7 +434,8 @@ bool Renderer::LoadAssets(Platform::Window* Window)
     const D3D12_INPUT_ELEMENT_DESC InputElements[]
     {
         {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+        {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
     };
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC GraphicsDesc { 0 };
@@ -389,20 +491,14 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         return false;
     }
 
-    if (m_CommandList->Close() != S_OK)
-    {
-        printf("Failed to close command list!\n");
-        return false;
-    }
-
-    m_RenderBuffer.Initialize(m_Device.Get(), 5000, 5000);
+    m_RenderBuffer.Initialize(m_Device.Get(), 1000, 1000);
 
     // Vertex Buffer
     {
         const float AspectRatio { Window->AspectRatio() };
-        Vertices[0] = { {0.0f, 0.25f * AspectRatio, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f} };
-        Vertices[1] = { {0.25f, -0.25f * AspectRatio, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f} };
-        Vertices[2] = { {-0.25f, -0.25f * AspectRatio, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f} };
+        Vertices[0] = { {0.0f, 0.25f * AspectRatio, 0.0f}, {0.5f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f} };
+        Vertices[1] = { {0.25f, -0.25f * AspectRatio, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f} };
+        Vertices[2] = { {-0.25f, -0.25f * AspectRatio, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f} };
 
         m_RenderBuffer
             .SetStride(sizeof(Vertex3))
@@ -417,6 +513,19 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         m_RenderBuffer
             .SetFormat(DXGI_FORMAT_R32_UINT)
             .UploadIndexData(IndexBufferData, IndexBufferSize);
+    }
+
+    // Texture
+    Microsoft::WRL::ComPtr<ID3D12Resource> TextureUpload;
+    {
+        const u32 Width { 256 };
+        const u32 Height { 256 };
+        m_Texture.Create(m_Device.Get(), Width, Height);
+
+        const Array<u8> Data { GenerateTexture(Width, Height) };
+        m_Texture.Upload(m_CommandList.Get(), m_SRVHeap.Get(), Data.Data(), TextureUpload);
+
+        ExecuteCommands();
     }
 
     if (m_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence)) != S_OK)
