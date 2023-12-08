@@ -113,8 +113,7 @@ void Renderer::Render(Platform::Window* Window)
     const float ClearColor[] { 0.0f, 0.2f, 0.4f, 1.0f };
     m_CommandList->ClearRenderTargetView(CPUDesc, ClearColor, 0, nullptr);
     m_CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    m_CommandList->IASetVertexBuffers(0, 1, &m_VertexBufferView);
-    m_CommandList->IASetIndexBuffer(&m_IndexBufferView);
+    m_RenderBuffer.BindViews(m_CommandList.Get());
     m_CommandList->DrawIndexedInstanced(3, 1, 0, 0, 0);
 
     Barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
@@ -386,25 +385,7 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         return false;
     }
 
-    D3D12_HEAP_PROPERTIES HeapProperties { 0 };
-    HeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
-    HeapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-    HeapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-    HeapProperties.CreationNodeMask = 1;
-    HeapProperties.VisibleNodeMask = 1;
-
-    D3D12_RESOURCE_DESC ResourceDescription { 0 };
-    ResourceDescription.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-    ResourceDescription.Alignment = 0;
-    ResourceDescription.Width = 0;
-    ResourceDescription.Height = 1;
-    ResourceDescription.DepthOrArraySize = 1;
-    ResourceDescription.MipLevels = 1;
-    ResourceDescription.Format = DXGI_FORMAT_UNKNOWN;
-    ResourceDescription.SampleDesc.Count = 1;
-    ResourceDescription.SampleDesc.Quality = 0;
-    ResourceDescription.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    ResourceDescription.Flags = D3D12_RESOURCE_FLAG_NONE;
+    m_RenderBuffer.Initialize(m_Device.Get(), 5000, 5000);
 
     // Vertex Buffer
     {
@@ -412,36 +393,10 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         Vertices[0] = { {0.0f, 0.25f * AspectRatio, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f} };
         Vertices[1] = { {0.25f, -0.25f * AspectRatio, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f} };
         Vertices[2] = { {-0.25f, -0.25f * AspectRatio, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f} };
-        const UINT VerticesSize { sizeof(Vertices) };
 
-        ResourceDescription.Width = VerticesSize;
-
-        if (m_Device->CreateCommittedResource(
-            &HeapProperties,
-            D3D12_HEAP_FLAG_NONE,
-            &ResourceDescription,
-            D3D12_RESOURCE_STATE_GENERIC_READ,
-            nullptr,
-            IID_PPV_ARGS(&m_VertexBuffer)
-        ) != S_OK)
-        {
-            printf("Failed to create vertex buffer!\n");
-            return false;
-        }
-
-        UINT8* VertexData { nullptr };
-        D3D12_RANGE Range { 0, 0 };
-        if (m_VertexBuffer->Map(0, &Range, reinterpret_cast<void**>(&VertexData)) != S_OK)
-        {
-            printf("Failed to map vertex buffer!\n");
-            return false;
-        }
-        memcpy(VertexData, Vertices, sizeof(Vertices));
-        m_VertexBuffer->Unmap(0, nullptr);
-
-        m_VertexBufferView.BufferLocation = m_VertexBuffer->GetGPUVirtualAddress();
-        m_VertexBufferView.StrideInBytes = sizeof(float) * 7; // 3 floats for position, 4 floats for color.
-        m_VertexBufferView.SizeInBytes = VerticesSize;
+        m_RenderBuffer
+            .SetStride(sizeof(Vertex3))
+            .UploadVertexData(Vertices, sizeof(Vertices));
     }
 
     // Index Buffer
@@ -449,35 +404,9 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         const u32 IndexBufferData[] = { 0, 1, 2 };
         const u32 IndexBufferSize = sizeof(IndexBufferData);
 
-        ResourceDescription.Width = IndexBufferSize;
-
-        if (m_Device->CreateCommittedResource(
-            &HeapProperties,
-            D3D12_HEAP_FLAG_NONE,
-            &ResourceDescription,
-            D3D12_RESOURCE_STATE_GENERIC_READ,
-            nullptr,
-            IID_PPV_ARGS(&m_IndexBuffer)
-        ) != S_OK)
-        {
-            printf("Failed to create index buffer!\n");
-            return false;
-        }
-
-        u8* Data { nullptr };
-        D3D12_RANGE Range { 0, 0 };
-
-        if (m_IndexBuffer->Map(0, &Range, reinterpret_cast<void**>(&Data)) != S_OK)
-        {
-            printf("Failed to map to index buffer!\n");
-            return false;
-        }
-        memcpy(Data, IndexBufferData, IndexBufferSize);
-        m_IndexBuffer->Unmap(0, nullptr);
-
-        m_IndexBufferView.BufferLocation = m_IndexBuffer->GetGPUVirtualAddress();
-        m_IndexBufferView.Format = DXGI_FORMAT_R32_UINT;
-        m_IndexBufferView.SizeInBytes = IndexBufferSize;
+        m_RenderBuffer
+            .SetFormat(DXGI_FORMAT_R32_UINT)
+            .UploadIndexData(IndexBufferData, IndexBufferSize);
     }
 
     if (m_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence)) != S_OK)
