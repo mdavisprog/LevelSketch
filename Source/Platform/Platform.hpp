@@ -66,7 +66,7 @@ public:
 
     Window* NewWindow(const char* Title, i32 X, i32 Y, i32 Width, i32 Height);
     Platform& CloseWindow(Window* Window);
-    const Core::Containers::Array<Core::Memory::UniquePtr<Window>>& Windows() const;
+    const Array<Core::Memory::UniquePtr<Window>>& Windows() const;
 
 protected:
     virtual Core::Memory::UniquePtr<Window> InternalNewWindow() const = 0;
@@ -74,7 +74,7 @@ protected:
 
 private:
     OnFrameSignature m_OnFrame { nullptr };
-    Core::Containers::Array<Core::Memory::UniquePtr<Window>> m_Windows {};
+    Array<Core::Memory::UniquePtr<Window>> m_Windows {};
     TimingData m_TimingData {};
 };
 

@@ -460,4 +460,8 @@ bool operator!=(const Array<T>& A, const Array<T>& B)
 
 }
 }
+
+template<typename T>
+using Array = Core::Containers::Array<T>;
+
 }

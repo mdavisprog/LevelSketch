@@ -69,7 +69,7 @@ private:
     Console& Write(const char* Format, va_list List);
 
     String m_Buffer {};
-    Containers::Array<Color> m_ForegroundColorStack {};
+    Array<Color> m_ForegroundColorStack {};
 };
 
 }

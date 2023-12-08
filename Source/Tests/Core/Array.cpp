@@ -36,12 +36,6 @@ namespace Tests
 namespace Core
 {
 
-namespace Containers
-{
-    template<typename T>
-    using Array = LevelSketch::Core::Containers::Array<T>;
-}
-
 class ArrayElement
 {
 public:
@@ -64,7 +58,7 @@ public:
 
 static bool Empty()
 {
-    Containers::Array<int> Values;
+    Array<int> Values;
     VERIFY(Values.Capacity() == 0);
     VERIFY(Values.Size() == 0);
     VERIFY(Values.Data() == nullptr);
@@ -73,8 +67,8 @@ static bool Empty()
 
 static bool Copy()
 {
-    Containers::Array<int> Values { 1, 2, 3 };
-    Containers::Array<int> ValuesCopy { Values };
+    Array<int> Values { 1, 2, 3 };
+    Array<int> ValuesCopy { Values };
     VERIFY(Values.Size() == 3);
     VERIFY(Values[0] == 1);
     VERIFY(Values[1] == 2);
@@ -89,12 +83,12 @@ static bool Copy()
 
 static bool Move()
 {
-    Containers::Array<int> Values { 1, 2, 3 };
+    Array<int> Values { 1, 2, 3 };
     VERIFY(Values.Size() == 3);
     VERIFY(Values[0] == 1);
     VERIFY(Values[1] == 2);
     VERIFY(Values[2] == 3);
-    Containers::Array<int> ValuesMove { std::move(Values) };
+    Array<int> ValuesMove { std::move(Values) };
     VERIFY(Values.Capacity() == 0);
     VERIFY(Values.Size() == 0);
     VERIFY(Values.Data() == nullptr);
@@ -107,7 +101,7 @@ static bool Move()
 
 static bool InitializerList()
 {
-    Containers::Array<int> Values { 1, 2, 3 };
+    Array<int> Values { 1, 2, 3 };
     VERIFY(Values.Size() == 3);
     VERIFY(Values[0] == 1);
     VERIFY(Values[1] == 2);
@@ -117,9 +111,9 @@ static bool InitializerList()
 
 static bool AssignCopy()
 {
-    Containers::Array<int> Values { 1, 2, 3 };
+    Array<int> Values { 1, 2, 3 };
     VERIFY(Values.Size() == 3);
-    Containers::Array<int> ValuesCopy;
+    Array<int> ValuesCopy;
     VERIFY(ValuesCopy.Size() == 0);
     ValuesCopy = Values;
     VERIFY(ValuesCopy.Size() == 3 && Values.Size() == 3);
@@ -132,9 +126,9 @@ static bool AssignCopy()
 
 static bool AssignMove()
 {
-    Containers::Array<int> Values { 1, 2, 3 };
+    Array<int> Values { 1, 2, 3 };
     VERIFY(Values.Size() == 3);
-    Containers::Array<int> ValuesMove;
+    Array<int> ValuesMove;
     VERIFY(ValuesMove.Size() == 0);
     ValuesMove = std::move(Values);
     VERIFY(ValuesMove.Size() == 3 && Values.Size() == 0);
@@ -147,7 +141,7 @@ static bool AssignMove()
 
 static bool Subscript()
 {
-    Containers::Array<int> Values { 1, 2, 3 };
+    Array<int> Values { 1, 2, 3 };
     VERIFY(Values.Size() == 3);
     VERIFY(Values[1] == 2);
     Values[1] = 4;
@@ -157,7 +151,7 @@ static bool Subscript()
 
 static bool Push()
 {
-    Containers::Array<int> Values;
+    Array<int> Values;
     Values.Push(1);
     VERIFY(Values.Size() == 1);
     VERIFY(Values[0] == 1);
@@ -166,7 +160,7 @@ static bool Push()
 
 static bool Pop()
 {
-    Containers::Array<int> Values { 1, 2, 3 };
+    Array<int> Values { 1, 2, 3 };
     VERIFY(Values.Size() == 3);
     VERIFY(Values[0] == 1);
     VERIFY(Values[1] == 2);
@@ -188,7 +182,7 @@ static bool Pop()
 
 static bool Clear()
 {
-    Containers::Array<int> Values { 1, 2, 3 };
+    Array<int> Values { 1, 2, 3 };
     VERIFY(Values.Size() == 3);
     VERIFY(Values[0] == 1);
     VERIFY(Values[1] == 2);
@@ -213,7 +207,7 @@ static bool Objects()
         Object& operator=(const Object&) { Constructed++; return *this; }
     };
 
-    Containers::Array<Object> Objects;
+    Array<Object> Objects;
     VERIFY(Constructed == 0);
     Objects.Push({});
     VERIFY(Constructed == 1);
@@ -225,7 +219,7 @@ static bool Objects()
 
 static bool MoveValue()
 {
-    Containers::Array<ArrayElement> Elements {};
+    Array<ArrayElement> Elements {};
     ArrayElement Element1;
     VERIFY(Element1.m_Count == 1);
 
@@ -244,8 +238,8 @@ static bool MoveValue()
 
 static bool Equality()
 {
-    Containers::Array<int> A { 1, 2, 3 };
-    Containers::Array<int> B { 1, 2, 3 };
+    Array<int> A { 1, 2, 3 };
+    Array<int> B { 1, 2, 3 };
     VERIFY(A == B);
     B.Pop();
     VERIFY(A != B);
@@ -255,7 +249,7 @@ static bool Equality()
 static bool ElementDtor()
 {
     static u32 s_Counter { 0 };
-    static Containers::Array<u32> s_Deleted {};
+    static Array<u32> s_Deleted {};
 
     class Object
     {
@@ -273,7 +267,7 @@ static bool ElementDtor()
         }
     };
 
-    Containers::Array<Object> Objects { {}, {} };
+    Array<Object> Objects { {}, {} };
     VERIFY(Objects[0].m_Counter == 1);
     VERIFY(Objects[1].m_Counter == 2);
 
@@ -286,7 +280,7 @@ static bool ElementDtor()
 
 static bool RemoveItem()
 {
-    Containers::Array<int> Values { 100, 200, 300 };
+    Array<int> Values { 100, 200, 300 };
     Values.Remove(200);
     VERIFY(Values.Size() == 2);
     VERIFY(Values[0] == 100);
@@ -296,7 +290,7 @@ static bool RemoveItem()
 
 static bool RemoveRange()
 {
-    Containers::Array<int> Values { 1, 2, 3, 4, 5, 6, 7, 8 };
+    Array<int> Values { 1, 2, 3, 4, 5, 6, 7, 8 };
     VERIFY(Values.Size() == 8);
     Values.RemoveRange(3, 3);
     VERIFY(Values.Size() == 5);
@@ -310,7 +304,7 @@ static bool RemoveRange()
 
 static bool Resize()
 {
-    Containers::Array<int> Values { 1, 2, 3, 4, 5 };
+    Array<int> Values { 1, 2, 3, 4, 5 };
     VERIFY(Values.Size() == 5);
     Values.Resize(3);
     VERIFY(Values.Size() == 3);
@@ -322,7 +316,7 @@ static bool Resize()
     return true;
 }
 
-Memory::UniquePtr<TestSuite> Array()
+Memory::UniquePtr<TestSuite> ArrayTests()
 {
     return TestSuite::New("Array", {
         TEST_CASE(Empty),

@@ -60,9 +60,9 @@ public:
         bool (*OnTestCase)();
     };
 
-    static LevelSketch::Core::Memory::UniquePtr<TestSuite> New(const char* Name, LevelSketch::Core::Containers::Array<TestCase>&& TestCases);
+    static LevelSketch::Core::Memory::UniquePtr<TestSuite> New(const char* Name, Array<TestCase>&& TestCases);
 
-    TestSuite(const char* Name, LevelSketch::Core::Containers::Array<TestCase>&& TestCases);
+    TestSuite(const char* Name, Array<TestCase>&& TestCases);
 
     bool Run();
 
@@ -71,7 +71,7 @@ public:
 
 private:
     std::string m_Name {};
-    LevelSketch::Core::Containers::Array<TestCase> m_TestCases {};
+    Array<TestCase> m_TestCases {};
 };
 
 }

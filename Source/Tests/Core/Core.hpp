@@ -45,7 +45,7 @@ namespace Memory
     using UniquePtr = LevelSketch::Core::Memory::UniquePtr<T>;
 }
 
-Memory::UniquePtr<TestSuite> Array();
+Memory::UniquePtr<TestSuite> ArrayTests();
 Memory::UniquePtr<TestSuite> MathTests();
 Memory::UniquePtr<TestSuite> Shareable();
 Memory::UniquePtr<TestSuite> SharedPtr();

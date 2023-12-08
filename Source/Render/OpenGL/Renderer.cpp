@@ -150,7 +150,7 @@ bool Renderer::CompileShader(u32 Shader) const
         GLint Length;
         glGetShaderiv(Shader, GL_INFO_LOG_LENGTH, &Length);
 
-        Core::Containers::Array<GLchar> Buffer;
+        Array<GLchar> Buffer;
         Buffer.Resize(Length);
 
         GLsizei Size;
@@ -179,7 +179,7 @@ bool Renderer::LinkProgram(u32 Program) const
         GLint Length;
         glGetProgramiv(Program, GL_INFO_LOG_LENGTH, &Length);
 
-        Core::Containers::Array<GLchar> Buffer;
+        Array<GLchar> Buffer;
         Buffer.Resize(Length);
 
         GLsizei Size;

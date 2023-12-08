@@ -74,7 +74,7 @@ i32 System::Run(i32, char**)
 System::System()
 {
     m_TestSuites
-        .Push(Core::Array())
+        .Push(Core::ArrayTests())
         .Push(Core::MathTests())
         .Push(Core::Shareable())
         .Push(Core::SharedPtr())

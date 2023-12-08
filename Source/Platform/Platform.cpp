@@ -150,7 +150,7 @@ Platform& Platform::CloseWindow(Window* Window)
     return *this;
 }
 
-const Core::Containers::Array<Core::Memory::UniquePtr<Window>>& Platform::Windows() const
+const Array<Core::Memory::UniquePtr<Window>>& Platform::Windows() const
 {
     return m_Windows;
 }

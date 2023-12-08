@@ -48,7 +48,7 @@ private:
 
     System& Shutdown();
 
-    LevelSketch::Core::Containers::Array<LevelSketch::Core::Memory::UniquePtr<TestSuite>> m_TestSuites {};
+    Array<LevelSketch::Core::Memory::UniquePtr<TestSuite>> m_TestSuites {};
 };
 
 }
