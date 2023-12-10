@@ -62,6 +62,7 @@ public:
     virtual bool Initialize(Platform::Window* Window) = 0;
     virtual void Shutdown() = 0;
     virtual void Render(Platform::Window* Window) = 0;
+    virtual u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel = 4);
 
     bool Initialized() const;
     const DriverSummary& Summary() const;

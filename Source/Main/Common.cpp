@@ -139,9 +139,9 @@ OctaneGUI::Event OnEvent(OctaneGUI::Window* Window)
     return { OctaneGUI::Event::Type::None };
 }
 
-u32 OnLoadTexture(const std::vector<u8>&, u32, u32)
+u32 OnLoadTexture(const std::vector<u8>& Data, u32 Width, u32 Height)
 {
-    return 1;
+    return Render::Renderer::Instance()->LoadTexture(Data.data(), Width, Height);
 }
 
 bool OnPlatformFrame(const Platform::TimingData&)
