@@ -29,7 +29,6 @@ SOFTWARE.
 #include "../Types.hpp"
 
 #include <cmath>
-#include <type_traits>
 
 namespace LevelSketch
 {
@@ -38,7 +37,7 @@ namespace Core
 namespace Math
 {
 
-static const f32 PI { 3.14159265359f };
+static constexpr const f32 PI { 3.14159265359f };
 static constexpr const f32 DEG2RAD { PI / 180.0f };
 static constexpr const f32 RAD2DEG { 180.0f / PI };
 
@@ -57,40 +56,19 @@ static T Max(const T& A, const T& B)
 template<typename T>
 static T Sin(T Radians)
 {
-    if constexpr (std::is_same<T, f32>::value)
-    {
-        return std::sinf(Radians);
-    }
-    else if constexpr (std::is_same<T, f64>::value)
-    {
-        return std::sin(Radians);
-    }
+    return std::sin(Radians);
 }
 
 template<typename T>
 static T Cos(T Radians)
 {
-    if constexpr (std::is_same<T, f32>::value)
-    {
-        return std::cosf(Radians);
-    }
-    else if constexpr (std::is_same<T, f64>::value)
-    {
-        return std::cos(Radians);
-    }
+    return std::cos(Radians);
 }
 
 template<typename T>
 static T FMod(T X, T Y)
 {
-    if constexpr (std::is_same<T, f32>::value)
-    {
-        return std::fmodf(X, Y);
-    }
-    else if constexpr (std::is_same<T, f64>::value)
-    {
-        return std::fmod(X, Y);
-    }
+    return std::fmod(X, Y);
 }
 
 }
