@@ -47,15 +47,22 @@ public:
     bool Upload(
         ID3D12GraphicsCommandList* CommandList,
         ID3D12DescriptorHeap* Heap,
+        u64 Offset,
         const void* Data,
         Microsoft::WRL::ComPtr<ID3D12Resource>& UploadResource);
 
     bool Initialized() const;
+    u32 ID() const;
+    u64 Offset() const;
 
 private:
+    static u32 s_ID;
+
     Microsoft::WRL::ComPtr<ID3D12Resource> m_Texture {};
     u32 m_Width { 0 };
     u32 m_Height { 0 };
+    u32 m_ID { 0 };
+    u64 m_Offset { 0 };
 };
 
 }

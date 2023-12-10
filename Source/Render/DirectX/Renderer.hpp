@@ -27,6 +27,7 @@ SOFTWARE.
 #pragma once
 
 #include "../Renderer.hpp"
+#include "../../Core/Containers/Array.hpp"
 #include "../../Platform/Windows/Common.hpp"
 #include "RenderBuffer.hpp"
 #include "Texture.hpp"
@@ -44,6 +45,7 @@ namespace DirectX
 {
 
 #define FRAME_COUNT 2
+#define MAX_DESCRIPTORS 1000
 
 class Renderer : public LevelSketch::Render::Renderer
 {
@@ -54,6 +56,7 @@ public:
     virtual bool Initialize(Platform::Window* Window) override;
     virtual void Shutdown() override;
     virtual void Render(Platform::Window* Window) override;
+    virtual u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel = 4) override;
 
 private:
     bool LoadPipeline(Platform::Window* Window);
@@ -61,6 +64,7 @@ private:
     IDXGIAdapter1* GetHardwareAdapter(IDXGIFactory1* Factory) const;
     void WaitForPreviousFrame();
     bool ExecuteCommands();
+    bool ResetCommands();
 
     UINT m_FrameIndex { 0 };
     Microsoft::WRL::ComPtr<ID3D12Device> m_Device;
@@ -75,11 +79,12 @@ private:
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList1> m_CommandList;
     Microsoft::WRL::ComPtr<ID3D12Fence> m_Fence;
     UINT m_HeapDescriptorSize { 0 };
+    UINT m_SRVHeapDescriptorSize { 0 };
     UINT64 m_FenceValue { 0 };
     HANDLE m_FenceEvent { nullptr };
 
     RenderBuffer m_RenderBuffer {};
-    Texture m_Texture {};
+    Array<Texture> m_Textures {};
 };
 
 }

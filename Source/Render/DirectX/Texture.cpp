@@ -36,6 +36,8 @@ namespace Render
 namespace DirectX
 {
 
+u32 Texture::s_ID { 0 };
+
 Texture::Texture()
 {
 }
@@ -77,6 +79,7 @@ bool Texture::Create(ID3D12Device* Device, u32 Width, u32 Height)
 bool Texture::Upload(
     ID3D12GraphicsCommandList* CommandList,
     ID3D12DescriptorHeap* Heap,
+    u64 Offset,
     const void* Data,
     Microsoft::WRL::ComPtr<ID3D12Resource>& UploadResource)
 {
@@ -157,9 +160,15 @@ bool Texture::Upload(
     ShaderViewDesc.Format = TextureDesc.Format;
     ShaderViewDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
     ShaderViewDesc.Texture2D.MipLevels = 1;
-    Device->CreateShaderResourceView(m_Texture.Get(), &ShaderViewDesc, Heap->GetCPUDescriptorHandleForHeapStart());
+
+    D3D12_CPU_DESCRIPTOR_HANDLE CPUDescriptor { Heap->GetCPUDescriptorHandleForHeapStart() };
+    CPUDescriptor.ptr += Offset;
+    Device->CreateShaderResourceView(m_Texture.Get(), &ShaderViewDesc, CPUDescriptor);
 
     Device->Release();
+
+    m_ID = ++s_ID;
+    m_Offset = Offset;
 
     return true;
 }
@@ -167,6 +176,16 @@ bool Texture::Upload(
 bool Texture::Initialized() const
 {
     return m_Texture != nullptr;
+}
+
+u32 Texture::ID() const
+{
+    return m_ID;
+}
+
+u64 Texture::Offset() const
+{
+    return m_Offset;
 }
 
 }

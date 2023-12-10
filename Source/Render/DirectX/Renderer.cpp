@@ -116,15 +116,8 @@ static Vertex3 Vertices[3];
 
 void Renderer::Render(Platform::Window* Window)
 {
-    if (m_CommandAllocator->Reset() != S_OK)
+    if (!ResetCommands())
     {
-        printf("Failed to reset command allocator!\n");
-        return;
-    }
-
-    if (m_CommandList->Reset(m_CommandAllocator.Get(), m_PipelineState.Get()) != S_OK)
-    {
-        printf("Failed to reset command list!\n");
         return;
     }
 
@@ -132,6 +125,7 @@ void Renderer::Render(Platform::Window* Window)
 
     ID3D12DescriptorHeap* Heaps[] = { m_SRVHeap.Get() };
     m_CommandList->SetDescriptorHeaps(_countof(Heaps), Heaps);
+    // TODO: Apply an offset to select a specific resource.
     m_CommandList->SetGraphicsRootDescriptorTable(0, m_SRVHeap->GetGPUDescriptorHandleForHeapStart());
 
     const Core::Math::Vector2i Size { Window->Size() };
@@ -170,6 +164,34 @@ void Renderer::Render(Platform::Window* Window)
     }
 
     WaitForPreviousFrame();
+}
+
+u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8)
+{
+    if (!ResetCommands())
+    {
+        Core::Console::Warning("Failed to load texture! Command list could not be reset.");
+        return 0;
+    }
+
+    Texture Tex;
+    if (!Tex.Create(m_Device.Get(), Width, Height))
+    {
+        return 0;
+    }
+
+    Microsoft::WRL::ComPtr<ID3D12Resource> UploadResource;
+    if (!Tex.Upload(m_CommandList.Get(), m_SRVHeap.Get(), m_Textures.Size() * m_SRVHeapDescriptorSize, Data, UploadResource))
+    {
+        return 0;
+    }
+
+    ExecuteCommands();
+    WaitForPreviousFrame();
+
+    m_Textures.Push(Tex);
+
+    return Tex.ID();
 }
 
 bool Renderer::LoadPipeline(Platform::Window* Window)
@@ -262,7 +284,7 @@ bool Renderer::LoadPipeline(Platform::Window* Window)
     }
 
     D3D12_DESCRIPTOR_HEAP_DESC SRVHeapDesc { 0 };
-    SRVHeapDesc.NumDescriptors = 1;
+    SRVHeapDesc.NumDescriptors = MAX_DESCRIPTORS;
     SRVHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     SRVHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
     if (m_Device->CreateDescriptorHeap(&SRVHeapDesc, IID_PPV_ARGS(&m_SRVHeap)) != S_OK)
@@ -272,6 +294,7 @@ bool Renderer::LoadPipeline(Platform::Window* Window)
     }
 
     m_HeapDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    m_SRVHeapDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle { m_RTVHeap->GetCPUDescriptorHandleForHeapStart() };
     for (UINT I = 0; I < FRAME_COUNT; ++I)
@@ -491,6 +514,20 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         return false;
     }
 
+    if (m_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence)) != S_OK)
+    {
+        printf("Failed to create fence!\n");
+        return false;
+    }
+    m_FenceValue = 1;
+
+    m_FenceEvent = CreateEventW(nullptr, FALSE, FALSE, nullptr);
+    if (m_FenceEvent == nullptr)
+    {
+        printf("Failed to create fence event!\n");
+        return false;
+    }
+
     m_RenderBuffer.Initialize(m_Device.Get(), 1000, 1000);
 
     // Vertex Buffer
@@ -515,31 +552,17 @@ bool Renderer::LoadAssets(Platform::Window* Window)
             .UploadIndexData(IndexBufferData, IndexBufferSize);
     }
 
+    // Upload Vertex/Index buffers. The Load texture function will reset the command list.
+    // Want to avoid resetting the command list while there are queued commands.
+    ExecuteCommands();
+    WaitForPreviousFrame();
+
     // Texture
-    Microsoft::WRL::ComPtr<ID3D12Resource> TextureUpload;
     {
         const u32 Width { 256 };
         const u32 Height { 256 };
-        m_Texture.Create(m_Device.Get(), Width, Height);
-
         const Array<u8> Data { GenerateTexture(Width, Height) };
-        m_Texture.Upload(m_CommandList.Get(), m_SRVHeap.Get(), Data.Data(), TextureUpload);
-
-        ExecuteCommands();
-    }
-
-    if (m_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence)) != S_OK)
-    {
-        printf("Failed to create fence!\n");
-        return false;
-    }
-    m_FenceValue = 1;
-
-    m_FenceEvent = CreateEventW(nullptr, FALSE, FALSE, nullptr);
-    if (m_FenceEvent == nullptr)
-    {
-        printf("Failed to create fence event!\n");
-        return false;
+        LoadTexture(Data.Data(), Width, Height, 4);
     }
 
     WaitForPreviousFrame();
@@ -629,6 +652,23 @@ bool Renderer::ExecuteCommands()
 
     ID3D12CommandList* CommandLists[] { m_CommandList.Get() };
     m_CommandQueue->ExecuteCommandLists(_countof(CommandLists), CommandLists);
+
+    return true;
+}
+
+bool Renderer::ResetCommands()
+{
+    if (m_CommandAllocator->Reset() != S_OK)
+    {
+        Core::Console::Warning("Failed to reset command allocator!");
+        return false;
+    }
+
+    if (m_CommandList->Reset(m_CommandAllocator.Get(), m_PipelineState.Get()) != S_OK)
+    {
+        Core::Console::Warning("Failed to reset command list!");
+        return false;
+    }
 
     return true;
 }
