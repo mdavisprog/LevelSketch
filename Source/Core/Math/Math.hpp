@@ -52,11 +52,6 @@ static f32 Absf(f32 Value)
     return Value < 0.0f ? Value * -1.0f : Value;
 }
 
-MAYBE_UNUSED static bool IsNearlyEqual(f32 A, f32 B, f32 Precision = 1e-5)
-{
-    return Absf(A - B) <= Precision;
-}
-
 template<typename T>
 static T Min(const T& A, const T& B)
 {
