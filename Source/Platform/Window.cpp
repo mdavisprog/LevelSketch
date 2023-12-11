@@ -41,7 +41,7 @@ f32 Window::AspectRatio() const
         return 0.0f;
     }
 
-    return { (f32)Size.X / (f32)Size.Y };
+    return (f32)Size.X / (f32)Size.Y;
 }
 
 }
