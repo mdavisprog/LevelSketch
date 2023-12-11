@@ -34,6 +34,10 @@ SOFTWARE.
     #ifndef MSVC
     #define MSVC
     #endif
+#elif __GNUC__ || __GNUG__
+    #ifndef GCC
+    #define GCC
+    #endif
 #endif
 
 #ifndef PRAGMA_STRINGIFY
@@ -52,4 +56,10 @@ SOFTWARE.
 #else
     #define PUSH_DISABLE_WARNING(Warning)
     #define POP_DISABLE_WARNING
+#endif
+
+#if defined(GCC)
+    #define MAYBE_UNUSED [[gnu::unused]]
+#else
+    #define MAYBE_UNUSED
 #endif
