@@ -26,6 +26,7 @@ SOFTWARE.
 
 #pragma once
 
+#include "../Compiler.hpp"
 #include "../Types.hpp"
 
 #include <cmath>
@@ -40,6 +41,21 @@ namespace Math
 static constexpr const f32 PI { 3.14159265359f };
 static constexpr const f32 DEG2RAD { PI / 180.0f };
 static constexpr const f32 RAD2DEG { 180.0f / PI };
+
+static i32 Abs(i32 Value)
+{
+    return Value < 0 ? Value * -1 : Value;
+}
+
+static f32 Absf(f32 Value)
+{
+    return Value < 0.0f ? Value * -1.0f : Value;
+}
+
+MAYBE_UNUSED static bool IsNearlyEqual(f32 A, f32 B, f32 Precision = 1e-5)
+{
+    return Absf(A - B) <= Precision;
+}
 
 template<typename T>
 static T Min(const T& A, const T& B)
@@ -77,6 +93,8 @@ static T FMod(T X, T Y)
 static const auto& PI = Core::Math::PI;
 static const auto& DEG2RAD = Core::Math::DEG2RAD;
 static const auto& RAD2DEG = Core::Math::RAD2DEG;
+static const auto& Abs = Core::Math::Abs;
+static const auto& Absf = Core::Math::Absf;
 template<typename T> static const auto& Min = Core::Math::Min<T>;
 template<typename T> static const auto& Max = Core::Math::Max<T>;
 template<typename T> static const auto& Sin = Core::Math::Sin<T>;
