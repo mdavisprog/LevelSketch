@@ -447,46 +447,11 @@ bool Renderer::LoadAssets(Platform::Window* Window)
     }
     PixelShader = ShaderObject.Blob();
 
-    D3D12_GRAPHICS_PIPELINE_STATE_DESC GraphicsDesc { 0 };
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC GraphicsDesc { Utility::MakeDefaultGraphicsPipelineState() };
     GraphicsDesc.InputLayout = { ShaderObject.InputElements(), ShaderObject.NumInputElements() };
     GraphicsDesc.pRootSignature = m_RootSignature.Get();
     GraphicsDesc.VS = { VertexShader->GetBufferPointer(), VertexShader->GetBufferSize() };
     GraphicsDesc.PS = { PixelShader->GetBufferPointer(), PixelShader->GetBufferSize() };
-    GraphicsDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-    GraphicsDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-    GraphicsDesc.RasterizerState.FrontCounterClockwise = FALSE;
-    GraphicsDesc.RasterizerState.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
-    GraphicsDesc.RasterizerState.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
-    GraphicsDesc.RasterizerState.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
-    GraphicsDesc.RasterizerState.DepthClipEnable = TRUE;
-    GraphicsDesc.RasterizerState.MultisampleEnable = FALSE;
-    GraphicsDesc.RasterizerState.AntialiasedLineEnable = FALSE;
-    GraphicsDesc.RasterizerState.ForcedSampleCount = 0;
-    GraphicsDesc.RasterizerState.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
-    GraphicsDesc.BlendState.AlphaToCoverageEnable = FALSE;
-    GraphicsDesc.BlendState.IndependentBlendEnable = FALSE;
-
-    for (UINT I = 0; I < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; ++I)
-    {
-        GraphicsDesc.BlendState.RenderTarget[I].BlendEnable = FALSE;
-        GraphicsDesc.BlendState.RenderTarget[I].LogicOpEnable = FALSE;
-        GraphicsDesc.BlendState.RenderTarget[I].SrcBlend = D3D12_BLEND_ONE;
-        GraphicsDesc.BlendState.RenderTarget[I].DestBlend = D3D12_BLEND_ZERO;
-        GraphicsDesc.BlendState.RenderTarget[I].BlendOp = D3D12_BLEND_OP_ADD;
-        GraphicsDesc.BlendState.RenderTarget[I].SrcBlendAlpha = D3D12_BLEND_ONE;
-        GraphicsDesc.BlendState.RenderTarget[I].DestBlendAlpha = D3D12_BLEND_ZERO;
-        GraphicsDesc.BlendState.RenderTarget[I].BlendOpAlpha = D3D12_BLEND_OP_ADD;
-        GraphicsDesc.BlendState.RenderTarget[I].LogicOp = D3D12_LOGIC_OP_NOOP;
-        GraphicsDesc.BlendState.RenderTarget[I].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-    }
-
-    GraphicsDesc.DepthStencilState.DepthEnable = FALSE;
-    GraphicsDesc.DepthStencilState.StencilEnable = FALSE;
-    GraphicsDesc.SampleMask = UINT_MAX;
-    GraphicsDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-    GraphicsDesc.NumRenderTargets = 1;
-    GraphicsDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-    GraphicsDesc.SampleDesc.Count = 1;
 
     if (m_Device->CreateGraphicsPipelineState(&GraphicsDesc, IID_PPV_ARGS(&m_PipelineState)) != S_OK)
     {

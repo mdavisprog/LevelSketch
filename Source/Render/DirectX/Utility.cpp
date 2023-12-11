@@ -80,6 +80,48 @@ D3D12_RESOURCE_BARRIER MakeResourceBarrierTransition(
     return Result;
 }
 
+D3D12_GRAPHICS_PIPELINE_STATE_DESC MakeDefaultGraphicsPipelineState()
+{
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC Result { 0 };
+    Result.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
+    Result.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
+    Result.RasterizerState.FrontCounterClockwise = FALSE;
+    Result.RasterizerState.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
+    Result.RasterizerState.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
+    Result.RasterizerState.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
+    Result.RasterizerState.DepthClipEnable = TRUE;
+    Result.RasterizerState.MultisampleEnable = FALSE;
+    Result.RasterizerState.AntialiasedLineEnable = FALSE;
+    Result.RasterizerState.ForcedSampleCount = 0;
+    Result.RasterizerState.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+    Result.BlendState.AlphaToCoverageEnable = FALSE;
+    Result.BlendState.IndependentBlendEnable = FALSE;
+
+    for (UINT I = 0; I < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; ++I)
+    {
+        Result.BlendState.RenderTarget[I].BlendEnable = FALSE;
+        Result.BlendState.RenderTarget[I].LogicOpEnable = FALSE;
+        Result.BlendState.RenderTarget[I].SrcBlend = D3D12_BLEND_ONE;
+        Result.BlendState.RenderTarget[I].DestBlend = D3D12_BLEND_ZERO;
+        Result.BlendState.RenderTarget[I].BlendOp = D3D12_BLEND_OP_ADD;
+        Result.BlendState.RenderTarget[I].SrcBlendAlpha = D3D12_BLEND_ONE;
+        Result.BlendState.RenderTarget[I].DestBlendAlpha = D3D12_BLEND_ZERO;
+        Result.BlendState.RenderTarget[I].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+        Result.BlendState.RenderTarget[I].LogicOp = D3D12_LOGIC_OP_NOOP;
+        Result.BlendState.RenderTarget[I].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+    }
+
+    Result.DepthStencilState.DepthEnable = FALSE;
+    Result.DepthStencilState.StencilEnable = FALSE;
+    Result.SampleMask = UINT_MAX;
+    Result.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    Result.NumRenderTargets = 1;
+    Result.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+    Result.SampleDesc.Count = 1;
+
+    return Result;
+}
+
 }
 }
 }
