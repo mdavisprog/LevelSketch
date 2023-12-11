@@ -41,8 +41,15 @@ namespace Core
 
 static bool CommonOps()
 {
+    VERIFY(Abs(-5) == 5);
+    VERIFY(Absf(1.0f) == 1.0f);
     VERIFY(Min<i32>(3, 5) == 3);
     VERIFY(Max<i32>(3, 5) == 5);
+
+    constexpr const f32 Angle { 90.0f * DEG2RAD };
+    VERIFY(Sin<f32>(Angle) == 1.0f);
+    VERIFY(LevelSketch::Core::Math::IsNearlyEqual(Cos<f32>(Angle), 0.0f));
+    VERIFY(FMod<f32>(4.0f, 4.0f) == 0.0f);
     return true;
 }
 
