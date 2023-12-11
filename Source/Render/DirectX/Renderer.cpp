@@ -30,6 +30,7 @@ SOFTWARE.
 #include "../../Core/Math/Vector2.hpp"
 #include "../../Core/Math/Vertex.hpp"
 #include "../../Platform/Window.hpp"
+#include "Shader.hpp"
 #include "Utility.hpp"
 
 #include <cstdio>
@@ -417,52 +418,37 @@ bool Renderer::LoadAssets(Platform::Window* Window)
     CompileFlags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
 
-    const size_t SourceLength { strlen(Source) };
-    if (D3DCompile(
-        (LPVOID)Source,
-        SourceLength,
-        "Default",
-        nullptr,
-        nullptr,
-        "VSMain",
-        "vs_5_0",
-        CompileFlags,
-        0,
-        &VertexShader,
-        nullptr
-    ) != S_OK)
+    Shader ShaderObject;
+    bool CompileResult = ShaderObject
+        .SetSource(Source)
+        .SetName("Default")
+        .SetEntryPoint("VSMain")
+        .SetTarget("vs_5_0")
+        .SetCompileFlags(CompileFlags)
+        .AddInputElement({"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0})
+        .AddInputElement({"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0})
+        .AddInputElement({"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0})
+        .Compile();
+    if (!CompileResult)
     {
-        printf("Failed to compile vertex shader!\n");
+        Core::Console::Warning("Failed to compile vertex shader:\n%s", (LPCSTR)ShaderObject.Errors()->GetBufferPointer());
         return false;
     }
+    VertexShader = ShaderObject.Blob();
 
-    if (D3DCompile(
-        (LPVOID)Source,
-        SourceLength,
-        "Default",
-        nullptr,
-        nullptr,
-        "PSMain",
-        "ps_5_0",
-        CompileFlags,
-        0,
-        &PixelShader,
-        nullptr
-    ) != S_OK)
+    CompileResult = ShaderObject
+        .SetEntryPoint("PSMain")
+        .SetTarget("ps_5_0")
+        .Compile();
+    if (!CompileResult)
     {
-        printf("Failed to compile pixel shader!\n");
+        Core::Console::Warning("Failed to compile pixel shader:\n%s", (LPCSTR)ShaderObject.Errors()->GetBufferPointer());
         return false;
     }
-
-    const D3D12_INPUT_ELEMENT_DESC InputElements[]
-    {
-        {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-    };
+    PixelShader = ShaderObject.Blob();
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC GraphicsDesc { 0 };
-    GraphicsDesc.InputLayout = { InputElements, _countof(InputElements) };
+    GraphicsDesc.InputLayout = { ShaderObject.InputElements(), ShaderObject.NumInputElements() };
     GraphicsDesc.pRootSignature = m_RootSignature.Get();
     GraphicsDesc.VS = { VertexShader->GetBufferPointer(), VertexShader->GetBufferSize() };
     GraphicsDesc.PS = { PixelShader->GetBufferPointer(), PixelShader->GetBufferSize() };
