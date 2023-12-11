@@ -46,7 +46,7 @@ if(WIN32)
         Platform/Windows/Events.cpp
         Platform/Windows/Platform.cpp
         Platform/Windows/Window.cpp
-    
+
         Render/DirectX/RenderBuffer.cpp
         Render/DirectX/Renderer.cpp
         Render/DirectX/Shader.cpp
@@ -162,6 +162,13 @@ target_link_libraries(
 #
 
 set(DEFINES "")
+
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+    set(DEFINES
+        ${DEFINES}
+        DEBUG
+    )
+endif()
 
 if(WIN32)
     set(DEFINES
