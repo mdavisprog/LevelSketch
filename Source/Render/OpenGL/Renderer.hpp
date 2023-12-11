@@ -44,6 +44,7 @@ public:
     virtual bool Initialize(Platform::Window* Window) override;
     virtual void Shutdown() override;
     virtual void Render(Platform::Window* Window) override;
+    virtual u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel = 4) override;
 
 private:
     bool CompileShaders();
