@@ -24,6 +24,11 @@ SOFTWARE.
 
 */
 
+// Need to include before including any Windows headers.
+#if defined(DEBUG)
+    #include "InfoQueue.hpp"
+#endif
+
 #include "Renderer.hpp"
 #include "../../Core/Console.hpp"
 #include "../../Core/Containers/Array.hpp"
@@ -165,6 +170,10 @@ void Renderer::Render(Platform::Window* Window)
     }
 
     WaitForPreviousFrame();
+
+#if defined(DEBUG)
+    InfoQueue::Poll();
+#endif
 }
 
 u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8)
@@ -199,7 +208,7 @@ bool Renderer::LoadPipeline(Platform::Window* Window)
 {
     u32 FactoryFlags { 0 };
 
-#if defined(_DEBUG)
+#if defined(DEBUG)
     Microsoft::WRL::ComPtr<ID3D12Debug> DebugController;
     if (D3D12GetDebugInterface(IID_PPV_ARGS(&DebugController)) == S_OK)
     {
@@ -221,6 +230,10 @@ bool Renderer::LoadPipeline(Platform::Window* Window)
         printf("Failed in D3D12CreateDevice!\n");
         return false;
     }
+
+#if defined(DEBUG)
+    InfoQueue::Initialize(m_Device.Get());
+#endif
 
     DXGI_ADAPTER_DESC1 Description;
     Adapter->GetDesc1(&Description);

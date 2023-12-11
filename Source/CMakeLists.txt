@@ -53,6 +53,14 @@ if(WIN32)
         Render/DirectX/Texture.cpp
         Render/DirectX/Utility.cpp
     )
+
+    if(CMAKE_BUILD_TYPE MATCHES Debug)
+        set(SOURCE
+            ${SOURCE}
+            Render/DirectX/InfoQueue.cpp
+        )
+    endif()
+
 elseif(APPLE)
     set(SOURCE
         ${SOURCE}
