@@ -75,6 +75,12 @@ Shader& Shader::AddInputElement(D3D12_INPUT_ELEMENT_DESC Description)
     return *this;
 }
 
+Shader& Shader::ClearInputElements()
+{
+    m_InputElements.Clear();
+    return *this;
+}
+
 bool Shader::Compile()
 {
     m_Blob = nullptr;

@@ -50,6 +50,7 @@ public:
     Shader& SetCompileFlags(u32 CompileFlags);
 
     Shader& AddInputElement(D3D12_INPUT_ELEMENT_DESC Description);
+    Shader& ClearInputElements();
     D3D12_INPUT_ELEMENT_DESC* InputElements() { return m_InputElements.Data(); }
     u32 NumInputElements() const { return static_cast<u32>(m_InputElements.Size()); }
 
