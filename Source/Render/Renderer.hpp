@@ -29,6 +29,12 @@ SOFTWARE.
 #include "../Core/Containers/String.hpp"
 #include "../Core/Memory/UniquePtr.hpp"
 
+namespace OctaneGUI
+{
+    class VertexBuffer;
+    class Window;
+}
+
 namespace LevelSketch
 {
 
@@ -63,6 +69,7 @@ public:
     virtual void Shutdown() = 0;
     virtual void Render(Platform::Window* Window) = 0;
     virtual u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel = 4);
+    virtual void UploadGUIData(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer);
 
     bool Initialized() const;
     const DriverSummary& Summary() const;

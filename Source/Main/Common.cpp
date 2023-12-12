@@ -144,6 +144,11 @@ u32 OnLoadTexture(const std::vector<u8>& Data, u32 Width, u32 Height)
     return Render::Renderer::Instance()->LoadTexture(Data.data(), Width, Height);
 }
 
+void OnPaint(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer)
+{
+    Render::Renderer::Instance()->UploadGUIData(Window, Buffer);
+}
+
 bool OnPlatformFrame(const Platform::TimingData&)
 {
     if (!g_Application->IsRunning())
@@ -202,7 +207,8 @@ i32 Main(i32 Argc, char** Argv)
     g_Application
         ->SetOnWindowAction(OnWindowAction)
         .SetOnEvent(OnEvent)
-        .SetOnLoadTexture(OnLoadTexture);
+        .SetOnLoadTexture(OnLoadTexture)
+        .SetOnPaint(OnPaint);
 
     std::unordered_map<std::string, OctaneGUI::ControlList> List;
     bool Success = g_Application
