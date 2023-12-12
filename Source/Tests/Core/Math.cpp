@@ -27,6 +27,7 @@ SOFTWARE.
 #include "Core.hpp"
 #include "../../Core/Math/Color.hpp"
 #include "../../Core/Math/Math.hpp"
+#include "../../Core/Math/Matrix.hpp"
 #include "../../Core/Math/Vector2.hpp"
 #include "../../Core/Math/Vector3.hpp"
 #include "../TestSuite.hpp"
@@ -92,13 +93,34 @@ static bool ColorOps()
     return true;
 }
 
+static bool MatrixOps()
+{
+    Matrix4f Instance {};
+    for (i32 I = 0; I < 16; I++)
+    {
+        VERIFY(Instance[I] == 0.0f);
+    }
+
+    const Matrix4f Identity {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
+
+    Instance = Matrix4f::Identity;
+    VERIFY(Instance == Identity);
+    return true;
+}
+
 UniquePtr<TestSuite> MathTests()
 {
     return TestSuite::New("Math", {
         TEST_CASE(CommonOps),
         TEST_CASE(Vector2Ops),
         TEST_CASE(Vector3Ops),
-        TEST_CASE(ColorOps)
+        TEST_CASE(ColorOps),
+        TEST_CASE(MatrixOps)
     });
 }
 
