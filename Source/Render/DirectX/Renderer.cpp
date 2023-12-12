@@ -25,6 +25,8 @@ SOFTWARE.
 */
 
 // Need to include before including any Windows headers.
+#include "../../External/OctaneGUI/OctaneGUI.h"
+
 #if defined(DEBUG)
     #include "InfoQueue.hpp"
 #endif
@@ -132,7 +134,9 @@ void Renderer::Render(Platform::Window* Window)
     ID3D12DescriptorHeap* Heaps[] = { m_SRVHeap.Get() };
     m_CommandList->SetDescriptorHeaps(_countof(Heaps), Heaps);
     // TODO: Apply an offset to select a specific resource.
-    m_CommandList->SetGraphicsRootDescriptorTable(0, m_SRVHeap->GetGPUDescriptorHandleForHeapStart());
+    D3D12_GPU_DESCRIPTOR_HANDLE GPUDesc { m_SRVHeap->GetGPUDescriptorHandleForHeapStart() };
+    GPUDesc.ptr += GetTextureOffset(m_DefaultTexture);
+    m_CommandList->SetGraphicsRootDescriptorTable(0, GPUDesc);
 
     const Core::Math::Vector2i Size { Window->Size() };
     D3D12_VIEWPORT View { 0.0f, 0.0f, (FLOAT)Size.X, (FLOAT)Size.Y, 0.0f, 1.0f };
@@ -153,10 +157,43 @@ void Renderer::Render(Platform::Window* Window)
     m_CommandList->OMSetRenderTargets(1, &CPUDesc, FALSE, nullptr);
 
     const float ClearColor[] { 0.0f, 0.2f, 0.4f, 1.0f };
+    m_CommandList->SetPipelineState(m_PipelineState.Get());
     m_CommandList->ClearRenderTargetView(CPUDesc, ClearColor, 0, nullptr);
     m_CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     m_RenderBuffer.BindViews(m_CommandList.Get());
     m_CommandList->DrawIndexedInstanced(3, 1, 0, 0, 0);
+
+    // Begin GUI rendering
+    m_CommandList->SetPipelineState(m_PipelineStateGUI.Get());
+    m_CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    m_RenderBufferGUI.BindViews(m_CommandList.Get());
+
+    for (const OctaneGUI::DrawCommand& Command : m_GUICommands)
+    {
+        GPUDesc = m_SRVHeap->GetGPUDescriptorHandleForHeapStart();
+
+        if (Command.TextureID() == 0)
+        {
+            GPUDesc.ptr += GetTextureOffset(m_WhiteTexture);
+        }
+        else
+        {
+            GPUDesc.ptr += GetTextureOffset(Command.TextureID());
+        }
+
+        D3D12_RECT Clip { Scissor };
+        if (!Command.Clip().IsZero())
+        {
+            Clip.left = static_cast<LONG>(Command.Clip().Min.X);
+            Clip.top = static_cast<LONG>(Command.Clip().Min.Y);
+            Clip.right = static_cast<LONG>(Command.Clip().Max.X);
+            Clip.bottom = static_cast<LONG>(Command.Clip().Max.Y);
+        };
+
+        m_CommandList->RSSetScissorRects(1, &Clip);
+        m_CommandList->SetGraphicsRootDescriptorTable(0, GPUDesc);
+        m_CommandList->DrawIndexedInstanced(Command.IndexCount(), 1, Command.IndexOffset(), Command.VertexOffset(), 0);
+    }
 
     Barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
     Barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
@@ -202,6 +239,34 @@ u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8)
     m_Textures.Push(Tex);
 
     return Tex.ID();
+}
+
+void Renderer::UploadGUIData(OctaneGUI::Window*, const OctaneGUI::VertexBuffer& Buffer)
+{
+    if (!m_RenderBufferGUI.Initialized())
+    {
+        return;
+    }
+
+    if (!ResetCommands())
+    {
+        return;
+    }
+
+    m_RenderBufferGUI.UploadVertexData(Buffer.GetVertices().data(), static_cast<u64>(Buffer.GetVertexCount()) * sizeof(OctaneGUI::Vertex));
+    m_RenderBufferGUI.UploadIndexData(Buffer.GetIndices().data(), static_cast<u64>(Buffer.GetIndexCount()) * sizeof(u32));
+
+    ExecuteCommands();
+    WaitForPreviousFrame();
+
+    m_GUICommands
+        .Clear()
+        .Reserve(Buffer.Commands().size());
+
+    for (const OctaneGUI::DrawCommand& Command : Buffer.Commands())
+    {
+        m_GUICommands.Push(Command);
+    }
 }
 
 bool Renderer::LoadPipeline(Platform::Window* Window)
@@ -468,7 +533,21 @@ bool Renderer::LoadAssets(Platform::Window* Window)
 
     if (m_Device->CreateGraphicsPipelineState(&GraphicsDesc, IID_PPV_ARGS(&m_PipelineState)) != S_OK)
     {
-        printf("Failed to create graphics pipeline state!\n");
+        Core::Console::WriteLine("Failed to create default graphics pipeline state!");
+        return false;
+    }
+
+    // Begin creation of GUI pipeline state.
+    ShaderObject
+        .ClearInputElements()
+        .AddInputElement({"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0})
+        .AddInputElement({"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0})
+        .AddInputElement({"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UINT, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0});
+    GraphicsDesc.InputLayout = { ShaderObject.InputElements(), ShaderObject.NumInputElements() };
+
+    if (m_Device->CreateGraphicsPipelineState(&GraphicsDesc, IID_PPV_ARGS(&m_PipelineStateGUI)) != S_OK)
+    {
+        Core::Console::WriteLine("Failed to create GUI graphics pipeline state!");
         return false;
     }
 
@@ -516,6 +595,11 @@ bool Renderer::LoadAssets(Platform::Window* Window)
             .UploadIndexData(IndexBufferData, IndexBufferSize);
     }
 
+    m_RenderBufferGUI.Initialize(m_Device.Get(), 100000, 100000);
+    m_RenderBufferGUI
+        .SetStride(sizeof(OctaneGUI::Vertex))
+        .SetFormat(DXGI_FORMAT_R32_UINT);
+
     // Upload Vertex/Index buffers. The Load texture function will reset the command list.
     // Want to avoid resetting the command list while there are queued commands.
     ExecuteCommands();
@@ -523,10 +607,13 @@ bool Renderer::LoadAssets(Platform::Window* Window)
 
     // Texture
     {
+        const u8 WhiteTexture[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
+        m_WhiteTexture = LoadTexture(WhiteTexture, 1, 1);
+
         const u32 Width { 256 };
         const u32 Height { 256 };
         const Array<u8> Data { GenerateTexture(Width, Height) };
-        LoadTexture(Data.Data(), Width, Height, 4);
+        m_DefaultTexture = LoadTexture(Data.Data(), Width, Height, 4);
     }
 
     WaitForPreviousFrame();
@@ -635,6 +722,19 @@ bool Renderer::ResetCommands()
     }
 
     return true;
+}
+
+u64 Renderer::GetTextureOffset(u32 ID) const
+{
+    for (const Texture& Tex : m_Textures)
+    {
+        if (Tex.ID() == ID)
+        {
+            return Tex.Offset();
+        }
+    }
+
+    return 0;
 }
 
 }

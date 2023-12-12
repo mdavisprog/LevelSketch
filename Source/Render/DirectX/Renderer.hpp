@@ -28,6 +28,7 @@ SOFTWARE.
 
 #include "../Renderer.hpp"
 #include "../../Core/Containers/Array.hpp"
+#include "../../External/OctaneGUI/DrawCommand.h"
 #include "../../Platform/Windows/Common.hpp"
 #include "RenderBuffer.hpp"
 #include "Texture.hpp"
@@ -57,6 +58,7 @@ public:
     virtual void Shutdown() override;
     virtual void Render(Platform::Window* Window) override;
     virtual u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel = 4) override;
+    virtual void UploadGUIData(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer) override;
 
 private:
     bool LoadPipeline(Platform::Window* Window);
@@ -65,6 +67,7 @@ private:
     void WaitForPreviousFrame();
     bool ExecuteCommands();
     bool ResetCommands();
+    u64 GetTextureOffset(u32 ID) const;
 
     UINT m_FrameIndex { 0 };
     Microsoft::WRL::ComPtr<ID3D12Device> m_Device;
@@ -76,6 +79,7 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource> m_RenderTargets[FRAME_COUNT];
     Microsoft::WRL::ComPtr<ID3D12RootSignature> m_RootSignature;
     Microsoft::WRL::ComPtr<ID3D12PipelineState> m_PipelineState;
+    Microsoft::WRL::ComPtr<ID3D12PipelineState> m_PipelineStateGUI;
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList1> m_CommandList;
     Microsoft::WRL::ComPtr<ID3D12Fence> m_Fence;
     UINT m_HeapDescriptorSize { 0 };
@@ -84,7 +88,12 @@ private:
     HANDLE m_FenceEvent { nullptr };
 
     RenderBuffer m_RenderBuffer {};
+    RenderBuffer m_RenderBufferGUI {};
     Array<Texture> m_Textures {};
+    Array<OctaneGUI::DrawCommand> m_GUICommands {};
+
+    u32 m_WhiteTexture { 0 };
+    u32 m_DefaultTexture { 0 };
 };
 
 }
