@@ -58,7 +58,7 @@ public:
 
     Matrix4(const std::initializer_list<T>& List)
     {
-        for (i32 I = 0; I < List.size(); I++)
+        for (std::size_t I = 0; I < List.size(); I++)
         {
             Data[I] = *(List.begin() + I);
         }
@@ -99,17 +99,21 @@ public:
     }
 };
 
-typedef Matrix4<f32> Matrix4f;
 
-Matrix4f Matrix4f::Identity
+template<typename T>
+Matrix4<T> Matrix4<T>::Identity
 {
-    1.0f, 0.0f, 0.0f, 0.0f,
-    0.0f, 1.0f, 0.0f, 0.0f,
-    0.0f, 0.0f, 1.0f, 0.0f,
-    0.0f, 0.0f, 0.0f, 1.0f
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1
 };
 
-Matrix4f Matrix4f::Zero { 0 };
+template<typename T>
+Matrix4<T> Matrix4<T>::Zero { 0 };
+
+typedef Matrix4<f32> Matrix4f;
+
 }
 }
 
