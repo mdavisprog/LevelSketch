@@ -77,15 +77,34 @@ void Renderer::Shutdown()
         glDeleteProgram(m_Program);
         m_Program = 0;
     }
+
+    if (!m_Textures.IsEmpty())
+    {
+        glDeleteTextures(static_cast<GLsizei>(m_Textures.Size()), m_Textures.Data());
+        m_Textures.Clear();
+    }
 }
 
 void Renderer::Render(Platform::Window*)
 {
 }
 
-u32 Renderer::LoadTexture(const void*, u32, u32, u8)
+u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8)
 {
-    return 1;
+    u32 Texture { 0 };
+    GLint Current { 0 };
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &Current);
+
+    glGenTextures(1, &Texture);
+    glBindTexture(GL_TEXTURE_2D, Texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Width, Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, Data);
+
+    glBindTexture(GL_TEXTURE_2D, Current);
+    m_Textures.Push(Texture);
+
+    return Texture;
 }
 
 bool Renderer::CompileShaders()

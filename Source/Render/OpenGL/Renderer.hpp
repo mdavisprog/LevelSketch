@@ -27,6 +27,7 @@ SOFTWARE.
 #pragma once
 
 #include "../Renderer.hpp"
+#include "../../Core/Containers/Array.hpp"
 
 namespace LevelSketch
 {
@@ -52,6 +53,7 @@ private:
     bool LinkProgram(u32 Program) const;
 
     u32 m_Program { 0 };
+    Array<u32> m_Textures { 0 };
 };
 
 }
