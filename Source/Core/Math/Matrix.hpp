@@ -37,11 +37,13 @@ namespace Core
 namespace Math
 {
 
+// ROW-MAJOR
 template<typename T>
 struct Matrix4
 {
 public:
     static Matrix4<T> Identity;
+    static Matrix4<T> Zero;
 
     T Data[16];
 
@@ -84,6 +86,17 @@ public:
 
         return true;
     }
+
+    Matrix4<T> Transpose() const
+    {
+        return
+        {
+            Data[0], Data[4], Data[8], Data[12],
+            Data[1], Data[5], Data[9], Data[13],
+            Data[2], Data[6], Data[10], Data[14],
+            Data[3], Data[7], Data[11], Data[15]
+        };
+    }
 };
 
 typedef Matrix4<f32> Matrix4f;
@@ -96,6 +109,7 @@ Matrix4f Matrix4f::Identity
     0.0f, 0.0f, 0.0f, 1.0f
 };
 
+Matrix4f Matrix4f::Zero { 0 };
 }
 }
 

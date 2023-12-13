@@ -77,6 +77,12 @@ static T Cos(T Radians)
 }
 
 template<typename T>
+static T Tan(T Num)
+{
+    return std::tan(Num);
+}
+
+template<typename T>
 static T FMod(T X, T Y)
 {
     return std::fmod(X, Y);
@@ -94,6 +100,7 @@ template<typename T> static const auto& Min = Core::Math::Min<T>;
 template<typename T> static const auto& Max = Core::Math::Max<T>;
 template<typename T> static const auto& Sin = Core::Math::Sin<T>;
 template<typename T> static const auto& Cos = Core::Math::Cos<T>;
+template<typename T> static const auto& Tan = Core::Math::Tan<T>;
 template<typename T> static const auto& FMod = Core::Math::FMod<T>;
 
 }
