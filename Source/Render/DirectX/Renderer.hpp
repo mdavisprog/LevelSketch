@@ -76,12 +76,14 @@ private:
     Microsoft::WRL::ComPtr<IDXGISwapChain3> m_SwapChain;
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_RTVHeap; // Render Target View
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_SRVHeap; // Shader Target View
+    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_DSVHeap; // Depth Stencil View
     Microsoft::WRL::ComPtr<ID3D12Resource> m_RenderTargets[FRAME_COUNT];
     Microsoft::WRL::ComPtr<ID3D12RootSignature> m_RootSignature;
     Microsoft::WRL::ComPtr<ID3D12PipelineState> m_PipelineState;
     Microsoft::WRL::ComPtr<ID3D12PipelineState> m_PipelineStateGUI;
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList1> m_CommandList;
     Microsoft::WRL::ComPtr<ID3D12Fence> m_Fence;
+    Microsoft::WRL::ComPtr<ID3D12Resource> m_DepthStencil;
     UINT m_HeapDescriptorSize { 0 };
     UINT m_SRVHeapDescriptorSize { 0 };
     UINT64 m_FenceValue { 0 };

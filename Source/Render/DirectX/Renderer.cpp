@@ -152,13 +152,18 @@ void Renderer::Render(Platform::Window* Window)
     )};
     m_CommandList->ResourceBarrier(1, &Barrier);
 
-    D3D12_CPU_DESCRIPTOR_HANDLE CPUDesc { m_RTVHeap->GetCPUDescriptorHandleForHeapStart() };
-    CPUDesc.ptr = SIZE_T(INT64(CPUDesc.ptr) + INT64(m_FrameIndex) * INT64(m_HeapDescriptorSize));
-    m_CommandList->OMSetRenderTargets(1, &CPUDesc, FALSE, nullptr);
+    D3D12_CPU_DESCRIPTOR_HANDLE RTVCPUDesc { m_RTVHeap->GetCPUDescriptorHandleForHeapStart() };
+    D3D12_CPU_DESCRIPTOR_HANDLE DSVCPUDesc { m_DSVHeap->GetCPUDescriptorHandleForHeapStart() };
+    RTVCPUDesc.ptr = SIZE_T(INT64(RTVCPUDesc.ptr) + INT64(m_FrameIndex) * INT64(m_HeapDescriptorSize));
+    m_CommandList->OMSetRenderTargets(1, &RTVCPUDesc, FALSE, &DSVCPUDesc);
+
+    // Begin World rendering
+    m_CommandList->SetPipelineState(m_PipelineState.Get());
 
     const float ClearColor[] { 0.0f, 0.2f, 0.4f, 1.0f };
-    m_CommandList->SetPipelineState(m_PipelineState.Get());
-    m_CommandList->ClearRenderTargetView(CPUDesc, ClearColor, 0, nullptr);
+    m_CommandList->ClearRenderTargetView(RTVCPUDesc, ClearColor, 0, nullptr);
+    m_CommandList->ClearDepthStencilView(DSVCPUDesc, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
     m_CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     m_RenderBuffer.BindViews(m_CommandList.Get());
     m_CommandList->DrawIndexedInstanced(3, 1, 0, 0, 0);
@@ -362,6 +367,16 @@ bool Renderer::LoadPipeline(Platform::Window* Window)
         return false;
     }
 
+    D3D12_DESCRIPTOR_HEAP_DESC DSVHeapDesc { 0 };
+    DSVHeapDesc.NumDescriptors = 1;
+    DSVHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+    DSVHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    if (m_Device->CreateDescriptorHeap(&DSVHeapDesc, IID_PPV_ARGS(&m_DSVHeap)) != S_OK)
+    {
+        Core::Console::Error("Failed to create depth stencil view.");
+        return false;
+    }
+
     D3D12_DESCRIPTOR_HEAP_DESC SRVHeapDesc { 0 };
     SRVHeapDesc.NumDescriptors = MAX_DESCRIPTORS;
     SRVHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
@@ -530,6 +545,8 @@ bool Renderer::LoadAssets(Platform::Window* Window)
     GraphicsDesc.pRootSignature = m_RootSignature.Get();
     GraphicsDesc.VS = { VertexShader->GetBufferPointer(), VertexShader->GetBufferSize() };
     GraphicsDesc.PS = { PixelShader->GetBufferPointer(), PixelShader->GetBufferSize() };
+    GraphicsDesc.DepthStencilState = Utility::MakeDepthStencilDescription();
+    GraphicsDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 
     if (m_Device->CreateGraphicsPipelineState(&GraphicsDesc, IID_PPV_ARGS(&m_PipelineState)) != S_OK)
     {
@@ -593,6 +610,44 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         m_RenderBuffer
             .SetFormat(DXGI_FORMAT_R32_UINT)
             .UploadIndexData(IndexBufferData, IndexBufferSize);
+    }
+
+    // Depth Stencil View
+    {
+        D3D12_HEAP_PROPERTIES HeapProps { Utility::MakeHeapProperties() };
+        D3D12_RESOURCE_DESC ResourceDesc { Utility::MakeResourceDescription(D3D12_RESOURCE_DIMENSION_TEXTURE2D, DXGI_FORMAT_D32_FLOAT) };
+        ResourceDesc.Width = Window->Size().X;
+        ResourceDesc.Height = Window->Size().Y;
+        ResourceDesc.DepthOrArraySize = 1;
+        ResourceDesc.MipLevels = 0;
+        ResourceDesc.SampleDesc.Count = 1;
+        ResourceDesc.SampleDesc.Quality = 0;
+        ResourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+        D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc { 0 };
+        DSVDesc.Format = DXGI_FORMAT_D32_FLOAT;
+        DSVDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+        DSVDesc.Flags = D3D12_DSV_FLAG_NONE;
+
+        D3D12_CLEAR_VALUE ClearValue { 0 };
+        ClearValue.Format = DXGI_FORMAT_D32_FLOAT;
+        ClearValue.DepthStencil.Depth = 1.0f;
+        ClearValue.DepthStencil.Stencil = 0;
+
+        if (m_Device->CreateCommittedResource(
+            &HeapProps,
+            D3D12_HEAP_FLAG_NONE,
+            &ResourceDesc,
+            D3D12_RESOURCE_STATE_DEPTH_WRITE,
+            &ClearValue,
+            IID_PPV_ARGS(&m_DepthStencil)
+        ) != S_OK)
+        {
+            Core::Console::Error("Failed to create depth stencil resource.");
+            return false;
+        }
+
+        m_Device->CreateDepthStencilView(m_DepthStencil.Get(), &DSVDesc, m_DSVHeap->GetCPUDescriptorHandleForHeapStart());
     }
 
     m_RenderBufferGUI.Initialize(m_Device.Get(), 100000, 100000);
