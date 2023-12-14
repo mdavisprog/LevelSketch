@@ -28,6 +28,7 @@ SOFTWARE.
 
 #include "../Renderer.hpp"
 #include "../../Core/Containers/Array.hpp"
+#include "../../Core/Math/Matrix.hpp"
 #include "../../External/OctaneGUI/DrawCommand.h"
 #include "../../Platform/Windows/Common.hpp"
 #include "RenderBuffer.hpp"
@@ -47,6 +48,15 @@ namespace DirectX
 
 #define FRAME_COUNT 2
 #define MAX_DESCRIPTORS 1000
+
+struct ConstantBufferData
+{
+public:
+    Matrix4f Model { Matrix4f::Identity };
+    Matrix4f View { Matrix4f::Identity };
+    Matrix4f Projection { Matrix4f::Identity };
+    Matrix4f Dummy {};
+};
 
 class Renderer : public LevelSketch::Render::Renderer
 {
@@ -96,6 +106,15 @@ private:
 
     u32 m_WhiteTexture { 0 };
     u32 m_DefaultTexture { 0 };
+
+    Microsoft::WRL::ComPtr<ID3D12Resource> m_ConstantBuffer;
+    Microsoft::WRL::ComPtr<ID3D12Resource> m_ConstantBufferGUI;
+    u8* m_ConstantBufferAddress { nullptr };
+    u8* m_ConstantBufferGUIAddress { nullptr };
+    ConstantBufferData m_ConstantBufferData {};
+    ConstantBufferData m_ConstantBufferDataGUI {};
+    u64 m_ConstantBufferTableOffset { 0 };
+    u64 m_ConstantBufferGUITableOffset { 0 };
 };
 
 }

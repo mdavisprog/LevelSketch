@@ -164,12 +164,22 @@ void Renderer::Render(Platform::Window* Window)
     m_CommandList->ClearRenderTargetView(RTVCPUDesc, ClearColor, 0, nullptr);
     m_CommandList->ClearDepthStencilView(DSVCPUDesc, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
+    GPUDesc = m_SRVHeap->GetGPUDescriptorHandleForHeapStart();
+    GPUDesc.ptr += m_ConstantBufferTableOffset;
+    m_CommandList->SetGraphicsRootDescriptorTable(1, GPUDesc);
+    std::memcpy(m_ConstantBufferAddress, &m_ConstantBufferData, sizeof(m_ConstantBufferData));
+
     m_CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     m_RenderBuffer.BindViews(m_CommandList.Get());
     m_CommandList->DrawIndexedInstanced(3, 1, 0, 0, 0);
 
     // Begin GUI rendering
     m_CommandList->SetPipelineState(m_PipelineStateGUI.Get());
+
+    GPUDesc = m_SRVHeap->GetGPUDescriptorHandleForHeapStart();
+    GPUDesc.ptr += m_ConstantBufferGUITableOffset;
+    m_CommandList->SetGraphicsRootDescriptorTable(1, GPUDesc);
+    std::memcpy(m_ConstantBufferGUIAddress, &m_ConstantBufferDataGUI, sizeof(m_ConstantBufferDataGUI));
     m_CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     m_RenderBufferGUI.BindViews(m_CommandList.Get());
 
@@ -422,19 +432,22 @@ bool Renderer::LoadAssets(Platform::Window* Window)
             FeatureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
         }
 
-        D3D12_DESCRIPTOR_RANGE1 DescRange[1];
-        DescRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        DescRange[0].NumDescriptors = 1;
-        DescRange[0].BaseShaderRegister = 0;
-        DescRange[0].RegisterSpace = 0;
-        DescRange[0].Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC;
-        DescRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+        D3D12_DESCRIPTOR_RANGE1 DescRange[2]
+        {
+            Utility::MakeDescriptorRange1(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC),
+            Utility::MakeDescriptorRange1(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC)
+        };
 
-        D3D12_ROOT_PARAMETER1 RootParameters[1];
+        D3D12_ROOT_PARAMETER1 RootParameters[2];
         RootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
         RootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
         RootParameters[0].DescriptorTable.NumDescriptorRanges = 1;
         RootParameters[0].DescriptorTable.pDescriptorRanges = &DescRange[0];
+
+        RootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        RootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+        RootParameters[1].DescriptorTable.NumDescriptorRanges = 1;
+        RootParameters[1].DescriptorTable.pDescriptorRanges = &DescRange[1];
 
         D3D12_STATIC_SAMPLER_DESC Sampler = { 0 };
         Sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
@@ -482,6 +495,14 @@ bool Renderer::LoadAssets(Platform::Window* Window)
             float4 color : COLOR;
         };
 
+        cbuffer ConstantBuffer : register(b0)
+        {
+            float4x4 Model;
+            float4x4 View;
+            float4x4 Projection;
+            float4x4 Dummy;
+        }
+
         Texture2D g_Texture : register(t0);
         SamplerState g_Sampler : register(s0);
 
@@ -489,7 +510,7 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         {
             PSInput result;
 
-            result.position = position;
+            result.position = mul(float4(position.xyz, 1.0), Projection);
             result.uv = uv;
             result.color = color;
 
@@ -561,6 +582,17 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         .AddInputElement({"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0})
         .AddInputElement({"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UINT, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0});
     GraphicsDesc.InputLayout = { ShaderObject.InputElements(), ShaderObject.NumInputElements() };
+    GraphicsDesc.DepthStencilState.DepthEnable = FALSE;
+    GraphicsDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+    GraphicsDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+    GraphicsDesc.DepthStencilState.StencilEnable = FALSE;
+    GraphicsDesc.DepthStencilState.FrontFace.StencilFailOp
+        = GraphicsDesc.DepthStencilState.FrontFace.StencilDepthFailOp
+        = GraphicsDesc.DepthStencilState.FrontFace.StencilPassOp
+        = D3D12_STENCIL_OP_KEEP;
+    GraphicsDesc.DepthStencilState.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+    GraphicsDesc.DepthStencilState.BackFace = GraphicsDesc.DepthStencilState.FrontFace;
+    GraphicsDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
 
     if (m_Device->CreateGraphicsPipelineState(&GraphicsDesc, IID_PPV_ARGS(&m_PipelineStateGUI)) != S_OK)
     {
@@ -592,10 +624,11 @@ bool Renderer::LoadAssets(Platform::Window* Window)
 
     // Vertex Buffer
     {
+        const float Offset { 0.25f };
         const float AspectRatio { Window->AspectRatio() };
-        Vertices[0] = { {0.0f, 0.25f * AspectRatio, 0.0f}, {0.5f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f} };
-        Vertices[1] = { {0.25f, -0.25f * AspectRatio, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f} };
-        Vertices[2] = { {-0.25f, -0.25f * AspectRatio, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f} };
+        Vertices[0] = { {0.0f, Offset * AspectRatio, 5.0f}, {0.5f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f} };
+        Vertices[1] = { {-Offset, -Offset * AspectRatio, 5.0f}, {1.0f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f} };
+        Vertices[2] = { {Offset, -Offset * AspectRatio, 5.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f} };
 
         m_RenderBuffer
             .SetStride(sizeof(Vertex3))
@@ -654,6 +687,77 @@ bool Renderer::LoadAssets(Platform::Window* Window)
     m_RenderBufferGUI
         .SetStride(sizeof(OctaneGUI::Vertex))
         .SetFormat(DXGI_FORMAT_R32_UINT);
+    
+    // Constant Buffer
+    {
+        D3D12_HEAP_PROPERTIES HeapProps { Utility::MakeHeapProperties(D3D12_HEAP_TYPE_UPLOAD) };
+        D3D12_RESOURCE_DESC ResourceDesc { Utility::MakeResourceDescription() };
+        ResourceDesc.Width = sizeof(ConstantBufferData);
+        ResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+        if (m_Device->CreateCommittedResource(
+            &HeapProps,
+            D3D12_HEAP_FLAG_NONE,
+            &ResourceDesc,
+            D3D12_RESOURCE_STATE_GENERIC_READ,
+            nullptr,
+            IID_PPV_ARGS(&m_ConstantBuffer)
+        ) != S_OK)
+        {
+            Core::Console::Error("Failed to create constant buffer.");
+            return false;
+        }
+
+        if (m_Device->CreateCommittedResource(
+            &HeapProps,
+            D3D12_HEAP_FLAG_NONE,
+            &ResourceDesc,
+            D3D12_RESOURCE_STATE_GENERIC_READ,
+            nullptr,
+            IID_PPV_ARGS(&m_ConstantBufferGUI)
+        ) != S_OK)
+        {
+            Core::Console::Error("Failed to create constant buffer GUI.");
+            return false;
+        }
+
+        D3D12_CONSTANT_BUFFER_VIEW_DESC ConstantBufferView { 0 };
+        ConstantBufferView.BufferLocation = m_ConstantBuffer->GetGPUVirtualAddress();
+        ConstantBufferView.SizeInBytes = sizeof(ConstantBufferData);
+
+        m_ConstantBufferTableOffset = (MAX_DESCRIPTORS - 1) * m_SRVHeapDescriptorSize;
+        D3D12_CPU_DESCRIPTOR_HANDLE CPUDesc { m_SRVHeap->GetCPUDescriptorHandleForHeapStart() };
+        CPUDesc.ptr += m_ConstantBufferTableOffset;
+        m_Device->CreateConstantBufferView(&ConstantBufferView, CPUDesc);
+
+        // Create the GUI constant buffer
+        D3D12_CONSTANT_BUFFER_VIEW_DESC ConstantBufferViewGUI { 0 };
+        ConstantBufferViewGUI.BufferLocation = m_ConstantBufferGUI->GetGPUVirtualAddress();
+        ConstantBufferViewGUI.SizeInBytes = sizeof(ConstantBufferData);
+
+        m_ConstantBufferGUITableOffset = (MAX_DESCRIPTORS - 2) * m_SRVHeapDescriptorSize;
+        D3D12_CPU_DESCRIPTOR_HANDLE CPUDescGUI { m_SRVHeap->GetCPUDescriptorHandleForHeapStart() };
+        CPUDescGUI.ptr += m_ConstantBufferGUITableOffset;
+        m_Device->CreateConstantBufferView(&ConstantBufferViewGUI, CPUDescGUI);
+
+        D3D12_RANGE Range { 0, 0 };
+        if (m_ConstantBuffer->Map(0, &Range, reinterpret_cast<void**>(&m_ConstantBufferAddress)) != S_OK)
+        {
+            Core::Console::Error("Failed to map constant buffer memory.");
+            return false;
+        }
+
+        Range = { 0, 0 };
+        if (m_ConstantBufferGUI->Map(0, &Range, reinterpret_cast<void**>(&m_ConstantBufferGUIAddress)) != S_OK)
+        {
+            Core::Console::Error("Failed to map constant buffer GUI memory.");
+            return false;
+        }
+
+        Rectf Bounds { 0.0f, 0.0f, (f32)Window->Size().X, (f32)Window->Size().Y };
+        m_ConstantBufferData.Projection = Core::Math::PerspectiveMatrixRH(45.0f, Window->AspectRatio(), 0.1f, 100.0f).Transpose();
+        m_ConstantBufferDataGUI.Projection = Core::Math::OrthographicMatrixRH(Bounds, -1.0f, 1.0f).Transpose();
+    }
 
     // Upload Vertex/Index buffers. The Load texture function will reset the command list.
     // Want to avoid resetting the command list while there are queued commands.

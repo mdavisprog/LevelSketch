@@ -85,7 +85,7 @@ D3D12_GRAPHICS_PIPELINE_STATE_DESC MakeDefaultGraphicsPipelineState()
     D3D12_GRAPHICS_PIPELINE_STATE_DESC Result { 0 };
     Result.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
     Result.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-    Result.RasterizerState.FrontCounterClockwise = FALSE;
+    Result.RasterizerState.FrontCounterClockwise = TRUE;
     Result.RasterizerState.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
     Result.RasterizerState.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
     Result.RasterizerState.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
@@ -119,6 +119,34 @@ D3D12_GRAPHICS_PIPELINE_STATE_DESC MakeDefaultGraphicsPipelineState()
     Result.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
     Result.SampleDesc.Count = 1;
 
+    return Result;
+}
+
+D3D12_DEPTH_STENCIL_DESC MakeDepthStencilDescription()
+{
+    D3D12_DEPTH_STENCIL_DESC Result;
+    Result.DepthEnable = TRUE;
+    Result.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+    Result.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+    Result.StencilEnable = FALSE;
+    Result.StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
+    Result.StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
+    const D3D12_DEPTH_STENCILOP_DESC defaultStencilOp =
+    { D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_COMPARISON_FUNC_ALWAYS };
+    Result.FrontFace = defaultStencilOp;
+    Result.BackFace = defaultStencilOp;
+    return Result;
+}
+
+D3D12_DESCRIPTOR_RANGE1 MakeDescriptorRange1(D3D12_DESCRIPTOR_RANGE_TYPE Type, D3D12_DESCRIPTOR_RANGE_FLAGS Flags)
+{
+    D3D12_DESCRIPTOR_RANGE1 Result;
+    Result.RangeType = Type;
+    Result.NumDescriptors = 1;
+    Result.BaseShaderRegister = 0;
+    Result.RegisterSpace = 0;
+    Result.Flags = Flags;
+    Result.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
     return Result;
 }
 
