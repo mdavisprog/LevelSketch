@@ -180,11 +180,14 @@ i32 Main(i32 Argc, char** Argv)
 
     const char* Stream = R"({
         "Theme": {
-            "FontPath": "Content/Fonts/Roboto-Regular.ttf"
+            "FontPath": "Content/Fonts/Roboto-Regular.ttf",
+            "FontSize": 16
         },
         "Windows": {
             "Main": {"Title": "Level Sketch", "Width": 1280, "Height": 720,
-                "MenuBar": {},
+                "MenuBar": {"Items": [
+                    {"Text": "File"}
+                ]},
                 "Body": {"Controls": []}
             }
         }
