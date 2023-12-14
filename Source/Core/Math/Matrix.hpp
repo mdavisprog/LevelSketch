@@ -27,6 +27,8 @@ SOFTWARE.
 #pragma once
 
 #include "../Types.hpp"
+#include "Math.hpp"
+#include "Rect.hpp"
 
 #include <initializer_list>
 
@@ -113,6 +115,38 @@ template<typename T>
 Matrix4<T> Matrix4<T>::Zero { 0 };
 
 typedef Matrix4<f32> Matrix4f;
+
+static inline Matrix4f PerspectiveMatrixRH(f32 FOVAngle, f32 Aspect, f32 Near, f32 Far)
+{
+    const f32 FOVRad { FOVAngle * DEG2RAD };
+    const f32 YScale { 1.0f / Tan<f32>(FOVRad * 0.5f) };
+    const float XScale { YScale * Aspect };
+    return
+    {
+        XScale, 0.0f, 0.0f, 0.0f,
+        0.0f, YScale, 0.0f, 0.0,
+        0.0f, 0.0f, Far / (Far - Near), 1.0f,
+        0.0f, 0.0f, -Near * (Far / (Far - Near)), 0.0f
+    };
+}
+
+static inline Matrix4f OrthographicMatrixRH(Rectf Viewport, f32 Near, f32 Far)
+{
+    const f32 L { Viewport.Left() };
+    const f32 R { Viewport.Right() };
+    const f32 T { Viewport.Top() };
+    const f32 B { Viewport.Bottom() };
+    const f32 ReciprocalWidth { 1.0f / (R - L) };
+    const f32 ReciprocalHeight { 1.0f / (T - B) };
+    const f32 Range { 1.0f / (Near - Far) };
+    return
+    {
+        2.0f * ReciprocalWidth, 0.0f, 0.0f, 0.0f,
+        0.0f, 2.0f * ReciprocalHeight, 0.0f, 0.0f,
+        0.0f, 0.0f, Range, 0.0f,
+        -(L + R) * ReciprocalWidth, -(T + B) * ReciprocalHeight, Range * Near, 1.0f
+    };
+}
 
 }
 }
