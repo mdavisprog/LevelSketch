@@ -74,6 +74,7 @@ elseif(APPLE)
 else()
     set(SOURCE
         ${SOURCE}
+        Platform/SDL2/FileSystem.cpp
         Platform/SDL2/Platform.cpp
         Platform/SDL2/Window.cpp
 
