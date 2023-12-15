@@ -28,6 +28,7 @@ SOFTWARE.
 #include "../Core/Console.hpp"
 #include "../Core/Version.hpp"
 #include "Core/Core.hpp"
+#include "Platform/Platform.hpp"
 #include "TestSuite.hpp"
 
 #include <cstdio>
@@ -80,7 +81,9 @@ System::System()
         .Push(Core::SharedPtrTests())
         .Push(Core::StringTests())
         .Push(Core::UniquePtrTests())
-        .Push(Core::WeakPtrTests());
+        .Push(Core::WeakPtrTests())
+
+        .Push(Platform::FileSystemTests());
 }
 
 System& System::Shutdown()

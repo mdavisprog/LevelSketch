@@ -24,6 +24,7 @@ set(SOURCE
     Core/Containers/String.cpp
     Core/Console.cpp
 
+    Platform/FileSystem.cpp
     Platform/Platform.cpp
     Platform/Window.cpp
 
@@ -44,6 +45,7 @@ if(WIN32)
     set(SOURCE
         ${SOURCE}
         Platform/Windows/Events.cpp
+        Platform/Windows/FileSystem.cpp
         Platform/Windows/Platform.cpp
         Platform/Windows/Window.cpp
 
@@ -88,6 +90,7 @@ else()
     set(SOURCE ${SOURCE} Main/Main.cpp)
 endif()
 
+# Testing framework
 if(WITH_TESTS)
     set(SOURCE
         ${SOURCE}
@@ -99,6 +102,8 @@ if(WITH_TESTS)
         Tests/Core/String.cpp
         Tests/Core/UniquePtr.cpp
         Tests/Core/WeakPtr.cpp
+
+        Tests/Platform/FileSystem.cpp
 
         Tests/System.cpp
         Tests/TestSuite.cpp
