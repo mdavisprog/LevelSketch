@@ -119,6 +119,25 @@ static bool Sub()
     return true;
 }
 
+static bool Add()
+{
+    String A { "Hello" };
+    String B { "World" };
+    VERIFY((A + B) == "HelloWorld");
+    return true;
+}
+
+static bool Append()
+{
+    String A { "Hello" };
+    String B { "World" };
+    A += B;
+    VERIFY(A == "HelloWorld");
+    A += "Foo";
+    VERIFY(A == "HelloWorldFoo");
+    return true;
+}
+
 UniquePtr<TestSuite> StringTests()
 {
     return TestSuite::New("String", {
@@ -129,7 +148,9 @@ UniquePtr<TestSuite> StringTests()
         TEST_CASE(Reserve),
         TEST_CASE(Find),
         TEST_CASE(RFind),
-        TEST_CASE(Sub)
+        TEST_CASE(Sub),
+        TEST_CASE(Add),
+        TEST_CASE(Append)
     });
 }
 

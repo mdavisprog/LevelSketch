@@ -88,6 +88,29 @@ public:
         return m_Data[Index];
     }
 
+    TString<T> operator+(const TString<T>& Other) const
+    {
+        TString<T> Result;
+
+        Result.m_Data = m_Data;
+        Result.m_Data.Pop(); // Remove terminator.
+        Result.m_Data += Other.m_Data;
+
+        return Result;
+    }
+
+    TString<T>& operator+=(const TString<T>& Other)
+    {
+        m_Data.Pop(); // Remove terminator.
+        m_Data += Other.m_Data;
+        return *this;
+    }
+
+    TString<T>& operator+=(const T* Other)
+    {
+        return Append(Other);
+    }
+
     T* Data()
     {
         return m_Data.Data();
@@ -194,6 +217,17 @@ public:
         Result[Count] = 0;
 
         return Result;
+    }
+
+    TString<T>& Append(const T* Other)
+    {
+        const u64 OtherLength { LengthFromPtr(Other) };
+        m_Data.Pop();
+        const u64 Size { m_Data.Size() };
+        m_Data.Resize(m_Data.Size() + OtherLength);
+        std::memcpy(m_Data.Data() + Size, Other, OtherLength);
+        m_Data.Push(0);
+        return *this;
     }
 
 private:
