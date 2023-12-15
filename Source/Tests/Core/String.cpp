@@ -86,6 +86,39 @@ static bool Reserve()
     return true;
 }
 
+static bool Find()
+{
+    const String Instance { "Hello World" };
+    VERIFY(Instance.Find('H') == 0);
+    VERIFY(Instance.Find(' ') == 5);
+    VERIFY(Instance.Find('d') == 10);
+    VERIFY(Instance.Find('T') == String::NPOS);
+    VERIFY(Instance.Find('W', 5) == 6);
+    VERIFY(Instance.Find('H', 5) == String::NPOS);
+    return true;
+}
+
+static bool RFind()
+{
+    const String Instance { "Hello World" };
+    VERIFY(Instance.RFind('H') == 0);
+    VERIFY(Instance.RFind(' ') == 5);
+    VERIFY(Instance.RFind('d') == 10);
+    VERIFY(Instance.RFind('T') == String::NPOS);
+    VERIFY(Instance.RFind('W', 5) == String::NPOS);
+    VERIFY(Instance.RFind('H', 5) == 0);
+    return true;
+}
+
+static bool Sub()
+{
+    const String Instance { "Hello World" };
+    VERIFY(Instance.Sub(0, 5) == "Hello");
+    VERIFY(Instance.Sub(6) == "World");
+    VERIFY(Instance.Sub(12) == "");
+    return true;
+}
+
 UniquePtr<TestSuite> StringTests()
 {
     return TestSuite::New("String", {
@@ -93,7 +126,10 @@ UniquePtr<TestSuite> StringTests()
         TEST_CASE(Constructor),
         TEST_CASE(Equality),
         TEST_CASE(Conversions),
-        TEST_CASE(Reserve)
+        TEST_CASE(Reserve),
+        TEST_CASE(Find),
+        TEST_CASE(RFind),
+        TEST_CASE(Sub)
     });
 }
 

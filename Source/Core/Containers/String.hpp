@@ -41,6 +41,8 @@ template<typename T>
 class TString
 {
 public:
+    static u64 NPOS;
+
     static u64 LengthFromPtr(const T* Data)
     {
         u64 Result { 0 };
@@ -139,6 +141,58 @@ public:
         return *this;
     }
 
+    u64 Find(T Ch, u64 Pos = 0) const
+    {
+        for (u64 I = Pos; I <= Length(); I++)
+        {
+            if (m_Data[I] == Ch)
+            {
+                return I;
+            }
+        }
+
+        return NPOS;
+    }
+
+    u64 RFind(T Ch, u64 Pos = NPOS) const
+    {
+        for (u64 I = (Pos == NPOS ? Length() : Pos); I >= 0; I--)
+        {
+            if (m_Data[I] == Ch)
+            {
+                return I;
+            }
+
+            if (I == 0)
+            {
+                break;
+            }
+        }
+
+        return NPOS;
+    }
+
+    TString<T> Sub(u64 Pos, u64 Count = NPOS) const
+    {
+        Pos = Pos > Length() ? Length() : Pos;
+        Count = Count == NPOS ? Length() - Pos : Count;
+        Count = Length() - Pos < Count ? Length() - Pos : Count;
+
+        TString<T> Result;
+
+        if (Count == 0)
+        {
+            return Result;
+        }
+
+        Result.Resize(Count + 1);
+
+        std::memcpy(Result.Data(), Data() + Pos, Count);
+        Result[Count] = 0;
+
+        return Result;
+    }
+
 private:
     TString<T>& Copy(const T* Data)
     {
@@ -157,6 +211,9 @@ private:
 
     Array<T> m_Data {};
 };
+
+template<typename T>
+u64 TString<T>::NPOS { static_cast<u64>(-1) };
 
 template<typename T>
 static bool operator==(const TString<T>& A, const T* B)
