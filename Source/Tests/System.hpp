@@ -41,7 +41,7 @@ class System
 public:
     static System& Instance();
 
-    i32 Run(i32 Argc, char** Argv);
+    i32 Run();
 
 private:
     System();

@@ -33,7 +33,7 @@ namespace LevelSketch
 namespace Main
 {
 
-i32 Main(i32 Argc, char** Argv);
+i32 Main(i32 Argc, const char** Argv);
 
 }
 }

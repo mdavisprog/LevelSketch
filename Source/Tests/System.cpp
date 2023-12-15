@@ -46,7 +46,7 @@ System& System::Instance()
     return Instance;
 }
 
-i32 System::Run(i32, char**)
+i32 System::Run()
 {
     Console::WriteLine("\nRunning %s testing framework version %d.%d.%d.", APP_NAME, VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION);
     Console::WriteLine("There are (%llu) test suites to run through.\n", m_TestSuites.Size());

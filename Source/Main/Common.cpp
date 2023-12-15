@@ -27,6 +27,7 @@ SOFTWARE.
 #include "Common.hpp"
 #include <cstdio>
 #include "../External/OctaneGUI/OctaneGUI.h"
+#include "../Core/CommandLine.hpp"
 #include "../Core/Defines.hpp"
 #include "../Platform/Platform.hpp"
 #include "../Platform/Window.hpp"
@@ -166,15 +167,14 @@ bool OnPlatformFrame(const Platform::TimingData&)
     return true;
 }
 
-i32 Main(i32 Argc, char** Argv)
+i32 Main(i32 Argc, const char** Argv)
 {
+    Core::CommandLine::Instance().Set(Argc, Argv);
+
 #if defined(WITH_TESTS)
-    for (int I = 0; I < Argc; I++)
+    if (Core::CommandLine::Instance().Has("--tests"))
     {
-        if (std::string{Argv[I]} == "--tests")
-        {
-            return LevelSketch::Tests::System::Instance().Run(Argc, Argv);
-        }
+        return LevelSketch::Tests::System::Instance().Run();
     }
 #endif
 
@@ -215,7 +215,7 @@ i32 Main(i32 Argc, char** Argv)
 
     std::unordered_map<std::string, OctaneGUI::ControlList> List;
     bool Success = g_Application
-        ->SetCommandLine(Argc, Argv)
+        ->SetCommandLine(Argc, const_cast<char**>(Argv))
         .Initialize(Stream, List);
     
     if (!Success)
