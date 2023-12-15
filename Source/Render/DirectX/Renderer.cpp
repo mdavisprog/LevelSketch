@@ -175,11 +175,6 @@ void Renderer::Render(Platform::Window* Window)
 
     // Begin GUI rendering
     m_CommandList->SetPipelineState(m_PipelineStateGUI.Get());
-
-    GPUDesc = m_SRVHeap->GetGPUDescriptorHandleForHeapStart();
-    GPUDesc.ptr += m_ConstantBufferGUITableOffset;
-    m_CommandList->SetGraphicsRootDescriptorTable(1, GPUDesc);
-    std::memcpy(m_ConstantBufferGUIAddress, &m_ConstantBufferDataGUI, sizeof(m_ConstantBufferDataGUI));
     m_CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     m_RenderBufferGUI.BindViews(m_CommandList.Get());
 
@@ -487,56 +482,16 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         }
     }
 
-    const char* Source = R"(
-        struct PSInput
-        {
-            float4 position : SV_POSITION;
-            float2 uv : TEXCOORD;
-            float4 color : COLOR;
-        };
-
-        cbuffer ConstantBuffer : register(b0)
-        {
-            float4x4 Model;
-            float4x4 View;
-            float4x4 Projection;
-            float4x4 Dummy;
-        }
-
-        Texture2D g_Texture : register(t0);
-        SamplerState g_Sampler : register(s0);
-
-        PSInput VSMain(float4 position : POSITION, float2 uv : TEXCOORD, float4 color : COLOR)
-        {
-            PSInput result;
-
-            result.position = mul(float4(position.xyz, 1.0), Projection);
-            result.uv = uv;
-            result.color = color;
-
-            return result;
-        }
-
-        float4 PSMain(PSInput input) : SV_TARGET
-        {
-            return g_Texture.Sample(g_Sampler, input.uv) * input.color;
-        }
-    )";
-
-    Microsoft::WRL::ComPtr<ID3DBlob> VertexShader;
-    Microsoft::WRL::ComPtr<ID3DBlob> PixelShader;
-
     u32 CompileFlags { 0 };
 
 #if defined(_DEBUG)
     CompileFlags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
 
-    Shader ShaderObject;
-    bool CompileResult = ShaderObject
-        .SetSource(Source)
-        .SetName("Default")
-        .SetEntryPoint("VSMain")
+    Shader VertexShader { Shader::LoadFromFile("Content/Shaders/HLSL/TestVS.hlsl") };
+    bool CompileResult = VertexShader
+        .SetName("DefaultVS")
+        .SetEntryPoint("Main")
         .SetTarget("vs_5_0")
         .SetCompileFlags(CompileFlags)
         .AddInputElement({"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0})
@@ -545,27 +500,28 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         .Compile();
     if (!CompileResult)
     {
-        Core::Console::Warning("Failed to compile vertex shader:\n%s", (LPCSTR)ShaderObject.Errors()->GetBufferPointer());
+        Core::Console::Warning("Failed to compile vertex shader:\n%s", (LPCSTR)VertexShader.Errors()->GetBufferPointer());
         return false;
     }
-    VertexShader = ShaderObject.Blob();
 
-    CompileResult = ShaderObject
-        .SetEntryPoint("PSMain")
+    Shader PixelShader { Shader::LoadFromFile("Content/Shaders/HLSL/TestPS.hlsl") };
+    CompileResult = PixelShader
+        .SetName("DefaultPS")
+        .SetEntryPoint("Main")
         .SetTarget("ps_5_0")
+        .SetCompileFlags(CompileFlags)
         .Compile();
     if (!CompileResult)
     {
-        Core::Console::Warning("Failed to compile pixel shader:\n%s", (LPCSTR)ShaderObject.Errors()->GetBufferPointer());
+        Core::Console::Warning("Failed to compile pixel shader:\n%s", (LPCSTR)PixelShader.Errors()->GetBufferPointer());
         return false;
     }
-    PixelShader = ShaderObject.Blob();
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC GraphicsDesc { Utility::MakeDefaultGraphicsPipelineState() };
-    GraphicsDesc.InputLayout = { ShaderObject.InputElements(), ShaderObject.NumInputElements() };
+    GraphicsDesc.InputLayout = { VertexShader.InputElements(), VertexShader.NumInputElements() };
     GraphicsDesc.pRootSignature = m_RootSignature.Get();
-    GraphicsDesc.VS = { VertexShader->GetBufferPointer(), VertexShader->GetBufferSize() };
-    GraphicsDesc.PS = { PixelShader->GetBufferPointer(), PixelShader->GetBufferSize() };
+    GraphicsDesc.VS = { VertexShader.Blob()->GetBufferPointer(), VertexShader.Blob()->GetBufferSize() };
+    GraphicsDesc.PS = { PixelShader.Blob()->GetBufferPointer(), PixelShader.Blob()->GetBufferSize() };
     GraphicsDesc.DepthStencilState = Utility::MakeDepthStencilDescription();
     GraphicsDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 
@@ -576,12 +532,38 @@ bool Renderer::LoadAssets(Platform::Window* Window)
     }
 
     // Begin creation of GUI pipeline state.
-    ShaderObject
-        .ClearInputElements()
+    VertexShader = Shader::LoadFromFile("Content/Shaders/HLSL/GUIVS.hlsl");
+    CompileResult = VertexShader
+        .SetName("GUIVS")
+        .SetEntryPoint("Main")
+        .SetTarget("vs_5_0")
+        .SetCompileFlags(CompileFlags)
         .AddInputElement({"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0})
         .AddInputElement({"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0})
-        .AddInputElement({"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UINT, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0});
-    GraphicsDesc.InputLayout = { ShaderObject.InputElements(), ShaderObject.NumInputElements() };
+        .AddInputElement({"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UINT, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0})
+        .Compile();
+    if (!CompileResult)
+    {
+        Core::Console::Warning("Failed to compile GUI vertex shader:\n%s", (LPCSTR)VertexShader.Errors()->GetBufferPointer());
+        return false;
+    }
+
+    PixelShader = Shader::LoadFromFile("Content/Shaders/HLSL/GUIPS.hlsl");
+    CompileResult = PixelShader
+        .SetName("GUIPS")
+        .SetEntryPoint("Main")
+        .SetTarget("ps_5_0")
+        .SetCompileFlags(CompileFlags)
+        .Compile();
+    if (!CompileResult)
+    {
+        Core::Console::Warning("Failed to compile GUI pixel shader:\n%s", (LPCSTR)PixelShader.Errors()->GetBufferPointer());
+        return false;
+    }
+
+    GraphicsDesc.InputLayout = { VertexShader.InputElements(), VertexShader.NumInputElements() };
+    GraphicsDesc.VS = { VertexShader.Blob()->GetBufferPointer(), VertexShader.Blob()->GetBufferSize() };
+    GraphicsDesc.PS = { PixelShader.Blob()->GetBufferPointer(), PixelShader.Blob()->GetBufferSize() };
     GraphicsDesc.DepthStencilState.DepthEnable = FALSE;
     GraphicsDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
     GraphicsDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS;
@@ -708,19 +690,6 @@ bool Renderer::LoadAssets(Platform::Window* Window)
             return false;
         }
 
-        if (m_Device->CreateCommittedResource(
-            &HeapProps,
-            D3D12_HEAP_FLAG_NONE,
-            &ResourceDesc,
-            D3D12_RESOURCE_STATE_GENERIC_READ,
-            nullptr,
-            IID_PPV_ARGS(&m_ConstantBufferGUI)
-        ) != S_OK)
-        {
-            Core::Console::Error("Failed to create constant buffer GUI.");
-            return false;
-        }
-
         D3D12_CONSTANT_BUFFER_VIEW_DESC ConstantBufferView { 0 };
         ConstantBufferView.BufferLocation = m_ConstantBuffer->GetGPUVirtualAddress();
         ConstantBufferView.SizeInBytes = sizeof(ConstantBufferData);
@@ -730,16 +699,6 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         CPUDesc.ptr += m_ConstantBufferTableOffset;
         m_Device->CreateConstantBufferView(&ConstantBufferView, CPUDesc);
 
-        // Create the GUI constant buffer
-        D3D12_CONSTANT_BUFFER_VIEW_DESC ConstantBufferViewGUI { 0 };
-        ConstantBufferViewGUI.BufferLocation = m_ConstantBufferGUI->GetGPUVirtualAddress();
-        ConstantBufferViewGUI.SizeInBytes = sizeof(ConstantBufferData);
-
-        m_ConstantBufferGUITableOffset = (MAX_DESCRIPTORS - 2) * m_SRVHeapDescriptorSize;
-        D3D12_CPU_DESCRIPTOR_HANDLE CPUDescGUI { m_SRVHeap->GetCPUDescriptorHandleForHeapStart() };
-        CPUDescGUI.ptr += m_ConstantBufferGUITableOffset;
-        m_Device->CreateConstantBufferView(&ConstantBufferViewGUI, CPUDescGUI);
-
         D3D12_RANGE Range { 0, 0 };
         if (m_ConstantBuffer->Map(0, &Range, reinterpret_cast<void**>(&m_ConstantBufferAddress)) != S_OK)
         {
@@ -747,16 +706,9 @@ bool Renderer::LoadAssets(Platform::Window* Window)
             return false;
         }
 
-        Range = { 0, 0 };
-        if (m_ConstantBufferGUI->Map(0, &Range, reinterpret_cast<void**>(&m_ConstantBufferGUIAddress)) != S_OK)
-        {
-            Core::Console::Error("Failed to map constant buffer GUI memory.");
-            return false;
-        }
-
         Rectf Bounds { 0.0f, 0.0f, (f32)Window->Size().X, (f32)Window->Size().Y };
         m_ConstantBufferData.Projection = Core::Math::PerspectiveMatrixRH(45.0f, Window->AspectRatio(), 0.1f, 100.0f).Transpose();
-        m_ConstantBufferDataGUI.Projection = Core::Math::OrthographicMatrixRH(Bounds, -1.0f, 1.0f).Transpose();
+        m_ConstantBufferData.Orthographic = Core::Math::OrthographicMatrixRH(Bounds, -1.0f, 1.0f).Transpose();
     }
 
     // Upload Vertex/Index buffers. The Load texture function will reset the command list.
