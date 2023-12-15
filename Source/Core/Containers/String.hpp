@@ -156,7 +156,8 @@ public:
 
     u64 RFind(T Ch, u64 Pos = NPOS) const
     {
-        for (u64 I = (Pos == NPOS ? Length() : Pos); I >= 0; I--)
+        u64 I = (Pos == NPOS ? Length() : Pos);
+        while (true)
         {
             if (m_Data[I] == Ch)
             {
@@ -167,6 +168,8 @@ public:
             {
                 break;
             }
+
+            I--;
         }
 
         return NPOS;
