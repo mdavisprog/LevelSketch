@@ -66,6 +66,7 @@ if(WIN32)
 elseif(APPLE)
     set(SOURCE
         ${SOURCE}
+        Platform/Mac/FileSystem.mm
         Platform/Mac/Platform.mm
         Platform/Mac/Window.mm
 
