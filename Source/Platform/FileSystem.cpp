@@ -28,6 +28,9 @@ SOFTWARE.
 #include "../Core/Defines.hpp"
 #include "../Core/Math/Math.hpp"
 
+#include <fstream>
+#include <string>
+
 #if defined(WINDOWS)
     #define PATH_SEPARATOR "\\"
 #else
@@ -66,6 +69,34 @@ String FileSystem::GetDirectory(const String& Path)
     }
 
     return Path.Sub(0, Pos);
+}
+
+String FileSystem::CombinePaths(const String& A, const String& B)
+{
+    return A + PATH_SEPARATOR + B;
+}
+
+String FileSystem::ReadContents(const String& Path)
+{
+    String Result;
+
+    std::fstream Stream;
+    Stream.open(Path.Data(), std::ios_base::in);
+    if (!Stream.is_open())
+    {
+        return Result;
+    }
+
+    std::string Buffer;
+    while (Stream.good())
+    {
+        std::getline(Stream, Buffer);
+        Result += Buffer.c_str();
+        Result += "\n";
+    }
+    Stream.close();
+
+    return Result;
 }
 
 FileSystem::FileSystem()

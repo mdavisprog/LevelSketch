@@ -34,6 +34,8 @@ namespace LevelSketch
 namespace Platform
 {
 
+// TODO: Look into creating a Path class to manage file paths.
+
 class FileSystem final
 {
 public:
@@ -41,6 +43,8 @@ public:
     static String ApplicationPath();
     static String ApplicationDirectory();
     static String GetDirectory(const String& Path);
+    static String CombinePaths(const String& A, const String& B);
+    static String ReadContents(const String& Path);
 
 private:
     FileSystem();
