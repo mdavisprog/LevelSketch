@@ -37,6 +37,10 @@ SOFTWARE.
 
 #define ARRAY_GRANULARITY 16
 
+#ifndef ARRAY_COUNT
+    #define ARRAY_COUNT(X) (sizeof(X) / sizeof(X[0]))
+#endif
+
 namespace LevelSketch
 {
 namespace Core
