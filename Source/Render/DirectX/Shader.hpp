@@ -41,6 +41,8 @@ namespace DirectX
 class Shader
 {
 public:
+    static Shader LoadFromFile(const char* Path);
+
     Shader();
 
     Shader& SetName(const char* Name);
