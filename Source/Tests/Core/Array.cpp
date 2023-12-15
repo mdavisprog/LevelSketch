@@ -316,6 +316,26 @@ static bool Resize()
     return true;
 }
 
+static bool Add()
+{
+    Array<i32> A { 1, 2, 3 };
+    Array<i32> B { 4, 5, 6 };
+    Array<i32> C { A + B };
+    VERIFY(C.Size() == 6);
+    VERIFY(C == Array<i32>({1, 2, 3, 4, 5, 6}));
+    return true;
+}
+
+static bool Append()
+{
+    Array<i32> A { 1, 2, 3 };
+    Array<i32> B { 4, 5, 6 };
+    A += B;
+    VERIFY(A.Size() == 6);
+    VERIFY(A == Array<i32>({1, 2, 3, 4, 5, 6}));
+    return true;
+}
+
 UniquePtr<TestSuite> ArrayTests()
 {
     return TestSuite::New("Array", {
@@ -335,7 +355,9 @@ UniquePtr<TestSuite> ArrayTests()
         TEST_CASE(ElementDtor),
         TEST_CASE(RemoveItem),
         TEST_CASE(RemoveRange),
-        TEST_CASE(Resize)
+        TEST_CASE(Resize),
+        TEST_CASE(Add),
+        TEST_CASE(Append)
     });
 }
 

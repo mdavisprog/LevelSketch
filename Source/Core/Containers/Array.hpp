@@ -104,6 +104,37 @@ public:
         return m_Data[Index];
     }
 
+    Array<T> operator+(const Array<T>& Other) const
+    {
+        Array<T> Result;
+        Result.Reserve(Size() + Other.Size());
+
+        for (const T& Item : *this)
+        {
+            Result.Push(Item);
+        }
+
+        for (const T& Item : Other)
+        {
+            Result.Push(Item);
+        }
+
+        return Result;
+    }
+
+    Array<T>& operator+=(const Array<T>& Other)
+    {
+        ConditionalGrow(Other.Size());
+
+        // Push items from one item to the other to properly call ctor.
+        for (const T& Item : Other)
+        {
+            Push(Item);
+        }
+
+        return *this;
+    }
+
     u64 Capacity() const
     {
         return m_Capacity;
