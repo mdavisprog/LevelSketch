@@ -24,30 +24,57 @@ SOFTWARE.
 
 */
 
-#pragma once
-
-#include "../../Core/Memory/UniquePtr.hpp"
+#include "CommandLine.hpp"
 
 namespace LevelSketch
 {
-
-namespace Tests
-{
-
-class TestSuite;
-
 namespace Core
 {
 
-UniquePtr<TestSuite> ArrayTests();
-UniquePtr<TestSuite> CommandLineTests();
-UniquePtr<TestSuite> MathTests();
-UniquePtr<TestSuite> ShareableTests();
-UniquePtr<TestSuite> SharedPtrTests();
-UniquePtr<TestSuite> StringTests();
-UniquePtr<TestSuite> UniquePtrTests();
-UniquePtr<TestSuite> WeakPtrTests();
-
+CommandLine& CommandLine::Instance()
+{
+    static CommandLine Instance;
+    return Instance;
 }
+
+CommandLine& CommandLine::Set(i32 Argc, const char** Argv)
+{
+    m_Arguments.Clear();
+
+    for (i32 I = 0; I < Argc; I++)
+    {
+        m_Arguments.Push(Argv[I]);
+    }
+
+    return *this;
+}
+
+u64 CommandLine::Count() const
+{
+    return m_Arguments.Size();
+}
+
+String CommandLine::Get(u64 Index) const
+{
+    return m_Arguments[Index];
+}
+
+bool CommandLine::Has(const char* Argument) const
+{
+    for (const String& Arg : m_Arguments)
+    {
+        if (Arg == Argument)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+CommandLine::CommandLine()
+{
+}
+
 }
 }

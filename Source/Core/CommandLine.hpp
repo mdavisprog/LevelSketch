@@ -26,28 +26,28 @@ SOFTWARE.
 
 #pragma once
 
-#include "../../Core/Memory/UniquePtr.hpp"
+#include "Containers/String.hpp"
 
 namespace LevelSketch
 {
-
-namespace Tests
-{
-
-class TestSuite;
-
 namespace Core
 {
 
-UniquePtr<TestSuite> ArrayTests();
-UniquePtr<TestSuite> CommandLineTests();
-UniquePtr<TestSuite> MathTests();
-UniquePtr<TestSuite> ShareableTests();
-UniquePtr<TestSuite> SharedPtrTests();
-UniquePtr<TestSuite> StringTests();
-UniquePtr<TestSuite> UniquePtrTests();
-UniquePtr<TestSuite> WeakPtrTests();
+class CommandLine
+{
+public:
+    static CommandLine& Instance();
 
-}
+    CommandLine& Set(i32 Argc, const char** Argv);
+    u64 Count() const;
+    String Get(u64 Index) const;
+    bool Has(const char* Argument) const;
+
+private:
+    CommandLine();
+
+    Array<String> m_Arguments {};
+};
+
 }
 }

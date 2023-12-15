@@ -22,6 +22,7 @@ add_subdirectory(External/OctaneGUI)
 # Common source files for all platforms and configurations.
 set(SOURCE
     Core/Containers/String.cpp
+    Core/CommandLine.cpp
     Core/Console.cpp
 
     Platform/FileSystem.cpp
@@ -98,6 +99,7 @@ if(WITH_TESTS)
         ${SOURCE}
 
         Tests/Core/Array.cpp
+        Tests/Core/CommandLine.cpp
         Tests/Core/Math.cpp
         Tests/Core/Shareable.cpp
         Tests/Core/SharedPtr.cpp

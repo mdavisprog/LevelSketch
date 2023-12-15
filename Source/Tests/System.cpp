@@ -76,6 +76,7 @@ System::System()
 {
     m_TestSuites
         .Push(Core::ArrayTests())
+        .Push(Core::CommandLineTests())
         .Push(Core::MathTests())
         .Push(Core::ShareableTests())
         .Push(Core::SharedPtrTests())

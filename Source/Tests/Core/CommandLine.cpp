@@ -24,29 +24,46 @@ SOFTWARE.
 
 */
 
-#pragma once
-
-#include "../../Core/Memory/UniquePtr.hpp"
+#include "Core.hpp"
+#include "../../Core/CommandLine.hpp"
+#include "../TestSuite.hpp"
+#include "../Utility.hpp"
 
 namespace LevelSketch
 {
-
 namespace Tests
 {
-
-class TestSuite;
-
 namespace Core
 {
 
-UniquePtr<TestSuite> ArrayTests();
-UniquePtr<TestSuite> CommandLineTests();
-UniquePtr<TestSuite> MathTests();
-UniquePtr<TestSuite> ShareableTests();
-UniquePtr<TestSuite> SharedPtrTests();
-UniquePtr<TestSuite> StringTests();
-UniquePtr<TestSuite> UniquePtrTests();
-UniquePtr<TestSuite> WeakPtrTests();
+using CommandLine = LevelSketch::Core::CommandLine;
+
+static bool Set()
+{
+    const char* Args[] = { "Hello", "World" };
+    CommandLine::Instance().Set(ARRAY_COUNT(Args), Args);
+    VERIFY(CommandLine::Instance().Count() == 2);
+    VERIFY(CommandLine::Instance().Get(0) == "Hello");
+    VERIFY(CommandLine::Instance().Get(1) == "World");
+    return true;
+}
+
+static bool Has()
+{
+    const char* Args[] = { "Hello", "World" };
+    CommandLine::Instance().Set(ARRAY_COUNT(Args), Args);
+    VERIFY(CommandLine::Instance().Has("World"));
+    VERIFY(!CommandLine::Instance().Has("Foo"));
+    return true;
+}
+
+UniquePtr<TestSuite> CommandLineTests()
+{
+    return TestSuite::New("CommandLine", {
+        TEST_CASE(Set),
+        TEST_CASE(Has)
+    });
+}
 
 }
 }
