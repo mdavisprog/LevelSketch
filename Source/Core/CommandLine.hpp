@@ -39,7 +39,9 @@ public:
     static CommandLine& Instance();
 
     CommandLine& Set(i32 Argc, const char** Argv);
+    CommandLine& Set(const Array<String>& Arguments);
     u64 Count() const;
+    const Array<String>& Arguments() const;
     String Get(u64 Index) const;
     bool Has(const char* Argument) const;
 

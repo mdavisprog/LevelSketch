@@ -38,8 +38,26 @@ namespace Core
 
 using CommandLine = LevelSketch::Core::CommandLine;
 
+class CommandLineState
+{
+public:
+    CommandLineState()
+    {
+        m_Arguments = CommandLine::Instance().Arguments();
+    }
+
+    ~CommandLineState()
+    {
+        CommandLine::Instance().Set(m_Arguments);
+    }
+
+private:
+    Array<String> m_Arguments {};
+};
+
 static bool Set()
 {
+    CommandLineState State {};
     const char* Args[] = { "Hello", "World" };
     CommandLine::Instance().Set(ARRAY_COUNT(Args), Args);
     VERIFY(CommandLine::Instance().Count() == 2);
@@ -50,6 +68,7 @@ static bool Set()
 
 static bool Has()
 {
+    CommandLineState State {};
     const char* Args[] = { "Hello", "World" };
     CommandLine::Instance().Set(ARRAY_COUNT(Args), Args);
     VERIFY(CommandLine::Instance().Has("World"));

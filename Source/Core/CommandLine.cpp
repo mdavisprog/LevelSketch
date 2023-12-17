@@ -49,9 +49,20 @@ CommandLine& CommandLine::Set(i32 Argc, const char** Argv)
     return *this;
 }
 
+CommandLine& CommandLine::Set(const Array<String>& Arguments)
+{
+    m_Arguments = Arguments;
+    return *this;
+}
+
 u64 CommandLine::Count() const
 {
     return m_Arguments.Size();
+}
+
+const Array<String>& CommandLine::Arguments() const
+{
+    return m_Arguments;
 }
 
 String CommandLine::Get(u64 Index) const
