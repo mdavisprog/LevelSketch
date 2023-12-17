@@ -29,6 +29,7 @@ SOFTWARE.
 #include "../External/OctaneGUI/OctaneGUI.h"
 #include "../Core/CommandLine.hpp"
 #include "../Core/Defines.hpp"
+#include "../Platform/Debugger.hpp"
 #include "../Platform/Platform.hpp"
 #include "../Platform/Window.hpp"
 #include "../Render/Renderer.hpp"
@@ -170,6 +171,7 @@ bool OnPlatformFrame(const Platform::TimingData&)
 i32 Main(i32 Argc, const char** Argv)
 {
     Core::CommandLine::Instance().Set(Argc, Argv);
+    Platform::Debugger::Instance()->Initialize();
 
 #if defined(WITH_TESTS)
     if (Core::CommandLine::Instance().Has("--tests"))
@@ -231,10 +233,12 @@ i32 Main(i32 Argc, const char** Argv)
         Platform->CloseWindow(Item.second);
     }
     g_Windows.clear();
-    Platform->Shutdown();
 
     g_Application->Shutdown();
     delete g_Application;
+
+    Platform->Shutdown();
+    Platform::Debugger::Instance()->Shutdown();
 
     return Return;
 }

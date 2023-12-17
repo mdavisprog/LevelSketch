@@ -25,6 +25,7 @@ set(SOURCE
     Core/CommandLine.cpp
     Core/Console.cpp
 
+    Platform/Debugger.cpp
     Platform/FileSystem.cpp
     Platform/Platform.cpp
     Platform/Window.cpp
@@ -45,6 +46,7 @@ endif()
 if(WIN32)
     set(SOURCE
         ${SOURCE}
+        Platform/Windows/Debugger.cpp
         Platform/Windows/Events.cpp
         Platform/Windows/FileSystem.cpp
         Platform/Windows/Platform.cpp

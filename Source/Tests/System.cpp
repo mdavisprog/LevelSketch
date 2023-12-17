@@ -27,6 +27,7 @@ SOFTWARE.
 #include "System.hpp"
 #include "../Core/Console.hpp"
 #include "../Core/Version.hpp"
+#include "../Platform/Debugger.hpp"
 #include "Core/Core.hpp"
 #include "Platform/Platform.hpp"
 #include "TestSuite.hpp"
@@ -69,6 +70,7 @@ i32 System::Run()
         Console::WriteLine(Console::Color::Red, "An error has occurred during testing.\n");
     }
 
+    LevelSketch::Platform::Debugger::Instance()->Shutdown();
     return 0;
 }
 
