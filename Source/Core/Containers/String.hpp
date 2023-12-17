@@ -62,6 +62,11 @@ public:
         Copy(nullptr);
     }
 
+    TString(const TString<T>& Other)
+        : m_Data(Other.m_Data)
+    {
+    }
+
     TString(const T* Data)
     {
         Copy(Data);
@@ -70,6 +75,13 @@ public:
     ~TString()
     {
         Clear();
+    }
+
+    TString<T>& operator=(const TString<T>& Other)
+    {
+        Clear();
+        m_Data = Other.m_Data;
+        return *this;
     }
 
     TString<T>& operator=(const T* Data)
