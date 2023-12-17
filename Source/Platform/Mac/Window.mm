@@ -27,77 +27,11 @@ SOFTWARE.
 #include "Window.hpp"
 #include "../../Core/Assert.hpp"
 #include "../../Core/Math/Vector2.hpp"
+#include "../../Render/Metal/ViewController.hpp"
 #include "Platform.hpp"
 #include "WindowBridge.hpp"
 
-#import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
-#import <Metal/Metal.h>
-#import <MetalKit/MetalKit.h>
-
-//
-// AppViewController
-//
-
-@interface AppViewController : NSViewController<NSWindowDelegate>
-@end
-
-@interface AppViewController () <MTKViewDelegate>
-    @property (nonatomic, strong) id<MTLDevice> Device;
-    @property (nonatomic, strong) id<MTLCommandQueue> CommandQueue;
-@end
-
-@implementation AppViewController
-
-    -(instancetype)initWithNibName:(nullable NSString *)nibNameOrNil bundle:(nullable NSBundle *)nibBundleOrNil
-    {
-        self = [super initWithNibName:nibNameOrNil bundle: nibBundleOrNil];
-
-        _Device = MTLCreateSystemDefaultDevice();
-        LS_ASSERT(self.Device != nullptr);
-
-        _CommandQueue = [_Device newCommandQueue];
-
-        return self;
-    }
-
-    -(void)loadView
-    {
-        self.view = [[MTKView alloc] initWithFrame:CGRectMake(0, 0, 960, 540)];
-    }
-
-    -(void)viewDidLoad
-    {
-        [super viewDidLoad];
-
-        MTKView* View = (MTKView*)self.view;
-        View.device = self.Device;
-        View.delegate = self;
-
-        [NSApp activateIgnoringOtherApps:YES];
-    }
-
-    -(void)drawInMTKView:(MTKView*)View
-    {
-        // TODO: Prevent running loop for all views
-        LevelSketch::Platform::Platform::Instance()->RunFrame();
-    }
-
-    -(void)mtkView:(MTKView*)View drawableSizeWillChange:(CGSize)Size
-    {
-    }
-
-    -(void)viewWillAppear
-    {
-        [super viewWillAppear];
-        self.view.window.delegate = self;
-    }
-
-    -(void)windowWillClose:(NSNotification*)Notification
-    {
-    }
-
-@end
 
 namespace LevelSketch
 {
@@ -127,15 +61,17 @@ bool Window::Create(const char* Title, int X, int Y, int Width, int Height)
     {
         WindowBridge* Bridge = [WindowBridge alloc];
 
-        NSViewController* Root = [[AppViewController alloc] initWithNibName:nil bundle:nil];
-
         Bridge.Window = [[NSWindow alloc]
             initWithContentRect:NSMakeRect(X, Y, Width, Height)
             styleMask:(NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable)
             backing:NSBackingStoreBuffered
             defer:NO
         ];
-        Proxy.Window.contentViewController = Root;
+
+        // The ViewController object must be created with window creation in order for rendering
+        // callback to work. Would be nice if this was done in Renderer::Initialize.
+        NSViewController* Root = [[ViewController alloc] initWithNibName:nil bundle:nil];
+        Bridge.Window.contentViewController = Root;
 
         [Bridge.Window setTitle:[NSString stringWithUTF8String:Title]];
 

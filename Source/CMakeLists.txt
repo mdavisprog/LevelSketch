@@ -85,6 +85,7 @@ elseif(APPLE)
         Platform/Mac/WindowBridge.mm
 
         Render/Metal/Renderer.mm
+        Render/Metal/ViewController.mm
     )
 else()
     set(SOURCE
