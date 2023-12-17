@@ -44,12 +44,16 @@ Debugger* Debugger::Instance()
 #if defined(WINDOWS)
         s_Instance = UniquePtr<Windows::Debugger>::New();
 #else
-        s_Instance = UniquePtr<Debugger>::New();
+        s_Instance = UniquePtr<Debugger>::Adopt(new Debugger);
 #endif
         LS_ASSERT(s_Instance != nullptr);
     }
 
     return s_Instance.Get();
+}
+
+Debugger::~Debugger()
+{
 }
 
 bool Debugger::Initialize()

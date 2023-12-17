@@ -40,6 +40,8 @@ class Debugger
 public:
     static Debugger* Instance();
 
+    virtual ~Debugger();
+
     // Should be called at the earliest possible point.
     virtual bool Initialize();
 
