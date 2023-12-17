@@ -175,8 +175,13 @@ public:
         {
             m_Data = Allocate(m_Capacity);
 
+            // FIXME: Should the Allocate function do an in-place new for
+            // each element to safely construct each object? Will do
+            // that here before a copy.
+
             for (u64 I = 0; I < m_Size; I++)
             {
+                new(static_cast<void*>(&m_Data[I])) T;
                 m_Data[I] = Other.m_Data[I];
             }
         }
