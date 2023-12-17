@@ -82,6 +82,7 @@ elseif(APPLE)
         Platform/Mac/FileSystem.mm
         Platform/Mac/Platform.mm
         Platform/Mac/Window.mm
+        Platform/Mac/WindowBridge.mm
 
         Render/Metal/Renderer.mm
     )

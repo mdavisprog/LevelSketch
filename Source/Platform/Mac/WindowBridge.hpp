@@ -26,36 +26,12 @@ SOFTWARE.
 
 #pragma once
 
-#include "../Window.hpp"
+#import <Foundation/Foundation.h>
 
-namespace LevelSketch
-{
-namespace Platform
-{
-namespace Mac
-{
+@class NSWindow;
 
-class Window : public LevelSketch::Platform::Window
-{
-public:
-    Window();
+@interface WindowBridge : NSObject
+    @property (strong) NSWindow* Window;
 
-    virtual void* Handle() const override;
-    virtual bool Create(const char* Title, int X, int Y, int Width, int Height) override;
-    virtual void Close() override;
-    virtual void Show() override;
-    virtual void Focus() override;
-    virtual void SetPosition(int X, int Y) override;
-    virtual Core::Math::Vector2i Position() const override;
-    virtual Core::Math::Vector2i Size() const override;
-    virtual void ProcessEvents() override;
-
-    virtual bool IsOpen() const override;
-
-private:
-    void* m_Bridge { nullptr };
-};
-
-}
-}
-}
+    +(WindowBridge*) Retrieve:(void*)Ptr;
+@end

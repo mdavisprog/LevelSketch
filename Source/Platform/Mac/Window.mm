@@ -28,22 +28,12 @@ SOFTWARE.
 #include "../../Core/Assert.hpp"
 #include "../../Core/Math/Vector2.hpp"
 #include "Platform.hpp"
+#include "WindowBridge.hpp"
 
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
-
-//
-// Window Proxy
-//
-
-@interface WindowProxy : NSObject
-    @property (strong) NSWindow* Window;
-@end
-
-@implementation WindowProxy
-@end
 
 //
 // AppViewController
@@ -116,11 +106,6 @@ namespace Platform
 namespace Mac
 {
 
-WindowProxy* GetWindowProxy(void* Ptr)
-{
-    return (__bridge WindowProxy*)Ptr;
-}
-
 Window::Window()
     : LevelSketch::Platform::Window()
 {
@@ -133,18 +118,18 @@ void* Window::Handle() const
 
 bool Window::Create(const char* Title, int X, int Y, int Width, int Height)
 {
-    if (m_WindowProxy != nullptr)
+    if (m_Bridge != nullptr)
     {
         return true;
     }
 
     @autoreleasepool
     {
-        WindowProxy* Proxy = [WindowProxy alloc];
+        WindowBridge* Bridge = [WindowBridge alloc];
 
         NSViewController* Root = [[AppViewController alloc] initWithNibName:nil bundle:nil];
 
-        Proxy.Window = [[NSWindow alloc]
+        Bridge.Window = [[NSWindow alloc]
             initWithContentRect:NSMakeRect(X, Y, Width, Height)
             styleMask:(NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable)
             backing:NSBackingStoreBuffered
@@ -152,9 +137,9 @@ bool Window::Create(const char* Title, int X, int Y, int Width, int Height)
         ];
         Proxy.Window.contentViewController = Root;
 
-        [Proxy.Window setTitle:[NSString stringWithUTF8String:Title]];
+        [Bridge.Window setTitle:[NSString stringWithUTF8String:Title]];
 
-        m_WindowProxy = (void*)CFBridgingRetain(Proxy);
+        m_Bridge = (void*)CFBridgingRetain(Bridge);
     }
 
     return true;
@@ -169,10 +154,10 @@ void Window::Close()
 
     @autoreleasepool
     {
-        WindowProxy* Proxy = GetWindowProxy(m_WindowProxy);
-        [Proxy.Window close];
-        [Proxy dealloc];
-        m_WindowProxy = nullptr;
+        WindowBridge* Bridge = [WindowBridge Retrieve:m_Bridge];
+        [Bridge.Window close];
+        [Bridge dealloc];
+        m_Bridge = nullptr;
     }
 }
 
@@ -185,8 +170,8 @@ void Window::Show()
 
     @autoreleasepool
     {
-        WindowProxy* Proxy = GetWindowProxy(m_WindowProxy);
-        [Proxy.Window makeKeyAndOrderFront:nil];
+        WindowBridge* Bridge = [WindowBridge Retrieve:m_Bridge];
+        [Bridge.Window makeKeyAndOrderFront:nil];
     }
 }
 
@@ -199,8 +184,8 @@ void Window::Focus()
 
     @autoreleasepool
     {
-        WindowProxy* Proxy = GetWindowProxy(m_WindowProxy);
-        [Proxy.Window orderFront:nil];
+        WindowBridge* Bridge = [WindowBridge Retrieve:m_Bridge];
+        [Bridge.Window orderFront:nil];
     }
 }
 
@@ -213,19 +198,19 @@ void Window::SetPosition(int X, int Y)
 
     @autoreleasepool
     {
-        WindowProxy* Proxy = GetWindowProxy(m_WindowProxy);
+        WindowBridge* Bridge = [WindowBridge Retrieve:m_Bridge];
 
         // Can be nil if window is off-screen.
-        if (Proxy.Window.screen != nil)
+        if (Bridge.Window.screen != nil)
         {
-            Y = (int)Proxy.Window.screen.frame.size.height - (int)Proxy.Window.frame.size.height - Y;
+            Y = (int)Bridge.Window.screen.frame.size.height - (int)Bridge.Window.frame.size.height - Y;
         }
         else
         {
-            Y = Proxy.Window.frame.size.height - Y;
+            Y = Bridge.Window.frame.size.height - Y;
         }
 
-        [Proxy.Window setFrameOrigin:NSMakePoint(X, Y)];
+        [Bridge.Window setFrameOrigin:NSMakePoint(X, Y)];
     }
 }
 
@@ -241,8 +226,8 @@ Core::Math::Vector2i Window::Position() const
     @autoreleasepool
     {
         // TODO: Properly check for screen.
-        WindowProxy* Proxy = GetWindowProxy(m_WindowProxy);
-        NSRect Frame = [Proxy.Window frame];
+        WindowBridge* Bridge = [WindowBridge Retrieve:m_Bridge];
+        NSRect Frame = [Bridge.Window frame];
         Result.X = Frame.origin.x;
         Result.Y = Frame.origin.y + Frame.size.height;
     }
@@ -261,8 +246,8 @@ Core::Math::Vector2i Window::Size() const
 
     @autoreleasepool
     {
-        WindowProxy* Proxy = GetWindowProxy(m_WindowProxy);
-        NSRect Frame = [Proxy.Window frame];
+        WindowBridge* Bridge = [WindowBridge Retrieve:m_Bridge];
+        NSRect Frame = [Bridge.Window frame];
         Result.X = Frame.size.width;
         Result.Y = Frame.size.height;
     }
@@ -276,7 +261,7 @@ void Window::ProcessEvents()
 
 bool Window::IsOpen() const
 {
-    return m_WindowProxy != nullptr;
+    return m_Bridge != nullptr;
 }
 
 }
