@@ -39,7 +39,7 @@ cbuffer ConstantBuffer : register(b0)
     float4x4 Orthographic;
 }
 
-PSInput Main(float4 position : POSITION, float2 uv : TEXCOORD, float4 color : COLOR)
+PSInput Main(float4 position : POSITION, float2 uv : TEXCOORD, uint color : COLOR)
 {
     PSInput result;
 
