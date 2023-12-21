@@ -35,7 +35,7 @@ namespace LevelSketch
 namespace Core
 {
 
-class Console
+class Console final
 {
 public:
     enum class Color

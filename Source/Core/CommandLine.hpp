@@ -33,7 +33,7 @@ namespace LevelSketch
 namespace Core
 {
 
-class CommandLine
+class CommandLine final
 {
 public:
     static CommandLine& Instance();

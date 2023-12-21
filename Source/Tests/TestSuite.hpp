@@ -45,7 +45,7 @@ namespace LevelSketch
 namespace Tests
 {
 
-class TestSuite
+class TestSuite final
 {
 public:
     struct TestCase

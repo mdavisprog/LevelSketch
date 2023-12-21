@@ -35,7 +35,7 @@ namespace Platform
 namespace Windows
 {
 
-class Event
+class Event final
 {
 public:
     static LRESULT WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);

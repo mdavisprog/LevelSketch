@@ -36,7 +36,7 @@ namespace Platform
 namespace Windows
 {
 
-class Platform : public LevelSketch::Platform::Platform
+class Platform final : public LevelSketch::Platform::Platform
 {
 public:
     Platform();

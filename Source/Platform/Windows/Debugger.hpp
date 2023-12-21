@@ -35,7 +35,7 @@ namespace Platform
 namespace Windows
 {
 
-class Debugger : public LevelSketch::Platform::Debugger
+class Debugger final : public LevelSketch::Platform::Debugger
 {
 public:
     Debugger();

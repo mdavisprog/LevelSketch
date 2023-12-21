@@ -36,7 +36,7 @@ namespace Tests
 
 class TestSuite;
 
-class System
+class System final
 {
 public:
     static System& Instance();

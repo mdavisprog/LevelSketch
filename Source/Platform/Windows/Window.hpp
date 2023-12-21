@@ -36,7 +36,7 @@ namespace Platform
 namespace Windows
 {
 
-class Window : public LevelSketch::Platform::Window
+class Window final : public LevelSketch::Platform::Window
 {
 public:
     Window();
