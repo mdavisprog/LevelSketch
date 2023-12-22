@@ -449,7 +449,7 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         Sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
         Sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
         Sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-        Sampler.MipLODBias = 0;
+        Sampler.MipLODBias = 0.0f;
         Sampler.MaxAnisotropy = 0;
         Sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
         Sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
@@ -538,9 +538,9 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         .SetEntryPoint("Main")
         .SetTarget("vs_5_0")
         .SetCompileFlags(CompileFlags)
-        .AddInputElement({"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0})
-        .AddInputElement({"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0})
-        .AddInputElement({"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UINT, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0})
+        .AddInputElement({"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0})
+        .AddInputElement({"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0})
+        .AddInputElement({"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0})
         .Compile();
     if (!CompileResult)
     {
@@ -575,6 +575,15 @@ bool Renderer::LoadAssets(Platform::Window* Window)
     GraphicsDesc.DepthStencilState.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
     GraphicsDesc.DepthStencilState.BackFace = GraphicsDesc.DepthStencilState.FrontFace;
     GraphicsDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+
+    GraphicsDesc.BlendState.RenderTarget[0].BlendEnable = TRUE;
+    GraphicsDesc.BlendState.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+    GraphicsDesc.BlendState.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+    GraphicsDesc.BlendState.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+    GraphicsDesc.BlendState.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+    GraphicsDesc.BlendState.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_INV_SRC_ALPHA;
+    GraphicsDesc.BlendState.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+    GraphicsDesc.BlendState.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 
     if (m_Device->CreateGraphicsPipelineState(&GraphicsDesc, IID_PPV_ARGS(&m_PipelineStateGUI)) != S_OK)
     {
