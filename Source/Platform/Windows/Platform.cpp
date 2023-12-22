@@ -46,13 +46,17 @@ Platform::Platform()
 
 bool Platform::Initialize()
 {
-    WNDCLASSEXW Class;
-    ZeroMemory(&Class, sizeof(WNDCLASSEXW));
+    WNDCLASSEXW Class { 0 };
     Class.cbSize = sizeof(Class);
     Class.style = CS_HREDRAW | CS_VREDRAW;
     Class.lpszClassName = WND_CLASS_NAME;
     Class.lpfnWndProc = Event::WndProc;
     Class.hInstance = GetModuleHandleW(nullptr);
+    Class.hCursor = LoadCursorW(nullptr, IDC_ARROW);
+    Class.hIcon = nullptr;
+    Class.hIconSm = nullptr;
+    Class.hbrBackground = nullptr;
+    Class.lpszMenuName = nullptr;
 
     if (RegisterClassExW(&Class) == 0)
     {
