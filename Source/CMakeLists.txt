@@ -25,6 +25,7 @@ set(SOURCE
     Core/CommandLine.cpp
     Core/Console.cpp
 
+    Engine/Engine.cpp
     Platform/Debugger.cpp
     Platform/FileSystem.cpp
     Platform/Platform.cpp

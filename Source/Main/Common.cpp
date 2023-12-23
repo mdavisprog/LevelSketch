@@ -28,7 +28,9 @@ SOFTWARE.
 #include <cstdio>
 #include "../External/OctaneGUI/OctaneGUI.h"
 #include "../Core/CommandLine.hpp"
+#include "../Core/Console.hpp"
 #include "../Core/Defines.hpp"
+#include "../Engine/Engine.hpp"
 #include "../Platform/Debugger.hpp"
 #include "../Platform/Platform.hpp"
 #include "../Platform/Window.hpp"
@@ -226,7 +228,15 @@ i32 Main(i32 Argc, const char** Argv)
         return 0;
     }
 
+    if (!Engine::Engine::Instance().Initialize())
+    {
+        Core::Console::Error("Failed to initialize engine!");
+        return 0;
+    }
+
     int Return = Platform->SetOnFrame(OnPlatformFrame).Run();
+
+    Engine::Engine::Instance().Shutdown();
 
     for (const std::pair<OctaneGUI::Window*, LevelSketch::Platform::Window*> Item : g_Windows)
     {
