@@ -29,6 +29,7 @@ SOFTWARE.
 #include "../Core/Version.hpp"
 #include "../Platform/Debugger.hpp"
 #include "Core/Core.hpp"
+#include "Engine/Engine.hpp"
 #include "Platform/Platform.hpp"
 #include "TestSuite.hpp"
 
@@ -85,6 +86,8 @@ System::System()
         .Push(Core::StringTests())
         .Push(Core::UniquePtrTests())
         .Push(Core::WeakPtrTests())
+
+        .Push(Engine::TypeDatabaseTests())
 
         .Push(Platform::FileSystemTests());
 }

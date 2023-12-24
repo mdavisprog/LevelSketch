@@ -26,6 +26,9 @@ set(SOURCE
     Core/Console.cpp
 
     Engine/Engine.cpp
+    Engine/Type.cpp
+    Engine/TypeDatabase.cpp
+
     Platform/Debugger.cpp
     Platform/FileSystem.cpp
     Platform/Platform.cpp
@@ -109,6 +112,8 @@ if(WITH_TESTS)
         Tests/Core/String.cpp
         Tests/Core/UniquePtr.cpp
         Tests/Core/WeakPtr.cpp
+
+        Tests/Engine/TypeDatabase.cpp
 
         Tests/Platform/FileSystem.cpp
 
