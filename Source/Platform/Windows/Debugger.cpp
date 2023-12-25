@@ -57,6 +57,7 @@ namespace Windows
         }
 
         _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+        Core::Console::WriteLine("Enabling memory leak check. Output is only dumped through Visual Studio at the moment.");
     }
 #endif
 
