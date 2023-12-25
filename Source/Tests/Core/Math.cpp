@@ -50,7 +50,9 @@ static bool CommonOps()
     VERIFY(Abs(-5) == 5);
     VERIFY(Absf(1.0f) == 1.0f);
     VERIFY(Min<i32>(3, 5) == 3);
+    VERIFY(Min<i32>({1, 3, 5, 7}) == 1);
     VERIFY(Max<i32>(3, 5) == 5);
+    VERIFY(Max<i32>({1, 3, 5, 7}) == 7);
 
     constexpr const f32 Angle { 90.0f * DEG2RAD };
     VERIFY(Sin<f32>(Angle) == 1.0f);

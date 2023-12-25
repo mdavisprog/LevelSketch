@@ -30,6 +30,7 @@ SOFTWARE.
 #include "../Types.hpp"
 
 #include <cmath>
+#include <initializer_list>
 
 namespace LevelSketch
 {
@@ -42,27 +43,73 @@ static constexpr const f32 PI { 3.14159265359f };
 static constexpr const f32 DEG2RAD { PI / 180.0f };
 static constexpr const f32 RAD2DEG { 180.0f / PI };
 
-static i32 Abs(i32 Value)
+static constexpr i32 Abs(i32 Value)
 {
     return Value < 0 ? Value * -1 : Value;
 }
 
-static f32 Absf(f32 Value)
+static constexpr f32 Absf(f32 Value)
 {
     return Value < 0.0f ? Value * -1.0f : Value;
 }
 
 template<typename T>
-static T Min(const T& A, const T& B)
+static constexpr T Min(const T& A, const T& B)
 {
     return A < B ? A : B;
 }
 
 template<typename T>
-static T Max(const T& A, const T& B)
+static constexpr T Min(const std::initializer_list<T>& Values)
+{
+    if (Values.size() == 0)
+    {
+        return T(0);
+    }
+
+    T Result { Values.begin()[0] };
+
+    for (u64 I = 0; I < Values.size(); I++)
+    {
+        const T& Value { Values.begin()[I] };
+
+        if (Value < Result)
+        {
+            Result = Value;
+        }
+    }
+
+    return Result;
+}
+
+template<typename T>
+static constexpr T Max(const T& A, const T& B)
 {
     return A > B ? A : B;
-} 
+}
+
+template<typename T>
+static constexpr T Max(const std::initializer_list<T>& Values)
+{
+    if (Values.size() == 0)
+    {
+        return T(0);
+    }
+
+    T Result { Values.begin()[0] };
+
+    for (u64 I = 0; I < Values.size(); I++)
+    {
+        const T& Value { Values.begin()[I] };
+
+        if (Value > Result)
+        {
+            Result = Value;
+        }
+    }
+
+    return Result;
+}
 
 template<typename T>
 static T Sin(T Radians)
@@ -91,16 +138,26 @@ static T FMod(T X, T Y)
 }
 }
 
-static const auto& PI = Core::Math::PI;
-static const auto& DEG2RAD = Core::Math::DEG2RAD;
-static const auto& RAD2DEG = Core::Math::RAD2DEG;
-static const auto& Abs = Core::Math::Abs;
-static const auto& Absf = Core::Math::Absf;
-template<typename T> static const auto& Min = Core::Math::Min<T>;
-template<typename T> static const auto& Max = Core::Math::Max<T>;
+static constexpr const auto& PI = Core::Math::PI;
+static constexpr const auto& DEG2RAD = Core::Math::DEG2RAD;
+static constexpr const auto& RAD2DEG = Core::Math::RAD2DEG;
+static constexpr const auto& Abs = Core::Math::Abs;
+static constexpr const auto& Absf = Core::Math::Absf;
 template<typename T> static const auto& Sin = Core::Math::Sin<T>;
 template<typename T> static const auto& Cos = Core::Math::Cos<T>;
 template<typename T> static const auto& Tan = Core::Math::Tan<T>;
 template<typename T> static const auto& FMod = Core::Math::FMod<T>;
+
+template<typename T>
+static constexpr T Min(const T& A, const T& B) { return Core::Math::Min<T>(A, B); }
+
+template<typename T>
+static constexpr T Min(const std::initializer_list<T>& Values) { return Core::Math::Min<T>(Values); }
+
+template<typename T>
+static constexpr T Max(const T& A, const T& B) { return Core::Math::Max<T>(A, B); }
+
+template<typename T>
+static constexpr T Max(const std::initializer_list<T>& Values) { return Core::Math::Max<T>(Values); }
 
 }
