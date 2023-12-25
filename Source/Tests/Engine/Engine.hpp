@@ -38,6 +38,7 @@ class TestSuite;
 namespace Engine
 {
 
+UniquePtr<TestSuite> ClassTests();
 UniquePtr<TestSuite> TypeDatabaseTests();
 
 }

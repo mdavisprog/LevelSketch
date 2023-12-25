@@ -113,6 +113,7 @@ if(WITH_TESTS)
         Tests/Core/UniquePtr.cpp
         Tests/Core/WeakPtr.cpp
 
+        Tests/Engine/Class.cpp
         Tests/Engine/TypeDatabase.cpp
 
         Tests/Platform/FileSystem.cpp

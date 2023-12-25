@@ -47,6 +47,7 @@ public:
 
     const char* Name() const;
     void* NewInstance() const;
+    Type* Parent() const;
 
     template<typename T>
     T* New() const

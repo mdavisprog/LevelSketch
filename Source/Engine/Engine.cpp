@@ -25,6 +25,7 @@ SOFTWARE.
 */
 
 #include "Engine.hpp"
+#include "Class.hpp"
 
 namespace LevelSketch
 {
@@ -39,6 +40,7 @@ Engine& Engine::Instance()
 
 bool Engine::Initialize()
 {
+    REGISTER_CLASS(Class);
     return true;
 }
 

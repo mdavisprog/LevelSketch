@@ -54,10 +54,10 @@ public:
         return InternalRegister(Name, Parent, []() -> void* { return new T; });
     }
 
+    Type* GetType(const char* Name) const;
     bool HasType(const char* Name) const;
     bool Inherits(const char* Name, const char* Parent) const;
     void Clear();
-    String Dump() const;
 
 private:
     TypeDatabase();
@@ -84,6 +84,12 @@ private:
     #define DECLARE_TYPE(Type, Parent) LevelSketch::Engine::TypeDatabase::Instance().Register<Type, Parent>(#Type, #Parent)
 #else
     #error "DECLARE_TYPE has already been defined!"
+#endif
+
+#ifndef TYPE_EXISTS
+    #define TYPE_EXISTS(Type) LevelSketch::Engine::TypeDatabase::Instance().HasType(#Type)
+#else
+    #error "TYPE_EXISTS has already been defined!"
 #endif
 
 #ifndef TYPE_INHERITS

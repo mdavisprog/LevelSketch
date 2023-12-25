@@ -87,6 +87,7 @@ System::System()
         .Push(Core::UniquePtrTests())
         .Push(Core::WeakPtrTests())
 
+        .Push(Engine::ClassTests())
         .Push(Engine::TypeDatabaseTests())
 
         .Push(Platform::FileSystemTests());

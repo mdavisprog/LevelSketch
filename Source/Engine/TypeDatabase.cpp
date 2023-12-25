@@ -38,6 +38,11 @@ TypeDatabase& TypeDatabase::Instance()
     return Instance;
 }
 
+Type* TypeDatabase::GetType(const char* Name) const
+{
+    return GetType(m_Root.Get(), Name);
+}
+
 bool TypeDatabase::HasType(const char* Name) const
 {
     return HasType(m_Root.Get(), Name);
@@ -58,6 +63,11 @@ bool TypeDatabase::Inherits(const char* Name, const char* Parent) const
     }
 
     return true;
+}
+
+void TypeDatabase::Clear()
+{
+    m_Root->m_Children.Clear();
 }
 
 TypeDatabase::TypeDatabase()
@@ -135,11 +145,6 @@ Type* TypeDatabase::GetType(Type* Parent, const char* Name) const
 bool TypeDatabase::HasType(Type* Parent, const char* Name) const
 {
     return GetType(Parent, Name) != nullptr;
-}
-
-void TypeDatabase::Clear()
-{
-    m_Root->m_Children.Clear();
 }
 
 }

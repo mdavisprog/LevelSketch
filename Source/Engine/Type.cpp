@@ -55,5 +55,10 @@ void* Type::NewInstance() const
     return m_OnNew();
 }
 
+Type* Type::Parent() const
+{
+    return m_Parent;
+}
+
 }
 }
