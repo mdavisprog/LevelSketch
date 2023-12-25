@@ -39,26 +39,15 @@ namespace Engine
 using Type = LevelSketch::Engine::Type;
 using TypeDatabase = LevelSketch::Engine::TypeDatabase;
 
-class TypeDatabaseScope
-{
-public:
-    ~TypeDatabaseScope()
-    {
-        TypeDatabase::Instance().Clear();
-    }
-};
-
 static bool Root()
 {
-    TypeDatabaseScope Scope;
     VERIFY(TypeDatabase::Instance().HasType("Type"));
+    TypeDatabase::Instance().Clear();
     return true;
 }
 
 static bool Base()
 {
-    TypeDatabaseScope Scope;
-
     class Base
     {
     public:
@@ -68,13 +57,12 @@ static bool Base()
     VERIFY(!TypeDatabase::Instance().HasType("Base"));
     DECLARE_BASE_TYPE(Base);
     VERIFY(TypeDatabase::Instance().HasType("Base"));
+    TypeDatabase::Instance().Clear();
     return true;
 }
 
 static bool Instance()
 {
-    TypeDatabaseScope Scope;
-
     class Base
     {
     public:
@@ -86,13 +74,12 @@ static bool Instance()
     VERIFY(TypeDatabase::Instance().HasType("Base"));
     UniquePtr<Base> Instance { BaseTypePtr->NewUnique<Base>() };
     VERIFY(Instance != nullptr);
+    TypeDatabase::Instance().Clear();
     return true;
 }
 
 static bool Child()
 {
-    TypeDatabaseScope Scope;
-
     class Parent {};
     class Child : public Parent {};
     DECLARE_BASE_TYPE(Parent);
@@ -100,13 +87,12 @@ static bool Child()
     VERIFY(!TypeDatabase::Instance().HasType("Child"));
     DECLARE_TYPE(Child, Parent);
     VERIFY(TypeDatabase::Instance().HasType("Child"));
+    TypeDatabase::Instance().Clear();
     return true;
 }
 
 static bool Inherits()
 {
-    TypeDatabaseScope Scope;
-
     class A {};
     class B : public A {};
     class C : public A {};
@@ -122,6 +108,7 @@ static bool Inherits()
     VERIFY(TYPE_INHERITS(B, A));
     VERIFY(!TYPE_INHERITS(C, B));
 
+    TypeDatabase::Instance().Clear();
     return true;
 }
 
