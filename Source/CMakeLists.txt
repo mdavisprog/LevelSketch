@@ -32,6 +32,7 @@ set(SOURCE
     Platform/Debugger.cpp
     Platform/EventQueue.cpp
     Platform/FileSystem.cpp
+    Platform/Mutex.cpp
     Platform/Platform.cpp
     Platform/Window.cpp
 
@@ -54,6 +55,7 @@ if(WIN32)
         Platform/Windows/Debugger.cpp
         Platform/Windows/Events.cpp
         Platform/Windows/FileSystem.cpp
+        Platform/Windows/Mutex.cpp
         Platform/Windows/Platform.cpp
         Platform/Windows/Window.cpp
 
