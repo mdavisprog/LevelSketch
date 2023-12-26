@@ -25,7 +25,10 @@ SOFTWARE.
 */
 
 #include "Events.hpp"
+#include "../EventQueue.hpp"
 #include "../Window.hpp"
+
+#include <windowsx.h>
 
 namespace LevelSketch
 {
@@ -47,6 +50,13 @@ LRESULT Event::WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
+    
+    case WM_MOUSEMOVE:
+    {
+        Vector2i Position { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+        Platform::Event::OnMouseMove MouseMove { Position };
+        EventQueue::Instance().Push({ MouseMove }, Window);
+    } break;
 
     default: break;
     }
