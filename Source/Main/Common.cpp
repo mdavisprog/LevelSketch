@@ -32,6 +32,7 @@ SOFTWARE.
 #include "../Core/Defines.hpp"
 #include "../Engine/Engine.hpp"
 #include "../Platform/Debugger.hpp"
+#include "../Platform/EventQueue.hpp"
 #include "../Platform/Platform.hpp"
 #include "../Platform/Window.hpp"
 #include "../Render/Renderer.hpp"
@@ -45,8 +46,33 @@ namespace LevelSketch
 namespace Main
 {
 
+struct UIEvent
+{
+public:
+    OctaneGUI::Event Event { OctaneGUI::Event::Type::None };
+    Platform::Window* Window { nullptr };
+};
+
 static OctaneGUI::Application* g_Application { nullptr };
 static std::unordered_map<OctaneGUI::Window*, LevelSketch::Platform::Window*> g_Windows {};
+static Array<UIEvent> g_UIEvents {};
+
+OctaneGUI::Event Transform(const Platform::Event& Event)
+{
+    switch (Event.GetType())
+    {
+    case Platform::Event::Type::MouseMove:
+    {
+        const Platform::Event::OnMouseMove& Data { Event.GetData().MouseMove };
+        return OctaneGUI::Event(OctaneGUI::Event::MouseMove(static_cast<f32>(Data.Position.X), static_cast<f32>(Data.Position.Y)));
+    } break;
+
+    case Platform::Event::Type::None:
+    default: break;
+    }
+
+    return OctaneGUI::Event(OctaneGUI::Event::Type::None);
+}
 
 void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Action)
 {
@@ -138,6 +164,16 @@ OctaneGUI::Event OnEvent(OctaneGUI::Window* Window)
         return { OctaneGUI::Event::Type::WindowClosed };
     }
 
+    for (u64 I = 0; I < g_UIEvents.Size(); I++)
+    {
+        const UIEvent Event { g_UIEvents[I] };
+        if (Event.Window == Win)
+        {
+            g_UIEvents.Remove(I);
+            return Event.Event;
+        }
+    }
+
     Win->ProcessEvents();
 
     return { OctaneGUI::Event::Type::None };
@@ -158,6 +194,12 @@ bool OnPlatformFrame(const Platform::TimingData&)
     if (!g_Application->IsRunning())
     {
         return false;
+    }
+
+    Array<Platform::Event> Events { Platform::EventQueue::Instance().Consume() };
+    for (const Platform::Event& Event : Events)
+    {
+        g_UIEvents.Push({ Transform(Event), Event.GetWindow() });
     }
 
     g_Application->RunFrame();
