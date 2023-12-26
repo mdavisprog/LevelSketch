@@ -30,6 +30,7 @@ set(SOURCE
     Engine/TypeDatabase.cpp
 
     Platform/Debugger.cpp
+    Platform/EventQueue.cpp
     Platform/FileSystem.cpp
     Platform/Platform.cpp
     Platform/Window.cpp
