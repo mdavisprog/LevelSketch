@@ -32,6 +32,7 @@ set(SOURCE
     Platform/Debugger.cpp
     Platform/EventQueue.cpp
     Platform/FileSystem.cpp
+    Platform/Mouse.cpp
     Platform/Mutex.cpp
     Platform/Platform.cpp
     Platform/Window.cpp

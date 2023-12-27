@@ -57,7 +57,21 @@ static OctaneGUI::Application* g_Application { nullptr };
 static std::unordered_map<OctaneGUI::Window*, LevelSketch::Platform::Window*> g_Windows {};
 static Array<UIEvent> g_UIEvents {};
 
-OctaneGUI::Event Transform(const Platform::Event& Event)
+static OctaneGUI::Mouse::Button Transform(const Platform::Mouse::Button::Type Button)
+{
+    switch (Button)
+    {
+    case Platform::Mouse::Button::Middle: return OctaneGUI::Mouse::Button::Middle;
+    case Platform::Mouse::Button::Right: return OctaneGUI::Mouse::Button::Right;
+    case Platform::Mouse::Button::Left:
+    case Platform::Mouse::Button::None:
+    default: break;
+    }
+
+    return OctaneGUI::Mouse::Button::Left;
+}
+
+static OctaneGUI::Event Transform(const Platform::Event& Event)
 {
     switch (Event.GetType())
     {
@@ -67,6 +81,19 @@ OctaneGUI::Event Transform(const Platform::Event& Event)
         return OctaneGUI::Event(OctaneGUI::Event::MouseMove(static_cast<f32>(Data.Position.X), static_cast<f32>(Data.Position.Y)));
     } break;
 
+    case Platform::Event::Type::MouseButton:
+    {
+        const Platform::Event::OnMouseButton& Data { Event.GetData().MouseButton };
+        const OctaneGUI::Event::Type Type { Data.Pressed ? OctaneGUI::Event::Type::MousePressed : OctaneGUI::Event::Type::MouseReleased };
+        return OctaneGUI::Event(
+            Type,
+            OctaneGUI::Event::MouseButton(
+                Transform(Data.Button),
+                static_cast<f32>(Data.Position.X),
+                static_cast<f32>(Data.Position.Y),
+                OctaneGUI::Mouse::Count::Single));
+    } break;
+
     case Platform::Event::Type::None:
     default: break;
     }
@@ -74,7 +101,7 @@ OctaneGUI::Event Transform(const Platform::Event& Event)
     return OctaneGUI::Event(OctaneGUI::Event::Type::None);
 }
 
-void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Action)
+static void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Action)
 {
     switch (Action)
     {
@@ -150,7 +177,7 @@ void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Action)
     }
 }
 
-OctaneGUI::Event OnEvent(OctaneGUI::Window* Window)
+static OctaneGUI::Event OnEvent(OctaneGUI::Window* Window)
 {
     if (g_Windows.find(Window) == g_Windows.end())
     {
@@ -179,17 +206,17 @@ OctaneGUI::Event OnEvent(OctaneGUI::Window* Window)
     return { OctaneGUI::Event::Type::None };
 }
 
-u32 OnLoadTexture(const std::vector<u8>& Data, u32 Width, u32 Height)
+static u32 OnLoadTexture(const std::vector<u8>& Data, u32 Width, u32 Height)
 {
     return Render::Renderer::Instance()->LoadTexture(Data.data(), Width, Height);
 }
 
-void OnPaint(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer)
+static void OnPaint(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer)
 {
     Render::Renderer::Instance()->UploadGUIData(Window, Buffer);
 }
 
-bool OnPlatformFrame(const Platform::TimingData&)
+static bool OnPlatformFrame(const Platform::TimingData&)
 {
     if (!g_Application->IsRunning())
     {

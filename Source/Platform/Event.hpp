@@ -28,6 +28,7 @@ SOFTWARE.
 
 #include "../Core/Types.hpp"
 #include "../Core/Math/Vector2.hpp"
+#include "Mouse.hpp"
 
 namespace LevelSketch
 {
@@ -35,6 +36,14 @@ namespace Platform
 {
 
 class Window;
+
+//
+// Currently using a typed union for now. Would like to use a Variant class
+// in the future. A Variant template type needs to be implemented first.
+//
+// NOTE: Variant requires some kind of RTTI system. Could look into using
+// the TypeDatabase for this.
+//
 
 struct Event
 {
@@ -50,6 +59,7 @@ public:
     {
         None,
         MouseMove,
+        MouseButton,
     };
 
     //
@@ -61,6 +71,13 @@ public:
         Vector2i Position {};
     };
 
+    struct OnMouseButton
+    {
+        Mouse::Button::Type Button { Mouse::Button::None };
+        bool Pressed { false };
+        Vector2i Position {};
+    };
+
     //
     // Union
     //
@@ -68,6 +85,7 @@ public:
     union Data
     {
         OnMouseMove MouseMove;
+        OnMouseButton MouseButton;
     };
 
     Event()
@@ -78,6 +96,12 @@ public:
         : m_Type(Type::MouseMove)
     {
         m_Data.MouseMove = Data;
+    }
+
+    Event(const OnMouseButton& Data)
+        : m_Type(Type::MouseButton)
+    {
+        m_Data.MouseButton = Data;
     }
 
     Type GetType() const

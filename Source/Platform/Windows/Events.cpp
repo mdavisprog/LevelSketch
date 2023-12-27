@@ -37,6 +37,11 @@ namespace Platform
 namespace Windows
 {
 
+static Vector2i Position(LPARAM Param)
+{
+    return { GET_X_LPARAM(Param), GET_Y_LPARAM(Param) };
+}
+
 LRESULT Event::WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
     LevelSketch::Platform::Window* Window { reinterpret_cast<LevelSketch::Platform::Window*>(GetWindowLongPtrW(hWnd, GWLP_USERDATA)) };
@@ -53,9 +58,30 @@ LRESULT Event::WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
     
     case WM_MOUSEMOVE:
     {
-        Vector2i Position { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
-        Platform::Event::OnMouseMove MouseMove { Position };
+        Platform::Event::OnMouseMove MouseMove { Position(lParam) };
         EventQueue::Instance().Push({ MouseMove }, Window);
+    } break;
+
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+    {
+        Mouse::Button::Type Button { Mouse::Button::Left };
+        switch (Msg)
+        {
+        case WM_MBUTTONDOWN:
+        case WM_MBUTTONUP: Button = Mouse::Button::Middle; break;
+        case WM_RBUTTONDOWN:
+        case WM_RBUTTONUP: Button = Mouse::Button::Right; break;
+        default: break;
+        }
+
+        const bool Pressed { Msg == WM_LBUTTONDOWN || Msg == WM_RBUTTONDOWN || Msg == WM_MBUTTONDOWN };
+        Platform::Event::OnMouseButton MouseButton { Button, Pressed, Position(lParam) };
+        EventQueue::Instance().Push({ MouseButton }, Window);
     } break;
 
     default: break;
