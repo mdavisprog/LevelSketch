@@ -38,22 +38,46 @@ namespace Memory
 {
 
 template<typename T>
+class DefaultDeleter
+{
+public:
+    DefaultDeleter() = default;
+    DefaultDeleter(const DefaultDeleter&) = default;
+
+    template<typename U>
+    DefaultDeleter(const DefaultDeleter<U>&)
+    {
+    }
+
+    void operator()(T* Ptr) const
+    {
+        delete Ptr;
+    }
+};
+
+template<typename T, typename Deleter = DefaultDeleter<T>>
 class UniquePtr
 {
 public:
     template<typename... Arguments>
-    static UniquePtr<T> New(Arguments&&... Args)
+    static UniquePtr New(Arguments&&... Args)
     {
-        return UniquePtr<T>(new T(std::forward<Arguments>(Args)...));
+        return UniquePtr(new T(std::forward<Arguments>(Args)...));
     }
 
-    static UniquePtr<T> Adopt(T* Data)
+    template<typename... Arguments>
+    static UniquePtr New(const Deleter& Deleter, Arguments&&... Args)
     {
-        return UniquePtr<T>(Data);
+        return UniquePtr(new T(std::forward<Arguments>(Args)...), Deleter);
     }
 
-    UniquePtr(const UniquePtr<T>&) = delete;
-    UniquePtr& operator=(const UniquePtr<T>&) = delete;
+    static UniquePtr Adopt(T* Data)
+    {
+        return UniquePtr(Data);
+    }
+
+    UniquePtr(const UniquePtr&) = delete;
+    UniquePtr& operator=(const UniquePtr&) = delete;
 
     UniquePtr()
     {
@@ -63,16 +87,17 @@ public:
     {
     }
 
-    UniquePtr(UniquePtr<T>&& Other) noexcept
+    UniquePtr(UniquePtr&& Other) noexcept
     {
         m_Data = Other.Leak();
     }
 
-    template<typename U>
-    UniquePtr(UniquePtr<U>&& Other) noexcept
+    template<typename U, typename UDeleter>
+    UniquePtr(UniquePtr<U, UDeleter>&& Other) noexcept
     {
         static_assert(std::is_base_of_v<T, U>, "Trying to create a unique pointer of a derived class that does not inherit from base.");
         m_Data = Other.Leak();
+        m_Deleter = std::forward<UDeleter>(Other.GetDeleter());
     }
 
     ~UniquePtr()
@@ -80,7 +105,7 @@ public:
         Reset();
     }
 
-    UniquePtr& operator=(UniquePtr<T>&& Other)
+    UniquePtr& operator=(UniquePtr&& Other)
     {
         Reset();
         m_Data = Other.Leak();
@@ -96,7 +121,7 @@ public:
         return *this;
     }
 
-    UniquePtr<T>& operator=(nullptr_t)
+    UniquePtr& operator=(nullptr_t)
     {
         Reset();
         return *this;
@@ -131,7 +156,7 @@ public:
     {
         if (m_Data != nullptr)
         {
-            delete m_Data;
+            m_Deleter(m_Data);
             m_Data = nullptr;
         }
     }
@@ -148,13 +173,25 @@ public:
         return m_Data != nullptr;
     }
 
+    Deleter GetDeleter() const
+    {
+        return m_Deleter;
+    }
+
 private:
     UniquePtr(T* Data)
         : m_Data(Data)
     {
     }
 
+    UniquePtr(T* Data, const Deleter& Deleter)
+        : m_Data(Data)
+        , m_Deleter(Deleter)
+    {
+    }
+
     T* m_Data { nullptr };
+    Deleter m_Deleter { Deleter() };
 };
 
 template<typename T, typename U>
@@ -196,8 +233,8 @@ bool operator!=(const UniquePtr<T>& A, nullptr_t)
 }
 }
 
-template<typename T>
-using UniquePtr = Core::Memory::UniquePtr<T>;
+template<typename T, typename Deleter = Core::Memory::DefaultDeleter<T>>
+using UniquePtr = Core::Memory::UniquePtr<T, Deleter>;
 
 }
 

@@ -112,6 +112,19 @@ static bool Equality()
     return true;
 }
 
+static bool Deleter()
+{
+    static int Count { 0 };
+    class Class {};
+    const auto OnFree = [&](Class* Obj) { delete Obj; Count++; };
+    VERIFY(Count == 0);
+    {
+        UniquePtr<Class, decltype(OnFree)> Instance { UniquePtr<Class, decltype(OnFree)>::New(OnFree) };
+    }
+    VERIFY(Count == 1);
+    return true;
+}
+
 UniquePtr<TestSuite> UniquePtrTests()
 {
     return TestSuite::New("UniquePtr", {
@@ -121,7 +134,8 @@ UniquePtr<TestSuite> UniquePtrTests()
         TEST_CASE(NullAssignment),
         TEST_CASE(Move),
         TEST_CASE(Polymorphism),
-        TEST_CASE(Equality)
+        TEST_CASE(Equality),
+        TEST_CASE(Deleter)
     });
 }
 
