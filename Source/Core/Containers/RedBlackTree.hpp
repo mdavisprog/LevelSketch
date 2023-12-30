@@ -135,9 +135,22 @@ public:
         V m_Value { 0 };
     };
 
-    RedBlackTree()
+    RedBlackTree() = default;
+
+    RedBlackTree(RedBlackTree&& Other)
     {
+        Move(std::move(Other));
     }
+
+    RedBlackTree& operator=(RedBlackTree&& Other)
+    {
+        return Move(std::move(Other));
+    }
+
+    // FIXME: Add copy ability. UniquePtr does not allow a copy so
+    // will need to perform manual allocation and copy over.
+    RedBlackTree(const RedBlackTree&) = delete;
+    RedBlackTree& operator=(const RedBlackTree&) = delete;
 
     bool IsEmpty() const
     {
@@ -151,7 +164,7 @@ public:
 
     RedBlackTree& Insert(const K& Key, const V& Value)
     {
-        return Insert(Key, V(Value));
+        return Insert(Key, std::move(V(Value)));
     }
 
     RedBlackTree& Insert(const K& Key, V&& Value)
@@ -174,6 +187,11 @@ public:
     }
 
     V* Find(const K& Key)
+    {
+        return const_cast<V*>(const_cast<const RedBlackTree*>(this)->Find(Key));
+    }
+
+    V const* Find(const K& Key) const
     {
         Node* Root { m_Root.Get() };
 
@@ -478,6 +496,14 @@ private:
         }
 
         return Anchor;
+    }
+
+    RedBlackTree& Move(RedBlackTree&& Other)
+    {
+        m_Root = std::move(Other.m_Root);
+        m_Size = std::move(Other.m_Size);
+        Other.m_Size = 0;
+        return *this;
     }
 
     UniquePtr<Node> m_Root { nullptr };

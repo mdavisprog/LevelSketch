@@ -332,6 +332,57 @@ static bool UniquePtrs()
     return true;
 }
 
+static bool MoveCtor()
+{
+    RedBlackTree<i32, i32> Instance1;
+    Instance1
+        .Insert(10, 10)
+        .Insert(20, 20)
+        .Insert(30, 20);
+    VERIFY(Instance1.Size() == 3);
+    VERIFY(*Instance1.Find(10) == 10);
+    VERIFY(*Instance1.Find(20) == 20);
+    VERIFY(*Instance1.Find(30) == 20);
+    RedBlackTree<i32, i32> Instance2 { std::move(Instance1) };
+    VERIFY(Instance1.Size() == 0);
+    VERIFY(Instance2.Size() == 3);
+    VERIFY(*Instance2.Find(10) == 10);
+    VERIFY(*Instance2.Find(20) == 20);
+    VERIFY(*Instance2.Find(30) == 20);
+    return true;
+}
+
+static bool MoveAssign()
+{
+    RedBlackTree<i32, i32> Instance1;
+    Instance1
+        .Insert(10, 10)
+        .Insert(20, 20)
+        .Insert(30, 20);
+    VERIFY(Instance1.Size() == 3);
+    VERIFY(*Instance1.Find(10) == 10);
+    VERIFY(*Instance1.Find(20) == 20);
+    VERIFY(*Instance1.Find(30) == 20);
+    RedBlackTree<i32, i32> Instance2;
+    Instance2
+        .Insert(1, 1)
+        .Insert(2, 2)
+        .Insert(3, 2)
+        .Insert(4, 4);
+    VERIFY(Instance2.Size() == 4);
+    VERIFY(*Instance2.Find(1) == 1);
+    VERIFY(*Instance2.Find(2) == 2);
+    VERIFY(*Instance2.Find(3) == 2);
+    VERIFY(*Instance2.Find(4) == 4);
+    Instance2 = std::move(Instance1);
+    VERIFY(Instance1.Size() == 0);
+    VERIFY(Instance2.Size() == 3);
+    VERIFY(*Instance2.Find(10) == 10);
+    VERIFY(*Instance2.Find(20) == 20);
+    VERIFY(*Instance2.Find(30) == 20);
+    return true;
+}
+
 UniquePtr<TestSuite> RedBlackTreeTests()
 {
     return TestSuite::New("RedBlackTree", {
@@ -341,7 +392,9 @@ UniquePtr<TestSuite> RedBlackTreeTests()
         TEST_CASE(InsertDuplicate),
         TEST_CASE(Find),
         TEST_CASE(Size),
-        TEST_CASE(UniquePtrs)
+        TEST_CASE(UniquePtrs),
+        TEST_CASE(MoveCtor),
+        TEST_CASE(MoveAssign)
     });
 }
 
