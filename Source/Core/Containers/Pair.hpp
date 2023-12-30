@@ -2,7 +2,7 @@
 
 MIT License
 
-Copyright (c) 2023 Mitchell Davis <mdavisprog@gmail.com>
+Copyright (c) 2024 Mitchell Davis <mdavisprog@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,30 +26,41 @@ SOFTWARE.
 
 #pragma once
 
-#include "../../Core/Memory/UniquePtr.hpp"
-
 namespace LevelSketch
 {
-
-namespace Tests
-{
-
-class TestSuite;
-
 namespace Core
 {
+namespace Containers
+{
 
-UniquePtr<TestSuite> ArrayTests();
-UniquePtr<TestSuite> CommandLineTests();
-UniquePtr<TestSuite> MathTests();
-UniquePtr<TestSuite> RedBlackTreeTests();
-UniquePtr<TestSuite> MapTests();
-UniquePtr<TestSuite> ShareableTests();
-UniquePtr<TestSuite> SharedPtrTests();
-UniquePtr<TestSuite> StringTests();
-UniquePtr<TestSuite> UniquePtrTests();
-UniquePtr<TestSuite> WeakPtrTests();
+template<typename _First, typename _Second>
+struct Pair
+{
+    Pair() = default;
+    Pair(const Pair&) = default;
+    Pair(Pair&&) = default;
+    Pair& operator=(const Pair&) = default;
+
+    Pair(const _First& First, const _Second& Second)
+        : First(First)
+        , Second(Second)
+    {
+    }
+
+    _First First { 0 };
+    _Second Second { 0 };
+};
 
 }
 }
+
+template<typename _First, typename _Second>
+using Pair = Core::Containers::Pair<_First, _Second>;
+
+template<typename _First, typename _Second>
+static constexpr Pair<_First, _Second> MakePair(const _First& First, const _Second& Second)
+{
+    return Pair<_First, _Second>{ First, Second };
+}
+
 }

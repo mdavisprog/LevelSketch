@@ -226,27 +226,49 @@ public:
         return *this;
     }
 
+protected:
+    Node* TryInsert(const K& Key, V&& Value, bool Overwrite)
+    {
+        Node* Result { nullptr };
+        m_Root = Insert(m_Root, Key, std::move(Value), &Result, Overwrite);
+        m_Root->m_Color = Node::Color::Black;
+        return Result;
+    }
+
 private:
-    UniquePtr<Node> Insert(UniquePtr<Node>& Root, const K& Key, V&& Value)
+    UniquePtr<Node> Insert(UniquePtr<Node>& Root, const K& Key, V&& Value, Node** Result = nullptr, bool Overwrite = true)
     {
         if (Root == nullptr)
         {
             Root = UniquePtr<Node>::Adopt(new Node(Key, std::move(Value)));
             m_Size++;
+
+            if (Result != nullptr)
+            {
+                *Result = Root.Get();
+            }
         }
         else
         {
             if (Key == Root->m_Key)
             {
-                Root->m_Value = std::move(Value);
+                if (Overwrite)
+                {
+                    Root->m_Value = std::move(Value);
+                }
+
+                if (Result != nullptr)
+                {
+                    *Result = Root.Get();
+                }
             }
             else if (Key < Root->m_Key)
             {
-                Root->m_Left = Insert(Root->m_Left, Key, std::move(Value));
+                Root->m_Left = Insert(Root->m_Left, Key, std::move(Value), Result, Overwrite);
             }
             else
             {
-                Root->m_Right = Insert(Root->m_Right, Key, std::move(Value));
+                Root->m_Right = Insert(Root->m_Right, Key, std::move(Value), Result, Overwrite);
             }
 
             if (IsRed(Root->m_Right) && !IsRed(Root->m_Left))

@@ -110,6 +110,7 @@ if(WITH_TESTS)
 
         Tests/Core/Array.cpp
         Tests/Core/CommandLine.cpp
+        Tests/Core/Map.cpp
         Tests/Core/Math.cpp
         Tests/Core/RedBlackTree.cpp
         Tests/Core/Shareable.cpp
