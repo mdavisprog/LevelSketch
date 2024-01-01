@@ -80,6 +80,7 @@ System::System()
     m_TestSuites
         .Push(Core::ArrayTests())
         .Push(Core::CommandLineTests())
+        .Push(Core::ListTests())
         .Push(Core::MathTests())
         .Push(Core::RedBlackTreeTests())
         .Push(Core::MapTests())

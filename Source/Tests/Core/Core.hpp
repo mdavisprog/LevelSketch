@@ -41,6 +41,7 @@ namespace Core
 
 UniquePtr<TestSuite> ArrayTests();
 UniquePtr<TestSuite> CommandLineTests();
+UniquePtr<TestSuite> ListTests();
 UniquePtr<TestSuite> MathTests();
 UniquePtr<TestSuite> RedBlackTreeTests();
 UniquePtr<TestSuite> MapTests();
