@@ -316,6 +316,29 @@ static bool Resize()
     return true;
 }
 
+static bool ResizeUniquePtrs()
+{
+    Array<UniquePtr<i32>> Values;
+    Values.Resize(1);
+    VERIFY(Values.Size() == 1);
+    VERIFY(Values[0] == nullptr);
+    return true;
+}
+
+static bool ReserveUniquePtrs()
+{
+    Array<UniquePtr<i32>> Values;
+    // Reserving does not in-place construct any elements. The
+    // UniquePtr at index 0 has invalid data and will cause undefined
+    // behavior if not properly created.
+    Values.Reserve(1);
+    VERIFY(Values.IsEmpty());
+    Values.Push(nullptr);
+    VERIFY(Values[0] == nullptr);
+    Values.Clear();
+    return true;
+}
+
 static bool Add()
 {
     Array<i32> A { 1, 2, 3 };
@@ -356,6 +379,8 @@ UniquePtr<TestSuite> ArrayTests()
         TEST_CASE(RemoveItem),
         TEST_CASE(RemoveRange),
         TEST_CASE(Resize),
+        TEST_CASE(ResizeUniquePtrs),
+        TEST_CASE(ReserveUniquePtrs),
         TEST_CASE(Add),
         TEST_CASE(Append)
     });

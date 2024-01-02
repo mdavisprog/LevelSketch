@@ -217,6 +217,15 @@ public:
         else
         {
             ConditionalGrow(Size - m_Size);
+
+            // FIXME: Should the Allocate function do an in-place new for
+            // each element to safely construct each object? Will do
+            // that here after growing.
+
+            for (u64 I = m_Size; I < Size - m_Size; I++)
+            {
+                new(static_cast<void*>(&m_Data[I])) T;
+            }
         }
 
         m_Size = Size;
