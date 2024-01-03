@@ -63,7 +63,7 @@ public:
         Copy(Other);
     }
 
-    Array(Array&& Other)
+    Array(Array&& Other) noexcept
     {
         Move(std::move(Other));
     }
@@ -89,7 +89,7 @@ public:
         return *this;
     }
 
-    Array& operator=(Array&& Other)
+    Array& operator=(Array&& Other) noexcept
     {
         return Move(std::move(Other));
     }
