@@ -17,6 +17,7 @@ if(SHIPPING)
     set(WITH_TESTS OFF CACHE BOOL "Disabling WITH_TESTS when SHIPPING configuration is enabled." FORCE)
 endif()
 
+add_library(MurmurHash3 STATIC External/MurmurHash3/MurmurHash3.cpp)
 add_subdirectory(External/OctaneGUI)
 
 # Common source files for all platforms and configurations.
@@ -157,7 +158,7 @@ endif()
 # Link Libraries
 #
 
-set(LIBS OctaneGUI)
+set(LIBS MurmurHash3 OctaneGUI)
 
 if(WIN32)
     set(LIBS
