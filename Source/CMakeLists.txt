@@ -111,6 +111,7 @@ if(WITH_TESTS)
 
         Tests/Core/Array.cpp
         Tests/Core/CommandLine.cpp
+        Tests/Core/HashMap.cpp
         Tests/Core/List.cpp
         Tests/Core/Map.cpp
         Tests/Core/Math.cpp

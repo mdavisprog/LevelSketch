@@ -2,7 +2,7 @@
 
 MIT License
 
-Copyright (c) 2023 Mitchell Davis <mdavisprog@gmail.com>
+Copyright (c) 2024 Mitchell Davis <mdavisprog@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,31 +26,32 @@ SOFTWARE.
 
 #pragma once
 
-#include "../../Core/Memory/UniquePtr.hpp"
+#include "../External/MurmurHash3/MurmurHash3.h"
+#include "Types.hpp"
 
 namespace LevelSketch
 {
-
-namespace Tests
-{
-
-class TestSuite;
-
 namespace Core
 {
+namespace Traits
+{
 
-UniquePtr<TestSuite> ArrayTests();
-UniquePtr<TestSuite> CommandLineTests();
-UniquePtr<TestSuite> HashMapTests();
-UniquePtr<TestSuite> ListTests();
-UniquePtr<TestSuite> MathTests();
-UniquePtr<TestSuite> RedBlackTreeTests();
-UniquePtr<TestSuite> MapTests();
-UniquePtr<TestSuite> ShareableTests();
-UniquePtr<TestSuite> SharedPtrTests();
-UniquePtr<TestSuite> StringTests();
-UniquePtr<TestSuite> UniquePtrTests();
-UniquePtr<TestSuite> WeakPtrTests();
+template<typename T>
+struct Base
+{
+public:
+    static u32 Seed()
+    {
+        return 0xBA5EBA11;
+    }
+
+    static u64 Hash(const T& Value)
+    {
+        u64 Out[2] { 0 };
+        MurmurHash3_x64_128(&Value, sizeof(Value), Seed(), &Out);
+        return Out[0] & Out[1];
+    }
+};
 
 }
 }
