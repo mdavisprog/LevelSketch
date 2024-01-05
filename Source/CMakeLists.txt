@@ -1,4 +1,8 @@
 set(CMAKE_CXX_STANDARD 17)
+
+add_library(MurmurHash3 STATIC External/MurmurHash3/MurmurHash3.cpp)
+add_subdirectory(External/OctaneGUI)
+
 set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
 if(MSVC)
     add_compile_options(/W4 /WX)
@@ -16,9 +20,6 @@ if(SHIPPING)
     message("Compiling with shipping configuration.")
     set(WITH_TESTS OFF CACHE BOOL "Disabling WITH_TESTS when SHIPPING configuration is enabled." FORCE)
 endif()
-
-add_library(MurmurHash3 STATIC External/MurmurHash3/MurmurHash3.cpp)
-add_subdirectory(External/OctaneGUI)
 
 # Common source files for all platforms and configurations.
 set(SOURCE
