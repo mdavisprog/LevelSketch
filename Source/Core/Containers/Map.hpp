@@ -62,36 +62,36 @@ public:
 
     bool IsEmpty() const
     {
-        return RedBlackTree::IsEmpty();
+        return RedBlackTree<K, V>::IsEmpty();
     }
 
     u64 Size() const
     {
-        return RedBlackTree::Size();
+        return RedBlackTree<K, V>::Size();
     }
 
     Map& Clear()
     {
-        RedBlackTree::Clear();
+        RedBlackTree<K, V>::Clear();
         return *this;
     }
 
     V& operator[](const K& Key)
     {
-        RedBlackTree::Node* Result = TryInsert(Key, V(0), false);
+        typename RedBlackTree<K, V>::Node* Result = RedBlackTree<K, V>::TryInsert(Key, V(0), false);
         return Result->Value();
     }
 
     const V& operator[](const K& Key) const
     {
-        V const* Result { RedBlackTree::Find(Key) };
+        V const* Result { RedBlackTree<K, V>::Find(Key) };
         LS_ASSERT(Result != nullptr);
         return *Result;
     }
 
     bool Contains(const K& Key) const
     {
-        return Find(Key) != nullptr;
+        return RedBlackTree<K, V>::Find(Key) != nullptr;
     }
 
 private:
@@ -100,7 +100,7 @@ private:
         for (std::size_t I = 0; I < List.size(); I++)
         {
             const ValueType& Item { List.begin()[I] };
-            RedBlackTree::Insert(Item.First, std::move(Item.Second));
+            RedBlackTree<K, V>::Insert(Item.First, std::move(Item.Second));
         }
     }
 };
