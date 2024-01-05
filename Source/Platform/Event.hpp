@@ -121,7 +121,7 @@ public:
 
 private:
     Type m_Type { Type::None };
-    Data m_Data { 0 };
+    Data m_Data {};
     Window* m_Window { nullptr };
 };
 
