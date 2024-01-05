@@ -392,7 +392,7 @@ private:
             X->m_Left->m_Color = Node::Color::Red;
         }
 
-        return std::move(X);
+        return X;
     }
 
     UniquePtr<Node> RotateRight(UniquePtr<Node>& Anchor) const
@@ -412,7 +412,7 @@ private:
             X->m_Right->m_Color = Node::Color::Red;
         }
 
-        return std::move(X);
+        return X;
     }
 
     bool IsColor(const UniquePtr<Node>& Anchor, typename Node::Color Value) const
