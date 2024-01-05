@@ -43,6 +43,7 @@ class DefaultDeleter
 public:
     DefaultDeleter() = default;
     DefaultDeleter(const DefaultDeleter&) = default;
+    DefaultDeleter& operator=(const DefaultDeleter&) = default;
 
     template<typename U>
     DefaultDeleter(const DefaultDeleter<U>&)
@@ -66,9 +67,9 @@ public:
     }
 
     template<typename... Arguments>
-    static UniquePtr New(const Deleter& Deleter, Arguments&&... Args)
+    static UniquePtr New(const Deleter& Deleter_, Arguments&&... Args)
     {
-        return UniquePtr(new T(std::forward<Arguments>(Args)...), Deleter);
+        return UniquePtr(new T(std::forward<Arguments>(Args)...), Deleter_);
     }
 
     static UniquePtr Adopt(T* Data)
@@ -184,9 +185,9 @@ private:
     {
     }
 
-    UniquePtr(T* Data, const Deleter& Deleter)
+    UniquePtr(T* Data, const Deleter& Deleter_)
         : m_Data(Data)
-        , m_Deleter(Deleter)
+        , m_Deleter(Deleter_)
     {
     }
 
