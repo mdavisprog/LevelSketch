@@ -80,11 +80,6 @@ public:
         m_Buckets.Resize(Constants::BucketSize());
     }
 
-    HashMap(const std::initializer_list<ValueType>& List)
-    {
-        m_Buckets.Resize(Constants::BucketSize());
-    }
-
     bool IsEmpty() const
     {
         return m_Size == 0;
