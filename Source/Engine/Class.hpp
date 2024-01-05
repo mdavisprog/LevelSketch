@@ -115,6 +115,8 @@ public:
     Class()
     {
     }
+
+    virtual ~Class() = default;
 };
 
 }
@@ -129,7 +131,6 @@ static T* Cast(Engine::Class* Object)
 
 #define DECLARE_CLASS(CLASS, PARENT) \
 public: \
-    typedef PARENT Super; \
     static void StaticInitialize() \
     { \
         static_assert(std::is_base_of_v<LevelSketch::Engine::Class, PARENT>, "Parent class (" #PARENT ") is not a child of LevelSketch::Engine::Class!"); \
