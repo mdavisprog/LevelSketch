@@ -85,6 +85,7 @@ elseif(APPLE)
         Platform/Mac/WindowBridge.mm
 
         Render/Metal/Renderer.mm
+        Render/Metal/View.mm
         Render/Metal/ViewController.mm
     )
 else()
@@ -175,6 +176,7 @@ elseif(APPLE)
     set(LIBS
         ${LIBS}
         "-framework AppKit"
+        "-framework CoreVideo"
         "-framework Foundation"
         "-framework Metal"
         "-framework MetalKit"

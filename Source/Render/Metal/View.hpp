@@ -26,46 +26,7 @@ SOFTWARE.
 
 #pragma once
 
-#include "../Platform.hpp"
+#import <MetalKit/MetalKit.h>
 
-#include <CoreVideo/CoreVideo.h>
-
-namespace LevelSketch
-{
-namespace Platform
-{
-namespace Mac
-{
-
-class Platform : public LevelSketch::Platform::Platform
-{
-public:
-    Platform();
-
-    virtual bool Initialize() override;
-    virtual void Shutdown() override;
-    virtual const char* Name() const override;
-
-    virtual int Run() override;
-
-    static CVReturn OnDisplayLinkOutput(
-        CVDisplayLinkRef DisplayLink,
-        const CVTimeStamp* Now,
-        const CVTimeStamp* OutputTime,
-        CVOptionFlags FlagsIn,
-        CVOptionFlags* FlagsOut,
-        void* DisplayLinkContext
-    );
-
-protected:
-    virtual UniquePtr<LevelSketch::Platform::Window> InternalNewWindow() const override;
-    virtual void UpdateTimingData(TimingData& Data) override;
-
-private:
-    f64 m_DeltaSeconds { 0.0 };
-    i64 m_LastVideoTime { 0 };
-};
-
-}
-}
-}
+@interface View : MTKView
+@end

@@ -28,6 +28,7 @@ SOFTWARE.
 #include "../../Core/Assert.hpp"
 #include "../../Platform/Platform.hpp"
 #include "../../Platform/Window.hpp"
+#include "View.hpp"
 
 @implementation ViewController
 {
@@ -49,7 +50,7 @@ SOFTWARE.
 
 -(void)loadView
 {
-    self.view = [[MTKView alloc] initWithFrame:CGRectMake(0, 0, 960, 540)];
+    self.view = [[View alloc] initWithFrame:CGRectMake(0, 0, 960, 540)];
 }
 
 -(void)viewDidLoad
@@ -59,6 +60,8 @@ SOFTWARE.
     MTKView* View = (MTKView*)self.view;
     View.device = m_Device;
     View.delegate = self;
+    View.paused = YES;
+    View.enableSetNeedsDisplay = NO;
 
     [NSApp activateIgnoringOtherApps:YES];
 }
@@ -75,7 +78,6 @@ SOFTWARE.
 
 -(void) drawInMTKView:(nonnull MTKView*)View
 {
-    LevelSketch::Platform::Platform::Instance()->RunFrame();
 }
 
 -(void) mtkView:(nonnull MTKView*)View drawableSizeWillChange:(CGSize)Size
