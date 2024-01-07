@@ -2,7 +2,7 @@
 
 MIT License
 
-Copyright (c) 2023 Mitchell Davis <mdavisprog@gmail.com>
+Copyright (c) 2024 Mitchell Davis <mdavisprog@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,12 @@ SOFTWARE.
 */
 
 #include "Renderer.hpp"
+#include "../../Platform/Window.hpp"
+#include "../../Platform/Mac/WindowBridge.hpp"
+#include "RenderBridge.hpp"
+#include "ViewController.hpp"
+
+#import <AppKit/AppKit.h>
 
 namespace LevelSketch
 {
@@ -38,13 +44,35 @@ Renderer::Renderer()
 {
 }
 
+Renderer::~Renderer()
+{
+}
+
 bool Renderer::Initialize()
 {
     return true;
 }
 
-bool Renderer::Initialize(Platform::Window*)
+bool Renderer::Initialize(Platform::Window* Window)
 {
+    @autoreleasepool
+    {
+        if (m_RenderBridge == nullptr)
+        {
+            m_RenderBridge = UniquePtr<RenderBridge>::New();
+
+            WindowBridge* Bridge = [WindowBridge Retrieve:Window->Handle()];
+            NSViewController* Root = [[ViewController alloc] initWithNibName:nil bundle:nil];
+            Bridge.Window.contentViewController = Root;
+            CAMetalLayer* Layer = (CAMetalLayer*)Bridge.Window.contentView.layer;
+            
+            if (!m_RenderBridge->Initialize(Layer))
+            {
+                return false;
+            }
+        }
+    }
+
     return true;
 }
 
@@ -52,8 +80,18 @@ void Renderer::Shutdown()
 {
 }
 
-void Renderer::Render(Platform::Window*)
+void Renderer::Render(Platform::Window* Window)
 {
+    @autoreleasepool
+    {
+        WindowBridge* Bridge = [WindowBridge Retrieve:Window->Handle()];
+        CAMetalLayer* Layer = (CAMetalLayer*)Bridge.Window.contentView.layer;
+
+        @synchronized(Layer)
+        {
+            m_RenderBridge->Render(Layer);
+        }
+    }
 }
 
 u32 Renderer::LoadTexture(const void*, u32, u32, u8)

@@ -2,7 +2,7 @@
 
 MIT License
 
-Copyright (c) 2023 Mitchell Davis <mdavisprog@gmail.com>
+Copyright (c) 2024 Mitchell Davis <mdavisprog@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,10 +27,10 @@ SOFTWARE.
 #include "Window.hpp"
 #include "../../Core/Assert.hpp"
 #include "../../Core/Math/Vector2.hpp"
-#include "../../Render/Metal/ViewController.hpp"
 #include "Platform.hpp"
 #include "WindowBridge.hpp"
 
+#import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 
 namespace LevelSketch
@@ -47,7 +47,7 @@ Window::Window()
 
 void* Window::Handle() const
 {
-    return nullptr;
+    return m_Bridge;
 }
 
 bool Window::Create(const char* Title, int X, int Y, int Width, int Height)
@@ -67,11 +67,6 @@ bool Window::Create(const char* Title, int X, int Y, int Width, int Height)
             backing:NSBackingStoreBuffered
             defer:NO
         ];
-
-        // The ViewController object must be created with window creation in order for rendering
-        // callback to work. Would be nice if this was done in Renderer::Initialize.
-        NSViewController* Root = [[ViewController alloc] initWithNibName:nil bundle:nil];
-        Bridge.Window.contentViewController = Root;
 
         [Bridge.Window setTitle:[NSString stringWithUTF8String:Title]];
 

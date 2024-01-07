@@ -2,7 +2,7 @@
 
 MIT License
 
-Copyright (c) 2023 Mitchell Davis <mdavisprog@gmail.com>
+Copyright (c) 2024 Mitchell Davis <mdavisprog@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -30,23 +30,9 @@ SOFTWARE.
 #include "../../Platform/Window.hpp"
 #include "View.hpp"
 
+#import <MetalKit/MetalKit.h>
+
 @implementation ViewController
-{
-    id<MTLDevice> m_Device;
-    id<MTLCommandQueue> m_CommandQueue;
-}
-
--(instancetype)initWithNibName:(nullable NSString *)nibNameOrNil bundle:(nullable NSBundle *)nibBundleOrNil
-{
-    self = [super initWithNibName:nibNameOrNil bundle: nibBundleOrNil];
-
-    m_Device = MTLCreateSystemDefaultDevice();
-    LS_ASSERT(m_Device != nullptr);
-
-    m_CommandQueue = [m_Device newCommandQueue];
-
-    return self;
-}
 
 -(void)loadView
 {
@@ -57,31 +43,12 @@ SOFTWARE.
 {
     [super viewDidLoad];
 
-    MTKView* View = (MTKView*)self.view;
-    View.device = m_Device;
-    View.delegate = self;
-    View.paused = YES;
-    View.enableSetNeedsDisplay = NO;
+    View* View_ = (View*)self.view;
+    View_.MetalLayer.device = MTLCreateSystemDefaultDevice();
+    View_.Paused = YES;
+    View_.MetalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 
     [NSApp activateIgnoringOtherApps:YES];
-}
-
--(void)viewWillAppear
-{
-    [super viewWillAppear];
-    self.view.window.delegate = self;
-}
-
--(void)windowWillClose:(NSNotification*)Notification
-{
-}
-
--(void) drawInMTKView:(nonnull MTKView*)View
-{
-}
-
--(void) mtkView:(nonnull MTKView*)View drawableSizeWillChange:(CGSize)Size
-{
 }
 
 @end

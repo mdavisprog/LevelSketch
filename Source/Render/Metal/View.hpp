@@ -2,7 +2,7 @@
 
 MIT License
 
-Copyright (c) 2023 Mitchell Davis <mdavisprog@gmail.com>
+Copyright (c) 2024 Mitchell Davis <mdavisprog@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,12 @@ SOFTWARE.
 
 #pragma once
 
-#import <MetalKit/MetalKit.h>
+#import <AppKit/AppKit.h>
+#import <QuartzCore/CAMetalLayer.h>
 
-@interface View : MTKView
+@interface View : NSView<CALayerDelegate>
+
+@property(nonatomic, nonnull, readonly) CAMetalLayer* MetalLayer;
+@property(nonatomic, getter=IsPaused) BOOL Paused;
+
 @end

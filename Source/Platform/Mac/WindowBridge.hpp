@@ -2,7 +2,7 @@
 
 MIT License
 
-Copyright (c) 2023 Mitchell Davis <mdavisprog@gmail.com>
+Copyright (c) 2024 Mitchell Davis <mdavisprog@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,7 @@ SOFTWARE.
 @class NSWindow;
 
 @interface WindowBridge : NSObject
-    @property (strong) NSWindow* Window;
+    @property (nonatomic, assign) NSWindow* Window;
 
     +(WindowBridge*) Retrieve:(void*)Ptr;
 @end

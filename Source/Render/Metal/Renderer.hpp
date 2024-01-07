@@ -2,7 +2,7 @@
 
 MIT License
 
-Copyright (c) 2023 Mitchell Davis <mdavisprog@gmail.com>
+Copyright (c) 2024 Mitchell Davis <mdavisprog@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,7 @@ SOFTWARE.
 #pragma once
 
 #include "../Renderer.hpp"
+#include "../../Core/Memory/UniquePtr.hpp"
 
 namespace LevelSketch
 {
@@ -35,16 +36,22 @@ namespace Render
 namespace Metal
 {
 
+class RenderBridge;
+
 class Renderer : public LevelSketch::Render::Renderer
 {
 public:
     Renderer();
+    virtual ~Renderer();
 
     virtual bool Initialize() override;
     virtual bool Initialize(Platform::Window* Window) override;
     virtual void Shutdown() override;
     virtual void Render(Platform::Window* Window) override;
     virtual u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel = 4) override;
+
+private:
+    UniquePtr<RenderBridge> m_RenderBridge { nullptr };
 };
 
 }

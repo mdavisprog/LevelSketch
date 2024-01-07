@@ -26,7 +26,35 @@ SOFTWARE.
 
 #pragma once
 
-#include "View.hpp"
+#import <Metal/Metal.h>
+#import <QuartzCore/CAMetalLayer.h>
 
-@interface ViewController : NSViewController
-@end
+namespace LevelSketch
+{
+namespace Render
+{
+namespace Metal
+{
+
+class RenderBridge
+{
+public:
+    RenderBridge();
+
+    bool Initialize(CAMetalLayer* Layer);
+    void Render(CAMetalLayer* Layer);
+
+private:
+    // The size should already be scaled.
+    RenderBridge& UpdateDepthBuffer(CGSize Size);
+
+    id<MTLDevice> m_Device { nullptr };
+    id<MTLCommandQueue> m_CommandQueue { nullptr };
+    id<MTLRenderPipelineState> m_PipelineState { nullptr };
+    id<MTLTexture> m_DepthBuffer { nullptr };
+    MTLRenderPassDescriptor* m_RenderPassDesc { nullptr };
+};
+
+}
+}
+}

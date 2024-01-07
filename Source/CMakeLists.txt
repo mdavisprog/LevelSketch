@@ -84,6 +84,7 @@ elseif(APPLE)
         Platform/Mac/Window.mm
         Platform/Mac/WindowBridge.mm
 
+        Render/Metal/RenderBridge.mm
         Render/Metal/Renderer.mm
         Render/Metal/View.mm
         Render/Metal/ViewController.mm
@@ -180,6 +181,7 @@ elseif(APPLE)
         "-framework Foundation"
         "-framework Metal"
         "-framework MetalKit"
+        "-framework QuartzCore"
     )
 else()
     find_package(SDL2 REQUIRED)

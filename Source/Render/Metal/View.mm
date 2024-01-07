@@ -2,7 +2,7 @@
 
 MIT License
 
-Copyright (c) 2023 Mitchell Davis <mdavisprog@gmail.com>
+Copyright (c) 2024 Mitchell Davis <mdavisprog@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,26 @@ SOFTWARE.
 @implementation View
 {
     CVDisplayLinkRef m_DisplayLink;
+}
+
+-(instancetype) initWithFrame:(CGRect)Frame
+{
+    self = [super initWithFrame:Frame];
+
+    if (self)
+    {
+        self.wantsLayer = YES;
+        self.layerContentsRedrawPolicy = NSViewLayerContentsRedrawDuringViewResize;
+        _MetalLayer = (CAMetalLayer*)self.layer;
+        self.layer.delegate = self;
+    }
+
+    return self;
+}
+
+-(CALayer*) makeBackingLayer
+{
+    return [CAMetalLayer layer];
 }
 
 -(void) viewDidMoveToWindow

@@ -24,9 +24,20 @@ SOFTWARE.
 
 */
 
-#pragma once
+struct RasterizerData
+{
+    float4 ClipSpacePosition [[position]];
+    float4 Color;
+};
 
-#include "View.hpp"
+vertex RasterizerData VertexMain()
+{
+    RasterizerData Out;
 
-@interface ViewController : NSViewController
-@end
+    return Out;
+}
+
+fragment float4 PixelMain(RasterizerData Data [[stage_in]])
+{
+    return Data.Color;
+}
