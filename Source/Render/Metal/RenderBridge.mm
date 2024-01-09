@@ -26,6 +26,7 @@ SOFTWARE.
 
 #include "RenderBridge.hpp"
 #include "../../Core/Console.hpp"
+#include "../../Core/Math/Vertex.hpp"
 #include "../../Platform/FileSystem.hpp"
 
 namespace LevelSketch
@@ -59,6 +60,11 @@ bool RenderBridge::Initialize(CAMetalLayer* Layer)
         m_RenderPassDesc.depthAttachment.loadAction = MTLLoadActionClear;
         m_RenderPassDesc.depthAttachment.storeAction = MTLStoreActionDontCare;
         m_RenderPassDesc.depthAttachment.clearDepth = 1.0;
+
+        MTLDepthStencilDescriptor* DepthStencilDesc = [MTLDepthStencilDescriptor new];
+        DepthStencilDesc.depthCompareFunction = MTLCompareFunctionLess;
+        DepthStencilDesc.depthWriteEnabled = YES;
+        m_DepthStencil = [m_Device newDepthStencilStateWithDescriptor:DepthStencilDesc];
 
         const String Path { Platform::FileSystem::ApplicationDirectory() + "/Content/Shaders/Metal/Test.metal" };
         const String Contents { Platform::FileSystem::ReadContents(Path) };
@@ -102,6 +108,17 @@ bool RenderBridge::Initialize(CAMetalLayer* Layer)
         PipelineDesc.colorAttachments[0].pixelFormat = Layer.pixelFormat;
         PipelineDesc.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
 
+        PipelineDesc.vertexDescriptor.attributes[0].format = MTLVertexFormatFloat3;
+        PipelineDesc.vertexDescriptor.attributes[0].bufferIndex = 0;
+        PipelineDesc.vertexDescriptor.attributes[0].offset = 0;
+        PipelineDesc.vertexDescriptor.attributes[1].format = MTLVertexFormatFloat2;
+        PipelineDesc.vertexDescriptor.attributes[1].bufferIndex = 0;
+        PipelineDesc.vertexDescriptor.attributes[1].offset = sizeof(Vector3);
+        PipelineDesc.vertexDescriptor.attributes[2].format = MTLVertexFormatFloat4;
+        PipelineDesc.vertexDescriptor.attributes[2].bufferIndex = 0;
+        PipelineDesc.vertexDescriptor.attributes[2].offset = sizeof(Vector3) + sizeof(Vector2);
+        PipelineDesc.vertexDescriptor.layouts[0].stride = sizeof(Vertex3);
+
         m_PipelineState = [m_Device newRenderPipelineStateWithDescriptor:PipelineDesc error:&Error];
         if (m_PipelineState == nil)
         {
@@ -111,6 +128,20 @@ bool RenderBridge::Initialize(CAMetalLayer* Layer)
         }
 
         UpdateDepthBuffer(Layer.drawableSize);
+
+        m_RenderBuffer.Initialize(m_Device, 1000, 1000);
+
+        const f32 Offset { 0.5f };
+        const Vertex3 Vertices[3]
+        {
+            {{0.0f, Offset, 0.0f}, {0.5f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
+            {{-Offset, -Offset, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
+            {{Offset, -Offset, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}}
+        };
+        m_RenderBuffer.UploadVertexData(Vertices, sizeof(Vertices));
+
+        const u32 Indices[3] { 0, 1, 2 };
+        m_RenderBuffer.UploadIndexData(Indices, sizeof(Indices));
     }
 
     return true;
@@ -139,8 +170,28 @@ void RenderBridge::Render(CAMetalLayer* Layer)
 
     m_RenderPassDesc.colorAttachments[0].texture = Drawable.texture;
 
+    MTLViewport Viewport
+    {
+        .originX = 0.0,
+        .originY = 0.0,
+        .width = Layer.drawableSize.width,
+        .height = Layer.drawableSize.height,
+        .znear = 0.0,
+        .zfar = 1.0
+    };
+
     id<MTLRenderCommandEncoder> Encoder = [CommandBuffer renderCommandEncoderWithDescriptor:m_RenderPassDesc];
     [Encoder setRenderPipelineState:m_PipelineState];
+    [Encoder setViewport:Viewport];
+    [Encoder setFrontFacingWinding:MTLWindingCounterClockwise];
+    [Encoder setCullMode:MTLCullModeBack];
+    [Encoder setDepthStencilState:m_DepthStencil];
+    [Encoder setVertexBuffer:m_RenderBuffer.Vertex() offset:0 atIndex:0];
+    [Encoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle
+                        indexCount:3
+                         indexType:MTLIndexTypeUInt32
+                       indexBuffer:m_RenderBuffer.Index()
+                 indexBufferOffset:0];
     [Encoder endEncoding];
 
     [CommandBuffer presentDrawable:Drawable];

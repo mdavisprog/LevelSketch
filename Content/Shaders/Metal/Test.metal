@@ -27,12 +27,24 @@ SOFTWARE.
 struct RasterizerData
 {
     float4 ClipSpacePosition [[position]];
+    float2 UV;
     float4 Color;
 };
 
-vertex RasterizerData VertexMain()
+struct Vertex3
+{
+    float3 Position [[ attribute(0) ]];
+    float2 UV [[ attribute(1) ]];
+    float4 Color [[ attribute(2) ]];
+};
+
+vertex RasterizerData VertexMain(Vertex3 Vertex [[ stage_in ]])
 {
     RasterizerData Out;
+
+    Out.ClipSpacePosition = float4(Vertex.Position, 1.0);
+    Out.UV = Vertex.UV;
+    Out.Color = Vertex.Color;
 
     return Out;
 }

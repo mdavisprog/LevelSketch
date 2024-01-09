@@ -24,13 +24,11 @@ SOFTWARE.
 
 */
 
-#pragma once
-
-#include "../../Core/Math/Vector2.hpp"
 #include "RenderBuffer.hpp"
 
-#import <Metal/Metal.h>
-#import <QuartzCore/CAMetalLayer.h>
+#include <cstring>
+
+#import <MetalKit/MetalKit.h>
 
 namespace LevelSketch
 {
@@ -39,27 +37,51 @@ namespace Render
 namespace Metal
 {
 
-class RenderBridge
+RenderBuffer::RenderBuffer()
 {
-public:
-    RenderBridge();
+}
 
-    bool Initialize(CAMetalLayer* Layer);
-    void Render(CAMetalLayer* Layer);
+bool RenderBuffer::Initialize(id<MTLDevice> Device, u64 VertexBufferSize, u64 IndexBufferSize)
+{
+    if (Initialized())
+    {
+        return true;
+    }
 
-private:
-    // The size should already be scaled.
-    RenderBridge& UpdateDepthBuffer(CGSize Size);
+    m_VertexBuffer = [Device newBufferWithLength:VertexBufferSize options:MTLResourceStorageModeShared];
+    m_IndexBuffer = [Device newBufferWithLength:IndexBufferSize options:MTLResourceStorageModeShared];
 
-    id<MTLDevice> m_Device { nullptr };
-    id<MTLCommandQueue> m_CommandQueue { nullptr };
-    id<MTLRenderPipelineState> m_PipelineState { nullptr };
-    id<MTLTexture> m_DepthBuffer { nullptr };
-    id<MTLDepthStencilState> m_DepthStencil { nullptr };
-    MTLRenderPassDescriptor* m_RenderPassDesc { nullptr };
+    return true;
+}
 
-    RenderBuffer m_RenderBuffer {};
-};
+bool RenderBuffer::Initialized() const
+{
+    return m_VertexBuffer != nullptr && m_IndexBuffer != nullptr;
+}
+
+bool RenderBuffer::UploadVertexData(const void* Source, u64 Size)
+{
+    if (!Initialized())
+    {
+        return false;
+    }
+
+    std::memcpy(m_VertexBuffer.contents, Source, Size);
+
+    return true;
+}
+
+bool RenderBuffer::UploadIndexData(const void* Source, u64 Size)
+{
+    if (!Initialized())
+    {
+        return false;
+    }
+
+    std::memcpy(m_IndexBuffer.contents, Source, Size);
+
+    return true;
+}
 
 }
 }
