@@ -27,6 +27,7 @@ SOFTWARE.
 #pragma once
 
 #include "../../Core/Math/Vector2.hpp"
+#include "../../Core/Math/Matrix.hpp"
 #include "RenderBuffer.hpp"
 
 #import <Metal/Metal.h>
@@ -34,18 +35,32 @@ SOFTWARE.
 
 namespace LevelSketch
 {
+
+namespace Platform
+{
+    class Window;
+}
+
 namespace Render
 {
 namespace Metal
 {
+
+struct Uniforms
+{
+    Matrix4f Model { Matrix4f::Identity };
+    Matrix4f View { Matrix4f::Identity };
+    Matrix4f Projection { Matrix4f::Identity };
+    Matrix4f Orthographic { Matrix4f::Identity };
+};
 
 class RenderBridge
 {
 public:
     RenderBridge();
 
-    bool Initialize(CAMetalLayer* Layer);
-    void Render(CAMetalLayer* Layer);
+    bool Initialize(CAMetalLayer* Layer, Platform::Window* Window);
+    void Render(CAMetalLayer* Layer, Platform::Window* Window);
 
 private:
     // The size should already be scaled.
@@ -59,6 +74,7 @@ private:
     MTLRenderPassDescriptor* m_RenderPassDesc { nullptr };
 
     RenderBuffer m_RenderBuffer {};
+    Uniforms m_Uniforms {};
 };
 
 }

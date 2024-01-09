@@ -28,6 +28,7 @@ SOFTWARE.
 #include "../../Core/Console.hpp"
 #include "../../Core/Math/Vertex.hpp"
 #include "../../Platform/FileSystem.hpp"
+#include "../../Platform/Window.hpp"
 
 namespace LevelSketch
 {
@@ -40,7 +41,7 @@ RenderBridge::RenderBridge()
 {
 }
 
-bool RenderBridge::Initialize(CAMetalLayer* Layer)
+bool RenderBridge::Initialize(CAMetalLayer* Layer, Platform::Window* Window)
 {
     @autoreleasepool
     {
@@ -49,7 +50,7 @@ bool RenderBridge::Initialize(CAMetalLayer* Layer)
             return true;
         }
 
-        m_Device = MTLCreateSystemDefaultDevice();
+        m_Device = Layer.device;
         m_CommandQueue = [m_Device newCommandQueue];
 
         m_RenderPassDesc = [MTLRenderPassDescriptor new];
@@ -134,68 +135,76 @@ bool RenderBridge::Initialize(CAMetalLayer* Layer)
         const f32 Offset { 0.5f };
         const Vertex3 Vertices[3]
         {
-            {{0.0f, Offset, 0.0f}, {0.5f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
-            {{-Offset, -Offset, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
-            {{Offset, -Offset, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}}
+            {{0.0f, Offset, 5.0f}, {0.5f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
+            {{-Offset, -Offset, 5.0f}, {1.0f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
+            {{Offset, -Offset, 5.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}}
         };
         m_RenderBuffer.UploadVertexData(Vertices, sizeof(Vertices));
 
         const u32 Indices[3] { 0, 1, 2 };
         m_RenderBuffer.UploadIndexData(Indices, sizeof(Indices));
+
+        const Rectf Bounds { 0.0f, 0.0f, static_cast<f32>(Window->Size().X), static_cast<f32>(Window->Size().Y) };
+        m_Uniforms.Projection = Core::Math::PerspectiveMatrixRH(75.0f, Window->AspectRatio(), 0.1f, 1000.0f).Transpose();
+        m_Uniforms.Orthographic = Core::Math::OrthographicMatrixRH(Bounds, -1.0f, 1.0f).Transpose();
     }
 
     return true;
 }
 
-void RenderBridge::Render(CAMetalLayer* Layer)
+void RenderBridge::Render(CAMetalLayer* Layer, Platform::Window*)
 {
-    if (Layer == nil)
+    @autoreleasepool
     {
-        return;
+        if (Layer == nil)
+        {
+            return;
+        }
+
+        id<MTLCommandBuffer> CommandBuffer = [m_CommandQueue commandBuffer];
+        id<CAMetalDrawable> Drawable = [Layer nextDrawable];
+        if (Drawable == nil)
+        {
+            return;
+        }
+
+        // TODO: Depth buffer should be updated whenever the size of the view changes.
+        // Probably can be done through a window delegate.
+        if (m_DepthBuffer == nil)
+        {
+            UpdateDepthBuffer(Layer.drawableSize);
+        }
+
+        m_RenderPassDesc.colorAttachments[0].texture = Drawable.texture;
+
+        MTLViewport Viewport
+        {
+            .originX = 0.0,
+            .originY = 0.0,
+            .width = Layer.drawableSize.width,
+            .height = Layer.drawableSize.height,
+            .znear = 0.0,
+            .zfar = 1.0
+        };
+
+        id<MTLRenderCommandEncoder> Encoder = [CommandBuffer renderCommandEncoderWithDescriptor:m_RenderPassDesc];
+        [Encoder setRenderPipelineState:m_PipelineState];
+        [Encoder setViewport:Viewport];
+        [Encoder setFrontFacingWinding:MTLWindingCounterClockwise];
+        [Encoder setCullMode:MTLCullModeBack];
+        [Encoder setDepthStencilState:m_DepthStencil];
+        [Encoder setVertexBuffer:m_RenderBuffer.Vertex() offset:0 atIndex:0];
+        [Encoder setVertexBytes:&m_Uniforms length:sizeof(m_Uniforms) atIndex:1];
+        [Encoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle
+                            indexCount:3
+                            indexType:MTLIndexTypeUInt32
+                        indexBuffer:m_RenderBuffer.Index()
+                    indexBufferOffset:0];
+        [Encoder endEncoding];
+
+        [CommandBuffer presentDrawable:Drawable];
+        [CommandBuffer commit];
     }
-
-    id<MTLCommandBuffer> CommandBuffer = [m_CommandQueue commandBuffer];
-    id<CAMetalDrawable> Drawable = [Layer nextDrawable];
-    if (Drawable == nil)
-    {
-        return;
-    }
-
-    // TODO: Depth buffer should be updated whenever the size of the view changes.
-    // Probably can be done through a window delegate.
-    if (m_DepthBuffer == nil)
-    {
-        UpdateDepthBuffer(Layer.drawableSize);
-    }
-
-    m_RenderPassDesc.colorAttachments[0].texture = Drawable.texture;
-
-    MTLViewport Viewport
-    {
-        .originX = 0.0,
-        .originY = 0.0,
-        .width = Layer.drawableSize.width,
-        .height = Layer.drawableSize.height,
-        .znear = 0.0,
-        .zfar = 1.0
-    };
-
-    id<MTLRenderCommandEncoder> Encoder = [CommandBuffer renderCommandEncoderWithDescriptor:m_RenderPassDesc];
-    [Encoder setRenderPipelineState:m_PipelineState];
-    [Encoder setViewport:Viewport];
-    [Encoder setFrontFacingWinding:MTLWindingCounterClockwise];
-    [Encoder setCullMode:MTLCullModeBack];
-    [Encoder setDepthStencilState:m_DepthStencil];
-    [Encoder setVertexBuffer:m_RenderBuffer.Vertex() offset:0 atIndex:0];
-    [Encoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle
-                        indexCount:3
-                         indexType:MTLIndexTypeUInt32
-                       indexBuffer:m_RenderBuffer.Index()
-                 indexBufferOffset:0];
-    [Encoder endEncoding];
-
-    [CommandBuffer presentDrawable:Drawable];
-    [CommandBuffer commit];
 }
 
 RenderBridge& RenderBridge::UpdateDepthBuffer(CGSize Size)

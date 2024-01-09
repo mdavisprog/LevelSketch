@@ -26,7 +26,7 @@ SOFTWARE.
 
 struct RasterizerData
 {
-    float4 ClipSpacePosition [[position]];
+    float4 Position [[position]];
     float2 UV;
     float4 Color;
 };
@@ -38,11 +38,19 @@ struct Vertex3
     float4 Color [[ attribute(2) ]];
 };
 
-vertex RasterizerData VertexMain(Vertex3 Vertex [[ stage_in ]])
+struct Uniforms
+{
+    metal::float4x4 Model;
+    metal::float4x4 View;
+    metal::float4x4 Projection;
+    metal::float4x4 Orthographic;
+};
+
+vertex RasterizerData VertexMain(Vertex3 Vertex [[ stage_in ]], constant Uniforms& Uniforms_ [[ buffer(1) ]])
 {
     RasterizerData Out;
 
-    Out.ClipSpacePosition = float4(Vertex.Position, 1.0);
+    Out.Position = float4(Vertex.Position, 1.0) * Uniforms_.Projection;
     Out.UV = Vertex.UV;
     Out.Color = Vertex.Color;
 

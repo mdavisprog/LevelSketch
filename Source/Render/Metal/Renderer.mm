@@ -66,7 +66,7 @@ bool Renderer::Initialize(Platform::Window* Window)
             Bridge.Window.contentViewController = Root;
             CAMetalLayer* Layer = (CAMetalLayer*)Bridge.Window.contentView.layer;
             
-            if (!m_RenderBridge->Initialize(Layer))
+            if (!m_RenderBridge->Initialize(Layer, Window))
             {
                 return false;
             }
@@ -89,7 +89,7 @@ void Renderer::Render(Platform::Window* Window)
 
         @synchronized(Layer)
         {
-            m_RenderBridge->Render(Layer);
+            m_RenderBridge->Render(Layer, Window);
         }
     }
 }
