@@ -29,6 +29,7 @@ SOFTWARE.
 #include "../../Core/Math/Vertex.hpp"
 #include "../../Platform/FileSystem.hpp"
 #include "../../Platform/Window.hpp"
+#include "Shader.hpp"
 
 #import <Metal/Metal.h>
 #import <QuartzCore/CAMetalLayer.h>
@@ -71,44 +72,19 @@ bool RenderBridge::Initialize(CAMetalLayer* Layer, Platform::Window* Window)
         m_DepthStencil = [m_Device newDepthStencilStateWithDescriptor:DepthStencilDesc];
 
         const String Path { Platform::FileSystem::ApplicationDirectory() + "/Content/Shaders/Metal/Test.metal" };
-        const String Contents { Platform::FileSystem::ReadContents(Path) };
-
-        NSError* Error = nil;
-        id<MTLLibrary> Shaders = [m_Device newLibraryWithSource:[NSString stringWithUTF8String:Contents.Data()]
-                                                        options:nil
-                                                          error:&Error];
-        if (Shaders == nil)
+        Shader Shader_;
+        if (!Shader_.LoadFile(m_Device, Path.Data()))
         {
-            Core::Console::Error("Failed to load shader source at '%s'.", Path.Data());
-            Core::Console::Error("Error: %s", [[Error localizedDescription] UTF8String]);
             return false;
         }
 
-        MTLFunctionConstantValues* ConstantValues = [MTLFunctionConstantValues alloc];
-        id<MTLFunction> VertexShader = [Shaders newFunctionWithName:@"VertexMain"
-                                                     constantValues:ConstantValues
-                                                              error:&Error];
-        if (VertexShader == nil)
-        {
-            Core::Console::Error("Failed to load vertex shader.");
-            Core::Console::Error("Error: %s", [[Error localizedDescription] UTF8String]);
-            return false;
-        }
-
-        id<MTLFunction> PixelShader = [Shaders newFunctionWithName:@"PixelMain"
-                                                    constantValues:ConstantValues
-                                                             error:&Error];
-        if (PixelShader  == nil)
-        {
-            Core::Console::Error("Failed to load pixel shader.");
-            Core::Console::Error("Error: %s", [[Error localizedDescription] UTF8String]);
-            return false;
-        }
+        if (!Shader_.LoadVertex("VertexMain")) { return false; }
+        if (!Shader_.LoadPixel("PixelMain")) { return false; }
 
         MTLRenderPipelineDescriptor* PipelineDesc = [[MTLRenderPipelineDescriptor alloc] init];
         PipelineDesc.label = @"Test";
-        PipelineDesc.vertexFunction = VertexShader;
-        PipelineDesc.fragmentFunction = PixelShader;
+        PipelineDesc.vertexFunction = Shader_.Vertex();
+        PipelineDesc.fragmentFunction = Shader_.Pixel();
         PipelineDesc.colorAttachments[0].pixelFormat = Layer.pixelFormat;
         PipelineDesc.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
 
@@ -123,6 +99,7 @@ bool RenderBridge::Initialize(CAMetalLayer* Layer, Platform::Window* Window)
         PipelineDesc.vertexDescriptor.attributes[2].offset = sizeof(Vector3) + sizeof(Vector2);
         PipelineDesc.vertexDescriptor.layouts[0].stride = sizeof(Vertex3);
 
+        NSError* Error { nullptr };
         m_PipelineState = [m_Device newRenderPipelineStateWithDescriptor:PipelineDesc error:&Error];
         if (m_PipelineState == nil)
         {

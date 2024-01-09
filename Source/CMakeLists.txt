@@ -87,6 +87,7 @@ elseif(APPLE)
         Render/Metal/RenderBridge.mm
         Render/Metal/RenderBuffer.mm
         Render/Metal/Renderer.mm
+        Render/Metal/Shader.mm
         Render/Metal/Texture.mm
         Render/Metal/View.mm
         Render/Metal/ViewController.mm
