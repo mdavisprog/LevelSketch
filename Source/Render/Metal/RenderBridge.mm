@@ -30,6 +30,9 @@ SOFTWARE.
 #include "../../Platform/FileSystem.hpp"
 #include "../../Platform/Window.hpp"
 
+#import <Metal/Metal.h>
+#import <QuartzCore/CAMetalLayer.h>
+
 namespace LevelSketch
 {
 namespace Render
@@ -229,7 +232,7 @@ u32 RenderBridge::LoadTexture(const void* Data, u32 Width, u32 Height, u8)
     return Result;
 }
 
-RenderBridge& RenderBridge::UpdateDepthBuffer(CGSize Size)
+RenderBridge& RenderBridge::UpdateDepthBuffer(const CGSize& Size)
 {
     if (Size.width == 0 || Size.height == 0)
     {

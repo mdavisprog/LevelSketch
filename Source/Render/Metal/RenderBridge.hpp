@@ -32,8 +32,17 @@ SOFTWARE.
 #include "RenderBuffer.hpp"
 #include "Texture.hpp"
 
-#import <Metal/Metal.h>
-#import <QuartzCore/CAMetalLayer.h>
+struct CGSize;
+
+@class CAMetalLayer;
+@class MTLRenderPassDescriptor;
+
+@protocol MTLCommandBuffer;
+@protocol MTLCommandQueue;
+@protocol MTLDepthStencilState;
+@protocol MTLDevice;
+@protocol MTLRenderPipelineState;
+@protocol MTLTexture;
 
 namespace LevelSketch
 {
@@ -68,7 +77,7 @@ public:
 
 private:
     // The size should already be scaled.
-    RenderBridge& UpdateDepthBuffer(CGSize Size);
+    RenderBridge& UpdateDepthBuffer(const CGSize& Size);
 
     id<MTLDevice> m_Device { nullptr };
     id<MTLCommandQueue> m_CommandQueue { nullptr };
