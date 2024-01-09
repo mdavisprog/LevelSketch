@@ -147,6 +147,9 @@ bool RenderBridge::Initialize(CAMetalLayer* Layer, Platform::Window* Window)
         const Rectf Bounds { 0.0f, 0.0f, static_cast<f32>(Window->Size().X), static_cast<f32>(Window->Size().Y) };
         m_Uniforms.Projection = Core::Math::PerspectiveMatrixRH(75.0f, Window->AspectRatio(), 0.1f, 1000.0f).Transpose();
         m_Uniforms.Orthographic = Core::Math::OrthographicMatrixRH(Bounds, -1.0f, 1.0f).Transpose();
+
+        const u8 WhiteTexture[4] { 255, 255, 255, 255 };
+        m_WhiteTexture = LoadTexture(WhiteTexture, 1, 1, 4);
     }
 
     return true;
@@ -198,13 +201,32 @@ void RenderBridge::Render(CAMetalLayer* Layer, Platform::Window*)
         [Encoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle
                             indexCount:3
                             indexType:MTLIndexTypeUInt32
-                        indexBuffer:m_RenderBuffer.Index()
+                          indexBuffer:m_RenderBuffer.Index()
                     indexBufferOffset:0];
         [Encoder endEncoding];
 
         [CommandBuffer presentDrawable:Drawable];
         [CommandBuffer commit];
     }
+}
+
+u32 RenderBridge::LoadTexture(const void* Data, u32 Width, u32 Height, u8)
+{
+    Texture Tex;
+
+    if (!Tex.Create(m_Device, Width, Height))
+    {
+        return 0;
+    }
+
+    if (!Tex.Upload(Data))
+    {
+        return 0;
+    }
+
+    const u32 Result { Tex.ID() };
+    m_Textures.Push(std::move(Tex));
+    return Result;
 }
 
 RenderBridge& RenderBridge::UpdateDepthBuffer(CGSize Size)

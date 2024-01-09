@@ -94,9 +94,9 @@ void Renderer::Render(Platform::Window* Window)
     }
 }
 
-u32 Renderer::LoadTexture(const void*, u32, u32, u8)
+u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel)
 {
-    return 1;
+    return m_RenderBridge->LoadTexture(Data, Width, Height, BytesPerPixel);
 }
 
 }

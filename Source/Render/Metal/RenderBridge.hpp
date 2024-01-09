@@ -26,9 +26,11 @@ SOFTWARE.
 
 #pragma once
 
+#include "../../Core/Containers/Array.hpp"
 #include "../../Core/Math/Vector2.hpp"
 #include "../../Core/Math/Matrix.hpp"
 #include "RenderBuffer.hpp"
+#include "Texture.hpp"
 
 #import <Metal/Metal.h>
 #import <QuartzCore/CAMetalLayer.h>
@@ -62,6 +64,8 @@ public:
     bool Initialize(CAMetalLayer* Layer, Platform::Window* Window);
     void Render(CAMetalLayer* Layer, Platform::Window* Window);
 
+    u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel);
+
 private:
     // The size should already be scaled.
     RenderBridge& UpdateDepthBuffer(CGSize Size);
@@ -75,6 +79,8 @@ private:
 
     RenderBuffer m_RenderBuffer {};
     Uniforms m_Uniforms {};
+    Array<Texture> m_Textures {};
+    u32 m_WhiteTexture { 0 };
 };
 
 }
