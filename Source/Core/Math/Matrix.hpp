@@ -99,6 +99,29 @@ public:
             Data[3], Data[7], Data[11], Data[15]
         };
     }
+
+    Matrix4<T> operator*(const Matrix4<T>& Other) const
+    {
+        Matrix4<T> Result;
+
+        for (u32 Row = 0; Row < 4; Row++)
+        {
+            for (u32 Col = 0; Col < 4; Col++)
+            {
+                const u32 Destination { Row * 4 + Col };
+                Result[Destination] = 0.0f;
+
+                for (u32 I = 0; I < 4; I++)
+                {
+                    const u32 RowIndex { Row * 4 + I };
+                    const u32 ColIndex { Col + I * 4 };
+                    Result[Destination] += Data[RowIndex] * Other[ColIndex];
+                }
+            }
+        }
+
+        return Result;
+    }
 };
 
 
