@@ -52,6 +52,8 @@ public:
     id<MTLFunction> Vertex() const;
     id<MTLFunction> Pixel() const;
 
+    Shader& Clear();
+
 private:
     id<MTLFunction> LoadFunction(const char* Name) const;
 

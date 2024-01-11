@@ -114,6 +114,14 @@ id<MTLFunction> Shader::Pixel() const
     return m_Pixel;
 }
 
+Shader& Shader::Clear()
+{
+    m_Shaders = nullptr;
+    m_Vertex = nullptr;
+    m_Pixel = nullptr;
+    return *this;
+}
+
 id<MTLFunction> Shader::LoadFunction(const char* Name) const
 {
     if (m_Shaders == nullptr)
