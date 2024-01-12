@@ -87,7 +87,6 @@ void Window::Close()
     {
         WindowBridge* Bridge = [WindowBridge Retrieve:m_Bridge];
         [Bridge.Window close];
-        [Bridge dealloc];
         m_Bridge = nullptr;
     }
 }

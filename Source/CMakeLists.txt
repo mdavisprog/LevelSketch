@@ -146,6 +146,12 @@ if(APPLE)
         MACOSX_BUNDLE
         ${SOURCE}
     )
+    
+    # Enable ARC
+    set_property(
+        TARGET ${TARGET}
+        APPEND_STRING PROPERTY COMPILE_FLAGS "-fobjc-arc"
+    )
 
     set_target_properties(
         ${TARGET}

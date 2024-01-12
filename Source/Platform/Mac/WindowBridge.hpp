@@ -31,7 +31,7 @@ SOFTWARE.
 @class NSWindow;
 
 @interface WindowBridge : NSObject
-    @property (nonatomic, assign) NSWindow* Window;
+    @property (strong) NSWindow* Window;
 
     +(WindowBridge*) Retrieve:(void*)Ptr;
 @end
