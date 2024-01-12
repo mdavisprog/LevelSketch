@@ -33,6 +33,7 @@ SOFTWARE.
 #include "../Engine/Engine.hpp"
 #include "../Platform/Debugger.hpp"
 #include "../Platform/EventQueue.hpp"
+#include "../Platform/FileSystem.hpp"
 #include "../Platform/Platform.hpp"
 #include "../Platform/Window.hpp"
 #include "../Render/Renderer.hpp"
@@ -248,6 +249,13 @@ i32 Main(i32 Argc, const char** Argv)
     if (Core::CommandLine::Instance().Has("--tests"))
     {
         return LevelSketch::Tests::System::Instance().Run();
+    }
+#endif
+
+#if defined(DEBUG)
+    if (Core::CommandLine::Instance().Has("--appcwd"))
+    {
+        Platform::FileSystem::SetWorkingDirectory(Platform::FileSystem::ApplicationDirectory());
     }
 #endif
 

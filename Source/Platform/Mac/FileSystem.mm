@@ -28,6 +28,8 @@ SOFTWARE.
 
 #import <Foundation/Foundation.h>
 
+#include <unistd.h>
+
 namespace LevelSketch
 {
 namespace Platform
@@ -38,6 +40,11 @@ String FileSystem::ApplicationPath()
     NSBundle* Main = [NSBundle mainBundle];
     NSString* Path = [[Main executableURL] path];
     return Path.UTF8String;
+}
+
+void FileSystem::SetWorkingDirectory(const String& Path)
+{
+    chdir(Path.Data());
 }
 
 }

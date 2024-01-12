@@ -46,6 +46,8 @@ public:
     static String CombinePaths(const String& A, const String& B);
     static String ReadContents(const String& Path);
 
+    static void SetWorkingDirectory(const String& Path);
+
 private:
     FileSystem();
 };
