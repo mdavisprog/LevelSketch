@@ -24,43 +24,42 @@ SOFTWARE.
 
 */
 
-#pragma once
-
-#include "../Renderer.hpp"
-#include "../../Core/Memory/UniquePtr.hpp"
-
-namespace OctaneGUI
+struct RasterizerData
 {
-    class VertexBuffer;
-    class Window;
-}
-
-namespace LevelSketch
-{
-namespace Render
-{
-namespace Metal
-{
-
-class RenderBridge;
-
-class Renderer : public LevelSketch::Render::Renderer
-{
-public:
-    Renderer();
-    virtual ~Renderer();
-
-    virtual bool Initialize() override;
-    virtual bool Initialize(Platform::Window* Window) override;
-    virtual void Shutdown() override;
-    virtual void Render(Platform::Window* Window) override;
-    virtual u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel = 4) override;
-    virtual void UploadGUIData(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer) override;
-
-private:
-    UniquePtr<RenderBridge> m_RenderBridge { nullptr };
+    float4 Position [[position]];
+    float2 UV;
+    float4 Color;
 };
 
+struct Vertex2
+{
+    float2 Position [[ attribute(0) ]];
+    float2 UV [[ attribute(1) ]];
+    uchar4 Color [[ attribute(2) ]];
+};
+
+struct Uniforms
+{
+    metal::float4x4 Model;
+    metal::float4x4 View;
+    metal::float4x4 Projection;
+    metal::float4x4 Orthographic;
+};
+
+vertex RasterizerData VertexMain(Vertex2 Vertex [[ stage_in ]], constant Uniforms& Uniforms_ [[ buffer(1) ]])
+{
+    RasterizerData Out;
+
+    Out.Position = float4(Vertex.Position, 0.0, 1.0) * Uniforms_.Orthographic;
+    Out.UV = Vertex.UV;
+    Out.Color = float4(Vertex.Color) / float4(255.0);
+
+    return Out;
 }
-}
+
+fragment float4 PixelMain(RasterizerData Data [[stage_in]], metal::texture2d<float> Texture [[ texture(0) ]])
+{
+    constexpr metal::sampler Sampler;
+    float4 TexColor = Texture.sample(Sampler, Data.UV);
+    return Data.Color * TexColor;
 }

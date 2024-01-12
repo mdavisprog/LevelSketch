@@ -27,6 +27,7 @@ SOFTWARE.
 #include "RenderBridge.hpp"
 #include "../../Core/Console.hpp"
 #include "../../Core/Math/Vertex.hpp"
+#include "../../External/OctaneGUI/VertexBuffer.h"
 #include "../../Platform/FileSystem.hpp"
 #include "../../Platform/Window.hpp"
 #include "Shader.hpp"
@@ -57,21 +58,12 @@ bool RenderBridge::Initialize(CAMetalLayer* Layer, Platform::Window* Window)
         m_Device = Layer.device;
         m_CommandQueue = [m_Device newCommandQueue];
 
-        m_RenderPassDesc = [MTLRenderPassDescriptor new];
-        m_RenderPassDesc.colorAttachments[0].loadAction = MTLLoadActionClear;
-        m_RenderPassDesc.colorAttachments[0].storeAction = MTLStoreActionStore;
-        m_RenderPassDesc.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 1.0, 1.0, 1.0);
-
-        m_RenderPassDesc.depthAttachment.loadAction = MTLLoadActionClear;
-        m_RenderPassDesc.depthAttachment.storeAction = MTLStoreActionDontCare;
-        m_RenderPassDesc.depthAttachment.clearDepth = 1.0;
-
         MTLDepthStencilDescriptor* DepthStencilDesc = [MTLDepthStencilDescriptor new];
         DepthStencilDesc.depthCompareFunction = MTLCompareFunctionLess;
         DepthStencilDesc.depthWriteEnabled = YES;
         m_DepthStencil = [m_Device newDepthStencilStateWithDescriptor:DepthStencilDesc];
 
-        const String Path { Platform::FileSystem::ApplicationDirectory() + "/Content/Shaders/Metal/Test.metal" };
+        String Path { Platform::FileSystem::ApplicationDirectory() + "/Content/Shaders/Metal/Test.metal" };
         Shader Shader_;
         if (!Shader_.LoadFile(m_Device, Path.Data()))
         {
@@ -81,7 +73,7 @@ bool RenderBridge::Initialize(CAMetalLayer* Layer, Platform::Window* Window)
         if (!Shader_.LoadVertex("VertexMain")) { return false; }
         if (!Shader_.LoadPixel("PixelMain")) { return false; }
 
-        MTLRenderPipelineDescriptor* PipelineDesc = [[MTLRenderPipelineDescriptor alloc] init];
+        MTLRenderPipelineDescriptor* PipelineDesc = [MTLRenderPipelineDescriptor new];
         PipelineDesc.label = @"Test";
         PipelineDesc.vertexFunction = Shader_.Vertex();
         PipelineDesc.fragmentFunction = Shader_.Pixel();
@@ -97,6 +89,8 @@ bool RenderBridge::Initialize(CAMetalLayer* Layer, Platform::Window* Window)
         PipelineDesc.vertexDescriptor.attributes[2].format = MTLVertexFormatFloat4;
         PipelineDesc.vertexDescriptor.attributes[2].bufferIndex = 0;
         PipelineDesc.vertexDescriptor.attributes[2].offset = sizeof(Vector3) + sizeof(Vector2);
+        PipelineDesc.vertexDescriptor.layouts[0].stepRate = 1;
+        PipelineDesc.vertexDescriptor.layouts[0].stepFunction = MTLVertexStepFunctionPerVertex;
         PipelineDesc.vertexDescriptor.layouts[0].stride = sizeof(Vertex3);
 
         NSError* Error { nullptr };
@@ -108,9 +102,64 @@ bool RenderBridge::Initialize(CAMetalLayer* Layer, Platform::Window* Window)
             return false;
         }
 
+        //
+        // GUI Render Pass
+        //
+
+        MTLDepthStencilDescriptor* DepthStencilDescGUI = [MTLDepthStencilDescriptor new];
+        DepthStencilDescGUI.depthCompareFunction = MTLCompareFunctionAlways;
+        DepthStencilDescGUI.depthWriteEnabled = NO;
+        m_DepthStencilGUI = [m_Device newDepthStencilStateWithDescriptor:DepthStencilDescGUI];
+
+        Path = Platform::FileSystem::ApplicationDirectory() + "/Content/Shaders/Metal/GUI.metal";
+        Shader_.Clear();
+        if (!Shader_.LoadFile(m_Device, Path.Data()))
+        {
+            return false;
+        }
+
+        if (!Shader_.LoadVertex("VertexMain")) { return false; }
+        if (!Shader_.LoadPixel("PixelMain")) { return false; }
+
+        PipelineDesc.label = @"GUI";
+        PipelineDesc.vertexFunction = Shader_.Vertex();
+        PipelineDesc.fragmentFunction = Shader_.Pixel();
+        PipelineDesc.rasterSampleCount = 1;
+        PipelineDesc.colorAttachments[0].pixelFormat = Layer.pixelFormat;
+        PipelineDesc.colorAttachments[0].blendingEnabled = YES;
+        PipelineDesc.colorAttachments[0].rgbBlendOperation = MTLBlendOperationAdd;
+        PipelineDesc.colorAttachments[0].sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
+        PipelineDesc.colorAttachments[0].destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+        PipelineDesc.colorAttachments[0].alphaBlendOperation = MTLBlendOperationAdd;
+        PipelineDesc.colorAttachments[0].sourceAlphaBlendFactor = MTLBlendFactorOne;
+        PipelineDesc.colorAttachments[0].destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+        PipelineDesc.depthAttachmentPixelFormat = MTLPixelFormatInvalid;
+
+        PipelineDesc.vertexDescriptor.attributes[0].format = MTLVertexFormatFloat2;
+        PipelineDesc.vertexDescriptor.attributes[0].bufferIndex = 0;
+        PipelineDesc.vertexDescriptor.attributes[0].offset = 0;
+        PipelineDesc.vertexDescriptor.attributes[1].format = MTLVertexFormatFloat2;
+        PipelineDesc.vertexDescriptor.attributes[1].bufferIndex = 0;
+        PipelineDesc.vertexDescriptor.attributes[1].offset = sizeof(OctaneGUI::Vector2);
+        PipelineDesc.vertexDescriptor.attributes[2].format = MTLVertexFormatUChar4;
+        PipelineDesc.vertexDescriptor.attributes[2].bufferIndex = 0;
+        PipelineDesc.vertexDescriptor.attributes[2].offset = sizeof(OctaneGUI::Vector2) + sizeof(OctaneGUI::Vector2);
+        PipelineDesc.vertexDescriptor.layouts[0].stepRate = 1;
+        PipelineDesc.vertexDescriptor.layouts[0].stepFunction = MTLVertexStepFunctionPerVertex;
+        PipelineDesc.vertexDescriptor.layouts[0].stride = sizeof(OctaneGUI::Vertex);
+
+        m_PipelineStateGUI = [m_Device newRenderPipelineStateWithDescriptor:PipelineDesc error:&Error];
+        if (m_PipelineStateGUI == nil)
+        {
+            Core::Console::Error("Failed to create render pipeline state.");
+            Core::Console::Error("Error: %s", [[Error localizedDescription] UTF8String]);
+            return false;
+        }
+
         UpdateDepthBuffer(Layer.drawableSize);
 
         m_RenderBuffer.Initialize(m_Device, 1000, 1000);
+        m_RenderBufferGUI.Initialize(m_Device, 100000, 100000);
 
         const f32 Offset { 0.5f };
         const Vertex3 Vertices[3]
@@ -124,12 +173,19 @@ bool RenderBridge::Initialize(CAMetalLayer* Layer, Platform::Window* Window)
         const u32 Indices[3] { 0, 1, 2 };
         m_RenderBuffer.UploadIndexData(Indices, sizeof(Indices));
 
-        const Rectf Bounds { 0.0f, 0.0f, static_cast<f32>(Window->Size().X), static_cast<f32>(Window->Size().Y) };
+        // FIXME: Take into account scale.
+        const Rectf Bounds
+        {
+            0.0f, 0.0f,
+            static_cast<f32>(Window->Size().X), static_cast<f32>(Window->Size().Y)
+        };
+
         m_Uniforms.Projection = Core::Math::PerspectiveMatrixRH(75.0f, Window->AspectRatio(), 0.1f, 1000.0f).Transpose();
         m_Uniforms.Orthographic = Core::Math::OrthographicMatrixRH(Bounds, -1.0f, 1.0f).Transpose();
 
         const u8 WhiteTexture[4] { 255, 255, 255, 255 };
-        m_WhiteTexture = LoadTexture(WhiteTexture, 1, 1, 4);
+        const u32 ID = LoadTexture(WhiteTexture, 1, 1, 4);
+        m_WhiteTexture = GetTexture(ID);
     }
 
     return true;
@@ -158,8 +214,18 @@ void RenderBridge::Render(CAMetalLayer* Layer, Platform::Window*)
             UpdateDepthBuffer(Layer.drawableSize);
         }
 
-        m_RenderPassDesc.colorAttachments[0].texture = Drawable.texture;
+        MTLRenderPassDescriptor* RenderPassDesc = [MTLRenderPassDescriptor new];
+        RenderPassDesc.colorAttachments[0].loadAction = MTLLoadActionClear;
+        RenderPassDesc.colorAttachments[0].storeAction = MTLStoreActionStore;
+        RenderPassDesc.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 1.0, 1.0, 1.0);
+        RenderPassDesc.colorAttachments[0].texture = Drawable.texture;
 
+        RenderPassDesc.depthAttachment.loadAction = MTLLoadActionClear;
+        RenderPassDesc.depthAttachment.storeAction = MTLStoreActionDontCare;
+        RenderPassDesc.depthAttachment.clearDepth = 1.0;
+        RenderPassDesc.depthAttachment.texture = m_DepthBuffer;
+
+        // FIXME: Scale size.
         MTLViewport Viewport
         {
             .originX = 0.0,
@@ -170,7 +236,7 @@ void RenderBridge::Render(CAMetalLayer* Layer, Platform::Window*)
             .zfar = 1.0
         };
 
-        id<MTLRenderCommandEncoder> Encoder = [CommandBuffer renderCommandEncoderWithDescriptor:m_RenderPassDesc];
+        id<MTLRenderCommandEncoder> Encoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDesc];
         [Encoder setRenderPipelineState:m_PipelineState];
         [Encoder setViewport:Viewport];
         [Encoder setFrontFacingWinding:MTLWindingCounterClockwise];
@@ -180,10 +246,47 @@ void RenderBridge::Render(CAMetalLayer* Layer, Platform::Window*)
         [Encoder setVertexBytes:&m_Uniforms length:sizeof(m_Uniforms) atIndex:1];
         [Encoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle
                             indexCount:3
-                            indexType:MTLIndexTypeUInt32
-                          indexBuffer:m_RenderBuffer.Index()
-                    indexBufferOffset:0];
+                             indexType:MTLIndexTypeUInt32
+                           indexBuffer:m_RenderBuffer.Index()
+                     indexBufferOffset:0];
         [Encoder endEncoding];
+
+        //
+        // GUI Render Pass
+        //
+
+        MTLRenderPassDescriptor* RenderPassDescGUI = [MTLRenderPassDescriptor new];
+        RenderPassDescGUI.colorAttachments[0].loadAction = MTLLoadActionLoad;
+        RenderPassDescGUI.colorAttachments[0].storeAction = MTLStoreActionStore;
+        RenderPassDescGUI.colorAttachments[0].texture = Drawable.texture;
+
+        id<MTLRenderCommandEncoder> EncoderGUI { [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescGUI] };
+        [EncoderGUI setRenderPipelineState:m_PipelineStateGUI];
+        [EncoderGUI setViewport:Viewport];
+        [EncoderGUI setFrontFacingWinding:MTLWindingCounterClockwise];
+        [EncoderGUI setCullMode:MTLCullModeNone];
+        [EncoderGUI setDepthStencilState:m_DepthStencilGUI];
+        [EncoderGUI setVertexBuffer:m_RenderBufferGUI.Vertex() offset:0 atIndex:0];
+        [EncoderGUI setVertexBytes:&m_Uniforms length:sizeof(m_Uniforms) atIndex:1];
+
+        for (const OctaneGUI::DrawCommand& Command : m_GUICommands)
+        {
+            id<MTLTexture> Tex { m_WhiteTexture };
+            if (Command.TextureID() != 0)
+            {
+                Tex = GetTexture(Command.TextureID());
+            }
+
+            [EncoderGUI setFragmentTexture:Tex atIndex:0];
+            [EncoderGUI setVertexBufferOffset:Command.VertexOffset() * sizeof(OctaneGUI::Vertex) atIndex:0];
+            [EncoderGUI drawIndexedPrimitives:MTLPrimitiveTypeTriangle
+                                   indexCount:Command.IndexCount()
+                                    indexType:MTLIndexTypeUInt32
+                                  indexBuffer:m_RenderBufferGUI.Index()
+                            indexBufferOffset:Command.IndexOffset() * sizeof(u32)];
+        }
+
+        [EncoderGUI endEncoding];
 
         [CommandBuffer presentDrawable:Drawable];
         [CommandBuffer commit];
@@ -209,6 +312,33 @@ u32 RenderBridge::LoadTexture(const void* Data, u32 Width, u32 Height, u8)
     return Result;
 }
 
+void RenderBridge::UploadGUIData(const OctaneGUI::VertexBuffer& Buffer)
+{
+    if (!m_RenderBufferGUI.Initialized())
+    {
+        return;
+    }
+
+    m_RenderBufferGUI.UploadVertexData(
+        Buffer.GetVertices().data(),
+        static_cast<u64>(Buffer.GetVertexCount() * sizeof(OctaneGUI::Vertex))
+    );
+
+    m_RenderBufferGUI.UploadIndexData(
+        Buffer.GetIndices().data(),
+        static_cast<u64>(Buffer.GetIndexCount() * sizeof(u32))
+    );
+
+    m_GUICommands
+        .Clear()
+        .Reserve(Buffer.Commands().size());
+    
+    for (const OctaneGUI::DrawCommand& Command : Buffer.Commands())
+    {
+        m_GUICommands.Push(Command);
+    }
+}
+
 RenderBridge& RenderBridge::UpdateDepthBuffer(const CGSize& Size)
 {
     if (Size.width == 0 || Size.height == 0)
@@ -224,9 +354,21 @@ RenderBridge& RenderBridge::UpdateDepthBuffer(const CGSize& Size)
     DepthBufferDesc.usage = MTLTextureUsageRenderTarget;
 
     m_DepthBuffer = [m_Device newTextureWithDescriptor:DepthBufferDesc];
-    m_RenderPassDesc.depthAttachment.texture = m_DepthBuffer;
 
     return *this;
+}
+
+id<MTLTexture> RenderBridge::GetTexture(u32 ID) const
+{
+    for (const Texture& Item : m_Textures)
+    {
+        if (Item.ID() == ID)
+        {
+            return Item.Data();
+        }
+    }
+
+    return nullptr;
 }
 
 }

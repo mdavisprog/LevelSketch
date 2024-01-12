@@ -99,6 +99,11 @@ u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPi
     return m_RenderBridge->LoadTexture(Data, Width, Height, BytesPerPixel);
 }
 
+void Renderer::UploadGUIData(OctaneGUI::Window*, const OctaneGUI::VertexBuffer& Buffer)
+{
+    m_RenderBridge->UploadGUIData(Buffer);
+}
+
 }
 }
 }

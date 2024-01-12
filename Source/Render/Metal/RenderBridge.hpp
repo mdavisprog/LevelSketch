@@ -29,13 +29,13 @@ SOFTWARE.
 #include "../../Core/Containers/Array.hpp"
 #include "../../Core/Math/Vector2.hpp"
 #include "../../Core/Math/Matrix.hpp"
+#include "../../External/OctaneGUI/DrawCommand.h"
 #include "RenderBuffer.hpp"
 #include "Texture.hpp"
 
 struct CGSize;
 
 @class CAMetalLayer;
-@class MTLRenderPassDescriptor;
 
 @protocol MTLCommandBuffer;
 @protocol MTLCommandQueue;
@@ -43,6 +43,11 @@ struct CGSize;
 @protocol MTLDevice;
 @protocol MTLRenderPipelineState;
 @protocol MTLTexture;
+
+namespace OctaneGUI
+{
+    class VertexBuffer;
+}
 
 namespace LevelSketch
 {
@@ -74,22 +79,29 @@ public:
     void Render(CAMetalLayer* Layer, Platform::Window* Window);
 
     u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel);
+    void UploadGUIData(const OctaneGUI::VertexBuffer& Buffer);
 
 private:
     // The size should already be scaled.
     RenderBridge& UpdateDepthBuffer(const CGSize& Size);
+    id<MTLTexture> GetTexture(u32 ID) const;
 
     id<MTLDevice> m_Device { nullptr };
     id<MTLCommandQueue> m_CommandQueue { nullptr };
-    id<MTLRenderPipelineState> m_PipelineState { nullptr };
     id<MTLTexture> m_DepthBuffer { nullptr };
     id<MTLDepthStencilState> m_DepthStencil { nullptr };
-    MTLRenderPassDescriptor* m_RenderPassDesc { nullptr };
+    id<MTLDepthStencilState> m_DepthStencilGUI { nullptr };
+
+    id<MTLRenderPipelineState> m_PipelineState { nullptr };
+    id<MTLRenderPipelineState> m_PipelineStateGUI { nullptr };
 
     RenderBuffer m_RenderBuffer {};
+    RenderBuffer m_RenderBufferGUI {};
+    Array<OctaneGUI::DrawCommand> m_GUICommands {};
+
     Uniforms m_Uniforms {};
     Array<Texture> m_Textures {};
-    u32 m_WhiteTexture { 0 };
+    id<MTLTexture> m_WhiteTexture { nullptr };
 };
 
 }
