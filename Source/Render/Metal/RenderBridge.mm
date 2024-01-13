@@ -277,6 +277,37 @@ void RenderBridge::Render(CAMetalLayer* Layer, Platform::Window*)
                 Tex = GetTexture(Command.TextureID());
             }
 
+            MTLScissorRect Scissor
+            {
+                .x = 0,
+                .y = 0,
+                .width = static_cast<NSUInteger>(Layer.drawableSize.width),
+                .height = static_cast<NSUInteger>(Layer.drawableSize.height)
+            };
+
+            const OctaneGUI::Rect Clip { Command.Clip() };
+            if (!Clip.IsZero())
+            {
+                // FIXME: Apply scale.
+                OctaneGUI::Vector2 Min = Clip.Min;// * Scale;
+                OctaneGUI::Vector2 Max = Clip.Max;// * Scale;
+
+                Min.X = std::max<f32>(Min.X, 0.0f);
+                Min.Y = std::max<f32>(Min.Y, 0.0f);
+                Max.X = std::min<f32>(Max.X, static_cast<f32>(Layer.drawableSize.width));// * Scale.X);
+                Max.Y = std::min<f32>(Max.Y, static_cast<f32>(Layer.drawableSize.height));// * Scale.Y);
+
+                const OctaneGUI::Vector2 ClipSize = Max - Min;
+                Scissor =
+                {
+                    .x = (NSUInteger)Min.X,
+                    .y = (NSUInteger)Min.Y,
+                    .width = (NSUInteger)ClipSize.X,
+                    .height = (NSUInteger)ClipSize.Y
+                };
+            }
+
+            [EncoderGUI setScissorRect:Scissor];
             [EncoderGUI setFragmentTexture:Tex atIndex:0];
             [EncoderGUI setVertexBufferOffset:Command.VertexOffset() * sizeof(OctaneGUI::Vertex) atIndex:0];
             [EncoderGUI drawIndexedPrimitives:MTLPrimitiveTypeTriangle
