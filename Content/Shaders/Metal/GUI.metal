@@ -57,9 +57,14 @@ vertex RasterizerData VertexMain(Vertex2 Vertex [[ stage_in ]], constant Uniform
     return Out;
 }
 
-fragment float4 PixelMain(RasterizerData Data [[stage_in]], metal::texture2d<float> Texture [[ texture(0) ]])
+fragment half4 PixelMain(RasterizerData Data [[stage_in]], metal::texture2d<half, metal::access::sample> Texture [[ texture(0) ]])
 {
-    constexpr metal::sampler Sampler;
-    float4 TexColor = Texture.sample(Sampler, Data.UV);
-    return Data.Color * TexColor;
+    constexpr metal::sampler LinearSampler(
+        metal::coord::normalized,
+        metal::min_filter::linear,
+        metal::mag_filter::linear,
+        metal::mip_filter::linear
+    );
+    half4 TexColor = Texture.sample(LinearSampler, Data.UV);
+    return half4(Data.Color) * TexColor;
 }

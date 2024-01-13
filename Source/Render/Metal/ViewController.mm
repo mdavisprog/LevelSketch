@@ -46,7 +46,7 @@ SOFTWARE.
     View* View_ = (View*)self.view;
     View_.MetalLayer.device = MTLCreateSystemDefaultDevice();
     View_.Paused = YES;
-    View_.MetalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
+    View_.MetalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
 
     [NSApp activateIgnoringOtherApps:YES];
 }
