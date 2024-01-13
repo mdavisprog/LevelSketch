@@ -26,20 +26,13 @@ SOFTWARE.
 
 #pragma once
 
-#import <Foundation/Foundation.h>
-
-@class NSWindow;
-@class NSView;
+#import <AppKit/AppKit.h>
 
 namespace LevelSketch::Platform
 {
     class Window;
 }
 
-@interface WindowBridge : NSObject
-    @property (strong) NSWindow* Window;
-
-    -(void) OnViewCreated:(NSView*)View Window:(LevelSketch::Platform::Window*)Window;
-
-    +(WindowBridge*) Retrieve:(void*)Ptr;
+@interface EventView : NSView
+    @property(nonatomic, assign) LevelSketch::Platform::Window* Window;
 @end

@@ -69,6 +69,7 @@ bool Window::Create(const char* Title, int X, int Y, int Width, int Height)
         ];
 
         [Bridge.Window setTitle:[NSString stringWithUTF8String:Title]];
+        [Bridge.Window setAcceptsMouseMovedEvents:YES];
 
         m_Bridge = (void*)CFBridgingRetain(Bridge);
     }

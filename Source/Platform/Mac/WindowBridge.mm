@@ -25,8 +25,21 @@ SOFTWARE.
 */
 
 #include "WindowBridge.hpp"
+#include "EventView.hpp"
+
+#import <AppKit/AppKit.h>
 
 @implementation WindowBridge
+
+-(void) OnViewCreated:(NSView*)View Window:(LevelSketch::Platform::Window*)Window
+{
+    @autoreleasepool
+    {
+        EventView* Events { [[EventView alloc] initWithFrame:NSZeroRect] };
+        Events.Window = Window;
+        [View addSubview:Events];
+    }
+}
 
 +(WindowBridge*) Retrieve:(void*)Ptr
 {

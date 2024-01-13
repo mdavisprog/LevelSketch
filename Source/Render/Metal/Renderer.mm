@@ -64,6 +64,7 @@ bool Renderer::Initialize(Platform::Window* Window)
             WindowBridge* Bridge = [WindowBridge Retrieve:Window->Handle()];
             NSViewController* Root = [[ViewController alloc] initWithNibName:nil bundle:nil];
             Bridge.Window.contentViewController = Root;
+            [Bridge OnViewCreated:Bridge.Window.contentView Window:Window];
             CAMetalLayer* Layer = (CAMetalLayer*)Bridge.Window.contentView.layer;
             
             if (!m_RenderBridge->Initialize(Layer, Window))

@@ -1,3 +1,4 @@
+
 /**
 
 MIT License
@@ -24,22 +25,58 @@ SOFTWARE.
 
 */
 
-#pragma once
+#include "EventView.hpp"
+#include "../EventQueue.hpp"
 
-#import <Foundation/Foundation.h>
+namespace Platform = LevelSketch::Platform;
 
-@class NSWindow;
-@class NSView;
+@implementation EventView
 
-namespace LevelSketch::Platform
+-(BOOL) acceptsFirstResponder
 {
-    class Window;
+    return YES;
 }
 
-@interface WindowBridge : NSObject
-    @property (strong) NSWindow* Window;
+-(void) viewDidMoveToWindow
+{
+    [self.window makeFirstResponder:self];
+}
 
-    -(void) OnViewCreated:(NSView*)View Window:(LevelSketch::Platform::Window*)Window;
+-(NSView*) hitTest:(NSPoint)Point
+{
+    return self;
+}
 
-    +(WindowBridge*) Retrieve:(void*)Ptr;
+-(void) mouseMoved:(NSEvent*)Event
+{
+    [self HandleEvent:Event];
+}
+
+-(void) mouseDown:(NSEvent*)Event
+{
+    [self HandleEvent:Event];
+}
+
+-(void) HandleEvent:(NSEvent*)Event
+{
+    switch (Event.type)
+    {
+
+    case NSEventTypeMouseMoved:
+    {
+        NSPoint Position { Event.locationInWindow };
+        Position.y = self.superview.frame.size.height - Position.y;
+
+        Platform::Event::OnMouseMove MouseMove
+        {
+            { static_cast<i32>(Position.x), static_cast<i32>(Position.y) }
+        };
+
+        Platform::EventQueue::Instance().Push(MouseMove, _Window);
+    } break;
+
+    default: break;
+    }
+}
+
 @end
