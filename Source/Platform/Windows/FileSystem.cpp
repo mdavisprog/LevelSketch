@@ -27,6 +27,8 @@ SOFTWARE.
 #include "../FileSystem.hpp"
 #include "Common.hpp"
 
+#include <direct.h>
+
 namespace LevelSketch
 {
 namespace Platform
@@ -54,6 +56,11 @@ String FileSystem::ApplicationPath()
     }
 
     return Core::Containers::ToString(Path);
+}
+
+void FileSystem::SetWorkingDirectory(const String& Path)
+{
+    _chdir(Path.Data());
 }
 
 }
