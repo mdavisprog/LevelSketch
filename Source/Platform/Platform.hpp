@@ -67,6 +67,8 @@ public:
     Window* NewWindow(const char* Title, i32 X, i32 Y, i32 Width, i32 Height);
     Platform& CloseWindow(Window* Window);
     const Array<UniquePtr<Window>>& Windows() const;
+    u64 WindowCount() const;
+    bool HasWindow(Window* Window) const;
 
 protected:
     virtual UniquePtr<Window> InternalNewWindow() const = 0;

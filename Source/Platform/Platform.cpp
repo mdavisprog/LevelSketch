@@ -155,6 +155,24 @@ const Array<UniquePtr<Window>>& Platform::Windows() const
     return m_Windows;
 }
 
+u64 Platform::WindowCount() const
+{
+    return m_Windows.Size();
+}
+
+bool Platform::HasWindow(Window* Window) const
+{
+    for (const UniquePtr<LevelSketch::Platform::Window>& Win : m_Windows)
+    {
+        if (Win.Get() == Window)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void Platform::UpdateTimingData(TimingData&)
 {
 }
