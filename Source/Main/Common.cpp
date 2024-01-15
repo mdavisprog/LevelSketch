@@ -185,8 +185,9 @@ static OctaneGUI::Event OnEvent(OctaneGUI::Window* Window)
         return { OctaneGUI::Event::Type::WindowClosed };
     }
 
+    // FIXME: Find a way better way to map a platform window with an OctaneGUI window.
     LevelSketch::Platform::Window* Win { g_Windows[Window] };
-    if (!Win->IsOpen())
+    if (!LevelSketch::Platform::Platform::Instance()->HasWindow(Win) || !Win->IsOpen())
     {
         g_Windows.erase(Window);
         return { OctaneGUI::Event::Type::WindowClosed };
@@ -317,7 +318,10 @@ i32 Main(i32 Argc, const char** Argv)
 
     for (const std::pair<OctaneGUI::Window*, LevelSketch::Platform::Window*> Item : g_Windows)
     {
-        Platform->CloseWindow(Item.second);
+        if (Platform->HasWindow(Item.second))
+        {
+            Platform->CloseWindow(Item.second);
+        }
     }
     g_Windows.clear();
 
