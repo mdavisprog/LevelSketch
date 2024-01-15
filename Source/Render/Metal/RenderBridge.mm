@@ -133,7 +133,6 @@ bool RenderBridge::Initialize(CAMetalLayer* Layer, Platform::Window* Window)
         PipelineDesc.colorAttachments[0].alphaBlendOperation = MTLBlendOperationAdd;
         PipelineDesc.colorAttachments[0].sourceAlphaBlendFactor = MTLBlendFactorOne;
         PipelineDesc.colorAttachments[0].destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
-        PipelineDesc.depthAttachmentPixelFormat = MTLPixelFormatInvalid;
 
         PipelineDesc.vertexDescriptor.attributes[0].format = MTLVertexFormatFloat2;
         PipelineDesc.vertexDescriptor.attributes[0].bufferIndex = 0;
@@ -249,25 +248,18 @@ void RenderBridge::Render(CAMetalLayer* Layer, Platform::Window*)
                              indexType:MTLIndexTypeUInt32
                            indexBuffer:m_RenderBuffer.Index()
                      indexBufferOffset:0];
-        [Encoder endEncoding];
 
         //
         // GUI Render Pass
         //
 
-        MTLRenderPassDescriptor* RenderPassDescGUI = [MTLRenderPassDescriptor new];
-        RenderPassDescGUI.colorAttachments[0].loadAction = MTLLoadActionLoad;
-        RenderPassDescGUI.colorAttachments[0].storeAction = MTLStoreActionStore;
-        RenderPassDescGUI.colorAttachments[0].texture = Drawable.texture;
-
-        id<MTLRenderCommandEncoder> EncoderGUI { [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescGUI] };
-        [EncoderGUI setRenderPipelineState:m_PipelineStateGUI];
-        [EncoderGUI setViewport:Viewport];
-        [EncoderGUI setFrontFacingWinding:MTLWindingCounterClockwise];
-        [EncoderGUI setCullMode:MTLCullModeNone];
-        [EncoderGUI setDepthStencilState:m_DepthStencilGUI];
-        [EncoderGUI setVertexBuffer:m_RenderBufferGUI.Vertex() offset:0 atIndex:0];
-        [EncoderGUI setVertexBytes:&m_Uniforms length:sizeof(m_Uniforms) atIndex:1];
+        [Encoder setRenderPipelineState:m_PipelineStateGUI];
+        [Encoder setViewport:Viewport];
+        [Encoder setFrontFacingWinding:MTLWindingCounterClockwise];
+        [Encoder setCullMode:MTLCullModeNone];
+        [Encoder setDepthStencilState:m_DepthStencilGUI];
+        [Encoder setVertexBuffer:m_RenderBufferGUI.Vertex() offset:0 atIndex:0];
+        [Encoder setVertexBytes:&m_Uniforms length:sizeof(m_Uniforms) atIndex:1];
 
         for (const OctaneGUI::DrawCommand& Command : m_GUICommands)
         {
@@ -307,17 +299,17 @@ void RenderBridge::Render(CAMetalLayer* Layer, Platform::Window*)
                 };
             }
 
-            [EncoderGUI setScissorRect:Scissor];
-            [EncoderGUI setFragmentTexture:Tex atIndex:0];
-            [EncoderGUI setVertexBufferOffset:Command.VertexOffset() * sizeof(OctaneGUI::Vertex) atIndex:0];
-            [EncoderGUI drawIndexedPrimitives:MTLPrimitiveTypeTriangle
+            [Encoder setScissorRect:Scissor];
+            [Encoder setFragmentTexture:Tex atIndex:0];
+            [Encoder setVertexBufferOffset:Command.VertexOffset() * sizeof(OctaneGUI::Vertex) atIndex:0];
+            [Encoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle
                                    indexCount:Command.IndexCount()
                                     indexType:MTLIndexTypeUInt32
                                   indexBuffer:m_RenderBufferGUI.Index()
                             indexBufferOffset:Command.IndexOffset() * sizeof(u32)];
         }
 
-        [EncoderGUI endEncoding];
+        [Encoder endEncoding];
 
         [CommandBuffer presentDrawable:Drawable];
         [CommandBuffer commit];
