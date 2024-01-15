@@ -76,7 +76,7 @@ public:
     RenderBridge();
 
     bool Initialize(CAMetalLayer* Layer, Platform::Window* Window);
-    void Render(CAMetalLayer* Layer, Platform::Window* Window);
+    void Render(CAMetalLayer* Layer, f64 ScaleFactor);
 
     u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel);
     void UploadGUIData(const OctaneGUI::VertexBuffer& Buffer);

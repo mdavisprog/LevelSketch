@@ -42,11 +42,21 @@ namespace Render
 namespace Metal
 {
 
+static f32 AspectRatio(CGSize Size)
+{
+    if (Size.height == 0.0)
+    {
+        return 0.0f;
+    }
+
+    return static_cast<f32>(Size.width) / static_cast<f32>(Size.height);
+}
+
 RenderBridge::RenderBridge()
 {
 }
 
-bool RenderBridge::Initialize(CAMetalLayer* Layer, Platform::Window* Window)
+bool RenderBridge::Initialize(CAMetalLayer* Layer, Platform::Window*)
 {
     @autoreleasepool
     {
@@ -172,14 +182,13 @@ bool RenderBridge::Initialize(CAMetalLayer* Layer, Platform::Window* Window)
         const u32 Indices[3] { 0, 1, 2 };
         m_RenderBuffer.UploadIndexData(Indices, sizeof(Indices));
 
-        // FIXME: Take into account scale.
         const Rectf Bounds
         {
             0.0f, 0.0f,
-            static_cast<f32>(Window->Size().X), static_cast<f32>(Window->Size().Y)
+            static_cast<f32>(Layer.drawableSize.width), static_cast<f32>(Layer.drawableSize.height)
         };
 
-        m_Uniforms.Projection = Core::Math::PerspectiveMatrixRH(75.0f, Window->AspectRatio(), 0.1f, 1000.0f).Transpose();
+        m_Uniforms.Projection = Core::Math::PerspectiveMatrixRH(75.0f, AspectRatio(Layer.drawableSize), 0.1f, 1000.0f).Transpose();
         m_Uniforms.Orthographic = Core::Math::OrthographicMatrixRH(Bounds, -1.0f, 1.0f).Transpose();
 
         const u8 WhiteTexture[4] { 255, 255, 255, 255 };
@@ -190,7 +199,7 @@ bool RenderBridge::Initialize(CAMetalLayer* Layer, Platform::Window* Window)
     return true;
 }
 
-void RenderBridge::Render(CAMetalLayer* Layer, Platform::Window*)
+void RenderBridge::Render(CAMetalLayer* Layer, f64 ScaleFactor)
 {
     @autoreleasepool
     {
@@ -206,11 +215,13 @@ void RenderBridge::Render(CAMetalLayer* Layer, Platform::Window*)
             return;
         }
 
+        const CGSize DrawableSize { Layer.drawableSize };
+
         // TODO: Depth buffer should be updated whenever the size of the view changes.
         // Probably can be done through a window delegate.
         if (m_DepthBuffer == nil)
         {
-            UpdateDepthBuffer(Layer.drawableSize);
+            UpdateDepthBuffer(DrawableSize);
         }
 
         MTLRenderPassDescriptor* RenderPassDesc = [MTLRenderPassDescriptor new];
@@ -224,13 +235,12 @@ void RenderBridge::Render(CAMetalLayer* Layer, Platform::Window*)
         RenderPassDesc.depthAttachment.clearDepth = 1.0;
         RenderPassDesc.depthAttachment.texture = m_DepthBuffer;
 
-        // FIXME: Scale size.
         MTLViewport Viewport
         {
             .originX = 0.0,
             .originY = 0.0,
-            .width = Layer.drawableSize.width,
-            .height = Layer.drawableSize.height,
+            .width = DrawableSize.width,
+            .height = DrawableSize.height,
             .znear = 0.0,
             .zfar = 1.0
         };
@@ -280,14 +290,13 @@ void RenderBridge::Render(CAMetalLayer* Layer, Platform::Window*)
             const OctaneGUI::Rect Clip { Command.Clip() };
             if (!Clip.IsZero())
             {
-                // FIXME: Apply scale.
-                OctaneGUI::Vector2 Min = Clip.Min;// * Scale;
-                OctaneGUI::Vector2 Max = Clip.Max;// * Scale;
+                OctaneGUI::Vector2 Min = Clip.Min * static_cast<f32>(ScaleFactor);
+                OctaneGUI::Vector2 Max = Clip.Max * static_cast<f32>(ScaleFactor);
 
                 Min.X = std::max<f32>(Min.X, 0.0f);
                 Min.Y = std::max<f32>(Min.Y, 0.0f);
-                Max.X = std::min<f32>(Max.X, static_cast<f32>(Layer.drawableSize.width));// * Scale.X);
-                Max.Y = std::min<f32>(Max.Y, static_cast<f32>(Layer.drawableSize.height));// * Scale.Y);
+                Max.X = std::min<f32>(Max.X, static_cast<f32>(Layer.drawableSize.width));
+                Max.Y = std::min<f32>(Max.Y, static_cast<f32>(Layer.drawableSize.height));
 
                 const OctaneGUI::Vector2 ClipSize = Max - Min;
                 Scissor =

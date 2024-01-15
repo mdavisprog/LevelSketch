@@ -39,6 +39,12 @@ namespace Render
 namespace Metal
 {
 
+static void UpdateDrawableSize(CAMetalLayer* Layer, NSWindow* Window)
+{
+    const f64 Scale { Window.screen.backingScaleFactor };
+    Layer.drawableSize = { Window.frame.size.width * Scale, Window.frame.size.height * Scale };
+}
+
 Renderer::Renderer()
     : LevelSketch::Render::Renderer()
 {
@@ -57,16 +63,17 @@ bool Renderer::Initialize(Platform::Window* Window)
 {
     @autoreleasepool
     {
+        WindowBridge* Bridge = [WindowBridge Retrieve:Window->Handle()];
+        NSViewController* Root = [[ViewController alloc] initWithNibName:nil bundle:nil];
+        Bridge.Window.contentViewController = Root;
+        [Bridge OnViewCreated:Bridge.Window.contentView Window:Window];
+
+        CAMetalLayer* Layer = (CAMetalLayer*)Bridge.Window.contentView.layer;
+        UpdateDrawableSize(Layer, Bridge.Window);
+
         if (m_RenderBridge == nullptr)
         {
             m_RenderBridge = UniquePtr<RenderBridge>::New();
-
-            WindowBridge* Bridge = [WindowBridge Retrieve:Window->Handle()];
-            NSViewController* Root = [[ViewController alloc] initWithNibName:nil bundle:nil];
-            Bridge.Window.contentViewController = Root;
-            [Bridge OnViewCreated:Bridge.Window.contentView Window:Window];
-            CAMetalLayer* Layer = (CAMetalLayer*)Bridge.Window.contentView.layer;
-            
             if (!m_RenderBridge->Initialize(Layer, Window))
             {
                 return false;
@@ -87,7 +94,8 @@ void Renderer::Render(Platform::Window* Window)
     {
         WindowBridge* Bridge = [WindowBridge Retrieve:Window->Handle()];
         CAMetalLayer* Layer = (CAMetalLayer*)Bridge.Window.contentView.layer;
-        m_RenderBridge->Render(Layer, Window);
+        UpdateDrawableSize(Layer, Bridge.Window);
+        m_RenderBridge->Render(Layer, Bridge.Window.screen.backingScaleFactor);
     }
 }
 
