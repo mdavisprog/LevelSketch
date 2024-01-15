@@ -37,7 +37,8 @@ namespace LevelSketch::Platform
 }
 
 @interface WindowBridge : NSObject
-    @property (strong) NSWindow* Window;
+    @property (nonatomic, strong) NSWindow* Window;
+    @property (nonatomic, readonly) LevelSketch::Platform::Window* PlatformWindow;
 
     -(void) OnViewCreated:(NSView*)View Window:(LevelSketch::Platform::Window*)Window;
 

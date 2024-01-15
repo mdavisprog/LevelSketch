@@ -35,6 +35,7 @@ SOFTWARE.
 {
     @autoreleasepool
     {
+        _PlatformWindow = Window;
         EventView* Events { [[EventView alloc] initWithFrame:NSZeroRect] };
         Events.Window = Window;
         [View addSubview:Events];
