@@ -136,6 +136,9 @@ static void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Ac
                             Render::Renderer::Instance()->Summary().ShadingLanguageVersion.Data());
                     }
                 }
+
+                const Vector2 Scale { Win->ContentScale() };
+                Window->SetRenderScale({Scale.X, Scale.Y});
             }
             else
             {

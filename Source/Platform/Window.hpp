@@ -27,16 +27,10 @@ SOFTWARE.
 #pragma once
 
 #include "../Core/Types.hpp"
+#include "../Core/Math/Vector2.hpp"
 
 namespace LevelSketch
 {
-
-namespace Core::Math
-{
-    template<typename T>
-    struct Vector2;
-    typedef Vector2<i32> Vector2i;
-}
 
 namespace Platform
 {
@@ -52,9 +46,10 @@ public:
     virtual void Show() = 0;
     virtual void Focus() = 0;
     virtual void SetPosition(i32 X, i32 Y) = 0;
-    virtual Core::Math::Vector2i Position() const = 0;
-    virtual Core::Math::Vector2i Size() const = 0;
+    virtual Vector2i Position() const = 0;
+    virtual Vector2i Size() const = 0;
     virtual void ProcessEvents() = 0;
+    virtual Vector2 ContentScale() const;
 
     virtual bool IsOpen() const = 0;
 

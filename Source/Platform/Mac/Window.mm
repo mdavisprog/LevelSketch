@@ -26,7 +26,6 @@ SOFTWARE.
 
 #include "Window.hpp"
 #include "../../Core/Assert.hpp"
-#include "../../Core/Math/Vector2.hpp"
 #include "Platform.hpp"
 #include "WindowBridge.hpp"
 
@@ -177,9 +176,9 @@ void Window::SetPosition(int X, int Y)
     }
 }
 
-Core::Math::Vector2i Window::Position() const
+Vector2i Window::Position() const
 {
-    Core::Math::Vector2i Result;
+    Vector2i Result;
 
     if (!IsOpen())
     {
@@ -198,9 +197,9 @@ Core::Math::Vector2i Window::Position() const
     return Result;
 }
 
-Core::Math::Vector2i Window::Size() const
+Vector2i Window::Size() const
 {
-    Core::Math::Vector2i Result;
+    Vector2i Result;
 
     if (!IsOpen())
     {
@@ -220,6 +219,26 @@ Core::Math::Vector2i Window::Size() const
 
 void Window::ProcessEvents()
 {
+}
+
+Vector2 Window::ContentScale() const
+{
+    Vector2 Result { 1.0f, 1.0f };
+
+    if (!IsOpen())
+    {
+        return Result;
+    }
+
+    @autoreleasepool
+    {
+        WindowBridge* Bridge { [WindowBridge Retrieve:m_Bridge] };
+        const f64 Scale { Bridge.Window.screen.backingScaleFactor };
+        Result.X = static_cast<f32>(Scale);
+        Result.Y = static_cast<f32>(Scale);
+    }
+
+    return Result;
 }
 
 bool Window::IsOpen() const

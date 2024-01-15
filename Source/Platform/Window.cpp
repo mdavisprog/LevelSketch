@@ -25,12 +25,16 @@ SOFTWARE.
 */
 
 #include "Window.hpp"
-#include "../Core/Math/Vector2.hpp"
 
 namespace LevelSketch
 {
 namespace Platform
 {
+
+Vector2 Window::ContentScale() const
+{
+    return { 1.0f, 1.0f };
+}
 
 f32 Window::AspectRatio() const
 {
