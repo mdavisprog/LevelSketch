@@ -70,6 +70,39 @@ bool Window::Create(const char* Title, int X, int Y, int Width, int Height)
 
         [Bridge.Window setTitle:[NSString stringWithUTF8String:Title]];
         [Bridge.Window setAcceptsMouseMovedEvents:YES];
+        [Bridge.Window setReleasedWhenClosed:NO];
+
+        NSNotificationCenter* __weak NotificationCenter = [NSNotificationCenter defaultCenter];
+        [NotificationCenter addObserverForName:NSWindowWillCloseNotification
+                                        object:Bridge.Window
+                                         queue:[NSOperationQueue mainQueue]
+                                    usingBlock:^(NSNotification*)
+                                    {
+                                        // Do not call Close()! The NSWindow object is already being
+                                        // closed. Only need to reduce the ref count of the bridge
+                                        // object.
+                                        @autoreleasepool
+                                        {
+                                            WindowBridge* Bridge { [WindowBridge Retrieve:m_Bridge] };
+                                            Bridge.Window = nullptr;
+                                            LevelSketch::Platform::Window* PlatformWindow { Bridge.PlatformWindow };
+                                            CFBridgingRelease(m_Bridge);
+                                            m_Bridge = nullptr;
+
+                                            // Close the window and remove from Platform's list. This is done after
+                                            // releasing the bridge above so a re-entrant [NSWindow close] call
+                                            // does not occur.
+                                            Platform::Instance()->CloseWindow(PlatformWindow);
+
+                                            // FIXME: Currently unable to determine why NSApplication is not ending
+                                            // the run loop after all windows are closed. Performing this as an alternative
+                                            // to end the loop.
+                                            if (Platform::Instance()->WindowCount() == 0)
+                                            {
+                                                [NSApp stop:nil];
+                                            }
+                                        }
+                                    }];
 
         m_Bridge = (void*)CFBridgingRetain(Bridge);
     }
@@ -88,7 +121,6 @@ void Window::Close()
     {
         WindowBridge* Bridge = [WindowBridge Retrieve:m_Bridge];
         [Bridge.Window close];
-        m_Bridge = nullptr;
     }
 }
 

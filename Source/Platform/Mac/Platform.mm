@@ -87,24 +87,12 @@ int Platform::Run()
     return 0;
 }
 
-CVReturn Platform::OnDisplayLinkOutput(
-    CVDisplayLinkRef,// DisplayLink,
-    const CVTimeStamp*,// Now,
-    const CVTimeStamp* OutputTime,
-    CVOptionFlags,// FlagsIn,
-    CVOptionFlags*,// FlagsOut,
-    void* //DisplayLinkContext
-)
+Platform& Platform::UpdateVideoTime(i64 VideoTime, i32 VideoTimeScale)
 {
-    Platform* Plat { static_cast<Platform*>(Platform::Instance().Get()) };
-    @autoreleasepool
-    {
-        const i64 Diff { OutputTime->videoTime - Plat->m_LastVideoTime };
-        Plat->m_DeltaSeconds = static_cast<f64>(Diff) / static_cast<f64>(OutputTime->videoTimeScale);
-        Plat->m_LastVideoTime = OutputTime->videoTime;
-        Plat->RunFrame();
-    }
-    return kCVReturnSuccess;
+    const i64 Diff { VideoTime - m_LastVideoTime };
+    m_DeltaSeconds = static_cast<f64>(Diff) / static_cast<f64>(VideoTimeScale);
+    m_LastVideoTime = VideoTime;
+    return *this;
 }
 
 UniquePtr<LevelSketch::Platform::Window> Platform::InternalNewWindow() const

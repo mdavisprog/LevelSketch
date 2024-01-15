@@ -87,11 +87,7 @@ void Renderer::Render(Platform::Window* Window)
     {
         WindowBridge* Bridge = [WindowBridge Retrieve:Window->Handle()];
         CAMetalLayer* Layer = (CAMetalLayer*)Bridge.Window.contentView.layer;
-
-        @synchronized(Layer)
-        {
-            m_RenderBridge->Render(Layer, Window);
-        }
+        m_RenderBridge->Render(Layer, Window);
     }
 }
 

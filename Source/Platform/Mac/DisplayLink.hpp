@@ -2,7 +2,7 @@
 
 MIT License
 
-Copyright (c) 2023 Mitchell Davis <mdavisprog@gmail.com>
+Copyright (c) 2024 Mitchell Davis <mdavisprog@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,8 +26,6 @@ SOFTWARE.
 
 #pragma once
 
-#include "../Platform.hpp"
-
 #include <CoreVideo/CoreVideo.h>
 
 namespace LevelSketch
@@ -37,26 +35,21 @@ namespace Platform
 namespace Mac
 {
 
-class Platform : public LevelSketch::Platform::Platform
+class DisplayLink
 {
 public:
-    Platform();
+    static DisplayLink& Instance();
 
-    virtual bool Initialize() override;
-    virtual void Shutdown() override;
-    virtual const char* Name() const override;
+    ~DisplayLink();
 
-    virtual int Run() override;
-
-    Platform& UpdateVideoTime(i64 VideoTime, i32 VideoTimeScale);
-
-protected:
-    virtual UniquePtr<LevelSketch::Platform::Window> InternalNewWindow() const override;
-    virtual void UpdateTimingData(TimingData& Data) override;
+    bool Initialize();
+    void Shutdown();
 
 private:
-    f64 m_DeltaSeconds { 0.0 };
-    i64 m_LastVideoTime { 0 };
+    DisplayLink();
+
+    CVDisplayLinkRef m_DisplayLink {};
+    dispatch_source_t m_DisplaySource {};
 };
 
 }

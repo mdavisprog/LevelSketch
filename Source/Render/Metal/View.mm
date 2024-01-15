@@ -26,14 +26,14 @@ SOFTWARE.
 
 #include "View.hpp"
 #include "../../Core/Console.hpp"
-#include "../../Platform/Mac/Platform.hpp"
-#include "../../Platform/Window.hpp"
+#include "../../Platform/Mac/DisplayLink.hpp"
 
 #import <CoreVideo/CoreVideo.h>
 
+using DisplayLink = LevelSketch::Platform::Mac::DisplayLink;
+
 @implementation View
 {
-    CVDisplayLinkRef m_DisplayLink;
 }
 
 -(instancetype) initWithFrame:(CGRect)Frame
@@ -64,25 +64,7 @@ SOFTWARE.
 
         // TODO: Check if callback has already been setup by the main display.
 
-        CVReturn Return = CVDisplayLinkCreateWithActiveCGDisplays(&m_DisplayLink);
-        if (Return != kCVReturnSuccess)
-        {
-            LevelSketch::Core::Console::Error("Failed to create display link.");
-            return;
-        }
-
-        Return = CVDisplayLinkSetOutputCallback(
-            m_DisplayLink,
-            &LevelSketch::Platform::Mac::Platform::OnDisplayLinkOutput,
-            nullptr);
-
-        if (Return != kCVReturnSuccess)
-        {
-            LevelSketch::Core::Console::Error("Failed to display link output callback.");
-            return;
-        }
-
-        CVDisplayLinkStart(m_DisplayLink);
+        DisplayLink::DisplayLink::Instance().Initialize();
 
         NSNotificationCenter* NotificationCenter = [NSNotificationCenter defaultCenter];
         [NotificationCenter addObserver:self
@@ -98,7 +80,7 @@ SOFTWARE.
     {
         if (Notification.object == self.window)
         {
-            CVDisplayLinkStop(m_DisplayLink);
+            DisplayLink::DisplayLink::Instance().Shutdown();
         }
     }
 }
