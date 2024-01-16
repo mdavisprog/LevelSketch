@@ -27,6 +27,8 @@ SOFTWARE.
 #include "../FileSystem.hpp"
 #include "SDL2/SDL.h"
 
+#include <unistd.h>
+
 namespace LevelSketch
 {
 namespace Platform
@@ -35,6 +37,11 @@ namespace Platform
 String FileSystem::ApplicationPath()
 {
     return SDL_GetBasePath();
+}
+
+void FileSystem::SetWorkingDirectory(const String& Path)
+{
+    chdir(Path.Data());
 }
 
 }
