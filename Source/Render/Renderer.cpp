@@ -31,6 +31,8 @@ SOFTWARE.
     #include "DirectX/Renderer.hpp"
 #elif defined(RENDER_METAL)
     #include "Metal/Renderer.hpp"
+#elif defined(RENDER_VULKAN)
+    #include "Vulkan/Renderer.hpp"
 #elif defined(RENDER_OPENGL)
     #if defined(PLATFORM_SDL2)
         #include "OpenGL/SDL2Renderer.hpp"
@@ -54,6 +56,8 @@ const UniquePtr<Renderer>& Renderer::Instance()
         UniquePtr<DirectX::Renderer>::New()
 #elif defined(RENDER_METAL)
         UniquePtr<Metal::Renderer>::New()
+#elif defined(RENDER_VULKAN)
+        UniquePtr<Vulkan::Renderer>::New()
 #elif defined(RENDER_OPENGL)
     #if defined(PLATFORM_SDL2)
         UniquePtr<OpenGL::SDL2Renderer>::New()

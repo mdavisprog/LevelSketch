@@ -15,6 +15,8 @@ set(TARGET LevelSketch)
 # List of options that can be set.
 option(SHIPPING "Enables the SHIPPING configuration." OFF)
 option(WITH_TESTS "Compiles the testing framework when ON." OFF)
+option(WITH_VULKAN "Uses the Vulkan renderer. Only available on Linux." ON)
+option(WITH_OPENGL "Uses the OpenGL renderer. Only available on Linux." OFF)
 
 if(SHIPPING)
     message("Compiling with shipping configuration.")
@@ -95,16 +97,32 @@ elseif(APPLE)
         Render/Metal/ViewController.mm
     )
 else()
+    if(WITH_VULKAN AND WITH_OPENGL)
+        message(FATAL_ERROR "Cannot use both Vulkan and OpenGL!")
+    endif()
+
     set(SOURCE
         ${SOURCE}
         Platform/SDL2/FileSystem.cpp
         Platform/SDL2/Platform.cpp
         Platform/SDL2/Window.cpp
-
-        Render/OpenGL/Extensions.cpp
-        Render/OpenGL/Renderer.cpp
-        Render/OpenGL/SDL2Renderer.cpp
     )
+
+    if(WITH_VULKAN)
+        message("Using Vulkan Renderer")
+        set(SOURCE
+            ${SOURCE}
+            Render/Vulkan/Renderer.cpp
+        )
+    elseif(WITH_OPENGL)
+        message("Using OpenGL Renderer")
+        set(SOURCE
+            ${SOURCE}
+            Render/OpenGL/Extensions.cpp
+            Render/OpenGL/Renderer.cpp
+            Render/OpenGL/SDL2Renderer.cpp
+        )
+    endif()
 endif()
 
 # The main function.
@@ -197,13 +215,19 @@ elseif(APPLE)
     )
 else()
     find_package(SDL2 REQUIRED)
-    find_package(OpenGL REQUIRED)
 
     set(LIBS
         ${LIBS}
         ${SDL2_LIBRARIES}
-        ${OPENGL_LIBRARIES}
     )
+
+    if(WITH_OPENGL)
+        find_package(OpenGL REQUIRED)
+        set(LIBS
+            ${LIBS}
+            ${OPENGL_LIBRARIES}
+        )
+    endif()
 endif()
 
 target_link_libraries(
@@ -240,8 +264,19 @@ else()
     set(DEFINES
         ${DEFINES}
         PLATFORM_SDL2
-        RENDER_OPENGL
     )
+
+    if(WITH_VULKAN)
+        set(DEFINES
+            ${DEFINES}
+            RENDER_VULKAN
+        )
+    elseif(WITH_OPENGL)
+        set(DEFINES
+            ${DEFINES}
+            RENDER_OPENGL
+        )
+    endif()
 endif()
 
 if(WITH_TESTS)
