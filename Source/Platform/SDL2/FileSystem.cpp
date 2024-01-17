@@ -25,8 +25,10 @@ SOFTWARE.
 */
 
 #include "../FileSystem.hpp"
+#include "../../Core/Console.hpp"
 #include "SDL2/SDL.h"
 
+#include <errno.h>
 #include <unistd.h>
 
 namespace LevelSketch
@@ -41,7 +43,12 @@ String FileSystem::ApplicationPath()
 
 void FileSystem::SetWorkingDirectory(const String& Path)
 {
-    chdir(Path.Data());
+    int Result { chdir(Path.Data()) };
+
+    if (Result == -1)
+    {
+        Core::Console::Warning("Failed to set current working directory. Error: %d", errno);
+    }
 }
 
 }
