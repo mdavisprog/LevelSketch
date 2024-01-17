@@ -112,6 +112,7 @@ else()
         message("Using Vulkan Renderer")
         set(SOURCE
             ${SOURCE}
+            Render/Vulkan/Loader.cpp
             Render/Vulkan/Renderer.cpp
         )
     elseif(WITH_OPENGL)
@@ -221,7 +222,24 @@ else()
         ${SDL2_LIBRARIES}
     )
 
-    if(WITH_OPENGL)
+    if(WITH_VULKAN)
+        if(VULKAN_SDK)
+            set(VULKAN_INCLUDE ${VULKAN_SDK}/include)
+            set(VULKAN_LIBRARIES ${VULKAN_SDK}/lib/libvulkan.so.1)
+        else()
+            message(FATAL_ERROR "VULKAN_SDK is not defined! Please define this as an environment variable within the build system.")
+        endif()
+
+        target_include_directories(
+            ${TARGET}
+            PRIVATE ${VULKAN_INCLUDE}
+        )
+
+        set(LIBS
+            ${LIBS}
+            ${VULKAN_LIBRARIES}
+        )
+    elseif(WITH_OPENGL)
         find_package(OpenGL REQUIRED)
         set(LIBS
             ${LIBS}

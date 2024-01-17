@@ -25,6 +25,10 @@ SOFTWARE.
 */
 
 #include "Renderer.hpp"
+#include "../../Core/Console.hpp"
+#include "../../Core/Version.hpp"
+#include "Errors.hpp"
+#include "Loader.hpp"
 
 namespace LevelSketch
 {
@@ -40,6 +44,47 @@ Renderer::Renderer()
 
 bool Renderer::Initialize()
 {
+    if (!Loader::Instance().Initialize())
+    {
+        return false;
+    }
+
+    const u32 Version { VK_MAKE_VERSION(VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION) };
+    VkApplicationInfo AppInfo {};
+    AppInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    AppInfo.pApplicationName = APP_NAME;
+    AppInfo.applicationVersion = Version;
+    AppInfo.pEngineName = APP_NAME;
+    AppInfo.engineVersion = Version;
+    AppInfo.apiVersion = VK_API_VERSION_1_3;
+
+    VkInstanceCreateInfo CreateInfo {};
+    CreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    CreateInfo.pApplicationInfo = &AppInfo;
+    CreateInfo.enabledLayerCount = 0;
+
+    Array<VkExtensionProperties> ExtProperties;
+    if (!Loader::Instance().GetInstanceExtensionProperties(ExtProperties))
+    {
+        return false;
+    }
+
+    Array<const char*> Ptrs;
+    if (!GetRequiredExtensionProperties(ExtProperties, Ptrs))
+    {
+        return false;
+    }
+
+    CreateInfo.enabledExtensionCount = static_cast<u32>(Ptrs.Size());
+    CreateInfo.ppEnabledExtensionNames = Ptrs.Data();
+
+    VkResult Result { vkCreateInstance(&CreateInfo, nullptr, &m_Instance) };
+    if (Result != VK_SUCCESS)
+    {
+        Core::Console::Error("Failed to create instance. Error: %s", Errors::ToString(Result));
+        return false;
+    }
+
     return true;
 }
 
@@ -50,6 +95,12 @@ bool Renderer::Initialize(Platform::Window*)
 
 void Renderer::Shutdown()
 {
+    if (m_Instance != nullptr)
+    {
+        vkDestroyInstance(m_Instance, nullptr);
+    }
+
+    Loader::Instance().Shutdown();
 }
 
 void Renderer::Render(Platform::Window*)
@@ -63,6 +114,32 @@ u32 Renderer::LoadTexture(const void*, u32, u32, u8)
 
 void Renderer::UploadGUIData(OctaneGUI::Window*, const OctaneGUI::VertexBuffer&)
 {
+}
+
+bool Renderer::GetRequiredExtensionProperties(const Array<VkExtensionProperties>& Properties, Array<const char*>& Ptrs) const
+{
+    bool FoundSurface { false };
+
+    for (const VkExtensionProperties& Property : Properties)
+    {
+        const String Name { Property.extensionName };
+        if (Name == "VK_KHR_surface"
+            || Name == "VK_KHR_xlib_surface"
+            || Name == "VK_KHR_xcb_surface"
+            || Name == "VK_KHR_wayland_surface")
+        {
+            FoundSurface |= Name == "VK_KHR_surface";
+            Ptrs.Push(Property.extensionName);
+        }
+    }
+
+    if (!FoundSurface)
+    {
+        Core::Console::Error("Failed to load window surface extensions.");
+        return false;
+    }
+
+    return true;
 }
 
 }

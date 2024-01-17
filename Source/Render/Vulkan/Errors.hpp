@@ -26,7 +26,6 @@ SOFTWARE.
 
 #pragma once
 
-#include "../Renderer.hpp"
 #include "vulkan/vulkan.hpp"
 
 namespace LevelSketch
@@ -35,25 +34,27 @@ namespace Render
 {
 namespace Vulkan
 {
-
-class Renderer : public LevelSketch::Render::Renderer
+namespace Errors
 {
-public:
-    Renderer();
 
-    virtual bool Initialize() override;
-    virtual bool Initialize(Platform::Window* Window) override;
-    virtual void Shutdown() override;
-    virtual void Render(Platform::Window* Window) override;
-    virtual u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel = 4) override;
-    virtual void UploadGUIData(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer) override;
+static const char* ToString(VkResult Error)
+{
+    switch (Error)
+    {
+    case VK_INCOMPLETE: return "Incomplete";
+    case VK_ERROR_OUT_OF_HOST_MEMORY: return "Out of host memory";
+    case VK_ERROR_OUT_OF_DEVICE_MEMORY: return "Out of device memory";
+    case VK_ERROR_LAYER_NOT_PRESENT: return "Layer not present";
+    case VK_ERROR_INITIALIZATION_FAILED: return "Initialization failed";
+    case VK_ERROR_EXTENSION_NOT_PRESENT: return "Extension not present";
+    case VK_ERROR_INCOMPATIBLE_DRIVER: return "Incompatible driver";
+    default: break;
+    }
 
-private:
-    bool GetRequiredExtensionProperties(const Array<VkExtensionProperties>& Properties, Array<const char*>& Ptrs) const;
+    return "Success";
+}
 
-    VkInstance m_Instance { nullptr };
-};
-
+}
 }
 }
 }

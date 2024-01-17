@@ -26,32 +26,43 @@ SOFTWARE.
 
 #pragma once
 
-#include "../Renderer.hpp"
 #include "vulkan/vulkan.hpp"
 
 namespace LevelSketch
 {
+
+namespace Core::Containers
+{
+    template<typename T>
+    class Array;
+}
+
+template<typename T>
+using Array = Core::Containers::Array<T>;
+
 namespace Render
 {
 namespace Vulkan
 {
 
-class Renderer : public LevelSketch::Render::Renderer
+class Loader
 {
 public:
-    Renderer();
+    static Loader& Instance();
 
-    virtual bool Initialize() override;
-    virtual bool Initialize(Platform::Window* Window) override;
-    virtual void Shutdown() override;
-    virtual void Render(Platform::Window* Window) override;
-    virtual u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel = 4) override;
-    virtual void UploadGUIData(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer) override;
+    bool Initialize();
+    bool IsInitialized() const;
+    void Shutdown();
+
+    bool GetInstanceExtensionProperties(Array<VkExtensionProperties>& Properties);
 
 private:
-    bool GetRequiredExtensionProperties(const Array<VkExtensionProperties>& Properties, Array<const char*>& Ptrs) const;
+    Loader();
 
-    VkInstance m_Instance { nullptr };
+    bool LoadGetInstanceProcAddr();
+
+    void* m_Handle { nullptr };
+    PFN_vkGetInstanceProcAddr m_GetInstanceProcAddr { nullptr };
 };
 
 }

@@ -56,7 +56,9 @@ bool Window::Create(const char* Title, int X, int Y, int Width, int Height)
 
 #if defined(RENDER_OPENGL)
     Flags |= SDL_WINDOW_OPENGL;
-#endif // RENDER_OPENGL
+#elif defined(RENDER_VULKAN)
+    Flags |= SDL_WINDOW_VULKAN;
+#endif
 
     m_Handle = SDL_CreateWindow(Title, X, Y, Width, Height, Flags);
 
