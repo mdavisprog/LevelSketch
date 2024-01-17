@@ -30,6 +30,10 @@ SOFTWARE.
 #include "Errors.hpp"
 #include "Loader.hpp"
 
+#if defined(DEBUG)
+    #include "DebugUtils.hpp"
+#endif
+
 namespace LevelSketch
 {
 namespace Render
@@ -69,14 +73,35 @@ bool Renderer::Initialize()
         return false;
     }
 
-    Array<const char*> Ptrs;
-    if (!GetRequiredExtensionProperties(ExtProperties, Ptrs))
+    Array<const char*> ExtPtrs;
+    if (!GetRequiredExtensionProperties(ExtProperties, ExtPtrs))
     {
         return false;
     }
 
-    CreateInfo.enabledExtensionCount = static_cast<u32>(Ptrs.Size());
-    CreateInfo.ppEnabledExtensionNames = Ptrs.Data();
+#if defined(DEBUG)
+    const Array<const char*> ValidationLayers {
+        "VK_LAYER_KHRONOS_validation"
+    };
+
+    Array<const char*> LayerPtrs;
+    if (GetExistingLayers(ValidationLayers, LayerPtrs))
+    {
+        Core::Console::WriteLine("Enabling validation layers");
+        CreateInfo.enabledLayerCount = static_cast<u32>(LayerPtrs.Size());
+        CreateInfo.ppEnabledLayerNames = LayerPtrs.Data();
+
+        ExtPtrs.Push(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    }
+
+    VkDebugUtilsMessengerCreateInfoEXT DebugUtilsMessengerCreateInfo {
+        DebugUtils::CreateInfo()
+    };
+    CreateInfo.pNext = &DebugUtilsMessengerCreateInfo;
+#endif
+
+    CreateInfo.enabledExtensionCount = static_cast<u32>(ExtPtrs.Size());
+    CreateInfo.ppEnabledExtensionNames = ExtPtrs.Data();
 
     VkResult Result { vkCreateInstance(&CreateInfo, nullptr, &m_Instance) };
     if (Result != VK_SUCCESS)
@@ -84,6 +109,10 @@ bool Renderer::Initialize()
         Core::Console::Error("Failed to create instance. Error: %s", Errors::ToString(Result));
         return false;
     }
+
+#if defined(DEBUG)
+    DebugUtils::Instance().Initialize(m_Instance);
+#endif
 
     return true;
 }
@@ -95,6 +124,10 @@ bool Renderer::Initialize(Platform::Window*)
 
 void Renderer::Shutdown()
 {
+#if defined(DEBUG)
+    DebugUtils::Instance().Shutdown(m_Instance);
+#endif
+
     if (m_Instance != nullptr)
     {
         vkDestroyInstance(m_Instance, nullptr);
@@ -140,6 +173,41 @@ bool Renderer::GetRequiredExtensionProperties(const Array<VkExtensionProperties>
     }
 
     return true;
+}
+
+bool Renderer::GetExistingLayers(const Array<const char*> Layers, Array<const char*>& Ptrs) const
+{
+    Ptrs.Clear();
+
+    u32 Count { 0 };
+    VkResult Result { vkEnumerateInstanceLayerProperties(&Count, nullptr) };
+    if (Result != VK_SUCCESS)
+    {
+        Core::Console::WriteLine("Failed to retrieve layer properties count. Error: %s", Errors::ToString(Result));
+        return false;
+    }
+
+    Array<VkLayerProperties> Properties;
+    Properties.Resize(Count);
+    Result = vkEnumerateInstanceLayerProperties(&Count, Properties.Data());
+    if (Result != VK_SUCCESS)
+    {
+        Core::Console::WriteLine("Failed to retrieve layer properties. Error: %s", Errors::ToString(Result));
+        return false;
+    }
+
+    for (const char* Name : Layers)
+    {
+        for (const VkLayerProperties& Layer : Properties)
+        {
+            if (String(Name) == Layer.layerName)
+            {
+                Ptrs.Push(Name);
+            }
+        }
+    }
+
+    return !Ptrs.IsEmpty();
 }
 
 }

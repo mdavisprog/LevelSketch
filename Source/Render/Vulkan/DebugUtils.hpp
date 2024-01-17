@@ -30,50 +30,24 @@ SOFTWARE.
 
 namespace LevelSketch
 {
-
-namespace Core::Containers
-{
-    template<typename T>
-    class Array;
-}
-
-template<typename T>
-using Array = Core::Containers::Array<T>;
-
 namespace Render
 {
 namespace Vulkan
 {
 
-class Loader
+class DebugUtils
 {
 public:
-    static Loader& Instance();
+    static DebugUtils& Instance();
+    static VkDebugUtilsMessengerCreateInfoEXT CreateInfo();
 
-    bool Initialize();
-    bool IsInitialized() const;
-    void Shutdown();
-
-    template<typename T>
-    T LoadFn(VkInstance Instance, const char* Name)
-    {
-        if (!LoadGetInstanceProcAddr())
-        {
-            return nullptr;
-        }
-
-        return reinterpret_cast<T>(m_GetInstanceProcAddr(Instance, Name));
-    }
-
-    bool GetInstanceExtensionProperties(Array<VkExtensionProperties>& Properties);
+    bool Initialize(VkInstance Instance);
+    void Shutdown(VkInstance Instance);
 
 private:
-    Loader();
+    DebugUtils();
 
-    bool LoadGetInstanceProcAddr();
-
-    void* m_Handle { nullptr };
-    PFN_vkGetInstanceProcAddr m_GetInstanceProcAddr { nullptr };
+    VkDebugUtilsMessengerEXT m_Messenger { nullptr };
 };
 
 }

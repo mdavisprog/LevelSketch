@@ -23,6 +23,10 @@ if(SHIPPING)
     set(WITH_TESTS OFF CACHE BOOL "Disabling WITH_TESTS when SHIPPING configuration is enabled." FORCE)
 endif()
 
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+    set(BUILD_TYPE_DEBUG TRUE)
+endif()
+
 # Common source files for all platforms and configurations.
 set(SOURCE
     Core/Containers/String.cpp
@@ -71,7 +75,7 @@ if(WIN32)
         Render/DirectX/Utility.cpp
     )
 
-    if(CMAKE_BUILD_TYPE MATCHES Debug)
+    if(BUILD_TYPE_DEBUG)
         set(SOURCE
             ${SOURCE}
             Render/DirectX/InfoQueue.cpp
@@ -115,6 +119,13 @@ else()
             Render/Vulkan/Loader.cpp
             Render/Vulkan/Renderer.cpp
         )
+
+        if(BUILD_TYPE_DEBUG)
+            set(SOURCE
+                ${SOURCE}
+                Render/Vulkan/DebugUtils.cpp
+            )
+        endif()
     elseif(WITH_OPENGL)
         message("Using OpenGL Renderer")
         set(SOURCE
@@ -259,7 +270,7 @@ target_link_libraries(
 
 set(DEFINES "")
 
-if(CMAKE_BUILD_TYPE MATCHES Debug)
+if(BUILD_TYPE_DEBUG)
     set(DEFINES
         ${DEFINES}
         DEBUG

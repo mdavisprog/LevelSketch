@@ -50,6 +50,7 @@ public:
 
 private:
     bool GetRequiredExtensionProperties(const Array<VkExtensionProperties>& Properties, Array<const char*>& Ptrs) const;
+    bool GetExistingLayers(const Array<const char*> Layers, Array<const char*>& Ptrs) const;
 
     VkInstance m_Instance { nullptr };
 };
