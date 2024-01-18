@@ -125,6 +125,7 @@ if(WITH_TESTS)
         Tests/Core/List.cpp
         Tests/Core/Map.cpp
         Tests/Core/Math.cpp
+        Tests/Core/Optional.cpp
         Tests/Core/RedBlackTree.cpp
         Tests/Core/Shareable.cpp
         Tests/Core/SharedPtr.cpp
