@@ -71,13 +71,44 @@ static bool Assign()
     return true;
 }
 
+static bool CopyConstructor()
+{
+    Optional<u32> InstanceA { 5 };
+    VERIFY(InstanceA.HasValue());
+    VERIFY(InstanceA.Value() == 5);
+    Optional<u32> InstanceB { InstanceA };
+    VERIFY(InstanceA.HasValue());
+    VERIFY(InstanceA.Value() == 5);
+    VERIFY(InstanceB.HasValue());
+    VERIFY(InstanceB.Value() == 5);
+    return true;
+}
+
+static bool CopyAssign()
+{
+    Optional<u32> InstanceA { 5 };
+    Optional<u32> InstanceB { 7 };
+    VERIFY(InstanceA.HasValue());
+    VERIFY(InstanceA.Value() == 5);
+    VERIFY(InstanceB.HasValue());
+    VERIFY(InstanceB.Value() == 7);
+    InstanceB = InstanceA;
+    VERIFY(InstanceA.HasValue());
+    VERIFY(InstanceA.Value() == 5);
+    VERIFY(InstanceB.HasValue());
+    VERIFY(InstanceB.Value() == 5);
+    return true;
+}
+
 UniquePtr<TestSuite> OptionalTests()
 {
     return TestSuite::New("Optional", {
         TEST_CASE(Empty),
         TEST_CASE(Construct),
         TEST_CASE(Clear),
-        TEST_CASE(Assign)
+        TEST_CASE(Assign),
+        TEST_CASE(CopyConstructor),
+        TEST_CASE(CopyAssign)
     });
 }
 

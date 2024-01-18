@@ -42,6 +42,18 @@ public:
     {
     }
 
+    Optional(const Optional<T>& Other)
+    {
+        Construct(Other.Value());
+    }
+
+    Optional<T>& operator=(const Optional<T>& Other)
+    {
+        Clear();
+        Construct(Other.Value());
+        return *this;
+    }
+
     Optional(const T& Value)
     {
         Construct(Value);
