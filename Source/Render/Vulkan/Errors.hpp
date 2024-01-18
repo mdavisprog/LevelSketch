@@ -47,7 +47,10 @@ static const char* ToString(VkResult Error)
     case VK_ERROR_LAYER_NOT_PRESENT: return "Layer not present";
     case VK_ERROR_INITIALIZATION_FAILED: return "Initialization failed";
     case VK_ERROR_EXTENSION_NOT_PRESENT: return "Extension not present";
+    case VK_ERROR_FEATURE_NOT_PRESENT: return "Feature not present";
     case VK_ERROR_INCOMPATIBLE_DRIVER: return "Incompatible driver";
+    case VK_ERROR_TOO_MANY_OBJECTS: return "Too many objects";
+    case VK_ERROR_DEVICE_LOST: return "Device lost";
     default: break;
     }
 

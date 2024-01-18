@@ -79,12 +79,12 @@ bool Renderer::Initialize()
         return false;
     }
 
+    Array<const char*> LayerPtrs;
 #if defined(DEBUG)
     const Array<const char*> ValidationLayers {
         "VK_LAYER_KHRONOS_validation"
     };
 
-    Array<const char*> LayerPtrs;
     if (GetExistingLayers(ValidationLayers, LayerPtrs))
     {
         Core::Console::WriteLine("Enabling validation layers");
@@ -119,6 +119,12 @@ bool Renderer::Initialize()
         return false;
     }
 
+    if (!m_LogicalDevice.Initialize(m_PhysicalDevice, LayerPtrs))
+    {
+        Core::Console::Error("Failed to initialize logical device.");
+        return false;
+    }
+
     return true;
 }
 
@@ -132,6 +138,8 @@ void Renderer::Shutdown()
 #if defined(DEBUG)
     DebugUtils::Instance().Shutdown(m_Instance);
 #endif
+
+    m_LogicalDevice.Shutdown();
 
     if (m_Instance != nullptr)
     {
@@ -230,22 +238,22 @@ bool Renderer::GetPhysicalDevice()
     {
         if (Device.SupportsGraphics())
         {
-            m_Device = Device;
+            m_PhysicalDevice = Device;
             break;
         }
     }
 
-    if (m_Device.SupportsGraphics())
+    if (m_PhysicalDevice.SupportsGraphics())
     {
         Core::Console::WriteLine("Selected Device:");
-        m_Device.PrintInfo();
+        m_PhysicalDevice.PrintInfo();
     }
     else
     {
         Core::Console::Error("Failed to find a device that supports graphics queues.");
     }
 
-    return m_Device.SupportsGraphics();
+    return m_PhysicalDevice.SupportsGraphics();
 }
 
 }

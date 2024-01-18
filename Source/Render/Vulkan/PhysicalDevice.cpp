@@ -94,6 +94,16 @@ bool PhysicalDevice::SupportsGraphics() const
     return m_QueueFamily.Graphics.HasValue();
 }
 
+VkPhysicalDevice PhysicalDevice::Handle() const
+{
+    return m_Device;
+}
+
+u32 PhysicalDevice::QueueFamilyIndex() const
+{
+    return m_QueueFamily.Graphics.Value();
+}
+
 PhysicalDevice::PhysicalDevice(VkPhysicalDevice Device)
     : m_Device(Device)
 {

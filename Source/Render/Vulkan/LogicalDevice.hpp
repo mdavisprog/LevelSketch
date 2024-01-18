@@ -26,8 +26,8 @@ SOFTWARE.
 
 #pragma once
 
-#include "../../Core/Containers/String.hpp"
-#include "../../Core/Optional.hpp"
+#include "../../Core/Containers/Forwards.hpp"
+#include "../../Core/Types.hpp"
 #include "vulkan/vulkan.hpp"
 
 namespace LevelSketch
@@ -37,43 +37,19 @@ namespace Render
 namespace Vulkan
 {
 
-class PhysicalDevice
+class PhysicalDevice;
+
+class LogicalDevice
 {
 public:
-    static Array<PhysicalDevice> GetDevices(VkInstance Instance);
+    LogicalDevice();
 
-    PhysicalDevice();
-
-    void PrintInfo() const;
-    bool SupportsGraphics() const;
-    VkPhysicalDevice Handle() const;
-    u32 QueueFamilyIndex() const;
+    bool Initialize(const PhysicalDevice& PhysDevice, const Array<const char*>& Layers);
+    void Shutdown();
+    bool IsValid() const;
 
 private:
-    struct QueueFamily
-    {
-        Optional<u32> Graphics {};
-    };
-
-    struct Info
-    {
-        u32 APIVersion_Major { 0 };
-        u32 APIVersion_Minor { 0 };
-        u32 APIVersion_Patch { 0 };
-        u32 DriverVersion { 0 };
-        u32 VendorID { 0 };
-        u32 DeviceID { 0 };
-        String Name {};
-    };
-
-    PhysicalDevice(VkPhysicalDevice Device);
-
-    PhysicalDevice& GatherInfo();
-    PhysicalDevice& FindQueueFamily();
-
-    VkPhysicalDevice m_Device { VK_NULL_HANDLE };
-    QueueFamily m_QueueFamily {};
-    Info m_Info {};
+    VkDevice m_Device { VK_NULL_HANDLE };
 };
 
 }

@@ -27,6 +27,7 @@ SOFTWARE.
 #pragma once
 
 #include "../Renderer.hpp"
+#include "LogicalDevice.hpp"
 #include "PhysicalDevice.hpp"
 #include "vulkan/vulkan.hpp"
 
@@ -55,7 +56,8 @@ private:
     bool GetPhysicalDevice();
 
     VkInstance m_Instance { nullptr };
-    PhysicalDevice m_Device {};
+    PhysicalDevice m_PhysicalDevice {};
+    LogicalDevice m_LogicalDevice {};
 };
 
 }
