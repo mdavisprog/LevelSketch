@@ -125,6 +125,12 @@ bool Renderer::Initialize()
         return false;
     }
 
+    if (!m_Queue.Initialize(m_LogicalDevice, m_PhysicalDevice.QueueFamilyIndex()))
+    {
+        Core::Console::Error("Failed to initialize queue.");
+        return false;
+    }
+
     return true;
 }
 

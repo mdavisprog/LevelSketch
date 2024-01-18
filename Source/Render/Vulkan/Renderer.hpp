@@ -29,6 +29,7 @@ SOFTWARE.
 #include "../Renderer.hpp"
 #include "LogicalDevice.hpp"
 #include "PhysicalDevice.hpp"
+#include "Queue.hpp"
 #include "vulkan/vulkan.hpp"
 
 namespace LevelSketch
@@ -58,6 +59,7 @@ private:
     VkInstance m_Instance { nullptr };
     PhysicalDevice m_PhysicalDevice {};
     LogicalDevice m_LogicalDevice {};
+    Queue m_Queue {};
 };
 
 }

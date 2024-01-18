@@ -120,6 +120,7 @@ else()
             Render/Vulkan/LogicalDevice.cpp
             Render/Vulkan/PhysicalDevice.cpp
             Render/Vulkan/Renderer.cpp
+            Render/Vulkan/Queue.cpp
         )
 
         if(BUILD_TYPE_DEBUG)

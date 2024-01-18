@@ -26,7 +26,6 @@ SOFTWARE.
 
 #pragma once
 
-#include "../../Core/Containers/Forwards.hpp"
 #include "../../Core/Types.hpp"
 #include "vulkan/vulkan.hpp"
 
@@ -37,20 +36,17 @@ namespace Render
 namespace Vulkan
 {
 
-class PhysicalDevice;
+class LogicalDevice;
 
-class LogicalDevice
+class Queue
 {
 public:
-    LogicalDevice();
+    Queue();
 
-    bool Initialize(const PhysicalDevice& PhysDevice, const Array<const char*>& Layers);
-    void Shutdown();
-    bool IsValid() const;
-    VkDevice Handle() const;
+    bool Initialize(const LogicalDevice& Device, u32 QueueFamilyIndex);
 
 private:
-    VkDevice m_Device { VK_NULL_HANDLE };
+    VkQueue m_GraphicsQueue { VK_NULL_HANDLE };
 };
 
 }

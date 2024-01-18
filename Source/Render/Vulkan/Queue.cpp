@@ -24,11 +24,8 @@ SOFTWARE.
 
 */
 
-#pragma once
-
-#include "../../Core/Containers/Forwards.hpp"
-#include "../../Core/Types.hpp"
-#include "vulkan/vulkan.hpp"
+#include "Queue.hpp"
+#include "LogicalDevice.hpp"
 
 namespace LevelSketch
 {
@@ -37,21 +34,15 @@ namespace Render
 namespace Vulkan
 {
 
-class PhysicalDevice;
-
-class LogicalDevice
+Queue::Queue()
 {
-public:
-    LogicalDevice();
+}
 
-    bool Initialize(const PhysicalDevice& PhysDevice, const Array<const char*>& Layers);
-    void Shutdown();
-    bool IsValid() const;
-    VkDevice Handle() const;
-
-private:
-    VkDevice m_Device { VK_NULL_HANDLE };
-};
+bool Queue::Initialize(const LogicalDevice& Device, u32 QueueFamilyIndex)
+{
+    vkGetDeviceQueue(Device.Handle(), QueueFamilyIndex, 0, &m_GraphicsQueue);
+    return true;
+}
 
 }
 }

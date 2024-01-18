@@ -83,6 +83,11 @@ bool LogicalDevice::IsValid() const
     return m_Device != nullptr;
 }
 
+VkDevice LogicalDevice::Handle() const
+{
+    return m_Device;
+}
+
 }
 }
 }
