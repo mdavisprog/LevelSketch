@@ -26,8 +26,8 @@ SOFTWARE.
 
 #pragma once
 
-#include "../Renderer.hpp"
-#include "PhysicalDevice.hpp"
+#include "../../Core/Containers/String.hpp"
+#include "../../Core/Optional.hpp"
 #include "vulkan/vulkan.hpp"
 
 namespace LevelSketch
@@ -37,25 +37,41 @@ namespace Render
 namespace Vulkan
 {
 
-class Renderer : public LevelSketch::Render::Renderer
+class PhysicalDevice
 {
 public:
-    Renderer();
+    static Array<PhysicalDevice> GetDevices(VkInstance Instance);
 
-    virtual bool Initialize() override;
-    virtual bool Initialize(Platform::Window* Window) override;
-    virtual void Shutdown() override;
-    virtual void Render(Platform::Window* Window) override;
-    virtual u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel = 4) override;
-    virtual void UploadGUIData(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer) override;
+    PhysicalDevice();
+
+    void PrintInfo() const;
+    bool SupportsGraphics() const;
 
 private:
-    bool GetRequiredExtensionProperties(const Array<VkExtensionProperties>& Properties, Array<const char*>& Ptrs) const;
-    bool GetExistingLayers(const Array<const char*> Layers, Array<const char*>& Ptrs) const;
-    bool GetPhysicalDevice();
+    struct QueueFamily
+    {
+        Optional<u32> Graphics {};
+    };
 
-    VkInstance m_Instance { nullptr };
-    PhysicalDevice m_Device {};
+    struct Info
+    {
+        u32 APIVersion_Major { 0 };
+        u32 APIVersion_Minor { 0 };
+        u32 APIVersion_Patch { 0 };
+        u32 DriverVersion { 0 };
+        u32 VendorID { 0 };
+        u32 DeviceID { 0 };
+        String Name {};
+    };
+
+    PhysicalDevice(VkPhysicalDevice Device);
+
+    PhysicalDevice& GatherInfo();
+    PhysicalDevice& FindQueueFamily();
+
+    VkPhysicalDevice m_Device { VK_NULL_HANDLE };
+    QueueFamily m_QueueFamily {};
+    Info m_Info {};
 };
 
 }

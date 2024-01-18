@@ -114,6 +114,11 @@ bool Renderer::Initialize()
     DebugUtils::Instance().Initialize(m_Instance);
 #endif
 
+    if (!GetPhysicalDevice())
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -208,6 +213,39 @@ bool Renderer::GetExistingLayers(const Array<const char*> Layers, Array<const ch
     }
 
     return !Ptrs.IsEmpty();
+}
+
+bool Renderer::GetPhysicalDevice()
+{
+    Array<PhysicalDevice> Devices { PhysicalDevice::GetDevices(m_Instance) };
+
+    if (Devices.IsEmpty())
+    {
+        Core::Console::Error("Failed to find a physical device.");
+        return false;
+    }
+
+    Core::Console::WriteLine("Found %lu devices", Devices.Size());
+    for (const PhysicalDevice& Device : Devices)
+    {
+        if (Device.SupportsGraphics())
+        {
+            m_Device = Device;
+            break;
+        }
+    }
+
+    if (m_Device.SupportsGraphics())
+    {
+        Core::Console::WriteLine("Selected Device:");
+        m_Device.PrintInfo();
+    }
+    else
+    {
+        Core::Console::Error("Failed to find a device that supports graphics queues.");
+    }
+
+    return m_Device.SupportsGraphics();
 }
 
 }
