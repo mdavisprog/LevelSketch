@@ -25,6 +25,7 @@ SOFTWARE.
 */
 
 #include "Window.hpp"
+#include "../../Core/Console.hpp"
 #include "../../Core/Math/Vector2.hpp"
 #include "SDL2/SDL.h"
 
@@ -64,7 +65,7 @@ bool Window::Create(const char* Title, int X, int Y, int Width, int Height)
 
     if (m_Handle == nullptr)
     {
-        printf("Failed to create SDL window: %s\n", SDL_GetError());
+        Core::Console::Error("Failed to create SDL window: %s", SDL_GetError());
         return false;
     }
 
