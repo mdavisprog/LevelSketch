@@ -114,6 +114,7 @@ void DebugUtils::Shutdown(VkInstance Instance)
     }
 
     vkDestroyDebugUtilsMessengerEXTFn(Instance, m_Messenger, nullptr);
+    m_Messenger = VK_NULL_HANDLE;
 }
 
 DebugUtils::DebugUtils()

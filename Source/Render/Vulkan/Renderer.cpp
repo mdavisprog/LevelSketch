@@ -125,7 +125,7 @@ bool Renderer::Initialize()
         return false;
     }
 
-    if (!m_Queue.Initialize(m_LogicalDevice, m_PhysicalDevice.QueueFamilyIndex()))
+    if (!m_Queue.Initialize(m_LogicalDevice, m_PhysicalDevice.QueueFamilyIndex().Graphics()))
     {
         Core::Console::Error("Failed to initialize queue.");
         return false;

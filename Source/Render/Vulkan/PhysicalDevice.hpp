@@ -40,6 +40,20 @@ namespace Vulkan
 class PhysicalDevice
 {
 public:
+    class QueueFamily
+    {
+        friend class PhysicalDevice;
+    
+    public:
+        u32 Graphics() const
+        {
+            return m_Graphics.Value();
+        }
+
+    private:
+        Optional<u32> m_Graphics {};
+    };
+
     static Array<PhysicalDevice> GetDevices(VkInstance Instance);
 
     PhysicalDevice();
@@ -47,14 +61,9 @@ public:
     void PrintInfo() const;
     bool SupportsGraphics() const;
     VkPhysicalDevice Handle() const;
-    u32 QueueFamilyIndex() const;
+    const QueueFamily& QueueFamilyIndex() const;
 
 private:
-    struct QueueFamily
-    {
-        Optional<u32> Graphics {};
-    };
-
     struct Info
     {
         u32 APIVersion_Major { 0 };

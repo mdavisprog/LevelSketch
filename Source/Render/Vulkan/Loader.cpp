@@ -74,6 +74,7 @@ void Loader::Shutdown()
     if (m_Handle != nullptr)
     {
         dlclose(m_Handle);
+        m_Handle = nullptr;
     }
 }
 

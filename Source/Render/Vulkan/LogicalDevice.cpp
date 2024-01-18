@@ -46,7 +46,7 @@ bool LogicalDevice::Initialize(const PhysicalDevice& PhysDevice, const Array<con
     const f32 QueuePriority { 1.0f };
     VkDeviceQueueCreateInfo QueueInfo {};
     QueueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    QueueInfo.queueFamilyIndex = PhysDevice.QueueFamilyIndex();
+    QueueInfo.queueFamilyIndex = PhysDevice.QueueFamilyIndex().Graphics();
     QueueInfo.queueCount = 1;
     QueueInfo.pQueuePriorities = &QueuePriority;
 
@@ -75,6 +75,7 @@ void LogicalDevice::Shutdown()
     if (m_Device != nullptr)
     {
         vkDestroyDevice(m_Device, nullptr);
+        m_Device = VK_NULL_HANDLE;
     }
 }
 

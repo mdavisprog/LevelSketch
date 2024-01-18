@@ -91,7 +91,7 @@ void PhysicalDevice::PrintInfo() const
 
 bool PhysicalDevice::SupportsGraphics() const
 {
-    return m_QueueFamily.Graphics.HasValue();
+    return m_QueueFamily.m_Graphics.HasValue();
 }
 
 VkPhysicalDevice PhysicalDevice::Handle() const
@@ -99,9 +99,9 @@ VkPhysicalDevice PhysicalDevice::Handle() const
     return m_Device;
 }
 
-u32 PhysicalDevice::QueueFamilyIndex() const
+const PhysicalDevice::QueueFamily& PhysicalDevice::QueueFamilyIndex() const
 {
-    return m_QueueFamily.Graphics.Value();
+    return m_QueueFamily;
 }
 
 PhysicalDevice::PhysicalDevice(VkPhysicalDevice Device)
@@ -149,7 +149,7 @@ PhysicalDevice& PhysicalDevice::FindQueueFamily()
     {
         if (Property.queueFlags & VK_QUEUE_GRAPHICS_BIT)
         {
-            m_QueueFamily.Graphics = Index;
+            m_QueueFamily.m_Graphics = Index;
         }
 
         Index++;
