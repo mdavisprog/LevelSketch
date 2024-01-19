@@ -28,6 +28,7 @@ SOFTWARE.
 #include "../../Core/Console.hpp"
 #include "../../Core/Containers/Array.hpp"
 #include "Errors.hpp"
+#include "Surface.hpp"
 
 namespace LevelSketch
 {
@@ -36,7 +37,7 @@ namespace Render
 namespace Vulkan
 {
 
-Array<PhysicalDevice> PhysicalDevice::GetDevices(VkInstance Instance)
+Array<PhysicalDevice> PhysicalDevice::GetDevices(VkInstance Instance, const Surface& Surface_)
 {
     Array<PhysicalDevice> Devices;
 
@@ -68,7 +69,7 @@ Array<PhysicalDevice> PhysicalDevice::GetDevices(VkInstance Instance)
         PhysicalDevice NewDevice { Device };
         NewDevice
             .GatherInfo()
-            .FindQueueFamily();
+            .FindQueueFamily(Surface_);
         Devices.Push(NewDevice);
     }
 
@@ -87,11 +88,6 @@ void PhysicalDevice::PrintInfo() const
     Core::Console::WriteLine("Driver Version: %d", m_Info.DriverVersion);
     Core::Console::WriteLine("Vendor ID: %d", m_Info.VendorID);
     Core::Console::WriteLine("Device ID: %d", m_Info.DeviceID);
-}
-
-bool PhysicalDevice::SupportsGraphics() const
-{
-    return m_QueueFamily.m_Graphics.HasValue();
 }
 
 VkPhysicalDevice PhysicalDevice::Handle() const
@@ -130,7 +126,7 @@ PhysicalDevice& PhysicalDevice::GatherInfo()
     return *this;
 }
 
-PhysicalDevice& PhysicalDevice::FindQueueFamily()
+PhysicalDevice& PhysicalDevice::FindQueueFamily(const Surface& Surface_)
 {
     if (m_Device == VK_NULL_HANDLE)
     {
@@ -150,6 +146,13 @@ PhysicalDevice& PhysicalDevice::FindQueueFamily()
         if (Property.queueFlags & VK_QUEUE_GRAPHICS_BIT)
         {
             m_QueueFamily.m_Graphics = Index;
+        }
+
+        VkBool32 Present { VK_FALSE };
+        VkResult Result { vkGetPhysicalDeviceSurfaceSupportKHR(m_Device, Index, Surface_.Handle(), &Present) };
+        if (Result == VK_SUCCESS && Present)
+        {
+            m_QueueFamily.m_Present = Index;
         }
 
         Index++;

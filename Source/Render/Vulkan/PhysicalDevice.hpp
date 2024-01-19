@@ -37,6 +37,8 @@ namespace Render
 namespace Vulkan
 {
 
+class Surface;
+
 class PhysicalDevice
 {
 public:
@@ -45,21 +47,26 @@ public:
         friend class PhysicalDevice;
     
     public:
-        u32 Graphics() const
-        {
-            return m_Graphics.Value();
-        }
+        bool HasGraphics() const { return m_Graphics.HasValue(); }
+        u32 Graphics() const { return m_Graphics.Value(); }
+
+        bool HasPresent() const { return m_Present.HasValue(); }
+        u32 Present() const { return m_Present.Value(); }
+
+        bool IsComplete() const { return HasGraphics() && HasPresent(); }
+
+        Array<u32> Indices() const { return {Graphics(), Present()}; }
 
     private:
         Optional<u32> m_Graphics {};
+        Optional<u32> m_Present {};
     };
 
-    static Array<PhysicalDevice> GetDevices(VkInstance Instance);
+    static Array<PhysicalDevice> GetDevices(VkInstance Instance, const Surface& Surface_);
 
     PhysicalDevice();
 
     void PrintInfo() const;
-    bool SupportsGraphics() const;
     VkPhysicalDevice Handle() const;
     const QueueFamily& QueueFamilyIndex() const;
 
@@ -78,7 +85,7 @@ private:
     PhysicalDevice(VkPhysicalDevice Device);
 
     PhysicalDevice& GatherInfo();
-    PhysicalDevice& FindQueueFamily();
+    PhysicalDevice& FindQueueFamily(const Surface& Surface_);
 
     VkPhysicalDevice m_Device { VK_NULL_HANDLE };
     QueueFamily m_QueueFamily {};

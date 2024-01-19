@@ -43,19 +43,33 @@ LogicalDevice::LogicalDevice()
 
 bool LogicalDevice::Initialize(const PhysicalDevice& PhysDevice, const Array<const char*>& Layers)
 {
+    Array<u32> UniqueIndices;
+    for (u32 Index : PhysDevice.QueueFamilyIndex().Indices())
+    {
+        if (!UniqueIndices.Contains(Index))
+        {
+            UniqueIndices.Push(Index);
+        }
+    }
+
     const f32 QueuePriority { 1.0f };
-    VkDeviceQueueCreateInfo QueueInfo {};
-    QueueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    QueueInfo.queueFamilyIndex = PhysDevice.QueueFamilyIndex().Graphics();
-    QueueInfo.queueCount = 1;
-    QueueInfo.pQueuePriorities = &QueuePriority;
+    Array<VkDeviceQueueCreateInfo> QueueInfos;
+    for (u32 Index : UniqueIndices)
+    {
+        VkDeviceQueueCreateInfo QueueInfo {};
+        QueueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        QueueInfo.queueFamilyIndex = Index;
+        QueueInfo.queueCount = 1;
+        QueueInfo.pQueuePriorities = &QueuePriority;
+        QueueInfos.Push(QueueInfo);
+    }
 
     VkPhysicalDeviceFeatures Features {};
 
     VkDeviceCreateInfo DeviceInfo {};
     DeviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    DeviceInfo.pQueueCreateInfos = &QueueInfo;
-    DeviceInfo.queueCreateInfoCount = 1;
+    DeviceInfo.pQueueCreateInfos = QueueInfos.Data();
+    DeviceInfo.queueCreateInfoCount = static_cast<u32>(QueueInfos.Size());
     DeviceInfo.pEnabledFeatures = &Features;
     DeviceInfo.enabledLayerCount = static_cast<u32>(Layers.Size());
     DeviceInfo.ppEnabledLayerNames = Layers.Data();

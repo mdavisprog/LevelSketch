@@ -26,12 +26,9 @@ SOFTWARE.
 
 #pragma once
 
-#include "../Renderer.hpp"
-#include "LogicalDevice.hpp"
-#include "PhysicalDevice.hpp"
-#include "Queue.hpp"
-#include "Surface.hpp"
 #include "vulkan/vulkan.hpp"
+
+#include <X11/Xlib.h>
 
 namespace LevelSketch
 {
@@ -40,29 +37,19 @@ namespace Render
 namespace Vulkan
 {
 
-class Renderer : public LevelSketch::Render::Renderer
+class Surface
 {
 public:
-    Renderer();
+    Surface();
 
-    virtual bool Initialize() override;
-    virtual bool Initialize(Platform::Window* Window) override;
-    virtual void Shutdown() override;
-    virtual void Render(Platform::Window* Window) override;
-    virtual u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel = 4) override;
-    virtual void UploadGUIData(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer) override;
+    bool Initialize(VkInstance Instance, Window Window_, Display* Display_);
+    void Shutdown(VkInstance Instance);
+
+    bool IsValid() const;
+    VkSurfaceKHR Handle() const;
 
 private:
-    bool GetRequiredExtensionProperties(const Array<VkExtensionProperties>& Properties, Array<const char*>& Ptrs) const;
-    bool GetExistingLayers(const Array<const char*> Layers, Array<const char*>& Ptrs) const;
-    bool GetPhysicalDevice();
-
-    VkInstance m_Instance { nullptr };
-    Surface m_Surface {};
-    PhysicalDevice m_PhysicalDevice {};
-    LogicalDevice m_LogicalDevice {};
-    Queue m_GraphicsQueue {};
-    Queue m_PresentQueue {};
+    VkSurfaceKHR m_Surface { VK_NULL_HANDLE };
 };
 
 }

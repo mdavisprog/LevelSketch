@@ -27,8 +27,14 @@ SOFTWARE.
 #include "Renderer.hpp"
 #include "../../Core/Console.hpp"
 #include "../../Core/Version.hpp"
+#include "../../Platform/Window.hpp"
 #include "Errors.hpp"
 #include "Loader.hpp"
+
+#if defined(PLATFORM_SDL2)
+    #include "SDL2/SDL.h"
+    #include "SDL2/SDL_syswm.h"
+#endif
 
 #if defined(DEBUG)
     #include "DebugUtils.hpp"
@@ -40,6 +46,13 @@ namespace Render
 {
 namespace Vulkan
 {
+
+// FIXME: Better orginazation can be used here.
+#if defined(DEBUG)
+    static const Array<const char*> ValidationLayers {
+        "VK_LAYER_KHRONOS_validation"
+    };
+#endif
 
 Renderer::Renderer()
     : LevelSketch::Render::Renderer()
@@ -79,12 +92,8 @@ bool Renderer::Initialize()
         return false;
     }
 
-    Array<const char*> LayerPtrs;
 #if defined(DEBUG)
-    const Array<const char*> ValidationLayers {
-        "VK_LAYER_KHRONOS_validation"
-    };
-
+    Array<const char*> LayerPtrs;
     if (GetExistingLayers(ValidationLayers, LayerPtrs))
     {
         Core::Console::WriteLine("Enabling validation layers");
@@ -114,28 +123,60 @@ bool Renderer::Initialize()
     DebugUtils::Instance().Initialize(m_Instance);
 #endif
 
-    if (!GetPhysicalDevice())
-    {
-        return false;
-    }
-
-    if (!m_LogicalDevice.Initialize(m_PhysicalDevice, LayerPtrs))
-    {
-        Core::Console::Error("Failed to initialize logical device.");
-        return false;
-    }
-
-    if (!m_Queue.Initialize(m_LogicalDevice, m_PhysicalDevice.QueueFamilyIndex().Graphics()))
-    {
-        Core::Console::Error("Failed to initialize queue.");
-        return false;
-    }
-
     return true;
 }
 
-bool Renderer::Initialize(Platform::Window*)
+bool Renderer::Initialize(Platform::Window* Window)
 {
+    if (!m_Surface.IsValid())
+    {
+#if defined(PLATFORM_SDL2)
+        SDL_Window* Handle { reinterpret_cast<SDL_Window*>(Window->Handle()) };
+        SDL_SysWMinfo Info {};
+        SDL_GetVersion(&Info.version);
+        if (SDL_GetWindowWMInfo(Handle, &Info) != SDL_TRUE)
+        {
+            Core::Console::Error("Failed to retrieve native window information. Error: %s", SDL_GetError());
+            return false;
+        }
+
+        if (!m_Surface.Initialize(m_Instance, Info.info.x11.window, Info.info.x11.display))
+        {
+            return false;
+        }
+#else
+    #error "Renderer::Initialize(Platform::Window*) needs platform specific implementation!"
+#endif
+
+        if (!GetPhysicalDevice())
+        {
+            return false;
+        }
+
+        Array<const char*> LayerPtrs;
+#if defined(DEBUG)
+        GetExistingLayers(ValidationLayers, LayerPtrs);
+#endif
+
+        if (!m_LogicalDevice.Initialize(m_PhysicalDevice, LayerPtrs))
+        {
+            Core::Console::Error("Failed to initialize logical device.");
+            return false;
+        }
+
+        if (!m_GraphicsQueue.Initialize(m_LogicalDevice, m_PhysicalDevice.QueueFamilyIndex().Graphics()))
+        {
+            Core::Console::Error("Failed to initialize graphics queue.");
+            return false;
+        }
+
+        if (!m_PresentQueue.Initialize(m_LogicalDevice, m_PhysicalDevice.QueueFamilyIndex().Present()))
+        {
+            Core::Console::Error("Failed to initialize present queue.");
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -145,6 +186,7 @@ void Renderer::Shutdown()
     DebugUtils::Instance().Shutdown(m_Instance);
 #endif
 
+    m_Surface.Shutdown(m_Instance);
     m_LogicalDevice.Shutdown();
 
     if (m_Instance != nullptr)
@@ -231,7 +273,7 @@ bool Renderer::GetExistingLayers(const Array<const char*> Layers, Array<const ch
 
 bool Renderer::GetPhysicalDevice()
 {
-    Array<PhysicalDevice> Devices { PhysicalDevice::GetDevices(m_Instance) };
+    Array<PhysicalDevice> Devices { PhysicalDevice::GetDevices(m_Instance, m_Surface) };
 
     if (Devices.IsEmpty())
     {
@@ -242,14 +284,14 @@ bool Renderer::GetPhysicalDevice()
     Core::Console::WriteLine("Found %lu devices", Devices.Size());
     for (const PhysicalDevice& Device : Devices)
     {
-        if (Device.SupportsGraphics())
+        if (Device.QueueFamilyIndex().IsComplete())
         {
             m_PhysicalDevice = Device;
             break;
         }
     }
 
-    if (m_PhysicalDevice.SupportsGraphics())
+    if (m_PhysicalDevice.QueueFamilyIndex().IsComplete())
     {
         Core::Console::WriteLine("Selected Device:");
         m_PhysicalDevice.PrintInfo();
@@ -259,7 +301,7 @@ bool Renderer::GetPhysicalDevice()
         Core::Console::Error("Failed to find a device that supports graphics queues.");
     }
 
-    return m_PhysicalDevice.SupportsGraphics();
+    return m_PhysicalDevice.QueueFamilyIndex().IsComplete();
 }
 
 }

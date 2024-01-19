@@ -120,6 +120,7 @@ else()
             Render/Vulkan/LogicalDevice.cpp
             Render/Vulkan/PhysicalDevice.cpp
             Render/Vulkan/Renderer.cpp
+            Render/Vulkan/Surface.cpp
             Render/Vulkan/Queue.cpp
         )
 
