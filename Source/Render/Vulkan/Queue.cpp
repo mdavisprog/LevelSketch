@@ -40,7 +40,7 @@ Queue::Queue()
 
 bool Queue::Initialize(const LogicalDevice& Device, u32 QueueFamilyIndex)
 {
-    vkGetDeviceQueue(Device.Handle(), QueueFamilyIndex, 0, &m_GraphicsQueue);
+    vkGetDeviceQueue(Device.Handle(), QueueFamilyIndex, 0, &m_Queue);
     return true;
 }
 

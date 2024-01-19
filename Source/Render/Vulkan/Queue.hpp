@@ -46,7 +46,7 @@ public:
     bool Initialize(const LogicalDevice& Device, u32 QueueFamilyIndex);
 
 private:
-    VkQueue m_GraphicsQueue { VK_NULL_HANDLE };
+    VkQueue m_Queue { VK_NULL_HANDLE };
 };
 
 }
