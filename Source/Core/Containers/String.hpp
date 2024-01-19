@@ -265,6 +265,31 @@ template<typename T>
 u64 TString<T>::NPOS { static_cast<u64>(-1) };
 
 template<typename T>
+static bool operator==(const TString<T>& A, const TString<T>& B)
+{
+    if (A.Length() != B.Length())
+    {
+        return false;
+    }
+
+    for (u64 I = 0; I < A.Length(); I++)
+    {
+        if (A[I] != B[I])
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+template<typename T>
+static bool operator!=(const TString<T>& A, const TString<T>& B)
+{
+    return !(A == B);
+}
+
+template<typename T>
 static bool operator==(const TString<T>& A, const T* B)
 {
     if (A.Length() != TString<T>::LengthFromPtr(B))
