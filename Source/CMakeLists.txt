@@ -237,6 +237,11 @@ else()
         ${SDL2_LIBRARIES}
     )
 
+    target_include_directories(
+        ${TARGET}
+        PRIVATE ${SDL2_INCLUDE_DIRS}
+    )
+
     if(WITH_VULKAN)
         if(VULKAN_SDK)
             set(VULKAN_INCLUDE ${VULKAN_SDK}/include)
