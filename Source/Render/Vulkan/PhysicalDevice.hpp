@@ -42,6 +42,8 @@ class Surface;
 class PhysicalDevice
 {
 public:
+    static const Array<const char*> s_RequiredExtensions;
+
     class QueueFamily
     {
         friend class PhysicalDevice;
@@ -68,7 +70,9 @@ public:
 
     void PrintInfo() const;
     VkPhysicalDevice Handle() const;
+    bool IsValid() const;
     const QueueFamily& QueueFamilyIndex() const;
+    bool AreRequiredExtensionsSupported() const;
 
 private:
     struct Info

@@ -73,6 +73,8 @@ bool LogicalDevice::Initialize(const PhysicalDevice& PhysDevice, const Array<con
     DeviceInfo.pEnabledFeatures = &Features;
     DeviceInfo.enabledLayerCount = static_cast<u32>(Layers.Size());
     DeviceInfo.ppEnabledLayerNames = Layers.Data();
+    DeviceInfo.enabledExtensionCount = static_cast<u32>(PhysicalDevice::s_RequiredExtensions.Size());
+    DeviceInfo.ppEnabledExtensionNames = PhysicalDevice::s_RequiredExtensions.Data();
 
     VkResult Result { vkCreateDevice(PhysDevice.Handle(), &DeviceInfo, nullptr, &m_Device) };
     if (Result != VK_SUCCESS)

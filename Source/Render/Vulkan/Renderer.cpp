@@ -130,6 +130,7 @@ bool Renderer::Initialize(Platform::Window* Window)
 {
     if (!m_Surface.IsValid())
     {
+        Vector2i PixelRes {};
 #if defined(PLATFORM_SDL2)
         SDL_Window* Handle { reinterpret_cast<SDL_Window*>(Window->Handle()) };
         SDL_SysWMinfo Info {};
@@ -144,6 +145,8 @@ bool Renderer::Initialize(Platform::Window* Window)
         {
             return false;
         }
+
+        SDL_GetWindowSizeInPixels(Handle, &PixelRes.X, &PixelRes.Y);
 #else
     #error "Renderer::Initialize(Platform::Window*) needs platform specific implementation!"
 #endif
@@ -175,6 +178,15 @@ bool Renderer::Initialize(Platform::Window* Window)
             Core::Console::Error("Failed to initialize present queue.");
             return false;
         }
+
+        VkExtent2D Extents { static_cast<u32>(PixelRes.X), static_cast<u32>(PixelRes.Y) };
+        if (!m_SwapChain.Initialize(m_PhysicalDevice, m_Surface, m_LogicalDevice, Extents))
+        {
+            Core::Console::Error("Failed to initialize swap chain.");
+            return false;
+        }
+
+        Core::Console::WriteLine("Initialized Vulkan");
     }
 
     return true;
@@ -284,14 +296,22 @@ bool Renderer::GetPhysicalDevice()
     Core::Console::WriteLine("Found %lu devices", Devices.Size());
     for (const PhysicalDevice& Device : Devices)
     {
-        if (Device.QueueFamilyIndex().IsComplete())
+        bool IsValid {
+            Device.QueueFamilyIndex().IsComplete() &&
+            Device.AreRequiredExtensionsSupported()
+        };
+
+        SwapChain::SupportDetails SwapChainDetails { SwapChain::GatherDetails(Device, m_Surface) };
+        IsValid &= SwapChainDetails.IsValid();
+
+        if (IsValid)
         {
             m_PhysicalDevice = Device;
             break;
         }
     }
 
-    if (m_PhysicalDevice.QueueFamilyIndex().IsComplete())
+    if (m_PhysicalDevice.IsValid())
     {
         Core::Console::WriteLine("Selected Device:");
         m_PhysicalDevice.PrintInfo();
@@ -301,7 +321,7 @@ bool Renderer::GetPhysicalDevice()
         Core::Console::Error("Failed to find a device that supports graphics queues.");
     }
 
-    return m_PhysicalDevice.QueueFamilyIndex().IsComplete();
+    return m_PhysicalDevice.IsValid();
 }
 
 }

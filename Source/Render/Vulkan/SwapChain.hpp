@@ -26,12 +26,7 @@ SOFTWARE.
 
 #pragma once
 
-#include "../Renderer.hpp"
-#include "LogicalDevice.hpp"
-#include "PhysicalDevice.hpp"
-#include "Queue.hpp"
-#include "Surface.hpp"
-#include "SwapChain.hpp"
+#include "../../Core/Containers/Array.hpp"
 #include "vulkan/vulkan.hpp"
 
 namespace LevelSketch
@@ -41,30 +36,42 @@ namespace Render
 namespace Vulkan
 {
 
-class Renderer : public LevelSketch::Render::Renderer
+class LogicalDevice;
+class PhysicalDevice;
+class Surface;
+
+class SwapChain
 {
 public:
-    Renderer();
+    struct SupportDetails
+    {
+        VkSurfaceCapabilitiesKHR SurfaceCapabilities {};
+        Array<VkSurfaceFormatKHR> Formats {};
+        Array<VkPresentModeKHR> PresentModes {};
+        
+        bool IsValid() const
+        {
+            return !Formats.IsEmpty() && !PresentModes.IsEmpty();
+        }
+    };
 
-    virtual bool Initialize() override;
-    virtual bool Initialize(Platform::Window* Window) override;
-    virtual void Shutdown() override;
-    virtual void Render(Platform::Window* Window) override;
-    virtual u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel = 4) override;
-    virtual void UploadGUIData(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer) override;
+    static SupportDetails GatherDetails(const PhysicalDevice& Device, const Surface& Surface_);
+
+    SwapChain();
+
+    bool Initialize(
+        const PhysicalDevice& PhysicalDevice_,
+        const Surface& Surface_,
+        const LogicalDevice& LogicalDevice_,
+        const VkExtent2D& DefaultExtents);
+    void Shutdown(const LogicalDevice& Device);
 
 private:
-    bool GetRequiredExtensionProperties(const Array<VkExtensionProperties>& Properties, Array<const char*>& Ptrs) const;
-    bool GetExistingLayers(const Array<const char*> Layers, Array<const char*>& Ptrs) const;
-    bool GetPhysicalDevice();
+    static VkSurfaceFormatKHR BestFormat(const Array<VkSurfaceFormatKHR>& Formats);
+    static VkPresentModeKHR BestPresentMode(const Array<VkPresentModeKHR>& Modes);
+    static VkExtent2D BestExtents(const VkSurfaceCapabilitiesKHR& Capabilities, const VkExtent2D& DefaultExtents);
 
-    VkInstance m_Instance { nullptr };
-    Surface m_Surface {};
-    PhysicalDevice m_PhysicalDevice {};
-    LogicalDevice m_LogicalDevice {};
-    Queue m_GraphicsQueue {};
-    Queue m_PresentQueue {};
-    SwapChain m_SwapChain {};
+    VkSwapchainKHR m_SwapChain { VK_NULL_HANDLE };
 };
 
 }

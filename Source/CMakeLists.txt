@@ -121,6 +121,7 @@ else()
             Render/Vulkan/PhysicalDevice.cpp
             Render/Vulkan/Renderer.cpp
             Render/Vulkan/Surface.cpp
+            Render/Vulkan/SwapChain.cpp
             Render/Vulkan/Queue.cpp
         )
 

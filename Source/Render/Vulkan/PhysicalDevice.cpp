@@ -37,6 +37,10 @@ namespace Render
 namespace Vulkan
 {
 
+const Array<const char*> PhysicalDevice::s_RequiredExtensions {
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME
+};
+
 Array<PhysicalDevice> PhysicalDevice::GetDevices(VkInstance Instance, const Surface& Surface_)
 {
     Array<PhysicalDevice> Devices;
@@ -95,9 +99,54 @@ VkPhysicalDevice PhysicalDevice::Handle() const
     return m_Device;
 }
 
+bool PhysicalDevice::IsValid() const
+{
+    return m_Device != VK_NULL_HANDLE;
+}
+
 const PhysicalDevice::QueueFamily& PhysicalDevice::QueueFamilyIndex() const
 {
     return m_QueueFamily;
+}
+
+bool PhysicalDevice::AreRequiredExtensionsSupported() const
+{
+    if (!IsValid())
+    {
+        Core::Console::Error("Physical device has not been initialized. Unable to check for required extensions.");
+        return false;
+    }
+
+    u32 Count { 0 };
+    VkResult Result { vkEnumerateDeviceExtensionProperties(m_Device, nullptr, &Count, nullptr) };
+    if (Result != VK_SUCCESS)
+    {
+        Core::Console::Error("Failed to retrieve device extension count. Error: %s", Errors::ToString(Result));
+        return false;
+    }
+
+    Array<VkExtensionProperties> Extensions;
+    Extensions.Resize(Count);
+
+    Result = vkEnumerateDeviceExtensionProperties(m_Device, nullptr, &Count, Extensions.Data());
+    if (Result != VK_SUCCESS)
+    {
+        Core::Console::Error("Failed to retrieve device extensions. Error: %s", Errors::ToString(Result));
+        return false;
+    }
+
+    Array<String> Required;
+    for (const char* Name : s_RequiredExtensions)
+    {
+        Required.Push(Name);
+    }
+
+    for (VkExtensionProperties& Extension : Extensions)
+    {
+        Required.Remove(Extension.extensionName);
+    }
+
+    return true;
 }
 
 PhysicalDevice::PhysicalDevice(VkPhysicalDevice Device)
