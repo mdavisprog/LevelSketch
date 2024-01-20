@@ -27,9 +27,8 @@ SOFTWARE.
 #include "SwapChain.hpp"
 #include "../../Core/Console.hpp"
 #include "../../Core/Math/Math.hpp"
+#include "Device.hpp"
 #include "Errors.hpp"
-#include "LogicalDevice.hpp"
-#include "PhysicalDevice.hpp"
 #include "Surface.hpp"
 
 namespace LevelSketch
@@ -116,12 +115,9 @@ SwapChain::SwapChain()
 {
 }
 
-bool SwapChain::Initialize(
-    const PhysicalDevice& PhysicalDevice_,
-    const Surface& Surface_,
-    const LogicalDevice& LogicalDevice_,
-    const VkExtent2D& DefaultExtents)
+bool SwapChain::Initialize(const Device& Device_, const Surface& Surface_, const VkExtent2D& DefaultExtents)
 {
+    const PhysicalDevice& PhysicalDevice_ { Device_.GetPhysicalDevice() };
     const SupportDetails Details { GatherDetails(PhysicalDevice_, Surface_) };
 
     if (!Details.IsValid())
@@ -167,7 +163,7 @@ bool SwapChain::Initialize(
         CreateInfo.pQueueFamilyIndices = nullptr;
     }
 
-    VkResult Result { vkCreateSwapchainKHR(LogicalDevice_.Handle(), &CreateInfo, nullptr, &m_SwapChain) };
+    VkResult Result { vkCreateSwapchainKHR(Device_.GetLogicalDevice().Handle(), &CreateInfo, nullptr, &m_SwapChain) };
 
     if (Result != VK_SUCCESS)
     {
@@ -178,13 +174,18 @@ bool SwapChain::Initialize(
     return true;
 }
 
-void SwapChain::Shutdown(const LogicalDevice& Device)
+void SwapChain::Shutdown(const Device& Device_)
 {
     if (m_SwapChain != VK_NULL_HANDLE)
     {
-        vkDestroySwapchainKHR(Device.Handle(), m_SwapChain, nullptr);
+        vkDestroySwapchainKHR(Device_.GetLogicalDevice().Handle(), m_SwapChain, nullptr);
         m_SwapChain = VK_NULL_HANDLE;
     }
+}
+
+bool SwapChain::IsValid() const
+{
+    return m_SwapChain != VK_NULL_HANDLE;
 }
 
 VkSurfaceFormatKHR SwapChain::BestFormat(const Array<VkSurfaceFormatKHR>& Formats)

@@ -151,36 +151,18 @@ bool Renderer::Initialize(Platform::Window* Window)
     #error "Renderer::Initialize(Platform::Window*) needs platform specific implementation!"
 #endif
 
-        if (!GetPhysicalDevice())
-        {
-            return false;
-        }
-
         Array<const char*> LayerPtrs;
 #if defined(DEBUG)
         GetExistingLayers(ValidationLayers, LayerPtrs);
 #endif
 
-        if (!m_LogicalDevice.Initialize(m_PhysicalDevice, LayerPtrs))
+        if (!m_Device.Initialize(m_Instance, m_Surface, LayerPtrs))
         {
-            Core::Console::Error("Failed to initialize logical device.");
-            return false;
-        }
-
-        if (!m_GraphicsQueue.Initialize(m_LogicalDevice, m_PhysicalDevice.QueueFamilyIndex().Graphics()))
-        {
-            Core::Console::Error("Failed to initialize graphics queue.");
-            return false;
-        }
-
-        if (!m_PresentQueue.Initialize(m_LogicalDevice, m_PhysicalDevice.QueueFamilyIndex().Present()))
-        {
-            Core::Console::Error("Failed to initialize present queue.");
             return false;
         }
 
         VkExtent2D Extents { static_cast<u32>(PixelRes.X), static_cast<u32>(PixelRes.Y) };
-        if (!m_SwapChain.Initialize(m_PhysicalDevice, m_Surface, m_LogicalDevice, Extents))
+        if (!m_SwapChain.Initialize(m_Device, m_Surface, Extents))
         {
             Core::Console::Error("Failed to initialize swap chain.");
             return false;
@@ -198,12 +180,13 @@ void Renderer::Shutdown()
     DebugUtils::Instance().Shutdown(m_Instance);
 #endif
 
+    m_Device.Shutdown();
     m_Surface.Shutdown(m_Instance);
-    m_LogicalDevice.Shutdown();
 
     if (m_Instance != nullptr)
     {
         vkDestroyInstance(m_Instance, nullptr);
+        m_Instance = VK_NULL_HANDLE;
     }
 
     Loader::Instance().Shutdown();
@@ -281,47 +264,6 @@ bool Renderer::GetExistingLayers(const Array<const char*> Layers, Array<const ch
     }
 
     return !Ptrs.IsEmpty();
-}
-
-bool Renderer::GetPhysicalDevice()
-{
-    Array<PhysicalDevice> Devices { PhysicalDevice::GetDevices(m_Instance, m_Surface) };
-
-    if (Devices.IsEmpty())
-    {
-        Core::Console::Error("Failed to find a physical device.");
-        return false;
-    }
-
-    Core::Console::WriteLine("Found %lu devices", Devices.Size());
-    for (const PhysicalDevice& Device : Devices)
-    {
-        bool IsValid {
-            Device.QueueFamilyIndex().IsComplete() &&
-            Device.AreRequiredExtensionsSupported()
-        };
-
-        SwapChain::SupportDetails SwapChainDetails { SwapChain::GatherDetails(Device, m_Surface) };
-        IsValid &= SwapChainDetails.IsValid();
-
-        if (IsValid)
-        {
-            m_PhysicalDevice = Device;
-            break;
-        }
-    }
-
-    if (m_PhysicalDevice.IsValid())
-    {
-        Core::Console::WriteLine("Selected Device:");
-        m_PhysicalDevice.PrintInfo();
-    }
-    else
-    {
-        Core::Console::Error("Failed to find a device that supports graphics queues.");
-    }
-
-    return m_PhysicalDevice.IsValid();
 }
 
 }

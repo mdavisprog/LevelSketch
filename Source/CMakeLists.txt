@@ -116,6 +116,7 @@ else()
         message("Using Vulkan Renderer")
         set(SOURCE
             ${SOURCE}
+            Render/Vulkan/Device.cpp
             Render/Vulkan/Loader.cpp
             Render/Vulkan/LogicalDevice.cpp
             Render/Vulkan/PhysicalDevice.cpp

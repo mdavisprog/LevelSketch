@@ -27,6 +27,7 @@ SOFTWARE.
 #pragma once
 
 #include "../Renderer.hpp"
+#include "Device.hpp"
 #include "LogicalDevice.hpp"
 #include "PhysicalDevice.hpp"
 #include "Queue.hpp"
@@ -56,14 +57,10 @@ public:
 private:
     bool GetRequiredExtensionProperties(const Array<VkExtensionProperties>& Properties, Array<const char*>& Ptrs) const;
     bool GetExistingLayers(const Array<const char*> Layers, Array<const char*>& Ptrs) const;
-    bool GetPhysicalDevice();
 
     VkInstance m_Instance { nullptr };
     Surface m_Surface {};
-    PhysicalDevice m_PhysicalDevice {};
-    LogicalDevice m_LogicalDevice {};
-    Queue m_GraphicsQueue {};
-    Queue m_PresentQueue {};
+    Device m_Device {};
     SwapChain m_SwapChain {};
 };
 

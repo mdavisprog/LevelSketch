@@ -26,8 +26,9 @@ SOFTWARE.
 
 #pragma once
 
-#include "../../Core/Containers/Array.hpp"
-#include "vulkan/vulkan.hpp"
+#include "LogicalDevice.hpp"
+#include "PhysicalDevice.hpp"
+#include "Queue.hpp"
 
 namespace LevelSketch
 {
@@ -36,40 +37,28 @@ namespace Render
 namespace Vulkan
 {
 
-class Device;
-class PhysicalDevice;
 class Surface;
 
-class SwapChain
+class Device
 {
 public:
-    struct SupportDetails
-    {
-        VkSurfaceCapabilitiesKHR SurfaceCapabilities {};
-        Array<VkSurfaceFormatKHR> Formats {};
-        Array<VkPresentModeKHR> PresentModes {};
-        
-        bool IsValid() const
-        {
-            return !Formats.IsEmpty() && !PresentModes.IsEmpty();
-        }
-    };
+    Device();
 
-    static SupportDetails GatherDetails(const PhysicalDevice& Device, const Surface& Surface_);
-
-    SwapChain();
-
-    bool Initialize(const Device& Device_, const Surface& Surface_, const VkExtent2D& DefaultExtents);
-    void Shutdown(const Device& Device_);
+    bool Initialize(VkInstance Instance, const Surface& Surface_, const Array<const char*>& Layers);
+    void Shutdown();
 
     bool IsValid() const;
 
-private:
-    static VkSurfaceFormatKHR BestFormat(const Array<VkSurfaceFormatKHR>& Formats);
-    static VkPresentModeKHR BestPresentMode(const Array<VkPresentModeKHR>& Modes);
-    static VkExtent2D BestExtents(const VkSurfaceCapabilitiesKHR& Capabilities, const VkExtent2D& DefaultExtents);
+    const LogicalDevice& GetLogicalDevice() const;
+    const PhysicalDevice& GetPhysicalDevice() const;
 
-    VkSwapchainKHR m_SwapChain { VK_NULL_HANDLE };
+private:
+    bool SelectBestPhysicalDevice(VkInstance Instance, const Surface& Surface_);
+
+    LogicalDevice m_LogicalDevice {};
+    PhysicalDevice m_PhysicalDevice {};
+    Queue m_GraphicsQueue {};
+    Queue m_PresentQueue {};
 };
 
 }
