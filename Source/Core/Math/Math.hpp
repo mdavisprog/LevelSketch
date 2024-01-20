@@ -112,6 +112,12 @@ static constexpr T Max(const std::initializer_list<T>& Values)
 }
 
 template<typename T>
+T Clamp(const T& Value, const T& Min, const T& Max)
+{
+    return Value < Min ? Min : Value > Max ? Max : Value;
+}
+
+template<typename T>
 static T Sin(T Radians)
 {
     return std::sin(Radians);
@@ -159,5 +165,8 @@ static constexpr T Max(const T& A, const T& B) { return Core::Math::Max<T>(A, B)
 
 template<typename T>
 static constexpr T Max(const std::initializer_list<T>& Values) { return Core::Math::Max<T>(Values); }
+
+template<typename T>
+static constexpr T Clamp(const T& Value, const T& Min, const T& Max) { return Core::Math::Clamp<T>(Value, Min, Max); }
 
 }
