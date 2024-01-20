@@ -54,6 +54,7 @@ static const char* ToString(VkResult Error)
     case VK_ERROR_SURFACE_LOST_KHR: return "Surface lost";
     case VK_ERROR_NATIVE_WINDOW_IN_USE_KHR: return "Native window in use";
     case VK_ERROR_COMPRESSION_EXHAUSTED_EXT: return "Compression exhausted ext";
+    case VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS_KHR: return "Invalid opaque capture address KHR";
     default: break;
     }
 

@@ -163,7 +163,9 @@ bool SwapChain::Initialize(const Device& Device_, const Surface& Surface_, const
         CreateInfo.pQueueFamilyIndices = nullptr;
     }
 
-    VkResult Result { vkCreateSwapchainKHR(Device_.GetLogicalDevice().Handle(), &CreateInfo, nullptr, &m_SwapChain) };
+    const VkDevice DeviceHandle { Device_.GetLogicalDevice().Handle() };
+
+    VkResult Result { vkCreateSwapchainKHR(DeviceHandle, &CreateInfo, nullptr, &m_SwapChain) };
 
     if (Result != VK_SUCCESS)
     {
@@ -171,11 +173,68 @@ bool SwapChain::Initialize(const Device& Device_, const Surface& Surface_, const
         return false;
     }
 
+    u32 Count { 0 };
+    Result = vkGetSwapchainImagesKHR(DeviceHandle, m_SwapChain, &Count, nullptr);
+
+    if (Result != VK_SUCCESS)
+    {
+        Core::Console::Error("Failed to retrieve swap chain image count. Error: %s", Errors::ToString(Result));
+        return false;
+    }
+
+    m_Images.Resize(Count);
+    
+    Result = vkGetSwapchainImagesKHR(DeviceHandle, m_SwapChain, &Count, m_Images.Data());
+
+    if (Result != VK_SUCCESS)
+    {
+        Core::Console::Error("Failed to retrieve swap chain images. Error: %s", Errors::ToString(Result));
+        return false;
+    }
+
+    m_Format = Format.format;
+    m_Extents = Extents;
+
+    m_ImageViews.Resize(m_Images.Size());
+
+    for (u64 I = 0; I < m_ImageViews.Size(); I++)
+    {
+        VkImageViewCreateInfo ImageViewInfo {};
+        ImageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        ImageViewInfo.image = m_Images[I];
+        ImageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        ImageViewInfo.format = m_Format;
+        ImageViewInfo.components = {
+            VK_COMPONENT_SWIZZLE_IDENTITY,
+            VK_COMPONENT_SWIZZLE_IDENTITY,
+            VK_COMPONENT_SWIZZLE_IDENTITY,
+            VK_COMPONENT_SWIZZLE_IDENTITY
+        };
+        ImageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        ImageViewInfo.subresourceRange.baseMipLevel = 0;
+        ImageViewInfo.subresourceRange.levelCount = 1;
+        ImageViewInfo.subresourceRange.baseArrayLayer = 0;
+        ImageViewInfo.subresourceRange.layerCount = 1;
+
+        Result = vkCreateImageView(DeviceHandle, &ImageViewInfo, nullptr, &m_ImageViews[I]);
+
+        if (Result != VK_SUCCESS)
+        {
+            Core::Console::Error("Failed to create image view. Error: %s", Errors::ToString(Result));
+            return false;
+        }
+    }
+
     return true;
 }
 
 void SwapChain::Shutdown(const Device& Device_)
 {
+    for (const VkImageView& ImageView : m_ImageViews)
+    {
+        vkDestroyImageView(Device_.GetLogicalDevice().Handle(), ImageView, nullptr);
+    }
+
     if (m_SwapChain != VK_NULL_HANDLE)
     {
         vkDestroySwapchainKHR(Device_.GetLogicalDevice().Handle(), m_SwapChain, nullptr);

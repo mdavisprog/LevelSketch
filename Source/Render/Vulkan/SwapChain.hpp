@@ -70,6 +70,10 @@ private:
     static VkExtent2D BestExtents(const VkSurfaceCapabilitiesKHR& Capabilities, const VkExtent2D& DefaultExtents);
 
     VkSwapchainKHR m_SwapChain { VK_NULL_HANDLE };
+    Array<VkImage> m_Images {};
+    Array<VkImageView> m_ImageViews {};
+    VkFormat m_Format {};
+    VkExtent2D m_Extents {};
 };
 
 }
