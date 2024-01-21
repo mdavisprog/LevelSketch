@@ -37,6 +37,7 @@ namespace Vulkan
 {
 
 class Device;
+class GraphicsPipeline;
 class PhysicalDevice;
 class Surface;
 
@@ -60,6 +61,7 @@ public:
     SwapChain();
 
     bool Initialize(const Device& Device_, const Surface& Surface_, const VkExtent2D& DefaultExtents);
+    bool InitializeFramebuffers(const Device& Device_, const GraphicsPipeline& Pipeline);
     void Shutdown(const Device& Device_);
 
     VkSwapchainKHR Handle() const;
@@ -76,6 +78,7 @@ private:
     VkSwapchainKHR m_SwapChain { VK_NULL_HANDLE };
     Array<VkImage> m_Images {};
     Array<VkImageView> m_ImageViews {};
+    Array<VkFramebuffer> m_Framebuffers {};
     VkFormat m_Format {};
     VkExtent2D m_Extents {};
 };

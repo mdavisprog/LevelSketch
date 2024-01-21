@@ -47,6 +47,8 @@ public:
     bool Initialize(const Device& Device_, const SwapChain& SwapChain_, const Shader& Vertex, const Shader& Fragment);
     void Shutdown(const Device& Device_);
 
+    VkRenderPass RenderPass() const;
+
 private:
     bool CreatePipelineLayout(const Device& Device_);
     bool CreateRenderPass(const Device& Device_, const SwapChain& SwapChain_);

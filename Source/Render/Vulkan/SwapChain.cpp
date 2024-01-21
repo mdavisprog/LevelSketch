@@ -29,6 +29,7 @@ SOFTWARE.
 #include "../../Core/Math/Math.hpp"
 #include "Device.hpp"
 #include "Errors.hpp"
+#include "GraphicsPipeline.hpp"
 #include "Surface.hpp"
 
 namespace LevelSketch
@@ -228,8 +229,53 @@ bool SwapChain::Initialize(const Device& Device_, const Surface& Surface_, const
     return true;
 }
 
+bool SwapChain::InitializeFramebuffers(const Device& Device_, const GraphicsPipeline& Pipeline)
+{
+    if (!IsValid())
+    {
+        Core::Console::Error("Failed to initialize framebuffers. Swap chain not initialized.");
+        return false;
+    }
+
+    m_Framebuffers.Resize(m_ImageViews.Size());
+
+    for (u64 I = 0; I < m_ImageViews.Size(); I++)
+    {
+        const VkImageView Attachments[] = { m_ImageViews[I] };
+
+        VkFramebufferCreateInfo CreateInfo {};
+        CreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        CreateInfo.renderPass = Pipeline.RenderPass();
+        CreateInfo.attachmentCount = 1;
+        CreateInfo.pAttachments = Attachments;
+        CreateInfo.width = m_Extents.width;
+        CreateInfo.height = m_Extents.height;
+        CreateInfo.layers = 1;
+
+        VkResult Result { vkCreateFramebuffer(
+            Device_.GetLogicalDevice().Handle(),
+            &CreateInfo,
+            nullptr,
+            &m_Framebuffers[I])
+        };
+
+        if (Result != VK_SUCCESS)
+        {
+            Core::Console::Error("Failed to create framebuffer. Error: %s", Errors::ToString(Result));
+            return false;
+        }
+    }
+
+    return true;
+}
+
 void SwapChain::Shutdown(const Device& Device_)
 {
+    for (const VkFramebuffer& Framebuffer : m_Framebuffers)
+    {
+        vkDestroyFramebuffer(Device_.GetLogicalDevice().Handle(), Framebuffer, nullptr);
+    }
+
     for (const VkImageView& ImageView : m_ImageViews)
     {
         vkDestroyImageView(Device_.GetLogicalDevice().Handle(), ImageView, nullptr);

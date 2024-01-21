@@ -199,6 +199,11 @@ void GraphicsPipeline::Shutdown(const Device& Device_)
     }
 }
 
+VkRenderPass GraphicsPipeline::RenderPass() const
+{
+    return m_RenderPass;
+}
+
 bool GraphicsPipeline::CreatePipelineLayout(const Device& Device_)
 {
     VkPipelineLayoutCreateInfo CreateInfo {};
