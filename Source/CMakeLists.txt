@@ -117,6 +117,7 @@ else()
         set(SOURCE
             ${SOURCE}
             Render/Vulkan/Device.cpp
+            Render/Vulkan/GraphicsPipeline.cpp
             Render/Vulkan/Loader.cpp
             Render/Vulkan/LogicalDevice.cpp
             Render/Vulkan/PhysicalDevice.cpp

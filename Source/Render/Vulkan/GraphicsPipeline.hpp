@@ -26,7 +26,6 @@ SOFTWARE.
 
 #pragma once
 
-#include "../../Core/Containers/Array.hpp"
 #include "vulkan/vulkan.hpp"
 
 namespace LevelSketch
@@ -37,47 +36,24 @@ namespace Vulkan
 {
 
 class Device;
-class PhysicalDevice;
-class Surface;
+class Shader;
+class SwapChain;
 
-class SwapChain
+class GraphicsPipeline
 {
 public:
-    struct SupportDetails
-    {
-        VkSurfaceCapabilitiesKHR SurfaceCapabilities {};
-        Array<VkSurfaceFormatKHR> Formats {};
-        Array<VkPresentModeKHR> PresentModes {};
-        
-        bool IsValid() const
-        {
-            return !Formats.IsEmpty() && !PresentModes.IsEmpty();
-        }
-    };
+    GraphicsPipeline();
 
-    static SupportDetails GatherDetails(const PhysicalDevice& Device, const Surface& Surface_);
-
-    SwapChain();
-
-    bool Initialize(const Device& Device_, const Surface& Surface_, const VkExtent2D& DefaultExtents);
+    bool Initialize(const Device& Device_, const SwapChain& SwapChain_, const Shader& Vertex, const Shader& Fragment);
     void Shutdown(const Device& Device_);
 
-    VkSwapchainKHR Handle() const;
-    bool IsValid() const;
-
-    VkFormat Format() const;
-    VkExtent2D Extents() const;
-
 private:
-    static VkSurfaceFormatKHR BestFormat(const Array<VkSurfaceFormatKHR>& Formats);
-    static VkPresentModeKHR BestPresentMode(const Array<VkPresentModeKHR>& Modes);
-    static VkExtent2D BestExtents(const VkSurfaceCapabilitiesKHR& Capabilities, const VkExtent2D& DefaultExtents);
+    bool CreatePipelineLayout(const Device& Device_);
+    bool CreateRenderPass(const Device& Device_, const SwapChain& SwapChain_);
 
-    VkSwapchainKHR m_SwapChain { VK_NULL_HANDLE };
-    Array<VkImage> m_Images {};
-    Array<VkImageView> m_ImageViews {};
-    VkFormat m_Format {};
-    VkExtent2D m_Extents {};
+    VkPipelineLayout m_PipelineLayout { VK_NULL_HANDLE };
+    VkRenderPass m_RenderPass { VK_NULL_HANDLE };
+    VkPipeline m_Pipeline { VK_NULL_HANDLE };
 };
 
 }

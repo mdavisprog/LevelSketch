@@ -242,9 +242,24 @@ void SwapChain::Shutdown(const Device& Device_)
     }
 }
 
+VkSwapchainKHR SwapChain::Handle() const
+{
+    return m_SwapChain;
+}
+
 bool SwapChain::IsValid() const
 {
     return m_SwapChain != VK_NULL_HANDLE;
+}
+
+VkFormat SwapChain::Format() const
+{
+    return m_Format;
+}
+
+VkExtent2D SwapChain::Extents() const
+{
+    return m_Extents;
 }
 
 VkSurfaceFormatKHR SwapChain::BestFormat(const Array<VkSurfaceFormatKHR>& Formats)

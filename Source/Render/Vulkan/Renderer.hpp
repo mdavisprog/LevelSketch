@@ -28,6 +28,7 @@ SOFTWARE.
 
 #include "../Renderer.hpp"
 #include "Device.hpp"
+#include "GraphicsPipeline.hpp"
 #include "LogicalDevice.hpp"
 #include "PhysicalDevice.hpp"
 #include "Queue.hpp"
@@ -62,6 +63,7 @@ private:
     Surface m_Surface {};
     Device m_Device {};
     SwapChain m_SwapChain {};
+    GraphicsPipeline m_Pipeline {};
 };
 
 }

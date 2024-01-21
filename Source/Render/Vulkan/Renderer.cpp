@@ -187,6 +187,11 @@ bool Renderer::Initialize(Platform::Window* Window)
             return false;
         }
 
+        if (!m_Pipeline.Initialize(m_Device, m_SwapChain, Vertex, Fragment))
+        {
+            return false;
+        }
+
         Vertex.Shutdown(m_Device);
         Fragment.Shutdown(m_Device);
 
@@ -202,6 +207,7 @@ void Renderer::Shutdown()
     DebugUtils::Instance().Shutdown(m_Instance);
 #endif
 
+    m_Pipeline.Shutdown(m_Device);
     m_Device.Shutdown();
     m_Surface.Shutdown(m_Instance);
 
