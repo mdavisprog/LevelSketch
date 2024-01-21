@@ -27,9 +27,11 @@ SOFTWARE.
 #include "Renderer.hpp"
 #include "../../Core/Console.hpp"
 #include "../../Core/Version.hpp"
+#include "../../Platform/FileSystem.hpp"
 #include "../../Platform/Window.hpp"
 #include "Errors.hpp"
 #include "Loader.hpp"
+#include "Shader.hpp"
 
 #if defined(PLATFORM_SDL2)
     #include "SDL2/SDL.h"
@@ -167,6 +169,26 @@ bool Renderer::Initialize(Platform::Window* Window)
             Core::Console::Error("Failed to initialize swap chain.");
             return false;
         }
+
+        const String ShaderPath { Platform::FileSystem::CombinePaths(
+            Platform::FileSystem::ApplicationPath(),
+            "Content/Shaders/GLSL")
+        };
+
+        Shader Vertex {};
+        if (!Vertex.Load(m_Device, Platform::FileSystem::CombinePaths(ShaderPath, "Test.vert").Data()))
+        {
+            return false;
+        }
+
+        Shader Fragment {};
+        if (!Fragment.Load(m_Device, Platform::FileSystem::CombinePaths(ShaderPath, "Test.frag").Data()))
+        {
+            return false;
+        }
+
+        Vertex.Shutdown(m_Device);
+        Fragment.Shutdown(m_Device);
 
         Core::Console::WriteLine("Initialized Vulkan");
     }

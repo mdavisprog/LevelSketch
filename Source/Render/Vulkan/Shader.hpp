@@ -34,35 +34,24 @@ namespace Render
 {
 namespace Vulkan
 {
-namespace Errors
+
+class Device;
+
+class Shader
 {
+public:
+    Shader();
 
-static const char* ToString(VkResult Error)
-{
-    switch (Error)
-    {
-    case VK_INCOMPLETE: return "Incomplete";
-    case VK_ERROR_OUT_OF_HOST_MEMORY: return "Out of host memory";
-    case VK_ERROR_OUT_OF_DEVICE_MEMORY: return "Out of device memory";
-    case VK_ERROR_LAYER_NOT_PRESENT: return "Layer not present";
-    case VK_ERROR_INITIALIZATION_FAILED: return "Initialization failed";
-    case VK_ERROR_EXTENSION_NOT_PRESENT: return "Extension not present";
-    case VK_ERROR_FEATURE_NOT_PRESENT: return "Feature not present";
-    case VK_ERROR_INCOMPATIBLE_DRIVER: return "Incompatible driver";
-    case VK_ERROR_TOO_MANY_OBJECTS: return "Too many objects";
-    case VK_ERROR_DEVICE_LOST: return "Device lost";
-    case VK_ERROR_SURFACE_LOST_KHR: return "Surface lost";
-    case VK_ERROR_NATIVE_WINDOW_IN_USE_KHR: return "Native window in use";
-    case VK_ERROR_COMPRESSION_EXHAUSTED_EXT: return "Compression exhausted ext";
-    case VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS_KHR: return "Invalid opaque capture address KHR";
-    case VK_ERROR_INVALID_SHADER_NV: return "Invalid shader nv";
-    default: break;
-    }
+    VkShaderModule Handle() const;
+    bool IsValid() const;
 
-    return "Success";
-}
+    bool Load(const Device& Device_, const char* Path);
+    void Shutdown(const Device& Device_);
 
-}
+private:
+    VkShaderModule m_Handle { VK_NULL_HANDLE };
+};
+
 }
 }
 }
