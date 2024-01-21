@@ -100,6 +100,26 @@ String FileSystem::ReadContents(const String& Path)
     return Result;
 }
 
+Array<u8> FileSystem::ReadBinaryContents(const String& Path)
+{
+    Array<u8> Result {};
+
+    std::fstream Stream;
+    Stream.open(Path.Data(), std::ios_base::in | std::ios_base::ate | std::ios_base::binary);
+    if (!Stream.is_open())
+    {
+        return Result;
+    }
+
+    Result.Resize(Stream.tellg());
+    Stream.seekg(0);
+
+    Stream.read(reinterpret_cast<i8*>(Result.Data()), Result.Size());
+    Stream.close();
+
+    return Result;
+}
+
 FileSystem::FileSystem()
 {
 }

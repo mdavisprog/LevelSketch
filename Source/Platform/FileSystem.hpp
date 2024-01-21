@@ -26,6 +26,7 @@ SOFTWARE.
 
 #pragma once
 
+#include "../Core/Types.hpp"
 #include "../Core/Containers/Forwards.hpp"
 
 namespace LevelSketch
@@ -45,6 +46,7 @@ public:
     static String GetDirectory(const String& Path);
     static String CombinePaths(const String& A, const String& B);
     static String ReadContents(const String& Path);
+    static Array<u8> ReadBinaryContents(const String& Path);
 
     static void SetWorkingDirectory(const String& Path);
 
