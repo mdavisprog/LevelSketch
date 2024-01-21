@@ -349,3 +349,31 @@ add_custom_command(
     "${CMAKE_CURRENT_SOURCE_DIR}/../Content"
     "$<TARGET_FILE_DIR:${TARGET}>/Content"
 )
+
+#
+# Compile Shaders
+#
+
+if(WITH_VULKAN)
+    set(SHADER_FILES
+        ${CMAKE_CURRENT_LIST_DIR}/../Content/Shaders/GLSL/Test.frag
+        ${CMAKE_CURRENT_LIST_DIR}/../Content/Shaders/GLSL/Test.vert
+    )
+
+    foreach(SHADER_FILE ${SHADER_FILES})
+        get_filename_component(SHADER_NAME ${SHADER_FILE} NAME)
+        set(OUTPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/Content/Shaders/GLSL/${SHADER_NAME})
+
+        add_custom_command(
+            OUTPUT ${OUTPUT_FILE}
+            COMMAND "${VULKAN_SDK}/bin/glslc" "${SHADER_FILE}" -o "${OUTPUT_FILE}"
+            DEPENDS ${TARGET}
+        )
+
+        add_custom_target(
+            COMPILE_${SHADER_NAME}
+            ALL
+            DEPENDS ${OUTPUT_FILE}
+        )
+    endforeach()
+endif()
