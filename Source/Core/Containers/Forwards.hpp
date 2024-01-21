@@ -36,10 +36,19 @@ namespace Containers
 template<typename T>
 class Array;
 
+template<typename T>
+class TString;
+
+typedef TString<char> String;
+typedef TString<wchar_t> WString;
+
 }
 }
 
 template<typename T>
 using Array = Core::Containers::Array<T>;
+
+using String = Core::Containers::String;
+using WString = Core::Containers::WString;
 
 }

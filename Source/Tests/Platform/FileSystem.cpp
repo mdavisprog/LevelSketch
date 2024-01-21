@@ -25,6 +25,7 @@ SOFTWARE.
 */
 
 #include "Platform.hpp"
+#include "../../Core/Containers/String.hpp"
 #include "../../Platform/FileSystem.hpp"
 #include "../TestSuite.hpp"
 #include "../Utility.hpp"

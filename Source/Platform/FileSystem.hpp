@@ -26,7 +26,7 @@ SOFTWARE.
 
 #pragma once
 
-#include "../Core/Containers/String.hpp"
+#include "../Core/Containers/Forwards.hpp"
 
 namespace LevelSketch
 {

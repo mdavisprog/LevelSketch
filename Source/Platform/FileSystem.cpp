@@ -25,6 +25,7 @@ SOFTWARE.
 */
 
 #include "FileSystem.hpp"
+#include "../Core/Containers/String.hpp"
 #include "../Core/Defines.hpp"
 #include "../Core/Math/Math.hpp"
 
