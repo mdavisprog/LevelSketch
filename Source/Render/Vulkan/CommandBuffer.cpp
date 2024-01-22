@@ -31,6 +31,7 @@ SOFTWARE.
 #include "Errors.hpp"
 #include "GraphicsPipeline.hpp"
 #include "SwapChain.hpp"
+#include "Sync.hpp"
 
 namespace LevelSketch
 {
@@ -62,7 +63,7 @@ bool CommandBuffer::Initialize(const Device& Device_, const CommandPool& Pool)
     return true;
 }
 
-bool CommandBuffer::Record(const GraphicsPipeline& Pipeline, const SwapChain& SwapChain_)
+bool CommandBuffer::Record(const GraphicsPipeline& Pipeline, const SwapChain& SwapChain_, u32 FrameIndex) const
 {
     VkCommandBufferBeginInfo BeginInfo {};
     BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -82,7 +83,7 @@ bool CommandBuffer::Record(const GraphicsPipeline& Pipeline, const SwapChain& Sw
     VkRenderPassBeginInfo RenderPassInfo {};
     RenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     RenderPassInfo.renderPass = Pipeline.RenderPass();
-    RenderPassInfo.framebuffer = SwapChain_.CurrentFramebuffer();
+    RenderPassInfo.framebuffer = SwapChain_.Framebuffer(FrameIndex);
     RenderPassInfo.renderArea.offset = { 0, 0 };
     RenderPassInfo.renderArea.extent = SwapChain_.Extents();
     RenderPassInfo.clearValueCount = 1;
@@ -118,6 +119,54 @@ bool CommandBuffer::Record(const GraphicsPipeline& Pipeline, const SwapChain& Sw
     }
 
     return true;
+}
+
+void CommandBuffer::Reset() const
+{
+    if (!IsValid())
+    {
+        return;
+    }
+
+    vkResetCommandBuffer(m_Handle, 0);
+}
+
+bool CommandBuffer::Submit(const Device& Device_, const Sync& Sync_) const
+{
+    if (!IsValid())
+    {
+        Core::Console::Error("Failed to submit command buffer. Invalid handle.");
+        return false;
+    }
+
+    const VkSemaphore WaitSemaphores[] = { Sync_.ImageReady() };
+    const VkSemaphore SignalSemaphores[] = { Sync_.RenderFinished() };
+    const VkPipelineStageFlags WaitFlags[] { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+
+    VkSubmitInfo SubmitInfo {};
+    SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    SubmitInfo.waitSemaphoreCount = 1;
+    SubmitInfo.pWaitSemaphores = WaitSemaphores;
+    SubmitInfo.pWaitDstStageMask = WaitFlags;
+    SubmitInfo.commandBufferCount = 1;
+    SubmitInfo.pCommandBuffers = &m_Handle;
+    SubmitInfo.signalSemaphoreCount = 1;
+    SubmitInfo.pSignalSemaphores = SignalSemaphores;
+
+    VkResult Result { vkQueueSubmit(Device_.GraphicsQueue().Handle(), 1, &SubmitInfo, Sync_.Fence()) };
+
+    if (Result != VK_SUCCESS)
+    {
+        Core::Console::Error("Failed to submit graphics queue. Error: %s", Errors::ToString(Result));
+        return false;
+    }
+
+    return true;
+}
+
+bool CommandBuffer::IsValid() const
+{
+    return m_Handle != VK_NULL_HANDLE;
 }
 
 }

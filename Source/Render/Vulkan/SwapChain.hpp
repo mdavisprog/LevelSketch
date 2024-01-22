@@ -40,6 +40,7 @@ class Device;
 class GraphicsPipeline;
 class PhysicalDevice;
 class Surface;
+class Sync;
 
 class SwapChain
 {
@@ -64,12 +65,14 @@ public:
     bool InitializeFramebuffers(const Device& Device_, const GraphicsPipeline& Pipeline);
     void Shutdown(const Device& Device_);
 
+    bool Present(const Device& Device_, const Sync& Sync_, u32 FrameIndex) const;
+
     VkSwapchainKHR Handle() const;
     bool IsValid() const;
 
     VkFormat Format() const;
     VkExtent2D Extents() const;
-    VkFramebuffer CurrentFramebuffer() const;
+    VkFramebuffer Framebuffer(u32 Index) const;
 
 private:
     static VkSurfaceFormatKHR BestFormat(const Array<VkSurfaceFormatKHR>& Formats);

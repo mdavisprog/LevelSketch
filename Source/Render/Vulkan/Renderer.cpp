@@ -197,6 +197,11 @@ bool Renderer::Initialize(Platform::Window* Window)
             return false;
         }
 
+        if (!m_Sync.Initialize(m_Device))
+        {
+            return false;
+        }
+
         Vertex.Shutdown(m_Device);
         Fragment.Shutdown(m_Device);
 
@@ -214,6 +219,7 @@ void Renderer::Shutdown()
     DebugUtils::Instance().Shutdown(m_Instance);
 #endif
 
+    m_Sync.Shutdown(m_Device);
     m_Pipeline.Shutdown(m_Device);
     m_SwapChain.Shutdown(m_Device);
     m_Device.Shutdown();
@@ -230,6 +236,17 @@ void Renderer::Shutdown()
 
 void Renderer::Render(Platform::Window*)
 {
+    m_Sync.WaitForFence(m_Device);
+    const u32 FrameIndex { m_Sync.FrameIndex(m_Device, m_SwapChain) };
+    (void)FrameIndex;
+
+    const CommandBuffer& CmdBuffer { m_Device.GetCommandPool().Buffer() };
+
+    CmdBuffer.Reset();
+    CmdBuffer.Record(m_Pipeline, m_SwapChain, FrameIndex);
+    CmdBuffer.Submit(m_Device, m_Sync);
+
+    m_SwapChain.Present(m_Device, m_Sync, FrameIndex);
 }
 
 u32 Renderer::LoadTexture(const void*, u32, u32, u8)

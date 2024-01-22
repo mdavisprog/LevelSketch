@@ -127,6 +127,7 @@ else()
             Render/Vulkan/Shader.cpp
             Render/Vulkan/Surface.cpp
             Render/Vulkan/SwapChain.cpp
+            Render/Vulkan/Sync.cpp
             Render/Vulkan/Queue.cpp
         )
 

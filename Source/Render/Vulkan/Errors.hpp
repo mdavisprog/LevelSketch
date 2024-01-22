@@ -43,6 +43,8 @@ static const char* ToString(VkResult Error)
     {
     case VK_SUCCESS: return "Success";
     case VK_INCOMPLETE: return "Incomplete";
+    case VK_NOT_READY: return "Not ready";
+    case VK_SUBOPTIMAL_KHR: return "Suboptimal KHR";
     case VK_ERROR_OUT_OF_HOST_MEMORY: return "Out of host memory";
     case VK_ERROR_OUT_OF_DEVICE_MEMORY: return "Out of device memory";
     case VK_ERROR_LAYER_NOT_PRESENT: return "Layer not present";
@@ -57,6 +59,8 @@ static const char* ToString(VkResult Error)
     case VK_ERROR_COMPRESSION_EXHAUSTED_EXT: return "Compression exhausted ext";
     case VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS_KHR: return "Invalid opaque capture address KHR";
     case VK_ERROR_INVALID_SHADER_NV: return "Invalid shader nv";
+    case VK_ERROR_OUT_OF_DATE_KHR: return "Out of date KHR";
+    case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT: return "Full screen exclusive mode lost KHR";
     default: break;
     }
 

@@ -36,27 +36,31 @@ namespace Render
 namespace Vulkan
 {
 
-class CommandPool;
 class Device;
-class GraphicsPipeline;
 class SwapChain;
-class Sync;
 
-class CommandBuffer
+class Sync
 {
 public:
-    CommandBuffer();
+    Sync();
 
-    bool Initialize(const Device& Device_, const CommandPool& Pool);
+    bool Initialize(const Device& Device_);
+    void Shutdown(const Device& Device_);
 
-    bool Record(const GraphicsPipeline& Pipeline, const SwapChain& SwapChain_, u32 FrameIndex) const;
-    void Reset() const;
-    bool Submit(const Device& Device_, const Sync& Sync_) const;
+    u32 FrameIndex(const Device& Device_, const SwapChain& SwapChain_);
+    Sync& WaitForFence(const Device& Device_);
 
-    bool IsValid() const;
+    VkSemaphore ImageReady() const;
+    VkSemaphore RenderFinished() const;
+    VkFence Fence() const;
 
 private:
-    VkCommandBuffer m_Handle { VK_NULL_HANDLE };
+    VkSemaphore CreateSemaphore(const Device& Device_);
+    void DestroySemaphore(const Device& Device_, VkSemaphore& Semaphore);
+
+    VkSemaphore m_ImageReady { VK_NULL_HANDLE };
+    VkSemaphore m_RenderFinished { VK_NULL_HANDLE };
+    VkFence m_Fence { VK_NULL_HANDLE };
 };
 
 }

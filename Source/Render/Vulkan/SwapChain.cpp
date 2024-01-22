@@ -31,6 +31,7 @@ SOFTWARE.
 #include "Errors.hpp"
 #include "GraphicsPipeline.hpp"
 #include "Surface.hpp"
+#include "Sync.hpp"
 
 namespace LevelSketch
 {
@@ -288,6 +289,31 @@ void SwapChain::Shutdown(const Device& Device_)
     }
 }
 
+bool SwapChain::Present(const Device& Device_, const Sync& Sync_, u32 FrameIndex) const
+{
+    const VkSemaphore SignalSemaphores[] { Sync_.RenderFinished() };
+    const VkSwapchainKHR SwapChains[] { m_SwapChain };
+
+    VkPresentInfoKHR PresentInfo {};
+    PresentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    PresentInfo.waitSemaphoreCount = 1;
+    PresentInfo.pWaitSemaphores = SignalSemaphores;
+    PresentInfo.swapchainCount = 1;
+    PresentInfo.pSwapchains = SwapChains;
+    PresentInfo.pImageIndices = &FrameIndex;
+    PresentInfo.pResults = nullptr;
+
+    VkResult Result { vkQueuePresentKHR(Device_.PresentQueue().Handle(), &PresentInfo) };
+
+    if (Result != VK_SUCCESS)
+    {
+        Core::Console::Error("Failed to present. Error: %s", Errors::ToString(Result));
+        return false;
+    }
+
+    return true;
+}
+
 VkSwapchainKHR SwapChain::Handle() const
 {
     return m_SwapChain;
@@ -308,10 +334,14 @@ VkExtent2D SwapChain::Extents() const
     return m_Extents;
 }
 
-VkFramebuffer SwapChain::CurrentFramebuffer() const
+VkFramebuffer SwapChain::Framebuffer(u32 Index) const
 {
-    // TODO: Get active framebuffer.
-    return m_Framebuffers[0];
+    if (Index >= m_Framebuffers.Size())
+    {
+        return VK_NULL_HANDLE;
+    }
+
+    return m_Framebuffers[Index];
 }
 
 VkSurfaceFormatKHR SwapChain::BestFormat(const Array<VkSurfaceFormatKHR>& Formats)

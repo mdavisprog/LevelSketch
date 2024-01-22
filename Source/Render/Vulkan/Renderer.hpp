@@ -34,6 +34,7 @@ SOFTWARE.
 #include "Queue.hpp"
 #include "Surface.hpp"
 #include "SwapChain.hpp"
+#include "Sync.hpp"
 #include "vulkan/vulkan.hpp"
 
 namespace LevelSketch
@@ -64,6 +65,7 @@ private:
     Device m_Device {};
     SwapChain m_SwapChain {};
     GraphicsPipeline m_Pipeline {};
+    Sync m_Sync {};
 };
 
 }

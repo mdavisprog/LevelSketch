@@ -250,12 +250,22 @@ bool GraphicsPipeline::CreateRenderPass(const Device& Device_, const SwapChain& 
     SubpassDesc.colorAttachmentCount = 1;
     SubpassDesc.pColorAttachments = &ColorRef;
 
+    VkSubpassDependency SubpassDependency {};
+    SubpassDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+    SubpassDependency.dstSubpass = 0;
+    SubpassDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    SubpassDependency.srcAccessMask = 0;
+    SubpassDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    SubpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
     VkRenderPassCreateInfo CreateInfo {};
     CreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     CreateInfo.attachmentCount = 1;
     CreateInfo.pAttachments = &ColorAttachment;
     CreateInfo.subpassCount = 1;
     CreateInfo.pSubpasses = &SubpassDesc;
+    CreateInfo.dependencyCount = 1;
+    CreateInfo.pDependencies = &SubpassDependency;
 
     VkResult Result { vkCreateRenderPass(Device_.GetLogicalDevice().Handle(), &CreateInfo, nullptr, &m_RenderPass) };
 
