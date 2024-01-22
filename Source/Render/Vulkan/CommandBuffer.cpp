@@ -44,23 +44,9 @@ CommandBuffer::CommandBuffer()
 {
 }
 
-bool CommandBuffer::Initialize(const Device& Device_, const CommandPool& Pool)
+void CommandBuffer::Initialize(VkCommandBuffer Handle)
 {
-    VkCommandBufferAllocateInfo AllocInfo {};
-    AllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    AllocInfo.commandPool = Pool.Handle();
-    AllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    AllocInfo.commandBufferCount = 1;
-
-    VkResult Result { vkAllocateCommandBuffers(Device_.GetLogicalDevice().Handle(), &AllocInfo, &m_Handle) };
-
-    if (Result != VK_SUCCESS)
-    {
-        Core::Console::Error("Failed to allocate command buffers. Error: %s", Errors::ToString(Result));
-        return false;
-    }
-
-    return true;
+    m_Handle = Handle;
 }
 
 bool CommandBuffer::Record(const GraphicsPipeline& Pipeline, const SwapChain& SwapChain_, u32 FrameIndex) const

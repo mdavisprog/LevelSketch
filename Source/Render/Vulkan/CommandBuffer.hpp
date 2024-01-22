@@ -47,7 +47,7 @@ class CommandBuffer
 public:
     CommandBuffer();
 
-    bool Initialize(const Device& Device_, const CommandPool& Pool);
+    void Initialize(VkCommandBuffer Handle);
 
     bool Record(const GraphicsPipeline& Pipeline, const SwapChain& SwapChain_, u32 FrameIndex) const;
     void Reset() const;

@@ -163,6 +163,16 @@ bool Renderer::Initialize(Platform::Window* Window)
             return false;
         }
 
+        if (!m_CommandPool.Initialize(m_Device))
+        {
+            return false;
+        }
+
+        if (!m_CommandPool.InitializeBuffers(m_Device, FRAMES_IN_FLIGHT))
+        {
+            return false;
+        }
+
         VkExtent2D Extents { static_cast<u32>(PixelRes.X), static_cast<u32>(PixelRes.Y) };
         if (!m_SwapChain.Initialize(m_Device, m_Surface, Extents))
         {
@@ -197,9 +207,12 @@ bool Renderer::Initialize(Platform::Window* Window)
             return false;
         }
 
-        if (!m_Sync.Initialize(m_Device))
+        for (Sync& Sync_ : m_Syncs)
         {
-            return false;
+            if (!Sync_.Initialize(m_Device))
+            {
+                return false;
+            }
         }
 
         Vertex.Shutdown(m_Device);
@@ -219,9 +232,14 @@ void Renderer::Shutdown()
     DebugUtils::Instance().Shutdown(m_Instance);
 #endif
 
-    m_Sync.Shutdown(m_Device);
+    for (Sync& Sync_ : m_Syncs)
+    {
+        Sync_.Shutdown(m_Device);
+    }
+
     m_Pipeline.Shutdown(m_Device);
     m_SwapChain.Shutdown(m_Device);
+    m_CommandPool.Shutdown(m_Device);
     m_Device.Shutdown();
     m_Surface.Shutdown(m_Instance);
 
@@ -236,17 +254,20 @@ void Renderer::Shutdown()
 
 void Renderer::Render(Platform::Window*)
 {
-    m_Sync.WaitForFence(m_Device);
-    const u32 FrameIndex { m_Sync.FrameIndex(m_Device, m_SwapChain) };
-    (void)FrameIndex;
+    const Sync& CurrentSync { m_Syncs[m_FrameIndex] };
 
-    const CommandBuffer& CmdBuffer { m_Device.GetCommandPool().Buffer() };
+    CurrentSync.WaitForFence(m_Device);
+    const u32 SwapChainFrameIndex { CurrentSync.FrameIndex(m_Device, m_SwapChain) };
+
+    const CommandBuffer& CmdBuffer { m_CommandPool.Buffer(m_FrameIndex) };
 
     CmdBuffer.Reset();
-    CmdBuffer.Record(m_Pipeline, m_SwapChain, FrameIndex);
-    CmdBuffer.Submit(m_Device, m_Sync);
+    CmdBuffer.Record(m_Pipeline, m_SwapChain, SwapChainFrameIndex);
+    CmdBuffer.Submit(m_Device, CurrentSync);
 
-    m_SwapChain.Present(m_Device, m_Sync, FrameIndex);
+    m_SwapChain.Present(m_Device, CurrentSync, SwapChainFrameIndex);
+
+    m_FrameIndex = (m_FrameIndex + 1) % FRAMES_IN_FLIGHT;
 }
 
 u32 Renderer::LoadTexture(const void*, u32, u32, u8)

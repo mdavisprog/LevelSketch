@@ -26,6 +26,7 @@ SOFTWARE.
 
 #pragma once
 
+#include "../../Core/Containers/Array.hpp"
 #include "CommandBuffer.hpp"
 
 namespace LevelSketch
@@ -43,15 +44,16 @@ public:
     CommandPool();
 
     bool Initialize(const Device& Device_);
+    bool InitializeBuffers(const Device& Device_, u64 Count);
     void Shutdown(const Device& Device_);
 
     bool IsValid() const;
     VkCommandPool Handle() const;
-    const CommandBuffer& Buffer() const;
+    const CommandBuffer& Buffer(u64 Index) const;
 
 private:
     VkCommandPool m_Handle { VK_NULL_HANDLE };
-    CommandBuffer m_CommandBuffer {};
+    Array<CommandBuffer> m_CommandBuffers {};
 };
 
 }

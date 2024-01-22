@@ -27,6 +27,7 @@ SOFTWARE.
 #pragma once
 
 #include "../Renderer.hpp"
+#include "CommandPool.hpp"
 #include "Device.hpp"
 #include "GraphicsPipeline.hpp"
 #include "LogicalDevice.hpp"
@@ -36,6 +37,8 @@ SOFTWARE.
 #include "SwapChain.hpp"
 #include "Sync.hpp"
 #include "vulkan/vulkan.hpp"
+
+#define FRAMES_IN_FLIGHT 2
 
 namespace LevelSketch
 {
@@ -65,7 +68,9 @@ private:
     Device m_Device {};
     SwapChain m_SwapChain {};
     GraphicsPipeline m_Pipeline {};
-    Sync m_Sync {};
+    Sync m_Syncs[FRAMES_IN_FLIGHT] {};
+    CommandPool m_CommandPool {};
+    u64 m_FrameIndex { 0 };
 };
 
 }

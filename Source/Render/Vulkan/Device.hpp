@@ -55,7 +55,6 @@ public:
     const PhysicalDevice& GetPhysicalDevice() const;
     const Queue& GraphicsQueue() const;
     const Queue& PresentQueue() const;
-    const CommandPool& GetCommandPool() const;
 
 private:
     bool SelectBestPhysicalDevice(VkInstance Instance, const Surface& Surface_);
@@ -64,7 +63,6 @@ private:
     PhysicalDevice m_PhysicalDevice {};
     Queue m_GraphicsQueue {};
     Queue m_PresentQueue {};
-    CommandPool m_CommandPool {};
 };
 
 }

@@ -84,7 +84,7 @@ void Sync::Shutdown(const Device& Device_)
     }
 }
 
-u32 Sync::FrameIndex(const Device& Device_, const SwapChain& SwapChain_)
+u32 Sync::FrameIndex(const Device& Device_, const SwapChain& SwapChain_) const
 {
     u32 Index { UINT32_MAX };
 
@@ -105,17 +105,17 @@ u32 Sync::FrameIndex(const Device& Device_, const SwapChain& SwapChain_)
     return Index;
 }
 
-Sync& Sync::WaitForFence(const Device& Device_)
+void Sync::WaitForFence(const Device& Device_) const
 {
     if (m_Fence == VK_NULL_HANDLE)
     {
-        return *this;
+        return;
     }
 
     vkWaitForFences(Device_.GetLogicalDevice().Handle(), 1, &m_Fence, VK_TRUE, UINT64_MAX);
     vkResetFences(Device_.GetLogicalDevice().Handle(), 1, &m_Fence);
 
-    return *this;
+    return;
 }
 
 VkSemaphore Sync::ImageReady() const

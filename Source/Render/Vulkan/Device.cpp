@@ -76,17 +76,11 @@ bool Device::Initialize(VkInstance Instance, const Surface& Surface_, const Arra
         return false;
     }
 
-    if (!m_CommandPool.Initialize(*this))
-    {
-        return false;
-    }
-
     return true;
 }
 
 void Device::Shutdown()
 {
-    m_CommandPool.Shutdown(*this);
     m_LogicalDevice.Shutdown();
 }
 
@@ -118,11 +112,6 @@ const Queue& Device::GraphicsQueue() const
 const Queue& Device::PresentQueue() const
 {
     return m_PresentQueue;
-}
-
-const CommandPool& Device::GetCommandPool() const
-{
-    return m_CommandPool;
 }
 
 bool Device::SelectBestPhysicalDevice(VkInstance Instance, const Surface& Surface_)

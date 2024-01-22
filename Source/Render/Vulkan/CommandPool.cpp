@@ -55,9 +55,33 @@ bool CommandPool::Initialize(const Device& Device_)
         return false;
     }
 
-    if (!m_CommandBuffer.Initialize(Device_, *this))
+    return true;
+}
+
+bool CommandPool::InitializeBuffers(const Device& Device_, u64 Count)
+{
+    VkCommandBufferAllocateInfo AllocInfo {};
+    AllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    AllocInfo.commandPool = m_Handle;
+    AllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    AllocInfo.commandBufferCount = Count;
+
+    Array<VkCommandBuffer> Buffers {};
+    Buffers.Resize(Count);
+
+    VkResult Result { vkAllocateCommandBuffers(Device_.GetLogicalDevice().Handle(), &AllocInfo, Buffers.Data()) };
+
+    if (Result != VK_SUCCESS)
     {
+        Core::Console::Error("Failed to allocate command buffers. Error: %s", Errors::ToString(Result));
         return false;
+    }
+
+    m_CommandBuffers.Resize(Count);
+
+    for (u64 I = 0; I < Count; I++)
+    {
+        m_CommandBuffers[I].Initialize(Buffers[I]);
     }
 
     return true;
@@ -82,9 +106,9 @@ VkCommandPool CommandPool::Handle() const
     return m_Handle;
 }
 
-const CommandBuffer& CommandPool::Buffer() const
+const CommandBuffer& CommandPool::Buffer(u64 Index) const
 {
-    return m_CommandBuffer;
+    return m_CommandBuffers[Index];
 }
 
 }
