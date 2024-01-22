@@ -208,6 +208,8 @@ bool Renderer::Initialize(Platform::Window* Window)
 
 void Renderer::Shutdown()
 {
+    m_Device.WaitForIdle();
+
 #if defined(DEBUG)
     DebugUtils::Instance().Shutdown(m_Instance);
 #endif

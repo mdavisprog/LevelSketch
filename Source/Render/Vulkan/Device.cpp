@@ -90,9 +90,39 @@ void Device::Shutdown()
     m_LogicalDevice.Shutdown();
 }
 
+void Device::WaitForIdle() const
+{
+    vkDeviceWaitIdle(m_LogicalDevice.Handle());
+}
+
 bool Device::IsValid() const
 {
     return m_PhysicalDevice.IsValid() && m_LogicalDevice.IsValid();
+}
+
+const LogicalDevice& Device::GetLogicalDevice() const
+{
+    return m_LogicalDevice;
+}
+
+const PhysicalDevice& Device::GetPhysicalDevice() const
+{
+    return m_PhysicalDevice;
+}
+
+const Queue& Device::GraphicsQueue() const
+{
+    return m_GraphicsQueue;
+}
+
+const Queue& Device::PresentQueue() const
+{
+    return m_PresentQueue;
+}
+
+const CommandPool& Device::GetCommandPool() const
+{
+    return m_CommandPool;
 }
 
 bool Device::SelectBestPhysicalDevice(VkInstance Instance, const Surface& Surface_)
@@ -133,16 +163,6 @@ bool Device::SelectBestPhysicalDevice(VkInstance Instance, const Surface& Surfac
     }
 
     return m_PhysicalDevice.IsValid();
-}
-
-const LogicalDevice& Device::GetLogicalDevice() const
-{
-    return m_LogicalDevice;
-}
-
-const PhysicalDevice& Device::GetPhysicalDevice() const
-{
-    return m_PhysicalDevice;
 }
 
 }

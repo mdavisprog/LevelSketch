@@ -47,11 +47,15 @@ public:
 
     bool Initialize(VkInstance Instance, const Surface& Surface_, const Array<const char*>& Layers);
     void Shutdown();
+    void WaitForIdle() const;
 
     bool IsValid() const;
 
     const LogicalDevice& GetLogicalDevice() const;
     const PhysicalDevice& GetPhysicalDevice() const;
+    const Queue& GraphicsQueue() const;
+    const Queue& PresentQueue() const;
+    const CommandPool& GetCommandPool() const;
 
 private:
     bool SelectBestPhysicalDevice(VkInstance Instance, const Surface& Surface_);
