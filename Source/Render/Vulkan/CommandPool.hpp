@@ -47,6 +47,7 @@ public:
 
     bool IsValid() const;
     VkCommandPool Handle() const;
+    const CommandBuffer& Buffer() const;
 
 private:
     VkCommandPool m_Handle { VK_NULL_HANDLE };

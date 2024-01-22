@@ -82,6 +82,11 @@ VkCommandPool CommandPool::Handle() const
     return m_Handle;
 }
 
+const CommandBuffer& CommandPool::Buffer() const
+{
+    return m_CommandBuffer;
+}
+
 }
 }
 }
