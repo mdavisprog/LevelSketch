@@ -69,6 +69,7 @@ public:
 
     VkFormat Format() const;
     VkExtent2D Extents() const;
+    VkFramebuffer CurrentFramebuffer() const;
 
 private:
     static VkSurfaceFormatKHR BestFormat(const Array<VkSurfaceFormatKHR>& Formats);

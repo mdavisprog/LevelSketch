@@ -76,11 +76,17 @@ bool Device::Initialize(VkInstance Instance, const Surface& Surface_, const Arra
         return false;
     }
 
+    if (!m_CommandPool.Initialize(*this))
+    {
+        return false;
+    }
+
     return true;
 }
 
 void Device::Shutdown()
 {
+    m_CommandPool.Shutdown(*this);
     m_LogicalDevice.Shutdown();
 }
 

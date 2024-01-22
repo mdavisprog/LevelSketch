@@ -26,7 +26,7 @@ SOFTWARE.
 
 #pragma once
 
-#include "vulkan/vulkan.hpp"
+#include "CommandBuffer.hpp"
 
 namespace LevelSketch
 {
@@ -36,27 +36,21 @@ namespace Vulkan
 {
 
 class Device;
-class Shader;
-class SwapChain;
 
-class GraphicsPipeline
+class CommandPool
 {
 public:
-    GraphicsPipeline();
+    CommandPool();
 
-    bool Initialize(const Device& Device_, const SwapChain& SwapChain_, const Shader& Vertex, const Shader& Fragment);
+    bool Initialize(const Device& Device_);
     void Shutdown(const Device& Device_);
 
-    VkRenderPass RenderPass() const;
-    VkPipeline Handle() const;
+    bool IsValid() const;
+    VkCommandPool Handle() const;
 
 private:
-    bool CreatePipelineLayout(const Device& Device_);
-    bool CreateRenderPass(const Device& Device_, const SwapChain& SwapChain_);
-
-    VkPipelineLayout m_PipelineLayout { VK_NULL_HANDLE };
-    VkRenderPass m_RenderPass { VK_NULL_HANDLE };
-    VkPipeline m_Handle { VK_NULL_HANDLE };
+    VkCommandPool m_Handle { VK_NULL_HANDLE };
+    CommandBuffer m_CommandBuffer {};
 };
 
 }

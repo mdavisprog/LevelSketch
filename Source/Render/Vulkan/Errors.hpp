@@ -41,6 +41,7 @@ static const char* ToString(VkResult Error)
 {
     switch (Error)
     {
+    case VK_SUCCESS: return "Success";
     case VK_INCOMPLETE: return "Incomplete";
     case VK_ERROR_OUT_OF_HOST_MEMORY: return "Out of host memory";
     case VK_ERROR_OUT_OF_DEVICE_MEMORY: return "Out of device memory";
@@ -59,7 +60,7 @@ static const char* ToString(VkResult Error)
     default: break;
     }
 
-    return "Success";
+    return "Error result not handled";
 }
 
 }

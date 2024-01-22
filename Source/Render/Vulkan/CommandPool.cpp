@@ -24,12 +24,10 @@ SOFTWARE.
 
 */
 
-#pragma once
-
 #include "CommandPool.hpp"
-#include "LogicalDevice.hpp"
-#include "PhysicalDevice.hpp"
-#include "Queue.hpp"
+#include "../../Core/Console.hpp"
+#include "Device.hpp"
+#include "Errors.hpp"
 
 namespace LevelSketch
 {
@@ -38,31 +36,53 @@ namespace Render
 namespace Vulkan
 {
 
-class Surface;
-
-class Device
+CommandPool::CommandPool()
 {
-public:
-    Device();
+}
 
-    bool Initialize(VkInstance Instance, const Surface& Surface_, const Array<const char*>& Layers);
-    void Shutdown();
+bool CommandPool::Initialize(const Device& Device_)
+{
+    VkCommandPoolCreateInfo CreateInfo {};
+    CreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    CreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    CreateInfo.queueFamilyIndex = Device_.GetPhysicalDevice().QueueFamilyIndex().Graphics();
 
-    bool IsValid() const;
+    VkResult Result { vkCreateCommandPool(Device_.GetLogicalDevice().Handle(), &CreateInfo, nullptr, &m_Handle) };
 
-    const LogicalDevice& GetLogicalDevice() const;
-    const PhysicalDevice& GetPhysicalDevice() const;
+    if (Result != VK_SUCCESS)
+    {
+        Core::Console::Error("Failed to create command pool. Error: %s", Errors::ToString(Result));
+        return false;
+    }
 
-private:
-    bool SelectBestPhysicalDevice(VkInstance Instance, const Surface& Surface_);
+    if (!m_CommandBuffer.Initialize(Device_, *this))
+    {
+        return false;
+    }
 
-    LogicalDevice m_LogicalDevice {};
-    PhysicalDevice m_PhysicalDevice {};
-    Queue m_GraphicsQueue {};
-    Queue m_PresentQueue {};
-    CommandPool m_CommandPool {};
-};
+    return true;
+}
+
+void CommandPool::Shutdown(const Device& Device_)
+{
+    if (m_Handle != VK_NULL_HANDLE)
+    {
+        vkDestroyCommandPool(Device_.GetLogicalDevice().Handle(), m_Handle, nullptr);
+        m_Handle = VK_NULL_HANDLE;
+    }
+}
+
+bool CommandPool::IsValid() const
+{
+    return m_Handle != VK_NULL_HANDLE;
+}
+
+VkCommandPool CommandPool::Handle() const
+{
+    return m_Handle;
+}
 
 }
 }
 }
+

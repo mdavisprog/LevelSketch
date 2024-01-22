@@ -166,7 +166,7 @@ bool GraphicsPipeline::Initialize(const Device& Device_, const SwapChain& SwapCh
         1,
         &PipelineInfo,
         nullptr,
-        &m_Pipeline
+        &m_Handle
     )};
 
     if (Result != VK_SUCCESS)
@@ -180,10 +180,10 @@ bool GraphicsPipeline::Initialize(const Device& Device_, const SwapChain& SwapCh
 
 void GraphicsPipeline::Shutdown(const Device& Device_)
 {
-    if (m_Pipeline != VK_NULL_HANDLE)
+    if (m_Handle != VK_NULL_HANDLE)
     {
-        vkDestroyPipeline(Device_.GetLogicalDevice().Handle(), m_Pipeline, nullptr);
-        m_Pipeline = VK_NULL_HANDLE;
+        vkDestroyPipeline(Device_.GetLogicalDevice().Handle(), m_Handle, nullptr);
+        m_Handle = VK_NULL_HANDLE;
     }
 
     if (m_RenderPass != VK_NULL_HANDLE)
@@ -202,6 +202,11 @@ void GraphicsPipeline::Shutdown(const Device& Device_)
 VkRenderPass GraphicsPipeline::RenderPass() const
 {
     return m_RenderPass;
+}
+
+VkPipeline GraphicsPipeline::Handle() const
+{
+    return m_Handle;
 }
 
 bool GraphicsPipeline::CreatePipelineLayout(const Device& Device_)

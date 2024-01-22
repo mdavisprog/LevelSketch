@@ -308,6 +308,12 @@ VkExtent2D SwapChain::Extents() const
     return m_Extents;
 }
 
+VkFramebuffer SwapChain::CurrentFramebuffer() const
+{
+    // TODO: Get active framebuffer.
+    return m_Framebuffers[0];
+}
+
 VkSurfaceFormatKHR SwapChain::BestFormat(const Array<VkSurfaceFormatKHR>& Formats)
 {
     if (Formats.IsEmpty())
