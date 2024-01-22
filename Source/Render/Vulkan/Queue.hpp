@@ -45,6 +45,8 @@ public:
 
     bool Initialize(const LogicalDevice& Device, u32 QueueFamilyIndex);
 
+    VkQueue Handle() const;
+
 private:
     VkQueue m_Queue { VK_NULL_HANDLE };
 };

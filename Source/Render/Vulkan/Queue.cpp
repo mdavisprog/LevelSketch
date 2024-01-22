@@ -44,6 +44,11 @@ bool Queue::Initialize(const LogicalDevice& Device, u32 QueueFamilyIndex)
     return true;
 }
 
+VkQueue Queue::Handle() const
+{
+    return m_Queue;
+}
+
 }
 }
 }
