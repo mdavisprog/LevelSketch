@@ -246,19 +246,24 @@ bool Renderer::Initialize(Platform::Window* Window)
         Vertex.Shutdown(m_Device);
         Fragment.Shutdown(m_Device);
 
-        const Vertex3 Vertices[3] {
-            {{0.0f, -0.5f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
-            {{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
-            {{0.5f, 0.5f, 0.0f,}, {0.0f, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}}
+        const Vertex3 Vertices[4] {
+            {{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
+            {{0.5f, -0.5f, 0.0f}, {0.0f, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
+            {{0.5f, 0.5f, 0.0f,}, {0.0f, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},
+            {{-0.5f, 0.5f, 0.0f,}, {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}}
         };
         const u64 VerticesSize { sizeof(Vertex3) * ARRAY_COUNT(Vertices) };
 
-        if (!m_RenderBuffer.Initialize(m_Device, VerticesSize))
+        const u32 Indices[] { 0, 2, 1, 0, 3, 2 };
+        const u64 IndicesSize { sizeof(u32) * ARRAY_COUNT(Indices) };
+
+        if (!m_RenderBuffer.Initialize(m_Device, VerticesSize, IndicesSize))
         {
             return false;
         }
 
         m_RenderBuffer.VertexBuffer().Upload(m_Device, m_CommandPool, Vertices, VerticesSize);
+        m_RenderBuffer.IndexBuffer().Upload(m_Device, m_CommandPool, Indices, IndicesSize);
 
         Core::Console::WriteLine("Initialized Vulkan");
     }
@@ -308,7 +313,7 @@ void Renderer::Render(Platform::Window*)
     CmdBuffer.Reset();
     CmdBuffer.BeginRecord(m_Pipeline, m_SwapChain, SwapChainFrameIndex);
     CmdBuffer.BindBuffers(m_RenderBuffer);
-    CmdBuffer.DrawVertices(3, 1, 0, 0);
+    CmdBuffer.DrawVerticesIndexed(6, 1, 0, 0, 0);
     CmdBuffer.EndRecord();
     CmdBuffer.Submit(m_Device, CurrentSync);
 

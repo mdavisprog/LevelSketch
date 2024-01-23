@@ -42,13 +42,17 @@ class RenderBuffer
 public:
     RenderBuffer();
 
-    bool Initialize(const Device& Device_, u64 VertexSize);
+    bool Initialize(const Device& Device_, u64 VertexSize, u64 IndexSize);
     void Shutdown(const Device& Device_);
 
     const Buffer& VertexBuffer() const;
+    const Buffer& IndexBuffer() const;
 
 private:
+    bool InitializeBuffer(Buffer& Buf, const Device& Device_, u64 Size, VkBufferUsageFlags Usage) const;
+
     Buffer m_VertexBuffer {};
+    Buffer m_IndexBuffer {};
 };
 
 }

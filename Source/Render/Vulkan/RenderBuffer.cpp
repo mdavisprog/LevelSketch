@@ -39,14 +39,17 @@ RenderBuffer::RenderBuffer()
 {
 }
 
-bool RenderBuffer::Initialize(const Device& Device_, u64 VertexSize)
+bool RenderBuffer::Initialize(const Device& Device_, u64 VertexSize, u64 IndexSize)
 {
-    if (!m_VertexBuffer.Initialize(
-        Device_,
-        VertexSize,
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT))
+    if (!InitializeBuffer(m_VertexBuffer, Device_, VertexSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT))
     {
+        Core::Console::Error("Failed to initialize vertex buffer.");
+        return false;
+    }
+
+    if (!InitializeBuffer(m_IndexBuffer, Device_, IndexSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT))
+    {
+        Core::Console::Error("Failed to initialize index buffer.");
         return false;
     }
 
@@ -56,11 +59,36 @@ bool RenderBuffer::Initialize(const Device& Device_, u64 VertexSize)
 void RenderBuffer::Shutdown(const Device& Device_)
 {
     m_VertexBuffer.Shutdown(Device_);
+    m_IndexBuffer.Shutdown(Device_);
 }
 
 const Buffer& RenderBuffer::VertexBuffer() const
 {
     return m_VertexBuffer;
+}
+
+const Buffer& RenderBuffer::IndexBuffer() const
+{
+    return m_IndexBuffer;
+}
+
+bool RenderBuffer::InitializeBuffer(Buffer& Buf, const Device& Device_, u64 Size, VkBufferUsageFlags Usage) const
+{
+    if (Buf.IsValid())
+    {
+        return true;
+    }
+
+    if (!Buf.Initialize(
+        Device_,
+        Size,
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | Usage,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT))
+    {
+        return false;
+    }
+
+    return true;
 }
 
 }

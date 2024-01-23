@@ -174,6 +174,7 @@ const CommandBuffer& CommandBuffer::BindBuffers(const RenderBuffer& Buffers) con
     VkDeviceSize Offsets[] { 0 };
 
     vkCmdBindVertexBuffers(m_Handle, 0, 1, VertexBuffers, Offsets);
+    vkCmdBindIndexBuffer(m_Handle, Buffers.IndexBuffer().Handle(), 0, VK_INDEX_TYPE_UINT32);
 
     return *this;
 }
@@ -185,6 +186,17 @@ const CommandBuffer& CommandBuffer::DrawVertices(
     u32 FirstInstance) const
 {
     vkCmdDraw(m_Handle, VertexCount, InstanceCount, FirstVertex, FirstInstance);
+    return *this;
+}
+
+const CommandBuffer& CommandBuffer::DrawVerticesIndexed(
+    u32 IndexCount,
+    u32 InstanceCount,
+    u32 FirstIndex,
+    u32 VertexOffset,
+    u32 FirstInstance) const
+{
+    vkCmdDrawIndexed(m_Handle, IndexCount, InstanceCount, FirstIndex, VertexOffset, FirstInstance);
     return *this;
 }
 

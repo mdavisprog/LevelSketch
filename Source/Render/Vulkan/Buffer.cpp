@@ -278,6 +278,11 @@ VkBuffer Buffer::Handle() const
     return m_Handle;
 }
 
+bool Buffer::IsValid() const
+{
+    return m_Handle != VK_NULL_HANDLE;
+}
+
 }
 }
 }

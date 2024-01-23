@@ -55,6 +55,7 @@ public:
     bool Upload(const Device& Device_, const CommandPool& Pool, const void* Data, u64 Size) const;
 
     VkBuffer Handle() const;
+    bool IsValid() const;
 
 private:
     VkBuffer m_Handle { VK_NULL_HANDLE };

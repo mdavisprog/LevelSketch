@@ -56,7 +56,17 @@ public:
     void Reset() const;
     bool Submit(const Device& Device_, const Sync& Sync_) const;
     const CommandBuffer& BindBuffers(const RenderBuffer& Buffers) const;
-    const CommandBuffer& DrawVertices(u32 VertexCount, u32 InstanceCount, u32 FirstVertex, u32 FirstInstance) const;
+    const CommandBuffer& DrawVertices(
+        u32 VertexCount,
+        u32 InstanceCount,
+        u32 FirstVertex,
+        u32 FirstInstance) const;
+    const CommandBuffer& DrawVerticesIndexed(
+        u32 IndexCount,
+        u32 InstanceCount,
+        u32 FirstIndex,
+        u32 VertexOffset,
+        u32 FirstInstance) const;
 
     bool IsValid() const;
 
