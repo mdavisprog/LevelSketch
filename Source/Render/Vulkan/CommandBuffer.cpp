@@ -50,6 +50,20 @@ void CommandBuffer::Initialize(VkCommandBuffer Handle)
     m_Handle = Handle;
 }
 
+void CommandBuffer::Shutdown(const Device& Device_, const CommandPool& Pool)
+{
+    if (m_Handle != VK_NULL_HANDLE)
+    {
+        vkFreeCommandBuffers(
+            Device_.GetLogicalDevice().Handle(),
+            Pool.Handle(),
+            1,
+            &m_Handle);
+
+        m_Handle = VK_NULL_HANDLE;
+    }
+}
+
 bool CommandBuffer::BeginRecord(const GraphicsPipeline& Pipeline, const SwapChain& SwapChain_, u32 FrameIndex) const
 {
     VkCommandBufferBeginInfo BeginInfo {};
@@ -156,7 +170,7 @@ bool CommandBuffer::Submit(const Device& Device_, const Sync& Sync_) const
 
 const CommandBuffer& CommandBuffer::BindBuffers(const RenderBuffer& Buffers) const
 {
-    VkBuffer VertexBuffers[] { Buffers.VertexBuffer() };
+    VkBuffer VertexBuffers[] { Buffers.VertexBuffer().Handle() };
     VkDeviceSize Offsets[] { 0 };
 
     vkCmdBindVertexBuffers(m_Handle, 0, 1, VertexBuffers, Offsets);

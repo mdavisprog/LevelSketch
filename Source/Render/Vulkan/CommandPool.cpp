@@ -89,6 +89,13 @@ bool CommandPool::InitializeBuffers(const Device& Device_, u64 Count)
 
 void CommandPool::Shutdown(const Device& Device_)
 {
+    for (CommandBuffer& Buffer : m_CommandBuffers)
+    {
+        Buffer.Shutdown(Device_, *this);
+    }
+
+    m_CommandBuffers.Clear();
+
     if (m_Handle != VK_NULL_HANDLE)
     {
         vkDestroyCommandPool(Device_.GetLogicalDevice().Handle(), m_Handle, nullptr);

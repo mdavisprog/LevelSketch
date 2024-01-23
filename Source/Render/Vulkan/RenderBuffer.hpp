@@ -26,8 +26,7 @@ SOFTWARE.
 
 #pragma once
 
-#include "../../Core/Types.hpp"
-#include "vulkan/vulkan.hpp"
+#include "Buffer.hpp"
 
 namespace LevelSketch
 {
@@ -46,13 +45,10 @@ public:
     bool Initialize(const Device& Device_, u64 VertexSize);
     void Shutdown(const Device& Device_);
 
-    bool Map(const Device& Device_, const void* Data, u64 Size) const;
-
-    VkBuffer VertexBuffer() const;
+    const Buffer& VertexBuffer() const;
 
 private:
-    VkBuffer m_Vertex { VK_NULL_HANDLE };
-    VkDeviceMemory m_VertexMemory { VK_NULL_HANDLE };
+    Buffer m_VertexBuffer {};
 };
 
 }

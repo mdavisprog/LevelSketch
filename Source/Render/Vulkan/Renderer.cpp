@@ -258,7 +258,7 @@ bool Renderer::Initialize(Platform::Window* Window)
             return false;
         }
 
-        m_RenderBuffer.Map(m_Device, Vertices, VerticesSize);
+        m_RenderBuffer.VertexBuffer().Upload(m_Device, m_CommandPool, Vertices, VerticesSize);
 
         Core::Console::WriteLine("Initialized Vulkan");
     }

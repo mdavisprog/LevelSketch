@@ -38,30 +38,27 @@ namespace Vulkan
 
 class CommandPool;
 class Device;
-class GraphicsPipeline;
-class RenderBuffer;
-class SwapChain;
-class Sync;
 
-class CommandBuffer
+class Buffer
 {
 public:
-    CommandBuffer();
+    Buffer();
 
-    void Initialize(VkCommandBuffer Handle);
-    void Shutdown(const Device& Device_, const CommandPool& Pool);
+    bool Initialize(
+        const Device& Device_,
+        u64 Size,
+        VkBufferUsageFlags Usage,
+        VkMemoryPropertyFlags MemProperties);
+    void Shutdown(const Device& Device_);
 
-    bool BeginRecord(const GraphicsPipeline& Pipeline, const SwapChain& SwapChain_, u32 FrameIndex) const;
-    bool EndRecord() const;
-    void Reset() const;
-    bool Submit(const Device& Device_, const Sync& Sync_) const;
-    const CommandBuffer& BindBuffers(const RenderBuffer& Buffers) const;
-    const CommandBuffer& DrawVertices(u32 VertexCount, u32 InstanceCount, u32 FirstVertex, u32 FirstInstance) const;
+    bool Map(const Device& Device_, const void* Data, u64 Size) const;
+    bool Upload(const Device& Device_, const CommandPool& Pool, const void* Data, u64 Size) const;
 
-    bool IsValid() const;
+    VkBuffer Handle() const;
 
 private:
-    VkCommandBuffer m_Handle { VK_NULL_HANDLE };
+    VkBuffer m_Handle { VK_NULL_HANDLE };
+    VkDeviceMemory m_Memory { VK_NULL_HANDLE };
 };
 
 }
