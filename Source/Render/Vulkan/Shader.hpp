@@ -26,6 +26,7 @@ SOFTWARE.
 
 #pragma once
 
+#include "../../Core/Containers/Array.hpp"
 #include "vulkan/vulkan.hpp"
 
 namespace LevelSketch
@@ -48,8 +49,16 @@ public:
     bool Load(const Device& Device_, const char* Path);
     void Shutdown(const Device& Device_);
 
+    Shader& PushBinding(const VkVertexInputBindingDescription& Binding);
+    Shader& PushAttribute(const VkVertexInputAttributeDescription& Attribute);
+
+    const Array<VkVertexInputBindingDescription>& Bindings() const;
+    const Array<VkVertexInputAttributeDescription>& Attributes() const;
+
 private:
     VkShaderModule m_Handle { VK_NULL_HANDLE };
+    Array<VkVertexInputBindingDescription> m_Bindings {};
+    Array<VkVertexInputAttributeDescription> m_Attributes {};
 };
 
 }

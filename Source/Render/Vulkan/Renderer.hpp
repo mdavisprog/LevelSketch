@@ -33,6 +33,7 @@ SOFTWARE.
 #include "LogicalDevice.hpp"
 #include "PhysicalDevice.hpp"
 #include "Queue.hpp"
+#include "RenderBuffer.hpp"
 #include "Surface.hpp"
 #include "SwapChain.hpp"
 #include "Sync.hpp"
@@ -71,6 +72,8 @@ private:
     Sync m_Syncs[FRAMES_IN_FLIGHT] {};
     CommandPool m_CommandPool {};
     u64 m_FrameIndex { 0 };
+    
+    RenderBuffer m_RenderBuffer {};
 };
 
 }

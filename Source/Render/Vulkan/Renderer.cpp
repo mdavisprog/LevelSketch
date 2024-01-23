@@ -27,6 +27,7 @@ SOFTWARE.
 #include "Renderer.hpp"
 #include "../../Core/Console.hpp"
 #include "../../Core/Version.hpp"
+#include "../../Core/Math/Vertex.hpp"
 #include "../../Platform/FileSystem.hpp"
 #include "../../Platform/Window.hpp"
 #include "Errors.hpp"
@@ -191,6 +192,33 @@ bool Renderer::Initialize(Platform::Window* Window)
             return false;
         }
 
+        VkVertexInputBindingDescription BindingDesc {};
+        BindingDesc.binding = 0;
+        BindingDesc.stride = sizeof(Vertex3);
+        BindingDesc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+        VkVertexInputAttributeDescription AttributeDesc[3] = {};
+        AttributeDesc[0].binding = 0;
+        AttributeDesc[0].location = 0;
+        AttributeDesc[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+        AttributeDesc[0].offset = offsetof(Vertex3, Position);
+
+        AttributeDesc[1].binding = 0;
+        AttributeDesc[1].location = 1;
+        AttributeDesc[1].format = VK_FORMAT_R32G32_SFLOAT;
+        AttributeDesc[1].offset = offsetof(Vertex3, UV);
+
+        AttributeDesc[2].binding = 0;
+        AttributeDesc[2].location = 2;
+        AttributeDesc[2].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+        AttributeDesc[2].offset = offsetof(Vertex3, Color);
+
+        Vertex
+            .PushBinding(BindingDesc)
+            .PushAttribute(AttributeDesc[0])
+            .PushAttribute(AttributeDesc[1])
+            .PushAttribute(AttributeDesc[2]);
+
         Shader Fragment {};
         if (!Fragment.Load(m_Device, Platform::FileSystem::CombinePaths(ShaderPath, "Test.frag").Data()))
         {
@@ -218,6 +246,20 @@ bool Renderer::Initialize(Platform::Window* Window)
         Vertex.Shutdown(m_Device);
         Fragment.Shutdown(m_Device);
 
+        const Vertex3 Vertices[3] {
+            {{0.0f, -0.5f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
+            {{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
+            {{0.5f, 0.5f, 0.0f,}, {0.0f, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}}
+        };
+        const u64 VerticesSize { sizeof(Vertex3) * ARRAY_COUNT(Vertices) };
+
+        if (!m_RenderBuffer.Initialize(m_Device, VerticesSize))
+        {
+            return false;
+        }
+
+        m_RenderBuffer.Map(m_Device, Vertices, VerticesSize);
+
         Core::Console::WriteLine("Initialized Vulkan");
     }
 
@@ -231,6 +273,8 @@ void Renderer::Shutdown()
 #if defined(DEBUG)
     DebugUtils::Instance().Shutdown(m_Instance);
 #endif
+
+    m_RenderBuffer.Shutdown(m_Device);
 
     for (Sync& Sync_ : m_Syncs)
     {
@@ -262,7 +306,10 @@ void Renderer::Render(Platform::Window*)
     const CommandBuffer& CmdBuffer { m_CommandPool.Buffer(m_FrameIndex) };
 
     CmdBuffer.Reset();
-    CmdBuffer.Record(m_Pipeline, m_SwapChain, SwapChainFrameIndex);
+    CmdBuffer.BeginRecord(m_Pipeline, m_SwapChain, SwapChainFrameIndex);
+    CmdBuffer.BindBuffers(m_RenderBuffer);
+    CmdBuffer.DrawVertices(3, 1, 0, 0);
+    CmdBuffer.EndRecord();
     CmdBuffer.Submit(m_Device, CurrentSync);
 
     m_SwapChain.Present(m_Device, CurrentSync, SwapChainFrameIndex);

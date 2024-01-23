@@ -89,6 +89,28 @@ void Shader::Shutdown(const Device& Device_)
     }
 }
 
+Shader& Shader::PushBinding(const VkVertexInputBindingDescription& Binding)
+{
+    m_Bindings.Push(Binding);
+    return *this;
+}
+
+Shader& Shader::PushAttribute(const VkVertexInputAttributeDescription& Attribute)
+{
+    m_Attributes.Push(Attribute);
+    return *this;
+}
+
+const Array<VkVertexInputBindingDescription>& Shader::Bindings() const
+{
+    return m_Bindings;
+}
+
+const Array<VkVertexInputAttributeDescription>& Shader::Attributes() const
+{
+    return m_Attributes;
+}
+
 }
 }
 }

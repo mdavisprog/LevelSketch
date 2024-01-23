@@ -36,31 +36,23 @@ namespace Render
 namespace Vulkan
 {
 
-class CommandPool;
 class Device;
-class GraphicsPipeline;
-class RenderBuffer;
-class SwapChain;
-class Sync;
 
-class CommandBuffer
+class RenderBuffer
 {
 public:
-    CommandBuffer();
+    RenderBuffer();
 
-    void Initialize(VkCommandBuffer Handle);
+    bool Initialize(const Device& Device_, u64 VertexSize);
+    void Shutdown(const Device& Device_);
 
-    bool BeginRecord(const GraphicsPipeline& Pipeline, const SwapChain& SwapChain_, u32 FrameIndex) const;
-    bool EndRecord() const;
-    void Reset() const;
-    bool Submit(const Device& Device_, const Sync& Sync_) const;
-    const CommandBuffer& BindBuffers(const RenderBuffer& Buffers) const;
-    const CommandBuffer& DrawVertices(u32 VertexCount, u32 InstanceCount, u32 FirstVertex, u32 FirstInstance) const;
+    bool Map(const Device& Device_, const void* Data, u64 Size) const;
 
-    bool IsValid() const;
+    VkBuffer VertexBuffer() const;
 
 private:
-    VkCommandBuffer m_Handle { VK_NULL_HANDLE };
+    VkBuffer m_Vertex { VK_NULL_HANDLE };
+    VkDeviceMemory m_VertexMemory { VK_NULL_HANDLE };
 };
 
 }

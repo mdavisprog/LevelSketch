@@ -123,6 +123,7 @@ else()
             Render/Vulkan/Loader.cpp
             Render/Vulkan/LogicalDevice.cpp
             Render/Vulkan/PhysicalDevice.cpp
+            Render/Vulkan/RenderBuffer.cpp
             Render/Vulkan/Renderer.cpp
             Render/Vulkan/Shader.cpp
             Render/Vulkan/Surface.cpp

@@ -30,6 +30,7 @@ SOFTWARE.
 #include "Device.hpp"
 #include "Errors.hpp"
 #include "GraphicsPipeline.hpp"
+#include "RenderBuffer.hpp"
 #include "SwapChain.hpp"
 #include "Sync.hpp"
 
@@ -49,7 +50,7 @@ void CommandBuffer::Initialize(VkCommandBuffer Handle)
     m_Handle = Handle;
 }
 
-bool CommandBuffer::Record(const GraphicsPipeline& Pipeline, const SwapChain& SwapChain_, u32 FrameIndex) const
+bool CommandBuffer::BeginRecord(const GraphicsPipeline& Pipeline, const SwapChain& SwapChain_, u32 FrameIndex) const
 {
     VkCommandBufferBeginInfo BeginInfo {};
     BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -92,11 +93,14 @@ bool CommandBuffer::Record(const GraphicsPipeline& Pipeline, const SwapChain& Sw
     Scissor.extent = SwapChain_.Extents();
     vkCmdSetScissor(m_Handle, 0, 1, &Scissor);
 
-    vkCmdDraw(m_Handle, 3, 1, 0, 0);
+    return true;
+}
 
+bool CommandBuffer::EndRecord() const
+{
     vkCmdEndRenderPass(m_Handle);
 
-    Result = vkEndCommandBuffer(m_Handle);
+    VkResult Result = vkEndCommandBuffer(m_Handle);
 
     if (Result != VK_SUCCESS)
     {
@@ -148,6 +152,26 @@ bool CommandBuffer::Submit(const Device& Device_, const Sync& Sync_) const
     }
 
     return true;
+}
+
+const CommandBuffer& CommandBuffer::BindBuffers(const RenderBuffer& Buffers) const
+{
+    VkBuffer VertexBuffers[] { Buffers.VertexBuffer() };
+    VkDeviceSize Offsets[] { 0 };
+
+    vkCmdBindVertexBuffers(m_Handle, 0, 1, VertexBuffers, Offsets);
+
+    return *this;
+}
+
+const CommandBuffer& CommandBuffer::DrawVertices(
+    u32 VertexCount,
+    u32 InstanceCount,
+    u32 FirstVertex,
+    u32 FirstInstance) const
+{
+    vkCmdDraw(m_Handle, VertexCount, InstanceCount, FirstVertex, FirstInstance);
+    return *this;
 }
 
 bool CommandBuffer::IsValid() const

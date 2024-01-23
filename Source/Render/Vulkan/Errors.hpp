@@ -61,6 +61,8 @@ static const char* ToString(VkResult Error)
     case VK_ERROR_INVALID_SHADER_NV: return "Invalid shader nv";
     case VK_ERROR_OUT_OF_DATE_KHR: return "Out of date KHR";
     case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT: return "Full screen exclusive mode lost KHR";
+    case VK_ERROR_INVALID_EXTERNAL_HANDLE: return "Invalid external handle";
+    case VK_ERROR_MEMORY_MAP_FAILED: return "Memory map failed";
     default: break;
     }
 

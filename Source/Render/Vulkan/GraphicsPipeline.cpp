@@ -76,10 +76,10 @@ bool GraphicsPipeline::Initialize(const Device& Device_, const SwapChain& SwapCh
 
     VkPipelineVertexInputStateCreateInfo VertexInputInfo {};
     VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    VertexInputInfo.vertexBindingDescriptionCount = 0;
-    VertexInputInfo.pVertexBindingDescriptions = nullptr;
-    VertexInputInfo.vertexAttributeDescriptionCount = 0;
-    VertexInputInfo.pVertexAttributeDescriptions = nullptr;
+    VertexInputInfo.vertexBindingDescriptionCount = static_cast<u32>(Vertex.Bindings().Size());
+    VertexInputInfo.pVertexBindingDescriptions = Vertex.Bindings().Data();
+    VertexInputInfo.vertexAttributeDescriptionCount = static_cast<u32>(Vertex.Attributes().Size());
+    VertexInputInfo.pVertexAttributeDescriptions = Vertex.Attributes().Data();
 
     VkPipelineInputAssemblyStateCreateInfo InputAssemblyInfo {};
     InputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;

@@ -27,9 +27,10 @@ SOFTWARE.
 #version 450
 
 layout(location = 0) out vec4 OutColor;
-layout(location = 0) in vec3 Color;
+layout(location = 0) in vec4 Color;
+layout(location = 1) in vec2 UVs;
 
 void main()
 {
-    OutColor = vec4(Color, 1.0);
+    OutColor = Color;
 }
