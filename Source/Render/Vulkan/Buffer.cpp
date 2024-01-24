@@ -123,6 +123,8 @@ bool Buffer::Initialize(
 
 void Buffer::Shutdown(const Device& Device_)
 {
+    Unmap(Device_);
+
     if (m_Memory != VK_NULL_HANDLE)
     {
         vkFreeMemory(Device_.GetLogicalDevice().Handle(), m_Memory, nullptr);
@@ -136,9 +138,12 @@ void Buffer::Shutdown(const Device& Device_)
     }
 }
 
-bool Buffer::Map(const Device& Device_, const void* Data, u64 Size) const
+bool Buffer::Map(const Device& Device_, u64 Size)
 {
-    void* Ptr { nullptr };
+    if (m_Ptr != nullptr)
+    {
+        return true;
+    }
 
     VkResult Result { vkMapMemory(
         Device_.GetLogicalDevice().Handle(),
@@ -146,7 +151,7 @@ bool Buffer::Map(const Device& Device_, const void* Data, u64 Size) const
         0,
         Size,
         0,
-        &Ptr)
+        &m_Ptr)
     };
 
     if (Result != VK_SUCCESS)
@@ -155,11 +160,28 @@ bool Buffer::Map(const Device& Device_, const void* Data, u64 Size) const
         return false;
     }
 
-    std::memcpy(Ptr, Data, Size);
+    return true;
+}
+
+void Buffer::MapData(const void* Data, u64 Size) const
+{
+    if (m_Ptr == nullptr)
+    {
+        return;
+    }
+
+    std::memcpy(m_Ptr, Data, Size);
+}
+
+void Buffer::Unmap(const Device& Device_)
+{
+    if (m_Ptr == nullptr)
+    {
+        return;
+    }
 
     vkUnmapMemory(Device_.GetLogicalDevice().Handle(), m_Memory);
-
-    return true;
+    m_Ptr = nullptr;
 }
 
 bool Buffer::Upload(const Device& Device_, const CommandPool& Pool, const void* Data, u64 Size) const
@@ -179,12 +201,15 @@ bool Buffer::Upload(const Device& Device_, const CommandPool& Pool, const void* 
         return false;
     }
 
-    if (!Staging.Map(Device_, Data, Size))
+    if (!Staging.Map(Device_, Size))
     {
         Staging.Shutdown(Device_);
         Core::Console::Error("Failed to map staging buffer.");
         return false;
     }
+
+    Staging.MapData(Data, Size);
+    Staging.Unmap(Device_);
 
     VkCommandBufferAllocateInfo AllocInfo {};
     AllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;

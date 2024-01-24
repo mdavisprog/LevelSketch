@@ -51,7 +51,9 @@ public:
         VkMemoryPropertyFlags MemProperties);
     void Shutdown(const Device& Device_);
 
-    bool Map(const Device& Device_, const void* Data, u64 Size) const;
+    bool Map(const Device& Device_, u64 Size);
+    void MapData(const void* Data, u64 Size) const;
+    void Unmap(const Device& Device_);
     bool Upload(const Device& Device_, const CommandPool& Pool, const void* Data, u64 Size) const;
 
     VkBuffer Handle() const;
@@ -60,6 +62,7 @@ public:
 private:
     VkBuffer m_Handle { VK_NULL_HANDLE };
     VkDeviceMemory m_Memory { VK_NULL_HANDLE };
+    void* m_Ptr { nullptr };
 };
 
 }
