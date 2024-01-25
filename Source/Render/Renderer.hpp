@@ -40,6 +40,7 @@ namespace LevelSketch
 
 namespace Platform
 {
+    struct TimingData;
     class Window;
 }
 
@@ -73,6 +74,7 @@ public:
 
     bool Initialized() const;
     const DriverSummary& Summary() const;
+    Platform::TimingData TimingData() const;
 
 protected:
     void SetInitialized(bool Initialized);

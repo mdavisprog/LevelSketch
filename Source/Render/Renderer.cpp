@@ -26,6 +26,8 @@ SOFTWARE.
 
 #include "Renderer.hpp"
 #include "../Core/Memory/UniquePtr.hpp"
+#include "../Platform/Platform.hpp"
+#include "../Platform/Window.hpp"
 
 #if defined(RENDER_DIRECTX)
     #include "DirectX/Renderer.hpp"
@@ -97,6 +99,11 @@ void Renderer::SetInitialized(bool Initialized)
 Renderer::DriverSummary& Renderer::SummaryMut()
 {
     return m_DriverSummary;
+}
+
+Platform::TimingData Renderer::TimingData() const
+{
+    return Platform::Platform::Instance()->GetTimingData();
 }
 
 }
