@@ -141,6 +141,12 @@ static T FMod(T X, T Y)
     return std::fmod(X, Y);
 }
 
+template<typename T>
+static T Sqrt(T Num)
+{
+    return std::sqrt(Num);
+}
+
 }
 }
 
@@ -153,6 +159,7 @@ template<typename T> static const auto& Sin = Core::Math::Sin<T>;
 template<typename T> static const auto& Cos = Core::Math::Cos<T>;
 template<typename T> static const auto& Tan = Core::Math::Tan<T>;
 template<typename T> static const auto& FMod = Core::Math::FMod<T>;
+template<typename T> static const auto& Sqrt = Core::Math::Sqrt<T>;
 
 template<typename T>
 static constexpr T Min(const T& A, const T& B) { return Core::Math::Min<T>(A, B); }
