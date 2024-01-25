@@ -27,6 +27,7 @@ SOFTWARE.
 #pragma once
 
 #include "../Types.hpp"
+#include "Math.hpp"
 
 namespace LevelSketch
 {
@@ -42,10 +43,53 @@ public:
     T X { 0 };
     T Y { 0 };
     T Z { 0 };
+
+    T Length() const
+    {
+        return Sqrt(X * X + Y * Y + Z * Z);
+    }
+
+    T LengthSq() const
+    {
+        return X * X + Y * Y + Z * Z;
+    }
+
+    Vector3<T> Normalize() const
+    {
+        T Length { this->Length() };
+        if (Length == 0)
+        {
+            Length = 1;
+        }
+
+        return { X / Length, Y / Length, Z / Length };
+    }
+
+    Vector3<T> Cross(const Vector3<T>& Other) const
+    {
+        return { Y * Other.Z - Z * Other.Y, Z * Other.X - X * Other.Z, X * Other.Y - Y * Other.X };
+    }
+
+    Vector3<T> Dot(const Vector3<T>& Other) const
+    {
+        return { X * Other.X + Y * Other.Y + Z * Other.Z };
+    }
 };
 
 typedef Vector3<f32> Vector3f;
 typedef Vector3<f64> Vector3d; // double
+
+template<typename T>
+static Vector3<T> operator+(const Vector3<T>& A, const Vector3<T>& B)
+{
+    return { A.X + B.X, A.Y + B.Y, A.Z + B.Z };
+}
+
+template<typename T>
+static Vector3<T> operator-(const Vector3<T>& A, const Vector3<T>& B)
+{
+    return { A.X - B.X, A.Y - B.Y, A.Z - B.Z };
+}
 
 }
 }
