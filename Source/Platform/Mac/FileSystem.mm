@@ -25,6 +25,7 @@ SOFTWARE.
 */
 
 #include "../FileSystem.hpp"
+#include "../../Core/Containers/String.hpp"
 
 #import <Foundation/Foundation.h>
 
