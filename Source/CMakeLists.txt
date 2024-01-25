@@ -15,8 +15,11 @@ set(TARGET LevelSketch)
 # List of options that can be set.
 option(SHIPPING "Enables the SHIPPING configuration." OFF)
 option(WITH_TESTS "Compiles the testing framework when ON." OFF)
-option(WITH_VULKAN "Uses the Vulkan renderer. Only available on Linux." ON)
-option(WITH_OPENGL "Uses the OpenGL renderer. Only available on Linux." OFF)
+
+if(NOT WIN32 AND NOT APPLE)
+    option(WITH_VULKAN "Uses the Vulkan renderer. Only available on Linux." ON)
+    option(WITH_OPENGL "Uses the OpenGL renderer. Only available on Linux." OFF)
+endif()
 
 if(SHIPPING)
     message("Compiling with shipping configuration.")
