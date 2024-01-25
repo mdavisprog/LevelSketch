@@ -29,8 +29,10 @@ SOFTWARE.
 #include "../../Core/Containers/Array.hpp"
 #include "Device.hpp"
 #include "Errors.hpp"
+#include "Renderer.hpp"
 #include "Shader.hpp"
 #include "SwapChain.hpp"
+#include "UniformBuffer.hpp"
 
 namespace LevelSketch
 {
@@ -197,6 +199,50 @@ void GraphicsPipeline::Shutdown(const Device& Device_)
         vkDestroyPipelineLayout(Device_.GetLogicalDevice().Handle(), m_PipelineLayout, nullptr);
         m_PipelineLayout = VK_NULL_HANDLE;
     }
+
+    if (m_DescriptorSetLayout != VK_NULL_HANDLE)
+    {
+        vkDestroyDescriptorSetLayout(Device_.GetLogicalDevice().Handle(), m_DescriptorSetLayout, nullptr);
+        m_DescriptorSetLayout = VK_NULL_HANDLE;
+    }
+
+    if (m_DescriptorPool != VK_NULL_HANDLE)
+    {
+        vkDestroyDescriptorPool(Device_.GetLogicalDevice().Handle(), m_DescriptorPool, nullptr);
+        m_DescriptorPool = VK_NULL_HANDLE;
+    }
+}
+
+GraphicsPipeline& GraphicsPipeline::PushLayoutBinding(const VkDescriptorSetLayoutBinding& Binding)
+{
+    m_LayoutBindings.Push(Binding);
+    return *this;
+}
+
+const GraphicsPipeline& GraphicsPipeline::BindUniformBuffer(const Device& Device_, const UniformBuffer* Buffers) const
+{
+    for (u32 I = 0; I < FRAMES_IN_FLIGHT; I++)
+    {
+        VkDescriptorBufferInfo BufferInfo {};
+        BufferInfo.buffer = Buffers[I].Handle();
+        BufferInfo.offset = 0;
+        BufferInfo.range = sizeof(UniformBuffer::Uniforms);
+
+        VkWriteDescriptorSet WriteDescriptorSet {};
+        WriteDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        WriteDescriptorSet.dstSet = m_DescriptorSets[I];
+        WriteDescriptorSet.dstBinding = 0;
+        WriteDescriptorSet.dstArrayElement = 0;
+        WriteDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        WriteDescriptorSet.descriptorCount = 1;
+        WriteDescriptorSet.pBufferInfo = &BufferInfo;
+        WriteDescriptorSet.pImageInfo = nullptr;
+        WriteDescriptorSet.pTexelBufferView = nullptr;
+
+        vkUpdateDescriptorSets(Device_.GetLogicalDevice().Handle(), 1, &WriteDescriptorSet, 0, nullptr);
+    }
+
+    return *this;
 }
 
 VkRenderPass GraphicsPipeline::RenderPass() const
@@ -209,12 +255,37 @@ VkPipeline GraphicsPipeline::Handle() const
     return m_Handle;
 }
 
+VkPipelineLayout GraphicsPipeline::PipelineLayout() const
+{
+    return m_PipelineLayout;
+}
+
+VkDescriptorSet GraphicsPipeline::DescriptorSet(u64 Index) const
+{
+    return m_DescriptorSets[Index];
+}
+
 bool GraphicsPipeline::CreatePipelineLayout(const Device& Device_)
 {
+    if (!CreateDescriptorSetLayout(Device_))
+    {
+        return false;
+    }
+
+    if (!CreateDescriptorPool(Device_))
+    {
+        return false;
+    }
+
+    if (!CreateDescriptorSets(Device_))
+    {
+        return false;
+    }
+
     VkPipelineLayoutCreateInfo CreateInfo {};
     CreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    CreateInfo.setLayoutCount = 0;
-    CreateInfo.pSetLayouts = nullptr;
+    CreateInfo.setLayoutCount = 1;
+    CreateInfo.pSetLayouts = &m_DescriptorSetLayout;
     CreateInfo.pushConstantRangeCount = 0;
     CreateInfo.pPushConstantRanges = nullptr;
 
@@ -272,6 +343,84 @@ bool GraphicsPipeline::CreateRenderPass(const Device& Device_, const SwapChain& 
     if (Result != VK_SUCCESS)
     {
         Core::Console::Error("Failed to create render pass. Error: %s", Errors::ToString(Result));
+        return false;
+    }
+
+    return true;
+}
+
+bool GraphicsPipeline::CreateDescriptorSetLayout(const Device& Device_)
+{
+    VkDescriptorSetLayoutCreateInfo CreateInfo {};
+    CreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    CreateInfo.bindingCount = static_cast<u32>(m_LayoutBindings.Size());
+    CreateInfo.pBindings = m_LayoutBindings.Data();
+
+    VkResult Result { vkCreateDescriptorSetLayout(
+        Device_.GetLogicalDevice().Handle(),
+        &CreateInfo,
+        nullptr,
+        &m_DescriptorSetLayout)
+    };
+
+    if (Result != VK_SUCCESS)
+    {
+        Core::Console::Error("Failed to create descriptor set layout. Error: %s", Errors::ToString(Result));
+        return false;
+    }
+
+    m_LayoutBindings.Clear();
+    return true;
+}
+
+bool GraphicsPipeline::CreateDescriptorPool(const Device& Device_)
+{
+    VkDescriptorPoolSize PoolSize {};
+    PoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    PoolSize.descriptorCount = static_cast<u32>(FRAMES_IN_FLIGHT);
+
+    VkDescriptorPoolCreateInfo CreateInfo {};
+    CreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    CreateInfo.poolSizeCount = 1;
+    CreateInfo.pPoolSizes = &PoolSize;
+    CreateInfo.maxSets = static_cast<u32>(FRAMES_IN_FLIGHT);
+
+    VkResult Result { vkCreateDescriptorPool(
+        Device_.GetLogicalDevice().Handle(),
+        &CreateInfo,
+        nullptr,
+        &m_DescriptorPool)
+    };
+
+    if (Result != VK_SUCCESS)
+    {
+        Core::Console::Error("Failed to create descriptor pool. Error: %s", Errors::ToString(Result));
+        return false;
+    }
+
+    return true;
+}
+
+bool GraphicsPipeline::CreateDescriptorSets(const Device& Device_)
+{
+    VkDescriptorSetLayout Layouts[] = { m_DescriptorSetLayout, m_DescriptorSetLayout };
+    VkDescriptorSetAllocateInfo AllocInfo {};
+    AllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    AllocInfo.descriptorPool = m_DescriptorPool;
+    AllocInfo.descriptorSetCount = static_cast<u32>(FRAMES_IN_FLIGHT);
+    AllocInfo.pSetLayouts = Layouts;
+
+    m_DescriptorSets.Resize(FRAMES_IN_FLIGHT);
+
+    VkResult Result { vkAllocateDescriptorSets(
+        Device_.GetLogicalDevice().Handle(),
+        &AllocInfo,
+        m_DescriptorSets.Data())
+    };
+
+    if (Result != VK_SUCCESS)
+    {
+        Core::Console::Error("Failed to allocate descriptor sets. Error: %s", Errors::ToString(Result));
         return false;
     }
 

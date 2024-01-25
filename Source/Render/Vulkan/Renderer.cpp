@@ -225,6 +225,14 @@ bool Renderer::Initialize(Platform::Window* Window)
             return false;
         }
 
+        VkDescriptorSetLayoutBinding UniformBinding {};
+        UniformBinding.binding = 0;
+        UniformBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        UniformBinding.descriptorCount = 1;
+        UniformBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+        UniformBinding.pImmutableSamplers = nullptr;
+        m_Pipeline.PushLayoutBinding(UniformBinding);
+
         if (!m_Pipeline.Initialize(m_Device, m_SwapChain, Vertex, Fragment))
         {
             return false;
@@ -265,6 +273,16 @@ bool Renderer::Initialize(Platform::Window* Window)
         m_RenderBuffer.VertexBuffer().Upload(m_Device, m_CommandPool, Vertices, VerticesSize);
         m_RenderBuffer.IndexBuffer().Upload(m_Device, m_CommandPool, Indices, IndicesSize);
 
+        for (UniformBuffer& Uniform : m_Uniforms)
+        {
+            if (!Uniform.Initialize(m_Device))
+            {
+                return false;
+            }
+        }
+
+        m_Pipeline.BindUniformBuffer(m_Device, m_Uniforms);
+
         Core::Console::WriteLine("Initialized Vulkan");
     }
 
@@ -280,6 +298,11 @@ void Renderer::Shutdown()
 #endif
 
     m_RenderBuffer.Shutdown(m_Device);
+
+    for (UniformBuffer& Uniform : m_Uniforms)
+    {
+        Uniform.Shutdown(m_Device);
+    }
 
     for (Sync& Sync_ : m_Syncs)
     {
@@ -303,6 +326,21 @@ void Renderer::Shutdown()
 
 void Renderer::Render(Platform::Window*)
 {
+    UniformBuffer& Uniforms { m_Uniforms[m_FrameIndex] };
+    Uniforms.GetUniforms().View = Matrix4f::LookAt({0.5f, 0.0f, -1.0f}, {}, {0.0f, 1.0f, 0.0f}).Transpose();
+    // TODO: Revisit to get perspective matrix working. Nothing is rendered when the following is
+    // uncommented.
+//    const f32 AspectRatio {
+//        static_cast<f32>(m_SwapChain.Extents().width) / static_cast<f32>(m_SwapChain.Extents().height)
+//    };
+//    Uniforms.GetUniforms().Projection = Core::Math::PerspectiveMatrixRH(
+//        45.0f,
+//        AspectRatio,
+//        0.1f,
+//        10.0f).Transpose();
+//    Uniforms.GetUniforms().Projection[5] *= -1.0f;
+    Uniforms.UpdateBuffer();
+
     const Sync& CurrentSync { m_Syncs[m_FrameIndex] };
 
     CurrentSync.WaitForFence(m_Device);
@@ -313,6 +351,7 @@ void Renderer::Render(Platform::Window*)
     CmdBuffer.Reset();
     CmdBuffer.BeginRecord(m_Pipeline, m_SwapChain, SwapChainFrameIndex);
     CmdBuffer.BindBuffers(m_RenderBuffer);
+    CmdBuffer.BindDescriptorSet(m_Pipeline, m_FrameIndex);
     CmdBuffer.DrawVerticesIndexed(6, 1, 0, 0, 0);
     CmdBuffer.EndRecord();
     CmdBuffer.Submit(m_Device, CurrentSync);

@@ -33,9 +33,17 @@ layout(location = 2) in vec4 Color;
 layout(location = 0) out vec4 OutColor;
 layout(location = 1) out vec2 OutUVs;
 
+layout(set = 0, binding = 0) uniform UniformObject
+{
+    mat4 Model;
+    mat4 View;
+    mat4 Projection;
+    mat4 Orthographic;
+} Uniforms;
+
 void main()
 {
-    gl_Position = vec4(Position, 1.0);
+    gl_Position = Uniforms.Projection * Uniforms.View * Uniforms.Model * vec4(Position, 1.0);
     OutColor = Color;
     OutUVs = UVs;
 }

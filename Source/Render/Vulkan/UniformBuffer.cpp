@@ -24,10 +24,8 @@ SOFTWARE.
 
 */
 
-#pragma once
-
-#include "../../Core/Types.hpp"
-#include "vulkan/vulkan.hpp"
+#include "UniformBuffer.hpp"
+#include "Device.hpp"
 
 namespace LevelSketch
 {
@@ -36,44 +34,51 @@ namespace Render
 namespace Vulkan
 {
 
-class CommandPool;
-class Device;
-class GraphicsPipeline;
-class RenderBuffer;
-class SwapChain;
-class Sync;
-
-class CommandBuffer
+UniformBuffer::UniformBuffer()
 {
-public:
-    CommandBuffer();
+}
 
-    void Initialize(VkCommandBuffer Handle);
-    void Shutdown(const Device& Device_, const CommandPool& Pool);
+bool UniformBuffer::Initialize(const Device& Device_)
+{
+    if (!m_Buffer.Initialize(
+        Device_,
+        sizeof(Uniforms),
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+    {
+        return false;
+    }
 
-    bool BeginRecord(const GraphicsPipeline& Pipeline, const SwapChain& SwapChain_, u32 FrameIndex) const;
-    bool EndRecord() const;
-    void Reset() const;
-    bool Submit(const Device& Device_, const Sync& Sync_) const;
-    const CommandBuffer& BindBuffers(const RenderBuffer& Buffers) const;
-    const CommandBuffer& BindDescriptorSet(const GraphicsPipeline& Pipeline, u64 FrameIndex) const;
-    const CommandBuffer& DrawVertices(
-        u32 VertexCount,
-        u32 InstanceCount,
-        u32 FirstVertex,
-        u32 FirstInstance) const;
-    const CommandBuffer& DrawVerticesIndexed(
-        u32 IndexCount,
-        u32 InstanceCount,
-        u32 FirstIndex,
-        u32 VertexOffset,
-        u32 FirstInstance) const;
+    if (!m_Buffer.Map(Device_, sizeof(Uniforms)))
+    {
+        return false;
+    }
 
-    bool IsValid() const;
+    UpdateBuffer();
 
-private:
-    VkCommandBuffer m_Handle { VK_NULL_HANDLE };
-};
+    return true;
+}
+
+void UniformBuffer::Shutdown(const Device& Device_)
+{
+    m_Buffer.Shutdown(Device_);
+}
+
+UniformBuffer::Uniforms& UniformBuffer::GetUniforms()
+{
+    return m_Uniforms;
+}
+
+const UniformBuffer& UniformBuffer::UpdateBuffer() const
+{
+    m_Buffer.MapData(&m_Uniforms, sizeof(Uniforms));
+    return *this;
+}
+
+VkBuffer UniformBuffer::Handle() const
+{
+    return m_Buffer.Handle();
+}
 
 }
 }

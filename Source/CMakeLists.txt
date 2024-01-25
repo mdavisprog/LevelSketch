@@ -131,6 +131,7 @@ else()
             Render/Vulkan/SwapChain.cpp
             Render/Vulkan/Sync.cpp
             Render/Vulkan/Queue.cpp
+            Render/Vulkan/UniformBuffer.cpp
         )
 
         if(BUILD_TYPE_DEBUG)

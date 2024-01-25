@@ -26,6 +26,7 @@ SOFTWARE.
 
 #pragma once
 
+#include "../../Core/Containers/Array.hpp"
 #include "vulkan/vulkan.hpp"
 
 namespace LevelSketch
@@ -38,6 +39,7 @@ namespace Vulkan
 class Device;
 class Shader;
 class SwapChain;
+class UniformBuffer;
 
 class GraphicsPipeline
 {
@@ -47,16 +49,30 @@ public:
     bool Initialize(const Device& Device_, const SwapChain& SwapChain_, const Shader& Vertex, const Shader& Fragment);
     void Shutdown(const Device& Device_);
 
+    GraphicsPipeline& PushLayoutBinding(const VkDescriptorSetLayoutBinding& Binding);
+    const GraphicsPipeline& BindUniformBuffer(const Device& Device_, const UniformBuffer* Buffers) const;
+
     VkRenderPass RenderPass() const;
     VkPipeline Handle() const;
+    VkPipelineLayout PipelineLayout() const;
+    VkDescriptorSet DescriptorSet(u64 Index) const;
 
 private:
     bool CreatePipelineLayout(const Device& Device_);
     bool CreateRenderPass(const Device& Device_, const SwapChain& SwapChain_);
+    bool CreateDescriptorSetLayout(const Device& Device_);
+    bool CreateDescriptorPool(const Device& Device_);
+    bool CreateDescriptorSets(const Device& Device_);
 
     VkPipelineLayout m_PipelineLayout { VK_NULL_HANDLE };
     VkRenderPass m_RenderPass { VK_NULL_HANDLE };
     VkPipeline m_Handle { VK_NULL_HANDLE };
+
+    VkDescriptorSetLayout m_DescriptorSetLayout { VK_NULL_HANDLE };
+    Array<VkDescriptorSetLayoutBinding> m_LayoutBindings {};
+
+    VkDescriptorPool m_DescriptorPool { VK_NULL_HANDLE };
+    Array<VkDescriptorSet> m_DescriptorSets {};
 };
 
 }

@@ -179,6 +179,23 @@ const CommandBuffer& CommandBuffer::BindBuffers(const RenderBuffer& Buffers) con
     return *this;
 }
 
+const CommandBuffer& CommandBuffer::BindDescriptorSet(const GraphicsPipeline& Pipeline, u64 FrameIndex) const
+{
+    VkDescriptorSet DescriptorSet { Pipeline.DescriptorSet(FrameIndex) };
+
+    vkCmdBindDescriptorSets(
+        m_Handle,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        Pipeline.PipelineLayout(),
+        0,
+        1,
+        &DescriptorSet,
+        0,
+        nullptr);
+
+    return *this;
+}
+
 const CommandBuffer& CommandBuffer::DrawVertices(
     u32 VertexCount,
     u32 InstanceCount,

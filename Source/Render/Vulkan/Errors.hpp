@@ -63,6 +63,9 @@ static const char* ToString(VkResult Error)
     case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT: return "Full screen exclusive mode lost KHR";
     case VK_ERROR_INVALID_EXTERNAL_HANDLE: return "Invalid external handle";
     case VK_ERROR_MEMORY_MAP_FAILED: return "Memory map failed";
+    case VK_ERROR_FRAGMENTATION_EXT: return "Fragmentation EXT";
+    case VK_ERROR_FRAGMENTED_POOL: return "Fragmented pool";
+    case VK_ERROR_OUT_OF_POOL_MEMORY: return "Out of pool memory";
     default: break;
     }
 

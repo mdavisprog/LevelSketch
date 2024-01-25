@@ -37,6 +37,7 @@ SOFTWARE.
 #include "Surface.hpp"
 #include "SwapChain.hpp"
 #include "Sync.hpp"
+#include "UniformBuffer.hpp"
 #include "vulkan/vulkan.hpp"
 
 #define FRAMES_IN_FLIGHT 2
@@ -74,6 +75,7 @@ private:
     u64 m_FrameIndex { 0 };
     
     RenderBuffer m_RenderBuffer {};
+    UniformBuffer m_Uniforms[FRAMES_IN_FLIGHT] {};
 };
 
 }

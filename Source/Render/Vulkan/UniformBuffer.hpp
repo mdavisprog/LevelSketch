@@ -26,8 +26,8 @@ SOFTWARE.
 
 #pragma once
 
-#include "../../Core/Types.hpp"
-#include "vulkan/vulkan.hpp"
+#include "../../Core/Math/Matrix.hpp"
+#include "Buffer.hpp"
 
 namespace LevelSketch
 {
@@ -36,43 +36,32 @@ namespace Render
 namespace Vulkan
 {
 
-class CommandPool;
 class Device;
-class GraphicsPipeline;
-class RenderBuffer;
-class SwapChain;
-class Sync;
 
-class CommandBuffer
+class UniformBuffer
 {
 public:
-    CommandBuffer();
+    struct Uniforms
+    {
+        Matrix4f Model { Matrix4f::Identity };
+        Matrix4f View { Matrix4f::Identity };
+        Matrix4f Projection { Matrix4f::Identity };
+        Matrix4f Orthographic { Matrix4f::Identity };
+    };
 
-    void Initialize(VkCommandBuffer Handle);
-    void Shutdown(const Device& Device_, const CommandPool& Pool);
+    UniformBuffer();
 
-    bool BeginRecord(const GraphicsPipeline& Pipeline, const SwapChain& SwapChain_, u32 FrameIndex) const;
-    bool EndRecord() const;
-    void Reset() const;
-    bool Submit(const Device& Device_, const Sync& Sync_) const;
-    const CommandBuffer& BindBuffers(const RenderBuffer& Buffers) const;
-    const CommandBuffer& BindDescriptorSet(const GraphicsPipeline& Pipeline, u64 FrameIndex) const;
-    const CommandBuffer& DrawVertices(
-        u32 VertexCount,
-        u32 InstanceCount,
-        u32 FirstVertex,
-        u32 FirstInstance) const;
-    const CommandBuffer& DrawVerticesIndexed(
-        u32 IndexCount,
-        u32 InstanceCount,
-        u32 FirstIndex,
-        u32 VertexOffset,
-        u32 FirstInstance) const;
+    bool Initialize(const Device& Device_);
+    void Shutdown(const Device& Device_);
 
-    bool IsValid() const;
+    Uniforms& GetUniforms();
+    const UniformBuffer& UpdateBuffer() const;
+
+    VkBuffer Handle() const;
 
 private:
-    VkCommandBuffer m_Handle { VK_NULL_HANDLE };
+    Buffer m_Buffer {};
+    Uniforms m_Uniforms {};
 };
 
 }
