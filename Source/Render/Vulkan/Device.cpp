@@ -126,10 +126,7 @@ bool Device::SelectBestPhysicalDevice(VkInstance Instance, const Surface& Surfac
 
     for (const PhysicalDevice& Device : Devices)
     {
-        bool IsValid {
-            Device.QueueFamilyIndex().IsComplete() &&
-            Device.AreRequiredExtensionsSupported()
-        };
+        bool IsValid { Device.QueueFamilyIndex().IsComplete() && Device.AreRequiredExtensionsSupported() };
 
         SwapChain::SupportDetails SwapChainDetails { SwapChain::GatherDetails(Device, Surface_) };
         IsValid &= SwapChainDetails.IsValid();

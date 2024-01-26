@@ -26,18 +26,25 @@ SOFTWARE.
 
 #pragma once
 
-#include "../Core/Types.hpp"
 #include "../Core/Containers/Array.hpp"
 #include "../Core/Memory/UniquePtr.hpp"
+#include "../Core/Types.hpp"
 
 #include <string>
+
+#ifndef STRINGIFY
+#define STRINGIFY(X) #X
+#endif
 
 // Utility initializer for in-place construction of test cases for a test suite for example:
 // return new TestSuite("TestSuite", {
 //     TEST_CASE(Test1),
 //     TEST_CASE(Test2)
 // });
-#define TEST_CASE(Fn) {#Fn, Fn}
+#define TEST_CASE(Fn)                                                                                                  \
+    {                                                                                                                  \
+        STRINGIFY(Fn), Fn                                                                                              \
+    }
 
 namespace LevelSketch
 {

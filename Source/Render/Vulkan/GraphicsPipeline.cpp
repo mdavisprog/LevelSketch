@@ -45,7 +45,10 @@ GraphicsPipeline::GraphicsPipeline()
 {
 }
 
-bool GraphicsPipeline::Initialize(const Device& Device_, const SwapChain& SwapChain_, const Shader& Vertex, const Shader& Fragment)
+bool GraphicsPipeline::Initialize(const Device& Device_,
+    const SwapChain& SwapChain_,
+    const Shader& Vertex,
+    const Shader& Fragment)
 {
     if (!CreatePipelineLayout(Device_))
     {
@@ -70,11 +73,8 @@ bool GraphicsPipeline::Initialize(const Device& Device_, const SwapChain& SwapCh
     FragmentInfo.pName = "main";
 
     VkPipelineShaderStageCreateInfo Stages[] { VertexInfo, FragmentInfo };
-    
-    const VkDynamicState DynamicStates[] {
-        VK_DYNAMIC_STATE_VIEWPORT,
-        VK_DYNAMIC_STATE_SCISSOR
-    };
+
+    const VkDynamicState DynamicStates[] { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 
     VkPipelineVertexInputStateCreateInfo VertexInputInfo {};
     VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -121,10 +121,8 @@ bool GraphicsPipeline::Initialize(const Device& Device_, const SwapChain& SwapCh
     MultisampleInfo.alphaToOneEnable = VK_FALSE;
 
     VkPipelineColorBlendAttachmentState ColorAttachment {};
-    ColorAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT
-        | VK_COLOR_COMPONENT_G_BIT
-        | VK_COLOR_COMPONENT_B_BIT
-        | VK_COLOR_COMPONENT_A_BIT;
+    ColorAttachment.colorWriteMask =
+        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     ColorAttachment.blendEnable = VK_FALSE;
     ColorAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
     ColorAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
@@ -162,14 +160,12 @@ bool GraphicsPipeline::Initialize(const Device& Device_, const SwapChain& SwapCh
     PipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
     PipelineInfo.basePipelineIndex = -1;
 
-    VkResult Result { vkCreateGraphicsPipelines(
-        Device_.GetLogicalDevice().Handle(),
+    VkResult Result { vkCreateGraphicsPipelines(Device_.GetLogicalDevice().Handle(),
         VK_NULL_HANDLE,
         1,
         &PipelineInfo,
         nullptr,
-        &m_Handle
-    )};
+        &m_Handle) };
 
     if (Result != VK_SUCCESS)
     {
@@ -289,7 +285,9 @@ bool GraphicsPipeline::CreatePipelineLayout(const Device& Device_)
     CreateInfo.pushConstantRangeCount = 0;
     CreateInfo.pPushConstantRanges = nullptr;
 
-    VkResult Result { vkCreatePipelineLayout(Device_.GetLogicalDevice().Handle(), &CreateInfo, nullptr, &m_PipelineLayout) };
+    VkResult Result {
+        vkCreatePipelineLayout(Device_.GetLogicalDevice().Handle(), &CreateInfo, nullptr, &m_PipelineLayout)
+    };
 
     if (Result != VK_SUCCESS)
     {
@@ -356,11 +354,8 @@ bool GraphicsPipeline::CreateDescriptorSetLayout(const Device& Device_)
     CreateInfo.bindingCount = static_cast<u32>(m_LayoutBindings.Size());
     CreateInfo.pBindings = m_LayoutBindings.Data();
 
-    VkResult Result { vkCreateDescriptorSetLayout(
-        Device_.GetLogicalDevice().Handle(),
-        &CreateInfo,
-        nullptr,
-        &m_DescriptorSetLayout)
+    VkResult Result {
+        vkCreateDescriptorSetLayout(Device_.GetLogicalDevice().Handle(), &CreateInfo, nullptr, &m_DescriptorSetLayout)
     };
 
     if (Result != VK_SUCCESS)
@@ -385,11 +380,8 @@ bool GraphicsPipeline::CreateDescriptorPool(const Device& Device_)
     CreateInfo.pPoolSizes = &PoolSize;
     CreateInfo.maxSets = static_cast<u32>(FRAMES_IN_FLIGHT);
 
-    VkResult Result { vkCreateDescriptorPool(
-        Device_.GetLogicalDevice().Handle(),
-        &CreateInfo,
-        nullptr,
-        &m_DescriptorPool)
+    VkResult Result {
+        vkCreateDescriptorPool(Device_.GetLogicalDevice().Handle(), &CreateInfo, nullptr, &m_DescriptorPool)
     };
 
     if (Result != VK_SUCCESS)
@@ -412,10 +404,8 @@ bool GraphicsPipeline::CreateDescriptorSets(const Device& Device_)
 
     m_DescriptorSets.Resize(FRAMES_IN_FLIGHT);
 
-    VkResult Result { vkAllocateDescriptorSets(
-        Device_.GetLogicalDevice().Handle(),
-        &AllocInfo,
-        m_DescriptorSets.Data())
+    VkResult Result {
+        vkAllocateDescriptorSets(Device_.GetLogicalDevice().Handle(), &AllocInfo, m_DescriptorSets.Data())
     };
 
     if (Result != VK_SUCCESS)

@@ -50,7 +50,11 @@ System& System::Instance()
 
 i32 System::Run()
 {
-    Console::WriteLine("\nRunning %s testing framework version %d.%d.%d.", APP_NAME, VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION);
+    Console::WriteLine("\nRunning %s testing framework version %d.%d.%d.",
+        APP_NAME,
+        VERSION_MAJOR,
+        VERSION_MINOR,
+        VERSION_REVISION);
     Console::WriteLine("There are (%llu) test suites to run through.\n", m_TestSuites.Size());
 
     bool Success { true };
@@ -77,8 +81,7 @@ i32 System::Run()
 
 System::System()
 {
-    m_TestSuites
-        .Push(Core::ArrayTests())
+    m_TestSuites.Push(Core::ArrayTests())
         .Push(Core::CommandLineTests())
         .Push(Core::ListTests())
         .Push(Core::HashMapTests())

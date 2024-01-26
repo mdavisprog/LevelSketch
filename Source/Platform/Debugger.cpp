@@ -29,7 +29,7 @@ SOFTWARE.
 #include "../Core/Defines.hpp"
 
 #if defined(WINDOWS)
-    #include "Windows/Debugger.hpp"
+#include "Windows/Debugger.hpp"
 #endif
 
 namespace LevelSketch

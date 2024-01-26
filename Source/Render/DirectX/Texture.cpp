@@ -51,18 +51,17 @@ bool Texture::Create(ID3D12Device* Device, u32 Width, u32 Height)
 
     D3D12_HEAP_PROPERTIES HeapProperties { Utility::MakeHeapProperties() };
 
-    D3D12_RESOURCE_DESC ResourceDescription = { Utility::MakeResourceDescription(D3D12_RESOURCE_DIMENSION_TEXTURE2D, DXGI_FORMAT_R8G8B8A8_UNORM) };
+    D3D12_RESOURCE_DESC ResourceDescription = { Utility::MakeResourceDescription(D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+        DXGI_FORMAT_R8G8B8A8_UNORM) };
     ResourceDescription.Width = Width;
     ResourceDescription.Height = Height;
 
-    HRESULT Result = Device->CreateCommittedResource(
-        &HeapProperties,
+    HRESULT Result = Device->CreateCommittedResource(&HeapProperties,
         D3D12_HEAP_FLAG_NONE,
         &ResourceDescription,
         D3D12_RESOURCE_STATE_COPY_DEST,
         nullptr,
-        IID_PPV_ARGS(&m_Texture)
-    );
+        IID_PPV_ARGS(&m_Texture));
 
     if (Result != S_OK)
     {
@@ -76,8 +75,7 @@ bool Texture::Create(ID3D12Device* Device, u32 Width, u32 Height)
     return true;
 }
 
-bool Texture::Upload(
-    ID3D12GraphicsCommandList* CommandList,
+bool Texture::Upload(ID3D12GraphicsCommandList* CommandList,
     ID3D12DescriptorHeap* Heap,
     u64 Offset,
     const void* Data,
@@ -103,14 +101,12 @@ bool Texture::Upload(
     D3D12_RESOURCE_DESC UploadResourceDescription { Utility::MakeResourceDescription() };
     UploadResourceDescription.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
     UploadResourceDescription.Width = RequiredSize;
-    HRESULT Result = Device->CreateCommittedResource(
-        &HeapProperties,
+    HRESULT Result = Device->CreateCommittedResource(&HeapProperties,
         D3D12_HEAP_FLAG_NONE,
         &UploadResourceDescription,
         D3D12_RESOURCE_STATE_GENERIC_READ,
         nullptr,
-        IID_PPV_ARGS(&UploadResource)
-    );
+        IID_PPV_ARGS(&UploadResource));
 
     if (Result != S_OK)
     {
@@ -131,7 +127,9 @@ bool Texture::Upload(
         return false;
     }
 
-    D3D12_MEMCPY_DEST Memcpy { UploadBuffer + Layouts.Offset, Layouts.Footprint.RowPitch, static_cast<u64>(Layouts.Footprint.RowPitch) * static_cast<u64>(NumRows) };
+    D3D12_MEMCPY_DEST Memcpy { UploadBuffer + Layouts.Offset,
+        Layouts.Footprint.RowPitch,
+        static_cast<u64>(Layouts.Footprint.RowPitch) * static_cast<u64>(NumRows) };
     for (u32 Slice = 0; Slice < Layouts.Footprint.Depth; Slice++)
     {
         u8* Dest { static_cast<u8*>(Memcpy.pData) + Memcpy.SlicePitch * Slice };
@@ -149,11 +147,9 @@ bool Texture::Upload(
     D3D12_TEXTURE_COPY_LOCATION CopySrc { UploadResource.Get(), D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT, Layouts };
     CommandList->CopyTextureRegion(&CopyDest, 0, 0, 0, &CopySrc, nullptr);
 
-    D3D12_RESOURCE_BARRIER Barrier { Utility::MakeResourceBarrierTransition(
-        m_Texture.Get(),
+    D3D12_RESOURCE_BARRIER Barrier { Utility::MakeResourceBarrierTransition(m_Texture.Get(),
         D3D12_RESOURCE_STATE_COPY_DEST,
-        D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
-    )};
+        D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE) };
     CommandList->ResourceBarrier(1, &Barrier);
 
     D3D12_SHADER_RESOURCE_VIEW_DESC ShaderViewDesc { 0 };

@@ -33,8 +33,8 @@ namespace LevelSketch
 
 namespace Core::Containers
 {
-    template<typename T>
-    class Array;
+template<typename T>
+class Array;
 }
 
 template<typename T>

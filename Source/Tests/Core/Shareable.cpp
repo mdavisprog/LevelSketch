@@ -24,10 +24,10 @@ SOFTWARE.
 
 */
 
-#include "Core.hpp"
 #include "../../Core/Memory/Shareable.hpp"
 #include "../TestSuite.hpp"
 #include "../Utility.hpp"
+#include "Core.hpp"
 
 namespace LevelSketch
 {
@@ -69,10 +69,7 @@ static bool ShareInstance()
 
 UniquePtr<TestSuite> ShareableTests()
 {
-    return TestSuite::New("Shareable", {
-        TEST_CASE(ShareNull),
-        TEST_CASE(ShareInstance)
-    });
+    return TestSuite::New("Shareable", { TEST_CASE(ShareNull), TEST_CASE(ShareInstance) });
 }
 
 }

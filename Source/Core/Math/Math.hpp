@@ -155,25 +155,46 @@ static constexpr const auto& DEG2RAD = Core::Math::DEG2RAD;
 static constexpr const auto& RAD2DEG = Core::Math::RAD2DEG;
 static constexpr const auto& Abs = Core::Math::Abs;
 static constexpr const auto& Absf = Core::Math::Absf;
-template<typename T> static const auto& Sin = Core::Math::Sin<T>;
-template<typename T> static const auto& Cos = Core::Math::Cos<T>;
-template<typename T> static const auto& Tan = Core::Math::Tan<T>;
-template<typename T> static const auto& FMod = Core::Math::FMod<T>;
-template<typename T> static const auto& Sqrt = Core::Math::Sqrt<T>;
 
 template<typename T>
-static constexpr T Min(const T& A, const T& B) { return Core::Math::Min<T>(A, B); }
+static const auto& Sin = Core::Math::Sin<T>;
+template<typename T>
+static const auto& Cos = Core::Math::Cos<T>;
+template<typename T>
+static const auto& Tan = Core::Math::Tan<T>;
+template<typename T>
+static const auto& FMod = Core::Math::FMod<T>;
+template<typename T>
+static const auto& Sqrt = Core::Math::Sqrt<T>;
 
 template<typename T>
-static constexpr T Min(const std::initializer_list<T>& Values) { return Core::Math::Min<T>(Values); }
+static constexpr T Min(const T& A, const T& B)
+{
+    return Core::Math::Min<T>(A, B);
+}
 
 template<typename T>
-static constexpr T Max(const T& A, const T& B) { return Core::Math::Max<T>(A, B); }
+static constexpr T Min(const std::initializer_list<T>& Values)
+{
+    return Core::Math::Min<T>(Values);
+}
 
 template<typename T>
-static constexpr T Max(const std::initializer_list<T>& Values) { return Core::Math::Max<T>(Values); }
+static constexpr T Max(const T& A, const T& B)
+{
+    return Core::Math::Max<T>(A, B);
+}
 
 template<typename T>
-static constexpr T Clamp(const T& Value, const T& Min, const T& Max) { return Core::Math::Clamp<T>(Value, Min, Max); }
+static constexpr T Max(const std::initializer_list<T>& Values)
+{
+    return Core::Math::Max<T>(Values);
+}
+
+template<typename T>
+static constexpr T Clamp(const T& Value, const T& Min, const T& Max)
+{
+    return Core::Math::Clamp<T>(Value, Min, Max);
+}
 
 }

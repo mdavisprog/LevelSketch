@@ -99,8 +99,7 @@ bool Shader::Compile()
     m_Blob = nullptr;
     m_Errors = nullptr;
 
-    HRESULT Result = D3DCompile(
-        m_Source.Data(),
+    HRESULT Result = D3DCompile(m_Source.Data(),
         m_Source.Length(),
         m_Name.Data(),
         nullptr,
@@ -110,8 +109,7 @@ bool Shader::Compile()
         m_CompileFlags,
         0,
         &m_Blob,
-        &m_Errors
-    );
+        &m_Errors);
 
     return Result == S_OK;
 }

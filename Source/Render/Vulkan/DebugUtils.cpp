@@ -36,8 +36,7 @@ namespace Render
 namespace Vulkan
 {
 
-static VKAPI_ATTR VkBool32 VKAPI_CALL MessageCallback(
-    VkDebugUtilsMessageSeverityFlagBitsEXT /*Severity*/,
+static VKAPI_ATTR VkBool32 VKAPI_CALL MessageCallback(VkDebugUtilsMessageSeverityFlagBitsEXT /*Severity*/,
     VkDebugUtilsMessageTypeFlagsEXT /*Type*/,
     const VkDebugUtilsMessengerCallbackDataEXT* CallbackData,
     void* /*UserData*/
@@ -57,12 +56,11 @@ VkDebugUtilsMessengerCreateInfoEXT DebugUtils::CreateInfo()
 {
     VkDebugUtilsMessengerCreateInfoEXT Result {};
     Result.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-    Result.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
-        | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
-        | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-    Result.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
-        | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
-        | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    Result.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+                             VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+                             VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    Result.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                         VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
     Result.pfnUserCallback = MessageCallback;
 
     return Result;

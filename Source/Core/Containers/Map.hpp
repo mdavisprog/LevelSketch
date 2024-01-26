@@ -26,9 +26,9 @@ SOFTWARE.
 
 #pragma once
 
-#include "RedBlackTree.hpp"
 #include "../Assert.hpp"
 #include "Pair.hpp"
+#include "RedBlackTree.hpp"
 
 #include <utility>
 

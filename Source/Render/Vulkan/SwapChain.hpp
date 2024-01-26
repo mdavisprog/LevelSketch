@@ -50,7 +50,7 @@ public:
         VkSurfaceCapabilitiesKHR SurfaceCapabilities {};
         Array<VkSurfaceFormatKHR> Formats {};
         Array<VkPresentModeKHR> PresentModes {};
-        
+
         bool IsValid() const
         {
             return !Formats.IsEmpty() && !PresentModes.IsEmpty();

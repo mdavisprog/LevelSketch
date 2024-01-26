@@ -26,8 +26,8 @@ SOFTWARE.
 
 #pragma once
 
-#include "../Core/Types.hpp"
 #include "../Core/Math/Vector2.hpp"
+#include "../Core/Types.hpp"
 #include "Mouse.hpp"
 
 namespace LevelSketch
@@ -50,7 +50,6 @@ struct Event
     friend class EventQueue;
 
 public:
-
     //
     // Enum
     //
@@ -124,7 +123,6 @@ private:
     Data m_Data {};
     Window* m_Window { nullptr };
 };
-
 
 }
 }

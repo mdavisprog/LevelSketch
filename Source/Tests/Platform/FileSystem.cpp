@@ -24,11 +24,11 @@ SOFTWARE.
 
 */
 
-#include "Platform.hpp"
-#include "../../Core/Containers/String.hpp"
 #include "../../Platform/FileSystem.hpp"
+#include "../../Core/Containers/String.hpp"
 #include "../TestSuite.hpp"
 #include "../Utility.hpp"
+#include "Platform.hpp"
 
 namespace LevelSketch
 {
@@ -59,9 +59,7 @@ static bool GetDirectory()
 
 UniquePtr<TestSuite> FileSystemTests()
 {
-    return TestSuite::New("FileSystem", {
-        TEST_CASE(GetDirectory)
-    });
+    return TestSuite::New("FileSystem", { TEST_CASE(GetDirectory) });
 }
 
 }

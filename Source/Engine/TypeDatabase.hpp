@@ -75,25 +75,25 @@ private:
 }
 
 #ifndef DECLARE_BASE_TYPE
-    #define DECLARE_BASE_TYPE(Type) LevelSketch::Engine::TypeDatabase::Instance().Register<Type>(#Type)
+#define DECLARE_BASE_TYPE(Type) LevelSketch::Engine::TypeDatabase::Instance().Register<Type>(#Type)
 #else
-    #error "DECLARE_BASE_TYPE has already been defined!"
+#error "DECLARE_BASE_TYPE has already been defined!"
 #endif
 
 #ifndef DECLARE_TYPE
-    #define DECLARE_TYPE(Type, Parent) LevelSketch::Engine::TypeDatabase::Instance().Register<Type, Parent>(#Type, #Parent)
+#define DECLARE_TYPE(Type, Parent) LevelSketch::Engine::TypeDatabase::Instance().Register<Type, Parent>(#Type, #Parent)
 #else
-    #error "DECLARE_TYPE has already been defined!"
+#error "DECLARE_TYPE has already been defined!"
 #endif
 
 #ifndef TYPE_EXISTS
-    #define TYPE_EXISTS(Type) LevelSketch::Engine::TypeDatabase::Instance().HasType(#Type)
+#define TYPE_EXISTS(Type) LevelSketch::Engine::TypeDatabase::Instance().HasType(#Type)
 #else
-    #error "TYPE_EXISTS has already been defined!"
+#error "TYPE_EXISTS has already been defined!"
 #endif
 
 #ifndef TYPE_INHERITS
-    #define TYPE_INHERITS(Type, Parent) LevelSketch::Engine::TypeDatabase::Instance().Inherits(#Type, #Parent)
+#define TYPE_INHERITS(Type, Parent) LevelSketch::Engine::TypeDatabase::Instance().Inherits(#Type, #Parent)
 #else
-    #error "TYPE_INHERITS has already been defined!"
+#error "TYPE_INHERITS has already been defined!"
 #endif

@@ -66,10 +66,8 @@ bool Shader::Load(id<MTLDevice> Device, const char* Source)
     }
 
     NSError* Error { nullptr };
-    m_Shaders = [Device newLibraryWithSource:[NSString stringWithUTF8String:Source]
-                                     options:nil
-                                       error:&Error];
-    
+    m_Shaders = [Device newLibraryWithSource:[NSString stringWithUTF8String:Source] options:nil error:&Error];
+
     if (m_Shaders == nullptr)
     {
         Core::Console::Error("Failed to compile shader.\nError: %s", [[Error localizedDescription] UTF8String]);
@@ -137,7 +135,9 @@ id<MTLFunction> Shader::LoadFunction(const char* Name) const
 
     if (Result == nullptr)
     {
-        Core::Console::Error("Failed to load function '%s'.\nError: %s", Name, [[Error localizedDescription] UTF8String]);
+        Core::Console::Error("Failed to load function '%s'.\nError: %s",
+            Name,
+            [[Error localizedDescription] UTF8String]);
     }
 
     return Result;

@@ -138,9 +138,7 @@ void Window::ProcessEvents()
     {
         switch (Event.type)
         {
-        case SDL_WINDOWEVENT:
-            ProcessEvent(Event.window);
-            break;
+        case SDL_WINDOWEVENT: ProcessEvent(Event.window); break;
 
         default: break;
         }
@@ -156,9 +154,7 @@ Window& Window::ProcessEvent(const SDL_WindowEvent& Event)
 {
     switch (Event.event)
     {
-    case SDL_WINDOWEVENT_CLOSE:
-        Close();
-        break;
+    case SDL_WINDOWEVENT_CLOSE: Close(); break;
 
     default: break;
     }

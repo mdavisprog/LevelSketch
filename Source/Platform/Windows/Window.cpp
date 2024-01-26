@@ -59,8 +59,7 @@ bool Window::Create(const char* Title, int X, int Y, int Width, int Height)
     wTitle.resize(Length);
     MultiByteToWideChar(CP_ACP, 0, Title, TitleLength, wTitle.data(), Length);
 
-    m_Handle = CreateWindowExW(
-        0,
+    m_Handle = CreateWindowExW(0,
         WND_CLASS_NAME,
         wTitle.data(),
         WS_OVERLAPPEDWINDOW,
@@ -71,8 +70,7 @@ bool Window::Create(const char* Title, int X, int Y, int Width, int Height)
         nullptr,
         nullptr,
         nullptr,
-        nullptr
-    );
+        nullptr);
 
     if (IsOpen())
     {
@@ -120,15 +118,7 @@ void Window::SetPosition(int X, int Y)
         return;
     }
 
-    SetWindowPos(
-        m_Handle,
-        HWND_TOP,
-        X,
-        Y,
-        0,
-        0,
-        SWP_NOSIZE
-    );
+    SetWindowPos(m_Handle, HWND_TOP, X, Y, 0, 0, SWP_NOSIZE);
 }
 
 Core::Math::Vector2i Window::Position() const

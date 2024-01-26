@@ -50,8 +50,13 @@ public:
 
     static const UniquePtr<Platform>& Instance();
 
-    Platform() {}
-    virtual ~Platform() {}
+    Platform()
+    {
+    }
+
+    virtual ~Platform()
+    {
+    }
 
     virtual bool Initialize() = 0;
     virtual void Shutdown() = 0;

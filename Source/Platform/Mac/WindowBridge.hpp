@@ -33,14 +33,14 @@ SOFTWARE.
 
 namespace LevelSketch::Platform
 {
-    class Window;
+class Window;
 }
 
 @interface WindowBridge : NSObject
-    @property (nonatomic, strong) NSWindow* Window;
-    @property (nonatomic, readonly) LevelSketch::Platform::Window* PlatformWindow;
+@property(nonatomic, strong) NSWindow* Window;
+@property(nonatomic, readonly) LevelSketch::Platform::Window* PlatformWindow;
 
-    -(void) OnViewCreated:(NSView*)View Window:(LevelSketch::Platform::Window*)Window;
+- (void)OnViewCreated:(NSView*)View Window:(LevelSketch::Platform::Window*)Window;
 
-    +(WindowBridge*) Retrieve:(void*)Ptr;
++ (WindowBridge*)Retrieve:(void*)Ptr;
 @end

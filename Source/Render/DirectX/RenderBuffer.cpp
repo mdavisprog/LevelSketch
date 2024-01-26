@@ -56,14 +56,12 @@ bool RenderBuffer::Initialize(ID3D12Device* Device, u64 VertexBufferSize, u64 In
     D3D12_RESOURCE_DESC ResourceDescription { Utility::MakeResourceDescription() };
     ResourceDescription.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
     ResourceDescription.Width = VertexBufferSize;
-    HRESULT Result = Device->CreateCommittedResource(
-        &HeapProperties,
+    HRESULT Result = Device->CreateCommittedResource(&HeapProperties,
         D3D12_HEAP_FLAG_NONE,
         &ResourceDescription,
         D3D12_RESOURCE_STATE_GENERIC_READ,
         nullptr,
-        IID_PPV_ARGS(&m_VertexBuffer)
-    );
+        IID_PPV_ARGS(&m_VertexBuffer));
 
     if (Result != S_OK)
     {
@@ -72,14 +70,12 @@ bool RenderBuffer::Initialize(ID3D12Device* Device, u64 VertexBufferSize, u64 In
     }
 
     ResourceDescription.Width = IndexBufferSize;
-    Result = Device->CreateCommittedResource(
-        &HeapProperties,
+    Result = Device->CreateCommittedResource(&HeapProperties,
         D3D12_HEAP_FLAG_NONE,
         &ResourceDescription,
         D3D12_RESOURCE_STATE_GENERIC_READ,
         nullptr,
-        IID_PPV_ARGS(&m_IndexBuffer)
-    );
+        IID_PPV_ARGS(&m_IndexBuffer));
 
     if (Result != S_OK)
     {

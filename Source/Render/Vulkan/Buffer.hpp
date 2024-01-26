@@ -44,11 +44,7 @@ class Buffer
 public:
     Buffer();
 
-    bool Initialize(
-        const Device& Device_,
-        u64 Size,
-        VkBufferUsageFlags Usage,
-        VkMemoryPropertyFlags MemProperties);
+    bool Initialize(const Device& Device_, u64 Size, VkBufferUsageFlags Usage, VkMemoryPropertyFlags MemProperties);
     void Shutdown(const Device& Device_);
 
     bool Map(const Device& Device_, u64 Size);

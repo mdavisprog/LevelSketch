@@ -24,12 +24,12 @@ SOFTWARE.
 
 */
 
-#include "Core.hpp"
-#include "../../Core/Containers/Array.hpp"
 #include "../../Core/Memory/SharedPtr.hpp"
 #include "../../Core/Compiler.hpp"
+#include "../../Core/Containers/Array.hpp"
 #include "../TestSuite.hpp"
 #include "../Utility.hpp"
+#include "Core.hpp"
 
 namespace LevelSketch
 {
@@ -144,9 +144,11 @@ static bool Equality()
     return true;
 }
 
+// clang-format off
 #if defined(CLANG)
-    PUSH_DISABLE_WARNING(-Wself-assign-overloaded)
+PUSH_DISABLE_WARNING(-Wself-assign-overloaded)
 #endif
+// clang-format on
 
 static bool SelfCopy()
 {
@@ -158,7 +160,7 @@ static bool SelfCopy()
 }
 
 #if defined(CLANG)
-    POP_DISABLE_WARNING
+POP_DISABLE_WARNING
 #endif
 
 static bool SetNull()
@@ -177,8 +179,14 @@ static bool SetNull()
 
 static bool Polymorphism()
 {
-    struct Base {};
-    struct Derived : public Base {};
+    struct Base
+    {
+    };
+
+    struct Derived : public Base
+    {
+    };
+
     SharedPtr<Base> Object { SharedPtr<Derived>::New() };
     // No need for any verifies. This test is meant to verify that SharedPtr is set up
     // to allow for base types to store pointers to derived types.
@@ -187,17 +195,16 @@ static bool Polymorphism()
 
 UniquePtr<TestSuite> SharedPtrTests()
 {
-    return TestSuite::New("SharedPtr", {
-        TEST_CASE(CreateNull),
-        TEST_CASE(CreateDestroy),
-        TEST_CASE(CreateCopy),
-        TEST_CASE(ArrayPtrs),
-        TEST_CASE(Move),
-        TEST_CASE(Equality),
-        TEST_CASE(SelfCopy),
-        TEST_CASE(SetNull),
-        TEST_CASE(Polymorphism)
-    });
+    return TestSuite::New("SharedPtr",
+        { TEST_CASE(CreateNull),
+            TEST_CASE(CreateDestroy),
+            TEST_CASE(CreateCopy),
+            TEST_CASE(ArrayPtrs),
+            TEST_CASE(Move),
+            TEST_CASE(Equality),
+            TEST_CASE(SelfCopy),
+            TEST_CASE(SetNull),
+            TEST_CASE(Polymorphism) });
 }
 
 }

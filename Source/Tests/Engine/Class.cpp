@@ -24,10 +24,10 @@ SOFTWARE.
 
 */
 
-#include "Engine.hpp"
 #include "../../Engine/Class.hpp"
 #include "../TestSuite.hpp"
 #include "../Utility.hpp"
+#include "Engine.hpp"
 
 namespace LevelSketch
 {
@@ -59,8 +59,15 @@ static bool DerivedClass()
 {
     Class::StaticInitialize(true);
 
-    class Base : public Class { DECLARE_CLASS(Base, Class) };
-    class Derived : public Base { DECLARE_CLASS(Derived, Base) };
+    class Base : public Class
+    {
+        DECLARE_CLASS(Base, Class)
+    };
+
+    class Derived : public Base
+    {
+        DECLARE_CLASS(Derived, Base)
+    };
 
     VERIFY(!TYPE_EXISTS(Base));
     VERIFY(!TYPE_EXISTS(Derived));
@@ -80,10 +87,25 @@ static bool CastClass()
 {
     Class::StaticInitialize(true);
 
-    class A : public Class { DECLARE_CLASS(A, Class) };
-    class B : public A { DECLARE_CLASS(B, A) };
-    class C : public A { DECLARE_CLASS(C, A) };
-    class D : public B { DECLARE_CLASS(D, B) };
+    class A : public Class
+    {
+        DECLARE_CLASS(A, Class)
+    };
+
+    class B : public A
+    {
+        DECLARE_CLASS(B, A)
+    };
+
+    class C : public A
+    {
+        DECLARE_CLASS(C, A)
+    };
+
+    class D : public B
+    {
+        DECLARE_CLASS(D, B)
+    };
 
     VERIFY(!TYPE_EXISTS(A));
     VERIFY(!TYPE_EXISTS(B));
@@ -120,11 +142,7 @@ static bool CastClass()
 
 UniquePtr<TestSuite> ClassTests()
 {
-    return TestSuite::New("Class", {
-        TEST_CASE(BaseClass),
-        TEST_CASE(DerivedClass),
-        TEST_CASE(CastClass)
-    });
+    return TestSuite::New("Class", { TEST_CASE(BaseClass), TEST_CASE(DerivedClass), TEST_CASE(CastClass) });
 }
 
 }

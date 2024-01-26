@@ -29,13 +29,13 @@ SOFTWARE.
 #include "Window.hpp"
 
 #if defined(PLATFORM_WINDOWS)
-    #include "Windows/Platform.hpp"
+#include "Windows/Platform.hpp"
 #elif defined(PLATFORM_MAC)
-    #include "Mac/Platform.hpp"
+#include "Mac/Platform.hpp"
 #elif defined(PLATFORM_SDL2)
-    #include "SDL2/Platform.hpp"
+#include "SDL2/Platform.hpp"
 #else
-    #error "Platform is not supported!"
+#error "Platform is not supported!"
 #endif
 
 #include <utility>
@@ -137,7 +137,7 @@ Platform& Platform::CloseWindow(Window* Window)
     }
 
     Window->Close();
-    
+
     for (const UniquePtr<LevelSketch::Platform::Window>& Item : m_Windows)
     {
         if (Item == Window)

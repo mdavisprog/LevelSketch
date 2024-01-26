@@ -88,8 +88,8 @@ bool Loader::GetInstanceExtensionProperties(Array<VkExtensionProperties>& Proper
     }
 
     PFN_vkEnumerateInstanceExtensionProperties vkEnumerateInstanceExtensionPropertiesFn {
-        reinterpret_cast<PFN_vkEnumerateInstanceExtensionProperties>(m_GetInstanceProcAddr(
-            nullptr, "vkEnumerateInstanceExtensionProperties"))
+        reinterpret_cast<PFN_vkEnumerateInstanceExtensionProperties>(
+            m_GetInstanceProcAddr(nullptr, "vkEnumerateInstanceExtensionProperties"))
     };
 
     if (vkEnumerateInstanceExtensionPropertiesFn == nullptr)

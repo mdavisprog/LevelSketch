@@ -38,7 +38,6 @@ namespace Engine
 class Class
 {
 public:
-
     //
     // GetType and StaticInitialize offer an optional 'Refresh' argument.
     // This is used in the testing framework to allow for re-registering
@@ -129,42 +128,44 @@ static T* Cast(Engine::Class* Object)
 
 }
 
-#define DECLARE_CLASS(CLASS, PARENT) \
-public: \
-    static void StaticInitialize() \
-    { \
-        static_assert(std::is_base_of_v<LevelSketch::Engine::Class, PARENT>, "Parent class (" #PARENT ") is not a child of LevelSketch::Engine::Class!"); \
-        static bool Initialized { false }; \
-        if (Initialized) \
-        { \
-            return; \
-        } \
-        Initialized = true; \
-        DECLARE_TYPE(CLASS, PARENT); \
-        ClassType(); \
-    } \
-    static LevelSketch::Engine::Type* ClassType() \
-    { \
-        static LevelSketch::Engine::Type* s_Type { nullptr }; \
-        if (s_Type == nullptr) \
-        { \
-            s_Type = LevelSketch::Engine::TypeDatabase::Instance().GetType(#CLASS); \
+#define DECLARE_CLASS(CLASS, PARENT)                                                                                   \
+public:                                                                                                                \
+    static void StaticInitialize()                                                                                     \
+    {                                                                                                                  \
+        static_assert(std::is_base_of_v<LevelSketch::Engine::Class, PARENT>,                                           \
+            "Parent class (" #PARENT ") is not a child of LevelSketch::Engine::Class!");                               \
+        static bool Initialized { false };                                                                             \
+        if (Initialized)                                                                                               \
+        {                                                                                                              \
+            return;                                                                                                    \
+        }                                                                                                              \
+        Initialized = true;                                                                                            \
+        DECLARE_TYPE(CLASS, PARENT);                                                                                   \
+        ClassType();                                                                                                   \
+    }                                                                                                                  \
+    static LevelSketch::Engine::Type* ClassType()                                                                      \
+    {                                                                                                                  \
+        static LevelSketch::Engine::Type* s_Type { nullptr };                                                          \
+        if (s_Type == nullptr)                                                                                         \
+        {                                                                                                              \
+            s_Type = LevelSketch::Engine::TypeDatabase::Instance().GetType(#CLASS);                                    \
             LS_ASSERTF(s_Type != nullptr, "Class (%s) is not registerd. Make sure REGISTER_CLASS is called.", #CLASS); \
-        } \
-        return s_Type; \
-    } \
-    static LevelSketch::Core::Memory::UniquePtr<CLASS> Instance() \
-    { \
-        return ClassType()->NewUnique<CLASS>(); \
-    } \
-    virtual LevelSketch::Engine::Type* GetType() const override \
-    { \
-        return ClassType(); \
-    } \
-    virtual LevelSketch::Engine::Type* GetParentType() const override \
-    { \
-        return PARENT::GetType(); \
-    } \
+        }                                                                                                              \
+        return s_Type;                                                                                                 \
+    }                                                                                                                  \
+    static LevelSketch::Core::Memory::UniquePtr<CLASS> Instance()                                                      \
+    {                                                                                                                  \
+        return ClassType()->NewUnique<CLASS>();                                                                        \
+    }                                                                                                                  \
+    virtual LevelSketch::Engine::Type* GetType() const override                                                        \
+    {                                                                                                                  \
+        return ClassType();                                                                                            \
+    }                                                                                                                  \
+    virtual LevelSketch::Engine::Type* GetParentType() const override                                                  \
+    {                                                                                                                  \
+        return PARENT::GetType();                                                                                      \
+    }                                                                                                                  \
+                                                                                                                       \
 private:
 
 #define REGISTER_CLASS(Class) Class::StaticInitialize()

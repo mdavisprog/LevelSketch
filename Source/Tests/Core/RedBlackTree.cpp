@@ -24,10 +24,10 @@ SOFTWARE.
 
 */
 
-#include "Core.hpp"
 #include "../../Core/Containers/RedBlackTree.hpp"
 #include "../TestSuite.hpp"
 #include "../Utility.hpp"
+#include "Core.hpp"
 
 namespace LevelSketch
 {
@@ -335,10 +335,7 @@ static bool UniquePtrs()
 static bool MoveCtor()
 {
     RedBlackTree<i32, i32> Instance1;
-    Instance1
-        .Insert(10, 10)
-        .Insert(20, 20)
-        .Insert(30, 20);
+    Instance1.Insert(10, 10).Insert(20, 20).Insert(30, 20);
     VERIFY(Instance1.Size() == 3);
     VERIFY(*Instance1.Find(10) == 10);
     VERIFY(*Instance1.Find(20) == 20);
@@ -355,20 +352,13 @@ static bool MoveCtor()
 static bool MoveAssign()
 {
     RedBlackTree<i32, i32> Instance1;
-    Instance1
-        .Insert(10, 10)
-        .Insert(20, 20)
-        .Insert(30, 20);
+    Instance1.Insert(10, 10).Insert(20, 20).Insert(30, 20);
     VERIFY(Instance1.Size() == 3);
     VERIFY(*Instance1.Find(10) == 10);
     VERIFY(*Instance1.Find(20) == 20);
     VERIFY(*Instance1.Find(30) == 20);
     RedBlackTree<i32, i32> Instance2;
-    Instance2
-        .Insert(1, 1)
-        .Insert(2, 2)
-        .Insert(3, 2)
-        .Insert(4, 4);
+    Instance2.Insert(1, 1).Insert(2, 2).Insert(3, 2).Insert(4, 4);
     VERIFY(Instance2.Size() == 4);
     VERIFY(*Instance2.Find(1) == 1);
     VERIFY(*Instance2.Find(2) == 2);
@@ -385,17 +375,16 @@ static bool MoveAssign()
 
 UniquePtr<TestSuite> RedBlackTreeTests()
 {
-    return TestSuite::New("RedBlackTree", {
-        TEST_CASE(Empty),
-        TEST_CASE(Insert),
-        TEST_CASE(Delete),
-        TEST_CASE(InsertDuplicate),
-        TEST_CASE(Find),
-        TEST_CASE(Size),
-        TEST_CASE(UniquePtrs),
-        TEST_CASE(MoveCtor),
-        TEST_CASE(MoveAssign)
-    });
+    return TestSuite::New("RedBlackTree",
+        { TEST_CASE(Empty),
+            TEST_CASE(Insert),
+            TEST_CASE(Delete),
+            TEST_CASE(InsertDuplicate),
+            TEST_CASE(Find),
+            TEST_CASE(Size),
+            TEST_CASE(UniquePtrs),
+            TEST_CASE(MoveCtor),
+            TEST_CASE(MoveAssign) });
 }
 
 }

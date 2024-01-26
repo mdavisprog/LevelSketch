@@ -40,11 +40,10 @@ UniformBuffer::UniformBuffer()
 
 bool UniformBuffer::Initialize(const Device& Device_)
 {
-    if (!m_Buffer.Initialize(
-        Device_,
-        sizeof(Uniforms),
-        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+    if (!m_Buffer.Initialize(Device_,
+            sizeof(Uniforms),
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
     {
         return false;
     }

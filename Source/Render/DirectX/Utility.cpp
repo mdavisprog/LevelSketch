@@ -63,8 +63,7 @@ D3D12_RESOURCE_DESC MakeResourceDescription(D3D12_RESOURCE_DIMENSION Dimension, 
     return Result;
 }
 
-D3D12_RESOURCE_BARRIER MakeResourceBarrierTransition(
-    ID3D12Resource* Resource,
+D3D12_RESOURCE_BARRIER MakeResourceBarrierTransition(ID3D12Resource* Resource,
     D3D12_RESOURCE_STATES Before,
     D3D12_RESOURCE_STATES After,
     UINT Subresource,
@@ -131,8 +130,10 @@ D3D12_DEPTH_STENCIL_DESC MakeDepthStencilDescription()
     Result.StencilEnable = FALSE;
     Result.StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
     Result.StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
-    const D3D12_DEPTH_STENCILOP_DESC defaultStencilOp =
-    { D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_COMPARISON_FUNC_ALWAYS };
+    const D3D12_DEPTH_STENCILOP_DESC defaultStencilOp = { D3D12_STENCIL_OP_KEEP,
+        D3D12_STENCIL_OP_KEEP,
+        D3D12_STENCIL_OP_KEEP,
+        D3D12_COMPARISON_FUNC_ALWAYS };
     Result.FrontFace = defaultStencilOp;
     Result.BackFace = defaultStencilOp;
     return Result;

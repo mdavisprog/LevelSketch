@@ -96,7 +96,8 @@ public:
     template<typename U, typename UDeleter>
     UniquePtr(UniquePtr<U, UDeleter>&& Other) noexcept
     {
-        static_assert(std::is_base_of_v<T, U>, "Trying to create a unique pointer of a derived class that does not inherit from base.");
+        static_assert(std::is_base_of_v<T, U>,
+            "Trying to create a unique pointer of a derived class that does not inherit from base.");
         m_Data = Other.Leak();
         m_Deleter = std::forward<UDeleter>(Other.GetDeleter());
     }
@@ -116,7 +117,8 @@ public:
     template<typename U>
     UniquePtr& operator=(UniquePtr<U>&& Other)
     {
-        static_assert(std::is_base_of_v<T, U>, "Trying to create a unique pointer of a derived class that does not inherit from base.");
+        static_assert(std::is_base_of_v<T, U>,
+            "Trying to create a unique pointer of a derived class that does not inherit from base.");
         Reset();
         m_Data = Other.Leak();
         return *this;
@@ -238,4 +240,3 @@ template<typename T, typename Deleter = Core::Memory::DefaultDeleter<T>>
 using UniquePtr = Core::Memory::UniquePtr<T, Deleter>;
 
 }
-

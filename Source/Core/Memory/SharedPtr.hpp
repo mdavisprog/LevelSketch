@@ -52,7 +52,7 @@ public:
     template<typename... TArguments>
     static SharedPtr<T> New(TArguments&&... Arguments)
     {
-        return SharedPtr<T>( new T(Arguments...) );
+        return SharedPtr<T>(new T(Arguments...));
     }
 
     SharedPtr()

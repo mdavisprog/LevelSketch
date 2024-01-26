@@ -28,15 +28,15 @@ SOFTWARE.
 #include "../../External/OctaneGUI/OctaneGUI.h"
 
 #if defined(DEBUG)
-    #include "InfoQueue.hpp"
+#include "InfoQueue.hpp"
 #endif
 
-#include "Renderer.hpp"
 #include "../../Core/Console.hpp"
 #include "../../Core/Containers/Array.hpp"
 #include "../../Core/Math/Vector2.hpp"
 #include "../../Core/Math/Vertex.hpp"
 #include "../../Platform/Window.hpp"
+#include "Renderer.hpp"
 #include "Shader.hpp"
 #include "Utility.hpp"
 
@@ -145,11 +145,9 @@ void Renderer::Render(Platform::Window* Window)
     m_CommandList->RSSetViewports(1, &View);
     m_CommandList->RSSetScissorRects(1, &Scissor);
 
-    D3D12_RESOURCE_BARRIER Barrier { Utility::MakeResourceBarrierTransition(
-        m_RenderTargets[m_FrameIndex].Get(),
+    D3D12_RESOURCE_BARRIER Barrier { Utility::MakeResourceBarrierTransition(m_RenderTargets[m_FrameIndex].Get(),
         D3D12_RESOURCE_STATE_PRESENT,
-        D3D12_RESOURCE_STATE_RENDER_TARGET
-    )};
+        D3D12_RESOURCE_STATE_RENDER_TARGET) };
     m_CommandList->ResourceBarrier(1, &Barrier);
 
     D3D12_CPU_DESCRIPTOR_HANDLE RTVCPUDesc { m_RTVHeap->GetCPUDescriptorHandleForHeapStart() };
@@ -238,7 +236,11 @@ u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8)
     }
 
     Microsoft::WRL::ComPtr<ID3D12Resource> UploadResource;
-    if (!Tex.Upload(m_CommandList.Get(), m_SRVHeap.Get(), m_Textures.Size() * m_SRVHeapDescriptorSize, Data, UploadResource))
+    if (!Tex.Upload(m_CommandList.Get(),
+            m_SRVHeap.Get(),
+            m_Textures.Size() * m_SRVHeapDescriptorSize,
+            Data,
+            UploadResource))
     {
         return 0;
     }
@@ -263,15 +265,15 @@ void Renderer::UploadGUIData(OctaneGUI::Window*, const OctaneGUI::VertexBuffer& 
         return;
     }
 
-    m_RenderBufferGUI.UploadVertexData(Buffer.GetVertices().data(), static_cast<u64>(Buffer.GetVertexCount()) * sizeof(OctaneGUI::Vertex));
-    m_RenderBufferGUI.UploadIndexData(Buffer.GetIndices().data(), static_cast<u64>(Buffer.GetIndexCount()) * sizeof(u32));
+    m_RenderBufferGUI.UploadVertexData(Buffer.GetVertices().data(),
+        static_cast<u64>(Buffer.GetVertexCount()) * sizeof(OctaneGUI::Vertex));
+    m_RenderBufferGUI.UploadIndexData(Buffer.GetIndices().data(),
+        static_cast<u64>(Buffer.GetIndexCount()) * sizeof(u32));
 
     ExecuteCommands();
     WaitForPreviousFrame();
 
-    m_GUICommands
-        .Clear()
-        .Reserve(Buffer.Commands().size());
+    m_GUICommands.Clear().Reserve(Buffer.Commands().size());
 
     for (const OctaneGUI::DrawCommand& Command : Buffer.Commands())
     {
@@ -335,14 +337,12 @@ bool Renderer::LoadPipeline(Platform::Window* Window)
 
     const HWND Handle { reinterpret_cast<HWND>(Window->Handle()) };
     Microsoft::WRL::ComPtr<IDXGISwapChain1> SwapChain;
-    if (Factory->CreateSwapChainForHwnd(
-        m_CommandQueue.Get(),
-        Handle,
-        &SwapChainDescription,
-        nullptr,
-        nullptr,
-        &SwapChain
-    ) != S_OK)
+    if (Factory->CreateSwapChainForHwnd(m_CommandQueue.Get(),
+            Handle,
+            &SwapChainDescription,
+            nullptr,
+            nullptr,
+            &SwapChain) != S_OK)
     {
         printf("Failed to create swap chain!\n");
         return false;
@@ -427,11 +427,9 @@ bool Renderer::LoadAssets(Platform::Window* Window)
             FeatureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
         }
 
-        D3D12_DESCRIPTOR_RANGE1 DescRange[2]
-        {
-            Utility::MakeDescriptorRange1(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC),
-            Utility::MakeDescriptorRange1(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC)
-        };
+        D3D12_DESCRIPTOR_RANGE1 DescRange[2] { Utility::MakeDescriptorRange1(D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+                                                   D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC),
+            Utility::MakeDescriptorRange1(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC) };
 
         D3D12_ROOT_PARAMETER1 RootParameters[2];
         RootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
@@ -475,7 +473,10 @@ bool Renderer::LoadAssets(Platform::Window* Window)
             return false;
         }
 
-        if (m_Device->CreateRootSignature(0, Signature->GetBufferPointer(), Signature->GetBufferSize(), IID_PPV_ARGS(&m_RootSignature)) != S_OK)
+        if (m_Device->CreateRootSignature(0,
+                Signature->GetBufferPointer(),
+                Signature->GetBufferSize(),
+                IID_PPV_ARGS(&m_RootSignature)) != S_OK)
         {
             printf("Failed to create root signature!\n");
             return false;
@@ -489,28 +490,28 @@ bool Renderer::LoadAssets(Platform::Window* Window)
 #endif
 
     Shader VertexShader { Shader::LoadFromFile("Content/Shaders/HLSL/TestVS.hlsl") };
-    bool CompileResult = VertexShader
-        .SetName("DefaultVS")
-        .SetEntryPoint("Main")
-        .SetTarget("vs_5_0")
-        .SetCompileFlags(CompileFlags)
-        .AddInputElement({"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0})
-        .AddInputElement({"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0})
-        .AddInputElement({"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0})
-        .Compile();
+    bool CompileResult =
+        VertexShader.SetName("DefaultVS")
+            .SetEntryPoint("Main")
+            .SetTarget("vs_5_0")
+            .SetCompileFlags(CompileFlags)
+            .AddInputElement(
+                { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 })
+            .AddInputElement(
+                { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 })
+            .AddInputElement(
+                { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 })
+            .Compile();
     if (!CompileResult)
     {
-        Core::Console::Warning("Failed to compile vertex shader:\n%s", (LPCSTR)VertexShader.Errors()->GetBufferPointer());
+        Core::Console::Warning("Failed to compile vertex shader:\n%s",
+            (LPCSTR)VertexShader.Errors()->GetBufferPointer());
         return false;
     }
 
     Shader PixelShader { Shader::LoadFromFile("Content/Shaders/HLSL/TestPS.hlsl") };
-    CompileResult = PixelShader
-        .SetName("DefaultPS")
-        .SetEntryPoint("Main")
-        .SetTarget("ps_5_0")
-        .SetCompileFlags(CompileFlags)
-        .Compile();
+    PixelShader.SetName("DefaultPS").SetEntryPoint("Main").SetTarget("ps_5_0").SetCompileFlags(CompileFlags);
+    CompileResult = PixelShader.Compile();
     if (!CompileResult)
     {
         Core::Console::Warning("Failed to compile pixel shader:\n%s", (LPCSTR)PixelShader.Errors()->GetBufferPointer());
@@ -533,31 +534,46 @@ bool Renderer::LoadAssets(Platform::Window* Window)
 
     // Begin creation of GUI pipeline state.
     VertexShader = Shader::LoadFromFile("Content/Shaders/HLSL/GUIVS.hlsl");
-    CompileResult = VertexShader
-        .SetName("GUIVS")
+    VertexShader.SetName("GUIVS")
         .SetEntryPoint("Main")
         .SetTarget("vs_5_0")
         .SetCompileFlags(CompileFlags)
-        .AddInputElement({"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0})
-        .AddInputElement({"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0})
-        .AddInputElement({"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0})
-        .Compile();
+        .AddInputElement({ "POSITION",
+            0,
+            DXGI_FORMAT_R32G32_FLOAT,
+            0,
+            D3D12_APPEND_ALIGNED_ELEMENT,
+            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
+            0 })
+        .AddInputElement({ "TEXCOORD",
+            0,
+            DXGI_FORMAT_R32G32_FLOAT,
+            0,
+            D3D12_APPEND_ALIGNED_ELEMENT,
+            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
+            0 })
+        .AddInputElement({ "COLOR",
+            0,
+            DXGI_FORMAT_R8G8B8A8_UNORM,
+            0,
+            D3D12_APPEND_ALIGNED_ELEMENT,
+            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
+            0 });
+    CompileResult = VertexShader.Compile();
     if (!CompileResult)
     {
-        Core::Console::Warning("Failed to compile GUI vertex shader:\n%s", (LPCSTR)VertexShader.Errors()->GetBufferPointer());
+        Core::Console::Warning("Failed to compile GUI vertex shader:\n%s",
+            (LPCSTR)VertexShader.Errors()->GetBufferPointer());
         return false;
     }
 
     PixelShader = Shader::LoadFromFile("Content/Shaders/HLSL/GUIPS.hlsl");
-    CompileResult = PixelShader
-        .SetName("GUIPS")
-        .SetEntryPoint("Main")
-        .SetTarget("ps_5_0")
-        .SetCompileFlags(CompileFlags)
-        .Compile();
+    CompileResult =
+        PixelShader.SetName("GUIPS").SetEntryPoint("Main").SetTarget("ps_5_0").SetCompileFlags(CompileFlags).Compile();
     if (!CompileResult)
     {
-        Core::Console::Warning("Failed to compile GUI pixel shader:\n%s", (LPCSTR)PixelShader.Errors()->GetBufferPointer());
+        Core::Console::Warning("Failed to compile GUI pixel shader:\n%s",
+            (LPCSTR)PixelShader.Errors()->GetBufferPointer());
         return false;
     }
 
@@ -568,10 +584,9 @@ bool Renderer::LoadAssets(Platform::Window* Window)
     GraphicsDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
     GraphicsDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS;
     GraphicsDesc.DepthStencilState.StencilEnable = FALSE;
-    GraphicsDesc.DepthStencilState.FrontFace.StencilFailOp
-        = GraphicsDesc.DepthStencilState.FrontFace.StencilDepthFailOp
-        = GraphicsDesc.DepthStencilState.FrontFace.StencilPassOp
-        = D3D12_STENCIL_OP_KEEP;
+    GraphicsDesc.DepthStencilState.FrontFace.StencilFailOp =
+        GraphicsDesc.DepthStencilState.FrontFace.StencilDepthFailOp =
+            GraphicsDesc.DepthStencilState.FrontFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
     GraphicsDesc.DepthStencilState.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
     GraphicsDesc.DepthStencilState.BackFace = GraphicsDesc.DepthStencilState.FrontFace;
     GraphicsDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
@@ -591,7 +606,11 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         return false;
     }
 
-    if (m_Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_CommandAllocator.Get(), m_PipelineState.Get(), IID_PPV_ARGS(&m_CommandList)) != S_OK)
+    if (m_Device->CreateCommandList(0,
+            D3D12_COMMAND_LIST_TYPE_DIRECT,
+            m_CommandAllocator.Get(),
+            m_PipelineState.Get(),
+            IID_PPV_ARGS(&m_CommandList)) != S_OK)
     {
         printf("Failed to create command list!\n");
         return false;
@@ -617,13 +636,11 @@ bool Renderer::LoadAssets(Platform::Window* Window)
     {
         const float Offset { 0.25f };
         const float AspectRatio { Window->AspectRatio() };
-        Vertices[0] = { {0.0f, Offset * AspectRatio, 5.0f}, {0.5f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f} };
-        Vertices[1] = { {-Offset, -Offset * AspectRatio, 5.0f}, {1.0f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f} };
-        Vertices[2] = { {Offset, -Offset * AspectRatio, 5.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f} };
+        Vertices[0] = { { 0.0f, Offset * AspectRatio, 5.0f }, { 0.5f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } };
+        Vertices[1] = { { -Offset, -Offset * AspectRatio, 5.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } };
+        Vertices[2] = { { Offset, -Offset * AspectRatio, 5.0f }, { 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } };
 
-        m_RenderBuffer
-            .SetStride(sizeof(Vertex3))
-            .UploadVertexData(Vertices, sizeof(Vertices));
+        m_RenderBuffer.SetStride(sizeof(Vertex3)).UploadVertexData(Vertices, sizeof(Vertices));
     }
 
     // Index Buffer
@@ -631,15 +648,14 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         const u32 IndexBufferData[] = { 0, 1, 2 };
         const u32 IndexBufferSize = sizeof(IndexBufferData);
 
-        m_RenderBuffer
-            .SetFormat(DXGI_FORMAT_R32_UINT)
-            .UploadIndexData(IndexBufferData, IndexBufferSize);
+        m_RenderBuffer.SetFormat(DXGI_FORMAT_R32_UINT).UploadIndexData(IndexBufferData, IndexBufferSize);
     }
 
     // Depth Stencil View
     {
         D3D12_HEAP_PROPERTIES HeapProps { Utility::MakeHeapProperties() };
-        D3D12_RESOURCE_DESC ResourceDesc { Utility::MakeResourceDescription(D3D12_RESOURCE_DIMENSION_TEXTURE2D, DXGI_FORMAT_D32_FLOAT) };
+        D3D12_RESOURCE_DESC ResourceDesc { Utility::MakeResourceDescription(D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+            DXGI_FORMAT_D32_FLOAT) };
         ResourceDesc.Width = Window->Size().X;
         ResourceDesc.Height = Window->Size().Y;
         ResourceDesc.DepthOrArraySize = 1;
@@ -658,27 +674,25 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         ClearValue.DepthStencil.Depth = 1.0f;
         ClearValue.DepthStencil.Stencil = 0;
 
-        if (m_Device->CreateCommittedResource(
-            &HeapProps,
-            D3D12_HEAP_FLAG_NONE,
-            &ResourceDesc,
-            D3D12_RESOURCE_STATE_DEPTH_WRITE,
-            &ClearValue,
-            IID_PPV_ARGS(&m_DepthStencil)
-        ) != S_OK)
+        if (m_Device->CreateCommittedResource(&HeapProps,
+                D3D12_HEAP_FLAG_NONE,
+                &ResourceDesc,
+                D3D12_RESOURCE_STATE_DEPTH_WRITE,
+                &ClearValue,
+                IID_PPV_ARGS(&m_DepthStencil)) != S_OK)
         {
             Core::Console::Error("Failed to create depth stencil resource.");
             return false;
         }
 
-        m_Device->CreateDepthStencilView(m_DepthStencil.Get(), &DSVDesc, m_DSVHeap->GetCPUDescriptorHandleForHeapStart());
+        m_Device->CreateDepthStencilView(m_DepthStencil.Get(),
+            &DSVDesc,
+            m_DSVHeap->GetCPUDescriptorHandleForHeapStart());
     }
 
     m_RenderBufferGUI.Initialize(m_Device.Get(), 100000, 100000);
-    m_RenderBufferGUI
-        .SetStride(sizeof(OctaneGUI::Vertex))
-        .SetFormat(DXGI_FORMAT_R32_UINT);
-    
+    m_RenderBufferGUI.SetStride(sizeof(OctaneGUI::Vertex)).SetFormat(DXGI_FORMAT_R32_UINT);
+
     // Constant Buffer
     {
         D3D12_HEAP_PROPERTIES HeapProps { Utility::MakeHeapProperties(D3D12_HEAP_TYPE_UPLOAD) };
@@ -686,14 +700,12 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         ResourceDesc.Width = sizeof(ConstantBufferData);
         ResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 
-        if (m_Device->CreateCommittedResource(
-            &HeapProps,
-            D3D12_HEAP_FLAG_NONE,
-            &ResourceDesc,
-            D3D12_RESOURCE_STATE_GENERIC_READ,
-            nullptr,
-            IID_PPV_ARGS(&m_ConstantBuffer)
-        ) != S_OK)
+        if (m_Device->CreateCommittedResource(&HeapProps,
+                D3D12_HEAP_FLAG_NONE,
+                &ResourceDesc,
+                D3D12_RESOURCE_STATE_GENERIC_READ,
+                nullptr,
+                IID_PPV_ARGS(&m_ConstantBuffer)) != S_OK)
         {
             Core::Console::Error("Failed to create constant buffer.");
             return false;
@@ -716,7 +728,8 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         }
 
         Rectf Bounds { 0.0f, 0.0f, (f32)Window->Size().X, (f32)Window->Size().Y };
-        m_ConstantBufferData.Projection = Core::Math::PerspectiveMatrixRH(45.0f, Window->AspectRatio(), 0.1f, 100.0f).Transpose();
+        m_ConstantBufferData.Projection =
+            Core::Math::PerspectiveMatrixRH(45.0f, Window->AspectRatio(), 0.1f, 100.0f).Transpose();
         m_ConstantBufferData.Orthographic = Core::Math::OrthographicMatrixRH(Bounds, -1.0f, 1.0f).Transpose();
     }
 
@@ -747,7 +760,10 @@ IDXGIAdapter1* Renderer::GetHardwareAdapter(IDXGIFactory1* Factory) const
     Microsoft::WRL::ComPtr<IDXGIFactory6> Factory6;
     if (Factory->QueryInterface(IID_PPV_ARGS(&Factory6)) == S_OK)
     {
-        for (UINT I = 0; Factory6->EnumAdapterByGpuPreference(I, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&Adapter)) == S_OK; ++I)
+        for (UINT I = 0;
+             Factory6->EnumAdapterByGpuPreference(I, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&Adapter)) ==
+             S_OK;
+             ++I)
         {
             DXGI_ADAPTER_DESC1 Description;
             Adapter->GetDesc1(&Description);

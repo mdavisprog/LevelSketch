@@ -24,10 +24,10 @@ SOFTWARE.
 
 */
 
-#include "Core.hpp"
 #include "../../Core/Memory/UniquePtr.hpp"
 #include "../TestSuite.hpp"
 #include "../Utility.hpp"
+#include "Core.hpp"
 
 namespace LevelSketch
 {
@@ -86,8 +86,14 @@ static bool Move()
 
 static bool Polymorphism()
 {
-    struct Base {};
-    struct Derived : public Base {};
+    struct Base
+    {
+    };
+
+    struct Derived : public Base
+    {
+    };
+
     UniquePtr<Base> Object = UniquePtr<Derived>::New();
     // No need for any verifies. This test is meant to verify that UniquePtr is set up
     // to allow for base types to store pointers to derived types.
@@ -115,8 +121,15 @@ static bool Equality()
 static bool Deleter()
 {
     static int Count { 0 };
-    class Class {};
-    const auto OnFree = [&](Class* Obj) { delete Obj; Count++; };
+    class Class
+    {
+    };
+
+    const auto OnFree = [&](Class* Obj) {
+        delete Obj;
+        Count++;
+    };
+
     VERIFY(Count == 0);
     {
         UniquePtr<Class, decltype(OnFree)> Instance { UniquePtr<Class, decltype(OnFree)>::New(OnFree) };
@@ -127,16 +140,15 @@ static bool Deleter()
 
 UniquePtr<TestSuite> UniquePtrTests()
 {
-    return TestSuite::New("UniquePtr", {
-        TEST_CASE(CreateNull),
-        TEST_CASE(CreateInstance),
-        TEST_CASE(Adopt),
-        TEST_CASE(NullAssignment),
-        TEST_CASE(Move),
-        TEST_CASE(Polymorphism),
-        TEST_CASE(Equality),
-        TEST_CASE(Deleter)
-    });
+    return TestSuite::New("UniquePtr",
+        { TEST_CASE(CreateNull),
+            TEST_CASE(CreateInstance),
+            TEST_CASE(Adopt),
+            TEST_CASE(NullAssignment),
+            TEST_CASE(Move),
+            TEST_CASE(Polymorphism),
+            TEST_CASE(Equality),
+            TEST_CASE(Deleter) });
 }
 
 }

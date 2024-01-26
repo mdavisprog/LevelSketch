@@ -60,7 +60,7 @@ using Pair = Core::Containers::Pair<_First, _Second>;
 template<typename _First, typename _Second>
 static constexpr Pair<_First, _Second> MakePair(const _First& First, const _Second& Second)
 {
-    return Pair<_First, _Second>{ First, Second };
+    return Pair<_First, _Second> { First, Second };
 }
 
 }

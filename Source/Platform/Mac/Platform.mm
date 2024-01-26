@@ -30,20 +30,20 @@ SOFTWARE.
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 
-@interface AppDelegate : NSObject<NSApplicationDelegate>
+@interface AppDelegate : NSObject <NSApplicationDelegate>
 @end
 
 @implementation AppDelegate
 
-    -(BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication*)sender
-    {
-        return YES;
-    }
+- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication*)sender
+{
+    return YES;
+}
 
-    -(void)applicationDidFinishLaunching:(NSNotification*)Notification
-    {
-        [NSApp activateIgnoringOtherApps:YES];
-    }
+- (void)applicationDidFinishLaunching:(NSNotification*)Notification
+{
+    [NSApp activateIgnoringOtherApps:YES];
+}
 
 @end
 

@@ -24,10 +24,10 @@ SOFTWARE.
 
 */
 
-#include "Core.hpp"
 #include "../../Core/Containers/String.hpp"
 #include "../TestSuite.hpp"
 #include "../Utility.hpp"
+#include "Core.hpp"
 
 namespace LevelSketch
 {
@@ -140,18 +140,17 @@ static bool Append()
 
 UniquePtr<TestSuite> StringTests()
 {
-    return TestSuite::New("String", {
-        TEST_CASE(Empty),
-        TEST_CASE(Constructor),
-        TEST_CASE(Equality),
-        TEST_CASE(Conversions),
-        TEST_CASE(Reserve),
-        TEST_CASE(Find),
-        TEST_CASE(RFind),
-        TEST_CASE(Sub),
-        TEST_CASE(Add),
-        TEST_CASE(Append)
-    });
+    return TestSuite::New("String",
+        { TEST_CASE(Empty),
+            TEST_CASE(Constructor),
+            TEST_CASE(Equality),
+            TEST_CASE(Conversions),
+            TEST_CASE(Reserve),
+            TEST_CASE(Find),
+            TEST_CASE(RFind),
+            TEST_CASE(Sub),
+            TEST_CASE(Add),
+            TEST_CASE(Append) });
 }
 
 }

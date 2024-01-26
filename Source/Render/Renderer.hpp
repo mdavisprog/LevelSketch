@@ -31,8 +31,8 @@ SOFTWARE.
 
 namespace OctaneGUI
 {
-    class VertexBuffer;
-    class Window;
+class VertexBuffer;
+class Window;
 }
 
 namespace LevelSketch
@@ -40,8 +40,8 @@ namespace LevelSketch
 
 namespace Platform
 {
-    struct TimingData;
-    class Window;
+struct TimingData;
+class Window;
 }
 
 namespace Render
@@ -63,7 +63,9 @@ public:
 
     static const UniquePtr<Renderer>& Instance();
 
-    virtual ~Renderer() {}
+    virtual ~Renderer()
+    {
+    }
 
     virtual bool Initialize() = 0;
     virtual bool Initialize(Platform::Window* Window) = 0;

@@ -47,17 +47,35 @@ public:
     class QueueFamily
     {
         friend class PhysicalDevice;
-    
+
     public:
-        bool HasGraphics() const { return m_Graphics.HasValue(); }
-        u32 Graphics() const { return m_Graphics.Value(); }
+        bool HasGraphics() const
+        {
+            return m_Graphics.HasValue();
+        }
+        u32 Graphics() const
+        {
+            return m_Graphics.Value();
+        }
 
-        bool HasPresent() const { return m_Present.HasValue(); }
-        u32 Present() const { return m_Present.Value(); }
+        bool HasPresent() const
+        {
+            return m_Present.HasValue();
+        }
+        u32 Present() const
+        {
+            return m_Present.Value();
+        }
 
-        bool IsComplete() const { return HasGraphics() && HasPresent(); }
+        bool IsComplete() const
+        {
+            return HasGraphics() && HasPresent();
+        }
 
-        Array<u32> Indices() const { return {Graphics(), Present()}; }
+        Array<u32> Indices() const
+        {
+            return { Graphics(), Present() };
+        }
 
     private:
         Optional<u32> m_Graphics {};

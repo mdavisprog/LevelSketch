@@ -24,10 +24,10 @@ SOFTWARE.
 
 */
 
-#include "Core.hpp"
 #include "../../Core/Containers/List.hpp"
 #include "../TestSuite.hpp"
 #include "../Utility.hpp"
+#include "Core.hpp"
 
 namespace LevelSketch
 {
@@ -76,11 +76,7 @@ static bool InsertBeginning()
 static bool ReverseTraversal()
 {
     List<i32> Instance;
-    Instance
-        .InsertEnd(1)
-        .InsertEnd(3)
-        .InsertEnd(5)
-        .InsertEnd(7);
+    Instance.InsertEnd(1).InsertEnd(3).InsertEnd(5).InsertEnd(7);
     VERIFY(Instance.Size() == 4);
     VERIFY(Instance.Tail()->Data() == 7);
     VERIFY(Instance.Tail()->Previous()->Data() == 5);
@@ -92,11 +88,7 @@ static bool ReverseTraversal()
 static bool Delete()
 {
     List<i32> Instance;
-    Instance
-        .InsertEnd(1)
-        .InsertEnd(3)
-        .InsertEnd(5)
-        .InsertEnd(7);
+    Instance.InsertEnd(1).InsertEnd(3).InsertEnd(5).InsertEnd(7);
     VERIFY(Instance.Size() == 4);
     VERIFY(Instance.Head()->Data() == 1);
     VERIFY(Instance.Head()->Next()->Data() == 3);
@@ -124,13 +116,12 @@ static bool Delete()
 
 UniquePtr<TestSuite> ListTests()
 {
-    return TestSuite::New("List", {
-        TEST_CASE(Empty),
-        TEST_CASE(InsertEnd),
-        TEST_CASE(InsertBeginning),
-        TEST_CASE(ReverseTraversal),
-        TEST_CASE(Delete)
-    });
+    return TestSuite::New("List",
+        { TEST_CASE(Empty),
+            TEST_CASE(InsertEnd),
+            TEST_CASE(InsertBeginning),
+            TEST_CASE(ReverseTraversal),
+            TEST_CASE(Delete) });
 }
 
 }

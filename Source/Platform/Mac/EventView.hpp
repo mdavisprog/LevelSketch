@@ -30,9 +30,9 @@ SOFTWARE.
 
 namespace LevelSketch::Platform
 {
-    class Window;
+class Window;
 }
 
 @interface EventView : NSView
-    @property(nonatomic, assign) LevelSketch::Platform::Window* Window;
+@property(nonatomic, assign) LevelSketch::Platform::Window* Window;
 @end

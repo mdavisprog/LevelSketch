@@ -49,8 +49,15 @@ public:
     bool UploadVertexData(const void* Source, u64 Size);
     bool UploadIndexData(const void* Source, u64 Size);
 
-    id<MTLBuffer> Vertex() const { return m_VertexBuffer; }
-    id<MTLBuffer> Index() const { return m_IndexBuffer; }
+    id<MTLBuffer> Vertex() const
+    {
+        return m_VertexBuffer;
+    }
+
+    id<MTLBuffer> Index() const
+    {
+        return m_IndexBuffer;
+    }
 
 private:
     id<MTLBuffer> m_VertexBuffer { nullptr };

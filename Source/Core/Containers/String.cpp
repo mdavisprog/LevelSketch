@@ -37,8 +37,8 @@ namespace Containers
 
 // TODO: Look into using the secure API or use codecvt
 #if defined(MSVC)
-    #pragma warning(push)
-    #pragma warning(disable : 4996)
+#pragma warning(push)
+#pragma warning(disable : 4996)
 #endif
 
 String ToString(const WString& Value)
@@ -82,7 +82,7 @@ WString ToWString(const String& Value)
 }
 
 #if defined(MSVC)
-    #pragma warning(pop)
+#pragma warning(pop)
 #endif
 
 }

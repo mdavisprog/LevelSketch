@@ -46,9 +46,18 @@ namespace Containers
 class HashMapConstants
 {
 public:
-    static constexpr u64 BucketSize() { return 8; }
-    static constexpr f64 GrowPercent() { return 0.8; }
-    static constexpr f64 GrowFactor() { return 0.9; }
+    static constexpr u64 BucketSize()
+    {
+        return 8;
+    }
+    static constexpr f64 GrowPercent()
+    {
+        return 0.8;
+    }
+    static constexpr f64 GrowFactor()
+    {
+        return 0.9;
+    }
 
     static u64 Grow(u64 Size)
     {
@@ -166,7 +175,8 @@ private:
     {
         if (Constants::ShouldGrow(m_Size, m_Buckets.Size()))
         {
-            const u64 NewCapacity { Max<u64>(Constants::Grow(m_Buckets.Size()), m_Buckets.Size() + Constants::BucketSize()) };
+            const u64 NewCapacity { Max<u64>(Constants::Grow(m_Buckets.Size()),
+                m_Buckets.Size() + Constants::BucketSize()) };
 
             Array<BucketType> Buckets { std::move(m_Buckets) };
             m_Buckets.Resize(NewCapacity);
@@ -177,7 +187,7 @@ private:
                 for (ValueType& Value : Bucket)
                 {
                     ValueType* Element { TryInsert(Value.First) };
-                    
+
                     if constexpr (std::is_nothrow_move_constructible_v<V> || !std::is_copy_constructible_v<V>)
                     {
                         Element->Second = std::move(Value.Second);
@@ -198,7 +208,10 @@ private:
 }
 }
 
-template<typename K, typename V, typename KTraits = Core::Traits::Base<K>, typename Constants = Core::Containers::HashMapConstants>
+template<typename K,
+    typename V,
+    typename KTraits = Core::Traits::Base<K>,
+    typename Constants = Core::Containers::HashMapConstants>
 using HashMap = Core::Containers::HashMap<K, V, KTraits, Constants>;
 
 }

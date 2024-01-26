@@ -24,10 +24,10 @@ SOFTWARE.
 
 */
 
-#include "Engine.hpp"
 #include "../../Engine/TypeDatabase.hpp"
 #include "../TestSuite.hpp"
 #include "../Utility.hpp"
+#include "Engine.hpp"
 
 namespace LevelSketch
 {
@@ -80,8 +80,14 @@ static bool Instance()
 
 static bool Child()
 {
-    class Parent {};
-    class Child : public Parent {};
+    class Parent
+    {
+    };
+
+    class Child : public Parent
+    {
+    };
+
     DECLARE_BASE_TYPE(Parent);
     VERIFY(TypeDatabase::Instance().HasType("Parent"));
     VERIFY(!TypeDatabase::Instance().HasType("Child"));
@@ -93,9 +99,17 @@ static bool Child()
 
 static bool Inherits()
 {
-    class A {};
-    class B : public A {};
-    class C : public A {};
+    class A
+    {
+    };
+
+    class B : public A
+    {
+    };
+
+    class C : public A
+    {
+    };
 
     DECLARE_BASE_TYPE(A);
     DECLARE_TYPE(B, A);
@@ -114,13 +128,8 @@ static bool Inherits()
 
 UniquePtr<TestSuite> TypeDatabaseTests()
 {
-    return TestSuite::New("TypeDatabase", {
-        TEST_CASE(Root),
-        TEST_CASE(Base),
-        TEST_CASE(Instance),
-        TEST_CASE(Child),
-        TEST_CASE(Inherits)
-    });
+    return TestSuite::New("TypeDatabase",
+        { TEST_CASE(Root), TEST_CASE(Base), TEST_CASE(Instance), TEST_CASE(Child), TEST_CASE(Inherits) });
 }
 
 }

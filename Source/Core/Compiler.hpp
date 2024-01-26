@@ -27,17 +27,17 @@ SOFTWARE.
 #pragma once
 
 #if __clang__
-    #ifndef CLANG
-    #define CLANG
-    #endif
+#ifndef CLANG
+#define CLANG
+#endif
 #elif _MSC_VER
-    #ifndef MSVC
-    #define MSVC
-    #endif
+#ifndef MSVC
+#define MSVC
+#endif
 #elif __GNUC__ || __GNUG__
-    #ifndef GCC
-    #define GCC
-    #endif
+#ifndef GCC
+#define GCC
+#endif
 #endif
 
 #ifndef PRAGMA_STRINGIFY
@@ -45,21 +45,19 @@ SOFTWARE.
 #endif
 
 #if __clang__
-    #define PRAGMA_WARNING(Warning) PRAGMA_STRINGIFY(clang diagnostic ignored #Warning)
+#define PRAGMA_WARNING(Warning) PRAGMA_STRINGIFY(clang diagnostic ignored #Warning)
 
-    #define PUSH_DISABLE_WARNING(Warning) \
-        _Pragma("clang diagnostic push") \
-        PRAGMA_WARNING(Warning)
-    
-    #define POP_DISABLE_WARNING _Pragma("clang diagnostic pop")
+#define PUSH_DISABLE_WARNING(Warning) _Pragma("clang diagnostic push") PRAGMA_WARNING(Warning)
+
+#define POP_DISABLE_WARNING _Pragma("clang diagnostic pop")
 
 #else
-    #define PUSH_DISABLE_WARNING(Warning)
-    #define POP_DISABLE_WARNING
+#define PUSH_DISABLE_WARNING(Warning)
+#define POP_DISABLE_WARNING
 #endif
 
 #if defined(GCC)
-    #define MAYBE_UNUSED [[gnu::unused]]
+#define MAYBE_UNUSED [[gnu::unused]]
 #else
-    #define MAYBE_UNUSED
+#define MAYBE_UNUSED
 #endif

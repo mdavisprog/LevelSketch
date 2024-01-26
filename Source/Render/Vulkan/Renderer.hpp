@@ -73,7 +73,7 @@ private:
     Sync m_Syncs[FRAMES_IN_FLIGHT] {};
     CommandPool m_CommandPool {};
     u64 m_FrameIndex { 0 };
-    
+
     RenderBuffer m_RenderBuffer {};
     UniformBuffer m_Uniforms[FRAMES_IN_FLIGHT] {};
 };

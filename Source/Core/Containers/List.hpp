@@ -52,7 +52,6 @@ public:
         friend class List;
 
     public:
-
         Node const* Next() const
         {
             return m_Next.Get();

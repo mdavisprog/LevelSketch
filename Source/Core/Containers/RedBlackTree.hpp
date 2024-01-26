@@ -26,8 +26,8 @@ SOFTWARE.
 
 #pragma once
 
-#include "../Types.hpp"
 #include "../Memory/UniquePtr.hpp"
+#include "../Types.hpp"
 
 namespace LevelSketch
 {
@@ -38,7 +38,7 @@ namespace Containers
 
 //
 // Left Leaning Red-Black tree
-// 
+//
 
 template<typename K, typename V>
 class RedBlackTree
@@ -55,8 +55,14 @@ public:
             Black
         };
 
-        bool IsRed() const { return m_Color == Color::Red; }
-        bool IsBlack() const { return m_Color == Color::Black; }
+        bool IsRed() const
+        {
+            return m_Color == Color::Red;
+        }
+        bool IsBlack() const
+        {
+            return m_Color == Color::Black;
+        }
 
         Node* Left() const
         {
@@ -236,7 +242,11 @@ protected:
     }
 
 private:
-    UniquePtr<Node> Insert(UniquePtr<Node>& Root, const K& Key, V&& Value, Node** Result = nullptr, bool Overwrite = true)
+    UniquePtr<Node> Insert(UniquePtr<Node>& Root,
+        const K& Key,
+        V&& Value,
+        Node** Result = nullptr,
+        bool Overwrite = true)
     {
         if (Root == nullptr)
         {

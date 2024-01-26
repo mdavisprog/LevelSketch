@@ -45,7 +45,7 @@ Surface::Surface()
 bool Surface::Initialize(VkInstance Instance, Window Window_, Display* Display_)
 {
     PFN_vkCreateXlibSurfaceKHR vkCreateXlibSurfaceKHRFn {
-            Loader::Instance().LoadFn<PFN_vkCreateXlibSurfaceKHR>(Instance, "vkCreateXlibSurfaceKHR")
+        Loader::Instance().LoadFn<PFN_vkCreateXlibSurfaceKHR>(Instance, "vkCreateXlibSurfaceKHR")
     };
 
     if (vkCreateXlibSurfaceKHRFn == nullptr)

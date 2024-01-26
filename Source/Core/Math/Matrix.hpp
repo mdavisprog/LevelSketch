@@ -39,6 +39,7 @@ namespace Core
 {
 namespace Math
 {
+// clang-format off
 
 // ROW-MAJOR
 template<typename T>
@@ -261,6 +262,7 @@ static inline Matrix4f OrthographicMatrixRH(Rectf Viewport, f32 Near, f32 Far)
     };
 }
 
+// clang-format on
 }
 }
 

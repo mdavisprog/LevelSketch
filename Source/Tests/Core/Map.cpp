@@ -24,10 +24,10 @@ SOFTWARE.
 
 */
 
-#include "Core.hpp"
 #include "../../Core/Containers/Map.hpp"
 #include "../TestSuite.hpp"
 #include "../Utility.hpp"
+#include "Core.hpp"
 
 #include <map>
 
@@ -56,11 +56,7 @@ static bool Index()
 
 static bool ConstIndex()
 {
-    const Map<i32, i32> Instance
-    {
-        MakePair(5, 10),
-        MakePair(10, 20)
-    };
+    const Map<i32, i32> Instance { MakePair(5, 10), MakePair(10, 20) };
     VERIFY(Instance.Size() == 2);
     VERIFY(Instance[5] == 10);
     VERIFY(Instance[10] == 20);
@@ -96,13 +92,8 @@ static bool Contains()
 
 UniquePtr<TestSuite> MapTests()
 {
-    return TestSuite::New("Map", {
-        TEST_CASE(Empty),
-        TEST_CASE(Index),
-        TEST_CASE(ConstIndex),
-        TEST_CASE(Clear),
-        TEST_CASE(Contains)
-    });
+    return TestSuite::New("Map",
+        { TEST_CASE(Empty), TEST_CASE(Index), TEST_CASE(ConstIndex), TEST_CASE(Clear), TEST_CASE(Contains) });
 }
 
 }

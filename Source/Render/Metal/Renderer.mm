@@ -25,8 +25,8 @@ SOFTWARE.
 */
 
 #include "Renderer.hpp"
-#include "../../Platform/Window.hpp"
 #include "../../Platform/Mac/WindowBridge.hpp"
+#include "../../Platform/Window.hpp"
 #include "RenderBridge.hpp"
 #include "ViewController.hpp"
 

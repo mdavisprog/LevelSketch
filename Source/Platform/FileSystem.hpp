@@ -26,8 +26,8 @@ SOFTWARE.
 
 #pragma once
 
-#include "../Core/Types.hpp"
 #include "../Core/Containers/Forwards.hpp"
+#include "../Core/Types.hpp"
 
 namespace LevelSketch
 {
@@ -40,7 +40,6 @@ namespace Platform
 class FileSystem final
 {
 public:
-
     static String ApplicationPath();
     static String ApplicationDirectory();
     static String GetDirectory(const String& Path);

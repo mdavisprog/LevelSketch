@@ -24,10 +24,10 @@ SOFTWARE.
 
 */
 
-#include "Core.hpp"
 #include "../../Core/Containers/HashMap.hpp"
 #include "../TestSuite.hpp"
 #include "../Utility.hpp"
+#include "Core.hpp"
 
 namespace LevelSketch
 {
@@ -70,9 +70,20 @@ static bool BucketGrow()
     class Constants : public HashMapConstants
     {
     public:
-        static constexpr u64 BucketSize() { return 2; }
-        static constexpr f64 GrowPercent() { return 1.0; }
-        static constexpr f64 GrowFactor() { return 1.0; }
+        static constexpr u64 BucketSize()
+        {
+            return 2;
+        }
+
+        static constexpr f64 GrowPercent()
+        {
+            return 1.0;
+        }
+
+        static constexpr f64 GrowFactor()
+        {
+            return 1.0;
+        }
     };
 
     HashMap<i32, i32, SimpleHash<i32>, Constants> Instance;
@@ -113,12 +124,7 @@ static bool Remove()
 
 UniquePtr<TestSuite> HashMapTests()
 {
-    return TestSuite::New("HashMap", {
-        TEST_CASE(Empty),
-        TEST_CASE(Index),
-        TEST_CASE(BucketGrow),
-        TEST_CASE(Remove)
-    });
+    return TestSuite::New("HashMap", { TEST_CASE(Empty), TEST_CASE(Index), TEST_CASE(BucketGrow), TEST_CASE(Remove) });
 }
 
 }

@@ -24,10 +24,10 @@ SOFTWARE.
 
 */
 
-#include "Core.hpp"
 #include "../../Core/Containers/Array.hpp"
 #include "../TestSuite.hpp"
 #include "../Utility.hpp"
+#include "Core.hpp"
 
 namespace LevelSketch
 {
@@ -201,10 +201,23 @@ static bool Objects()
     class Object
     {
     public:
-        Object() { Constructed++; }
-        Object(const Object&) { Constructed++; }
-        ~Object() { Constructed--; }
-        Object& operator=(const Object&) { Constructed++; return *this; }
+        Object()
+        {
+            Constructed++;
+        }
+        Object(const Object&)
+        {
+            Constructed++;
+        }
+        ~Object()
+        {
+            Constructed--;
+        }
+        Object& operator=(const Object&)
+        {
+            Constructed++;
+            return *this;
+        }
     };
 
     Array<Object> Objects;
@@ -345,7 +358,7 @@ static bool Add()
     Array<i32> B { 4, 5, 6 };
     Array<i32> C { A + B };
     VERIFY(C.Size() == 6);
-    VERIFY(C == Array<i32>({1, 2, 3, 4, 5, 6}));
+    VERIFY(C == Array<i32>({ 1, 2, 3, 4, 5, 6 }));
     return true;
 }
 
@@ -355,35 +368,34 @@ static bool Append()
     Array<i32> B { 4, 5, 6 };
     A += B;
     VERIFY(A.Size() == 6);
-    VERIFY(A == Array<i32>({1, 2, 3, 4, 5, 6}));
+    VERIFY(A == Array<i32>({ 1, 2, 3, 4, 5, 6 }));
     return true;
 }
 
 UniquePtr<TestSuite> ArrayTests()
 {
-    return TestSuite::New("Array", {
-        TEST_CASE(Empty),
-        TEST_CASE(Copy),
-        TEST_CASE(Move),
-        TEST_CASE(InitializerList),
-        TEST_CASE(AssignCopy),
-        TEST_CASE(AssignMove),
-        TEST_CASE(Subscript),
-        TEST_CASE(Push),
-        TEST_CASE(Pop),
-        TEST_CASE(Clear),
-        TEST_CASE(Objects),
-        TEST_CASE(MoveValue),
-        TEST_CASE(Equality),
-        TEST_CASE(ElementDtor),
-        TEST_CASE(RemoveItem),
-        TEST_CASE(RemoveRange),
-        TEST_CASE(Resize),
-        TEST_CASE(ResizeUniquePtrs),
-        TEST_CASE(ReserveUniquePtrs),
-        TEST_CASE(Add),
-        TEST_CASE(Append)
-    });
+    return TestSuite::New("Array",
+        { TEST_CASE(Empty),
+            TEST_CASE(Copy),
+            TEST_CASE(Move),
+            TEST_CASE(InitializerList),
+            TEST_CASE(AssignCopy),
+            TEST_CASE(AssignMove),
+            TEST_CASE(Subscript),
+            TEST_CASE(Push),
+            TEST_CASE(Pop),
+            TEST_CASE(Clear),
+            TEST_CASE(Objects),
+            TEST_CASE(MoveValue),
+            TEST_CASE(Equality),
+            TEST_CASE(ElementDtor),
+            TEST_CASE(RemoveItem),
+            TEST_CASE(RemoveRange),
+            TEST_CASE(Resize),
+            TEST_CASE(ResizeUniquePtrs),
+            TEST_CASE(ReserveUniquePtrs),
+            TEST_CASE(Add),
+            TEST_CASE(Append) });
 }
 
 }

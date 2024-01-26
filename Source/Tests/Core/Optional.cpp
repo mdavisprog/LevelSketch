@@ -24,10 +24,10 @@ SOFTWARE.
 
 */
 
-#include "Core.hpp"
 #include "../../Core/Optional.hpp"
 #include "../TestSuite.hpp"
 #include "../Utility.hpp"
+#include "Core.hpp"
 
 namespace LevelSketch
 {
@@ -102,14 +102,13 @@ static bool CopyAssign()
 
 UniquePtr<TestSuite> OptionalTests()
 {
-    return TestSuite::New("Optional", {
-        TEST_CASE(Empty),
-        TEST_CASE(Construct),
-        TEST_CASE(Clear),
-        TEST_CASE(Assign),
-        TEST_CASE(CopyConstructor),
-        TEST_CASE(CopyAssign)
-    });
+    return TestSuite::New("Optional",
+        { TEST_CASE(Empty),
+            TEST_CASE(Construct),
+            TEST_CASE(Clear),
+            TEST_CASE(Assign),
+            TEST_CASE(CopyConstructor),
+            TEST_CASE(CopyAssign) });
 }
 
 }

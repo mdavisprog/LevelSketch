@@ -32,32 +32,32 @@ namespace Platform = LevelSketch::Platform;
 
 @implementation EventView
 
--(BOOL) acceptsFirstResponder
+- (BOOL)acceptsFirstResponder
 {
     return YES;
 }
 
--(void) viewDidMoveToWindow
+- (void)viewDidMoveToWindow
 {
     [self.window makeFirstResponder:self];
 }
 
--(NSView*) hitTest:(NSPoint)Point
+- (NSView*)hitTest:(NSPoint)Point
 {
     return self;
 }
 
--(void) mouseMoved:(NSEvent*)Event
+- (void)mouseMoved:(NSEvent*)Event
 {
     [self HandleEvent:Event];
 }
 
--(void) mouseDown:(NSEvent*)Event
+- (void)mouseDown:(NSEvent*)Event
 {
     [self HandleEvent:Event];
 }
 
--(void) HandleEvent:(NSEvent*)Event
+- (void)HandleEvent:(NSEvent*)Event
 {
     switch (Event.type)
     {
@@ -67,13 +67,11 @@ namespace Platform = LevelSketch::Platform;
         NSPoint Position { Event.locationInWindow };
         Position.y = self.superview.frame.size.height - Position.y;
 
-        Platform::Event::OnMouseMove MouseMove
-        {
-            { static_cast<i32>(Position.x), static_cast<i32>(Position.y) }
-        };
+        Platform::Event::OnMouseMove MouseMove { { static_cast<i32>(Position.x), static_cast<i32>(Position.y) } };
 
         Platform::EventQueue::Instance().Push(MouseMove, _Window);
-    } break;
+    }
+    break;
 
     default: break;
     }

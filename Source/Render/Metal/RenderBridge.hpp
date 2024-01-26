@@ -27,8 +27,8 @@ SOFTWARE.
 #pragma once
 
 #include "../../Core/Containers/Array.hpp"
-#include "../../Core/Math/Vector2.hpp"
 #include "../../Core/Math/Matrix.hpp"
+#include "../../Core/Math/Vector2.hpp"
 #include "../../External/OctaneGUI/DrawCommand.h"
 #include "RenderBuffer.hpp"
 #include "Texture.hpp"
@@ -46,7 +46,7 @@ struct CGSize;
 
 namespace OctaneGUI
 {
-    class VertexBuffer;
+class VertexBuffer;
 }
 
 namespace LevelSketch
@@ -54,7 +54,7 @@ namespace LevelSketch
 
 namespace Platform
 {
-    class Window;
+class Window;
 }
 
 namespace Render

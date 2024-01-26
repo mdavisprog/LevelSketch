@@ -79,11 +79,7 @@ bool RenderBuffer::InitializeBuffer(Buffer& Buf, const Device& Device_, u64 Size
         return true;
     }
 
-    if (!Buf.Initialize(
-        Device_,
-        Size,
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | Usage,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT))
+    if (!Buf.Initialize(Device_, Size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | Usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT))
     {
         return false;
     }

@@ -26,13 +26,13 @@ SOFTWARE.
 
 #pragma once
 
-#include "../Renderer.hpp"
 #include "../../Core/Memory/UniquePtr.hpp"
+#include "../Renderer.hpp"
 
 namespace OctaneGUI
 {
-    class VertexBuffer;
-    class Window;
+class VertexBuffer;
+class Window;
 }
 
 namespace LevelSketch

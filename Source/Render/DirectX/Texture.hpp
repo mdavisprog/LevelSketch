@@ -44,8 +44,7 @@ public:
     Texture();
 
     bool Create(ID3D12Device* Device, u32 Width, u32 Height);
-    bool Upload(
-        ID3D12GraphicsCommandList* CommandList,
+    bool Upload(ID3D12GraphicsCommandList* CommandList,
         ID3D12DescriptorHeap* Heap,
         u64 Offset,
         const void* Data,

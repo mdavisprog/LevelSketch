@@ -24,14 +24,14 @@ SOFTWARE.
 
 */
 
-#include "Core.hpp"
-#include "../../Core/Math/Color.hpp"
 #include "../../Core/Math/Math.hpp"
+#include "../../Core/Math/Color.hpp"
 #include "../../Core/Math/Matrix.hpp"
 #include "../../Core/Math/Vector2.hpp"
 #include "../../Core/Math/Vector3.hpp"
 #include "../TestSuite.hpp"
 #include "../Utility.hpp"
+#include "Core.hpp"
 
 namespace LevelSketch
 {
@@ -50,9 +50,9 @@ static bool CommonOps()
     VERIFY(Abs(-5) == 5);
     VERIFY(Absf(1.0f) == 1.0f);
     VERIFY(Min<i32>(3, 5) == 3);
-    VERIFY(Min<i32>({1, 3, 5, 7}) == 1);
+    VERIFY(Min<i32>({ 1, 3, 5, 7 }) == 1);
     VERIFY(Max<i32>(3, 5) == 5);
-    VERIFY(Max<i32>({1, 3, 5, 7}) == 7);
+    VERIFY(Max<i32>({ 1, 3, 5, 7 }) == 7);
 
     constexpr const f32 Angle { 90.0f * DEG2RAD };
     VERIFY(Sin<f32>(Angle) == 1.0f);
@@ -103,6 +103,7 @@ static bool MatrixOps()
         VERIFY(Instance[I] == 0.0f);
     }
 
+    // clang-format off
     const Matrix4f Identity {
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
@@ -139,19 +140,19 @@ static bool MatrixOps()
         400.0f, 358.0f, 316.0f, 274.0f,
         560.0f, 502.0f, 444.0f, 386.0f
     }));
+    // clang-format on
 
     return true;
 }
 
 UniquePtr<TestSuite> MathTests()
 {
-    return TestSuite::New("Math", {
-        TEST_CASE(CommonOps),
-        TEST_CASE(Vector2Ops),
-        TEST_CASE(Vector3Ops),
-        TEST_CASE(ColorOps),
-        TEST_CASE(MatrixOps)
-    });
+    return TestSuite::New("Math",
+        { TEST_CASE(CommonOps),
+            TEST_CASE(Vector2Ops),
+            TEST_CASE(Vector3Ops),
+            TEST_CASE(ColorOps),
+            TEST_CASE(MatrixOps) });
 }
 
 }

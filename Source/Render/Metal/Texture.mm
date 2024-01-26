@@ -42,7 +42,7 @@ bool Texture::Create(id<MTLDevice> Device, u32 Width, u32 Height)
         return true;
     }
 
-    MTLTextureDescriptor* TextureDesc = 
+    MTLTextureDescriptor* TextureDesc =
         [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatRGBA8Unorm
                                                            width:Width
                                                           height:Height
@@ -64,10 +64,7 @@ bool Texture::Upload(const void* Data)
     }
 
     MTLRegion Region = MTLRegionMake2D(0, 0, m_Texture.width, m_Texture.height);
-    [m_Texture replaceRegion:Region
-                 mipmapLevel:0
-                   withBytes:Data
-                 bytesPerRow:m_Texture.width * 4];
+    [m_Texture replaceRegion:Region mipmapLevel:0 withBytes:Data bytesPerRow:m_Texture.width * 4];
 
     return true;
 }

@@ -102,7 +102,7 @@ private:
     {
         LS_ASSERT(!m_HasValue);
         m_HasValue = true;
-        new(m_Value) T(Value);
+        new (m_Value) T(Value);
     }
 
     alignas(T) u8 m_Value[sizeof(T)];

@@ -31,7 +31,7 @@ SOFTWARE.
 
 @implementation WindowBridge
 
--(void) OnViewCreated:(NSView*)View Window:(LevelSketch::Platform::Window*)Window
+- (void)OnViewCreated:(NSView*)View Window:(LevelSketch::Platform::Window*)Window
 {
     @autoreleasepool
     {
@@ -42,7 +42,7 @@ SOFTWARE.
     }
 }
 
-+(WindowBridge*) Retrieve:(void*)Ptr
++ (WindowBridge*)Retrieve:(void*)Ptr
 {
     return (__bridge WindowBridge*)Ptr;
 }

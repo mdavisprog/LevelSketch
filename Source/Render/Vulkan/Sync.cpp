@@ -88,14 +88,12 @@ u32 Sync::FrameIndex(const Device& Device_, const SwapChain& SwapChain_) const
 {
     u32 Index { UINT32_MAX };
 
-    VkResult Result { vkAcquireNextImageKHR(
-        Device_.GetLogicalDevice().Handle(),
+    VkResult Result { vkAcquireNextImageKHR(Device_.GetLogicalDevice().Handle(),
         SwapChain_.Handle(),
         UINT64_MAX,
         m_ImageReady,
         VK_NULL_HANDLE,
-        &Index)
-    };
+        &Index) };
 
     if (Result != VK_SUCCESS)
     {

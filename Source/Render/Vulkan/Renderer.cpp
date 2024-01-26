@@ -26,8 +26,8 @@ SOFTWARE.
 
 #include "Renderer.hpp"
 #include "../../Core/Console.hpp"
-#include "../../Core/Version.hpp"
 #include "../../Core/Math/Vertex.hpp"
+#include "../../Core/Version.hpp"
 #include "../../Platform/FileSystem.hpp"
 #include "../../Platform/Window.hpp"
 #include "Errors.hpp"
@@ -35,12 +35,12 @@ SOFTWARE.
 #include "Shader.hpp"
 
 #if defined(PLATFORM_SDL2)
-    #include "SDL2/SDL.h"
-    #include "SDL2/SDL_syswm.h"
+#include "SDL2/SDL.h"
+#include "SDL2/SDL_syswm.h"
 #endif
 
 #if defined(DEBUG)
-    #include "DebugUtils.hpp"
+#include "DebugUtils.hpp"
 #endif
 
 namespace LevelSketch
@@ -52,9 +52,7 @@ namespace Vulkan
 
 // FIXME: Better orginazation can be used here.
 #if defined(DEBUG)
-    static const Array<const char*> ValidationLayers {
-        "VK_LAYER_KHRONOS_validation"
-    };
+static const Array<const char*> ValidationLayers { "VK_LAYER_KHRONOS_validation" };
 #endif
 
 Renderer::Renderer()
@@ -106,9 +104,7 @@ bool Renderer::Initialize()
         ExtPtrs.Push(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
 
-    VkDebugUtilsMessengerCreateInfoEXT DebugUtilsMessengerCreateInfo {
-        DebugUtils::CreateInfo()
-    };
+    VkDebugUtilsMessengerCreateInfoEXT DebugUtilsMessengerCreateInfo { DebugUtils::CreateInfo() };
     CreateInfo.pNext = &DebugUtilsMessengerCreateInfo;
 #endif
 
@@ -151,7 +147,7 @@ bool Renderer::Initialize(Platform::Window* Window)
 
         SDL_GetWindowSizeInPixels(Handle, &PixelRes.X, &PixelRes.Y);
 #else
-    #error "Renderer::Initialize(Platform::Window*) needs platform specific implementation!"
+#error "Renderer::Initialize(Platform::Window*) needs platform specific implementation!"
 #endif
 
         Array<const char*> LayerPtrs;
@@ -181,10 +177,8 @@ bool Renderer::Initialize(Platform::Window* Window)
             return false;
         }
 
-        const String ShaderPath { Platform::FileSystem::CombinePaths(
-            Platform::FileSystem::ApplicationPath(),
-            "Content/Shaders/GLSL")
-        };
+        const String ShaderPath { Platform::FileSystem::CombinePaths(Platform::FileSystem::ApplicationPath(),
+            "Content/Shaders/GLSL") };
 
         Shader Vertex {};
         if (!Vertex.Load(m_Device, Platform::FileSystem::CombinePaths(ShaderPath, "Test.vert").Data()))
@@ -213,8 +207,7 @@ bool Renderer::Initialize(Platform::Window* Window)
         AttributeDesc[2].format = VK_FORMAT_R32G32B32A32_SFLOAT;
         AttributeDesc[2].offset = offsetof(Vertex3, Color);
 
-        Vertex
-            .PushBinding(BindingDesc)
+        Vertex.PushBinding(BindingDesc)
             .PushAttribute(AttributeDesc[0])
             .PushAttribute(AttributeDesc[1])
             .PushAttribute(AttributeDesc[2]);
@@ -254,12 +247,14 @@ bool Renderer::Initialize(Platform::Window* Window)
         Vertex.Shutdown(m_Device);
         Fragment.Shutdown(m_Device);
 
+        // clang-format off
         const Vertex3 Vertices[4] {
             {{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
             {{0.5f, -0.5f, 0.0f}, {0.0f, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
             {{0.5f, 0.5f, 0.0f,}, {0.0f, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},
             {{-0.5f, 0.5f, 0.0f,}, {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}}
         };
+        // clang-format on
         const u64 VerticesSize { sizeof(Vertex3) * ARRAY_COUNT(Vertices) };
 
         const u32 Indices[] { 0, 2, 1, 0, 3, 2 };
@@ -327,18 +322,18 @@ void Renderer::Shutdown()
 void Renderer::Render(Platform::Window*)
 {
     UniformBuffer& Uniforms { m_Uniforms[m_FrameIndex] };
-    Uniforms.GetUniforms().View = Matrix4f::LookAt({0.5f, 0.0f, -1.0f}, {}, {0.0f, 1.0f, 0.0f}).Transpose();
+    Uniforms.GetUniforms().View = Matrix4f::LookAt({ 0.5f, 0.0f, -1.0f }, {}, { 0.0f, 1.0f, 0.0f }).Transpose();
     // TODO: Revisit to get perspective matrix working. Nothing is rendered when the following is
     // uncommented.
-//    const f32 AspectRatio {
-//        static_cast<f32>(m_SwapChain.Extents().width) / static_cast<f32>(m_SwapChain.Extents().height)
-//    };
-//    Uniforms.GetUniforms().Projection = Core::Math::PerspectiveMatrixRH(
-//        45.0f,
-//        AspectRatio,
-//        0.1f,
-//        10.0f).Transpose();
-//    Uniforms.GetUniforms().Projection[5] *= -1.0f;
+    //    const f32 AspectRatio {
+    //        static_cast<f32>(m_SwapChain.Extents().width) / static_cast<f32>(m_SwapChain.Extents().height)
+    //    };
+    //    Uniforms.GetUniforms().Projection = Core::Math::PerspectiveMatrixRH(
+    //        45.0f,
+    //        AspectRatio,
+    //        0.1f,
+    //        10.0f).Transpose();
+    //    Uniforms.GetUniforms().Projection[5] *= -1.0f;
     Uniforms.UpdateBuffer();
 
     const Sync& CurrentSync { m_Syncs[m_FrameIndex] };
@@ -370,17 +365,16 @@ void Renderer::UploadGUIData(OctaneGUI::Window*, const OctaneGUI::VertexBuffer&)
 {
 }
 
-bool Renderer::GetRequiredExtensionProperties(const Array<VkExtensionProperties>& Properties, Array<const char*>& Ptrs) const
+bool Renderer::GetRequiredExtensionProperties(const Array<VkExtensionProperties>& Properties,
+    Array<const char*>& Ptrs) const
 {
     bool FoundSurface { false };
 
     for (const VkExtensionProperties& Property : Properties)
     {
         const String Name { Property.extensionName };
-        if (Name == "VK_KHR_surface"
-            || Name == "VK_KHR_xlib_surface"
-            || Name == "VK_KHR_xcb_surface"
-            || Name == "VK_KHR_wayland_surface")
+        if (Name == "VK_KHR_surface" || Name == "VK_KHR_xlib_surface" || Name == "VK_KHR_xcb_surface" ||
+            Name == "VK_KHR_wayland_surface")
         {
             FoundSurface |= Name == "VK_KHR_surface";
             Ptrs.Push(Property.extensionName);

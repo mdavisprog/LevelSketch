@@ -37,9 +37,7 @@ namespace Render
 namespace Vulkan
 {
 
-const Array<const char*> PhysicalDevice::s_RequiredExtensions {
-    VK_KHR_SWAPCHAIN_EXTENSION_NAME
-};
+const Array<const char*> PhysicalDevice::s_RequiredExtensions { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
 Array<PhysicalDevice> PhysicalDevice::GetDevices(VkInstance Instance, const Surface& Surface_)
 {
@@ -71,9 +69,7 @@ Array<PhysicalDevice> PhysicalDevice::GetDevices(VkInstance Instance, const Surf
     for (const VkPhysicalDevice& Device : PhysicalDevices)
     {
         PhysicalDevice NewDevice { Device };
-        NewDevice
-            .GatherInfo()
-            .FindQueueFamily(Surface_);
+        NewDevice.GatherInfo().FindQueueFamily(Surface_);
         Devices.Push(NewDevice);
     }
 
@@ -88,7 +84,9 @@ void PhysicalDevice::PrintInfo() const
 {
     Core::Console::WriteLine("Device: %s", m_Info.Name.Data());
     Core::Console::WriteLine("API Version: %d.%d.%d",
-        m_Info.APIVersion_Major, m_Info.APIVersion_Minor, m_Info.APIVersion_Patch);
+        m_Info.APIVersion_Major,
+        m_Info.APIVersion_Minor,
+        m_Info.APIVersion_Patch);
     Core::Console::WriteLine("Driver Version: %d", m_Info.DriverVersion);
     Core::Console::WriteLine("Vendor ID: %d", m_Info.VendorID);
     Core::Console::WriteLine("Device ID: %d", m_Info.DeviceID);

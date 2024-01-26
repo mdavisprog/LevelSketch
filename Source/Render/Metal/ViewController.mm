@@ -34,12 +34,12 @@ SOFTWARE.
 
 @implementation ViewController
 
--(void)loadView
+- (void)loadView
 {
     self.view = [[View alloc] initWithFrame:CGRectMake(0, 0, 960, 540)];
 }
 
--(void)viewDidLoad
+- (void)viewDidLoad
 {
     [super viewDidLoad];
 

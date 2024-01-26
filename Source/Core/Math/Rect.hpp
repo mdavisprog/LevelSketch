@@ -44,10 +44,22 @@ public:
     T W { 0 };
     T H { 0 };
 
-    T Left() const { return X; }
-    T Right() const { return X + W; }
-    T Top() const { return Y; }
-    T Bottom() const { return Y + H; }
+    T Left() const
+    {
+        return X;
+    }
+    T Right() const
+    {
+        return X + W;
+    }
+    T Top() const
+    {
+        return Y;
+    }
+    T Bottom() const
+    {
+        return Y + H;
+    }
 };
 
 typedef Rect<f32> Rectf;

@@ -37,21 +37,19 @@ namespace Platform
 namespace Mac
 {
 
-static CVReturn OnDisplayLinkOutput(
-    CVDisplayLinkRef,// DisplayLink,
-    const CVTimeStamp*,// Now,
+static CVReturn OnDisplayLinkOutput(CVDisplayLinkRef, // DisplayLink,
+    const CVTimeStamp*,                               // Now,
     const CVTimeStamp* OutputTime,
-    CVOptionFlags,// FlagsIn,
-    CVOptionFlags*,// FlagsOut,
-    void* DisplayLinkContext
-)
+    CVOptionFlags,  // FlagsIn,
+    CVOptionFlags*, // FlagsOut,
+    void* DisplayLinkContext)
 {
     Mac::Platform* Platform { static_cast<Mac::Platform*>(Platform::Platform::Instance().Get()) };
     Platform->UpdateVideoTime(OutputTime->videoTime, OutputTime->videoTimeScale);
 
     __weak dispatch_source_t Source { (__bridge dispatch_source_t)DisplayLinkContext };
     dispatch_source_merge_data(Source, 1);
-    
+
     return kCVReturnSuccess;
 }
 
@@ -67,13 +65,8 @@ DisplayLink::~DisplayLink()
 
 bool DisplayLink::Initialize()
 {
-    m_DisplaySource = dispatch_source_create(
-        DISPATCH_SOURCE_TYPE_DATA_ADD,
-        0,
-        0,
-        dispatch_get_main_queue()
-    );
-    dispatch_source_set_event_handler(m_DisplaySource, ^(){
+    m_DisplaySource = dispatch_source_create(DISPATCH_SOURCE_TYPE_DATA_ADD, 0, 0, dispatch_get_main_queue());
+    dispatch_source_set_event_handler(m_DisplaySource, ^() {
         @autoreleasepool
         {
             Platform::Platform::Instance()->RunFrame();
@@ -88,10 +81,7 @@ bool DisplayLink::Initialize()
         return false;
     }
 
-    Return = CVDisplayLinkSetOutputCallback(
-        m_DisplayLink,
-        &OnDisplayLinkOutput,
-        (__bridge void*)m_DisplaySource);
+    Return = CVDisplayLinkSetOutputCallback(m_DisplayLink, &OnDisplayLinkOutput, (__bridge void*)m_DisplaySource);
 
     if (Return != kCVReturnSuccess)
     {

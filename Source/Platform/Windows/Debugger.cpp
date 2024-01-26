@@ -31,9 +31,9 @@ SOFTWARE.
 #include "Common.hpp"
 
 #if defined(DEBUG)
-    #define _CRTDBG_MAP_ALLOC
-    #include <cstdlib>
-    #include <crtdbg.h>
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#include <cstdlib>
 #endif
 
 namespace LevelSketch
@@ -44,21 +44,21 @@ namespace Windows
 {
 
 #if defined(DEBUG)
-    static bool HasLeakCheack()
+static bool HasLeakCheack()
+{
+    return Core::CommandLine::Instance().Has("--leak-check");
+}
+
+static void StartMemCapture()
+{
+    if (!HasLeakCheack())
     {
-        return Core::CommandLine::Instance().Has("--leak-check");
+        return;
     }
 
-    static void StartMemCapture()
-    {
-        if (!HasLeakCheack())
-        {
-            return;
-        }
-
-        _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-        Core::Console::WriteLine("Enabling memory leak check. Output is only dumped through Visual Studio at the moment.");
-    }
+    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+    Core::Console::WriteLine("Enabling memory leak check. Output is only dumped through Visual Studio at the moment.");
+}
 #endif
 
 Debugger::Debugger()

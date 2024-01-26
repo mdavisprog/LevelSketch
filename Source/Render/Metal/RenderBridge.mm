@@ -80,8 +80,15 @@ bool RenderBridge::Initialize(CAMetalLayer* Layer, Platform::Window*)
             return false;
         }
 
-        if (!Shader_.LoadVertex("VertexMain")) { return false; }
-        if (!Shader_.LoadPixel("PixelMain")) { return false; }
+        if (!Shader_.LoadVertex("VertexMain"))
+        {
+            return false;
+        }
+
+        if (!Shader_.LoadPixel("PixelMain"))
+        {
+            return false;
+        }
 
         MTLRenderPipelineDescriptor* PipelineDesc = [MTLRenderPipelineDescriptor new];
         PipelineDesc.label = @"Test";
@@ -128,8 +135,15 @@ bool RenderBridge::Initialize(CAMetalLayer* Layer, Platform::Window*)
             return false;
         }
 
-        if (!Shader_.LoadVertex("VertexMain")) { return false; }
-        if (!Shader_.LoadPixel("PixelMain")) { return false; }
+        if (!Shader_.LoadVertex("VertexMain"))
+        {
+            return false;
+        }
+
+        if (!Shader_.LoadPixel("PixelMain"))
+        {
+            return false;
+        }
 
         PipelineDesc.label = @"GUI";
         PipelineDesc.vertexFunction = Shader_.Vertex();
@@ -171,24 +185,26 @@ bool RenderBridge::Initialize(CAMetalLayer* Layer, Platform::Window*)
         m_RenderBufferGUI.Initialize(m_Device, 100000, 100000);
 
         const f32 Offset { 0.5f };
+        // clang-format off
         const Vertex3 Vertices[3]
         {
             {{0.0f, Offset, 5.0f}, {0.5f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
             {{-Offset, -Offset, 5.0f}, {1.0f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
             {{Offset, -Offset, 5.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}}
         };
+        // clang-format on
         m_RenderBuffer.UploadVertexData(Vertices, sizeof(Vertices));
 
         const u32 Indices[3] { 0, 1, 2 };
         m_RenderBuffer.UploadIndexData(Indices, sizeof(Indices));
 
-        const Rectf Bounds
-        {
-            0.0f, 0.0f,
-            static_cast<f32>(Layer.drawableSize.width), static_cast<f32>(Layer.drawableSize.height)
-        };
+        const Rectf Bounds { 0.0f,
+            0.0f,
+            static_cast<f32>(Layer.drawableSize.width),
+            static_cast<f32>(Layer.drawableSize.height) };
 
-        m_Uniforms.Projection = Core::Math::PerspectiveMatrixRH(75.0f, AspectRatio(Layer.drawableSize), 0.1f, 100.0f).Transpose();
+        m_Uniforms.Projection =
+            Core::Math::PerspectiveMatrixRH(75.0f, AspectRatio(Layer.drawableSize), 0.1f, 100.0f).Transpose();
         m_Uniforms.Orthographic = Core::Math::OrthographicMatrixRH(Bounds, -1.0f, 1.0f).Transpose();
 
         const u8 WhiteTexture[4] { 255, 255, 255, 255 };
@@ -235,15 +251,12 @@ void RenderBridge::Render(CAMetalLayer* Layer, f64 ScaleFactor)
         RenderPassDesc.depthAttachment.clearDepth = 1.0;
         RenderPassDesc.depthAttachment.texture = m_DepthBuffer;
 
-        MTLViewport Viewport
-        {
-            .originX = 0.0,
+        MTLViewport Viewport { .originX = 0.0,
             .originY = 0.0,
             .width = DrawableSize.width,
             .height = DrawableSize.height,
             .znear = 0.0,
-            .zfar = 1.0
-        };
+            .zfar = 1.0 };
 
         id<MTLRenderCommandEncoder> Encoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDesc];
         [Encoder setRenderPipelineState:m_PipelineState];
@@ -279,13 +292,10 @@ void RenderBridge::Render(CAMetalLayer* Layer, f64 ScaleFactor)
                 Tex = GetTexture(Command.TextureID());
             }
 
-            MTLScissorRect Scissor
-            {
-                .x = 0,
+            MTLScissorRect Scissor { .x = 0,
                 .y = 0,
                 .width = static_cast<NSUInteger>(Layer.drawableSize.width),
-                .height = static_cast<NSUInteger>(Layer.drawableSize.height)
-            };
+                .height = static_cast<NSUInteger>(Layer.drawableSize.height) };
 
             const OctaneGUI::Rect Clip { Command.Clip() };
             if (!Clip.IsZero())
@@ -299,23 +309,20 @@ void RenderBridge::Render(CAMetalLayer* Layer, f64 ScaleFactor)
                 Max.Y = std::min<f32>(Max.Y, static_cast<f32>(Layer.drawableSize.height));
 
                 const OctaneGUI::Vector2 ClipSize = Max - Min;
-                Scissor =
-                {
-                    .x = (NSUInteger)Min.X,
+                Scissor = { .x = (NSUInteger)Min.X,
                     .y = (NSUInteger)Min.Y,
                     .width = (NSUInteger)ClipSize.X,
-                    .height = (NSUInteger)ClipSize.Y
-                };
+                    .height = (NSUInteger)ClipSize.Y };
             }
 
             [Encoder setScissorRect:Scissor];
             [Encoder setFragmentTexture:Tex atIndex:0];
             [Encoder setVertexBufferOffset:Command.VertexOffset() * sizeof(OctaneGUI::Vertex) atIndex:0];
             [Encoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle
-                                   indexCount:Command.IndexCount()
-                                    indexType:MTLIndexTypeUInt32
-                                  indexBuffer:m_RenderBufferGUI.Index()
-                            indexBufferOffset:Command.IndexOffset() * sizeof(u32)];
+                                indexCount:Command.IndexCount()
+                                 indexType:MTLIndexTypeUInt32
+                               indexBuffer:m_RenderBufferGUI.Index()
+                         indexBufferOffset:Command.IndexOffset() * sizeof(u32)];
         }
 
         [Encoder endEncoding];
@@ -355,20 +362,14 @@ void RenderBridge::UploadGUIData(const OctaneGUI::VertexBuffer& Buffer)
         return;
     }
 
-    m_RenderBufferGUI.UploadVertexData(
-        Buffer.GetVertices().data(),
-        static_cast<u64>(Buffer.GetVertexCount() * sizeof(OctaneGUI::Vertex))
-    );
+    m_RenderBufferGUI.UploadVertexData(Buffer.GetVertices().data(),
+        static_cast<u64>(Buffer.GetVertexCount() * sizeof(OctaneGUI::Vertex)));
 
-    m_RenderBufferGUI.UploadIndexData(
-        Buffer.GetIndices().data(),
-        static_cast<u64>(Buffer.GetIndexCount() * sizeof(u32))
-    );
+    m_RenderBufferGUI.UploadIndexData(Buffer.GetIndices().data(),
+        static_cast<u64>(Buffer.GetIndexCount() * sizeof(u32)));
 
-    m_GUICommands
-        .Clear()
-        .Reserve(Buffer.Commands().size());
-    
+    m_GUICommands.Clear().Reserve(Buffer.Commands().size());
+
     for (const OctaneGUI::DrawCommand& Command : Buffer.Commands())
     {
         m_GUICommands.Push(Command);

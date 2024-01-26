@@ -65,7 +65,11 @@ bool TestSuite::Run()
 
     const bool Result { Succeeded == NumTestCases() };
     const Core::Console::Color Color { Result ? Core::Console::Color::Green : Core::Console::Color::Red };
-    Core::Console::WriteLine(Color, "'%s' was completed with %llu/%llu test cases passed.", Name(), Succeeded, m_TestCases.Size());
+    Core::Console::WriteLine(Color,
+        "'%s' was completed with %llu/%llu test cases passed.",
+        Name(),
+        Succeeded,
+        m_TestCases.Size());
 
     return Result;
 }

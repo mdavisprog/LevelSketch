@@ -54,11 +54,7 @@ void CommandBuffer::Shutdown(const Device& Device_, const CommandPool& Pool)
 {
     if (m_Handle != VK_NULL_HANDLE)
     {
-        vkFreeCommandBuffers(
-            Device_.GetLogicalDevice().Handle(),
-            Pool.Handle(),
-            1,
-            &m_Handle);
+        vkFreeCommandBuffers(Device_.GetLogicalDevice().Handle(), Pool.Handle(), 1, &m_Handle);
 
         m_Handle = VK_NULL_HANDLE;
     }
@@ -79,7 +75,7 @@ bool CommandBuffer::BeginRecord(const GraphicsPipeline& Pipeline, const SwapChai
         return false;
     }
 
-    const VkClearValue ClearValue {{{ 0.0f, 0.0f, 1.0f, 1.0f }}};
+    const VkClearValue ClearValue { { { 0.0f, 0.0f, 1.0f, 1.0f } } };
 
     VkRenderPassBeginInfo RenderPassInfo {};
     RenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -183,8 +179,7 @@ const CommandBuffer& CommandBuffer::BindDescriptorSet(const GraphicsPipeline& Pi
 {
     VkDescriptorSet DescriptorSet { Pipeline.DescriptorSet(FrameIndex) };
 
-    vkCmdBindDescriptorSets(
-        m_Handle,
+    vkCmdBindDescriptorSets(m_Handle,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         Pipeline.PipelineLayout(),
         0,
@@ -196,8 +191,7 @@ const CommandBuffer& CommandBuffer::BindDescriptorSet(const GraphicsPipeline& Pi
     return *this;
 }
 
-const CommandBuffer& CommandBuffer::DrawVertices(
-    u32 VertexCount,
+const CommandBuffer& CommandBuffer::DrawVertices(u32 VertexCount,
     u32 InstanceCount,
     u32 FirstVertex,
     u32 FirstInstance) const
@@ -206,8 +200,7 @@ const CommandBuffer& CommandBuffer::DrawVertices(
     return *this;
 }
 
-const CommandBuffer& CommandBuffer::DrawVerticesIndexed(
-    u32 IndexCount,
+const CommandBuffer& CommandBuffer::DrawVerticesIndexed(u32 IndexCount,
     u32 InstanceCount,
     u32 FirstIndex,
     u32 VertexOffset,

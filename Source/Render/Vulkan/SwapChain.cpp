@@ -56,10 +56,8 @@ SwapChain::SupportDetails SwapChain::GatherDetails(const PhysicalDevice& Device,
         return Details;
     }
 
-    VkResult Result { vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
-        Device.Handle(),
-        Surface_.Handle(),
-        &Details.SurfaceCapabilities)
+    VkResult Result {
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Device.Handle(), Surface_.Handle(), &Details.SurfaceCapabilities)
     };
 
     if (Result != VK_SUCCESS)
@@ -80,7 +78,8 @@ SwapChain::SupportDetails SwapChain::GatherDetails(const PhysicalDevice& Device,
         }
 
         Details.Formats.Resize(Count);
-        Result = vkGetPhysicalDeviceSurfaceFormatsKHR(Device.Handle(), Surface_.Handle(), &Count, Details.Formats.Data());
+        Result =
+            vkGetPhysicalDeviceSurfaceFormatsKHR(Device.Handle(), Surface_.Handle(), &Count, Details.Formats.Data());
 
         if (Result != VK_SUCCESS)
         {
@@ -101,7 +100,10 @@ SwapChain::SupportDetails SwapChain::GatherDetails(const PhysicalDevice& Device,
         }
 
         Details.PresentModes.Resize(Count);
-        Result = vkGetPhysicalDeviceSurfacePresentModesKHR(Device.Handle(), Surface_.Handle(), &Count, Details.PresentModes.Data());
+        Result = vkGetPhysicalDeviceSurfacePresentModesKHR(Device.Handle(),
+            Surface_.Handle(),
+            &Count,
+            Details.PresentModes.Data());
 
         if (Result != VK_SUCCESS)
         {
@@ -131,10 +133,8 @@ bool SwapChain::Initialize(const Device& Device_, const Surface& Surface_, const
     const VkSurfaceFormatKHR Format { BestFormat(Details.Formats) };
     const VkPresentModeKHR PresentMode { BestPresentMode(Details.PresentModes) };
     const VkExtent2D Extents { BestExtents(Details.SurfaceCapabilities, DefaultExtents) };
-    const u32 ImageCount { Min<u32>(
-        Details.SurfaceCapabilities.minImageCount + 1,
-        Details.SurfaceCapabilities.maxImageCount > 0 ? Details.SurfaceCapabilities.maxImageCount : 0xFFFFFFFF)
-    };
+    const u32 ImageCount { Min<u32>(Details.SurfaceCapabilities.minImageCount + 1,
+        Details.SurfaceCapabilities.maxImageCount > 0 ? Details.SurfaceCapabilities.maxImageCount : 0xFFFFFFFF) };
 
     VkSwapchainCreateInfoKHR CreateInfo {};
     CreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -151,7 +151,8 @@ bool SwapChain::Initialize(const Device& Device_, const Surface& Surface_, const
     CreateInfo.clipped = VK_TRUE;
     CreateInfo.oldSwapchain = VK_NULL_HANDLE;
 
-    const u32 Indices[] = { PhysicalDevice_.QueueFamilyIndex().Graphics(), PhysicalDevice_.QueueFamilyIndex().Present() };
+    const u32 Indices[] = { PhysicalDevice_.QueueFamilyIndex().Graphics(),
+        PhysicalDevice_.QueueFamilyIndex().Present() };
     if (PhysicalDevice_.QueueFamilyIndex().Graphics() != PhysicalDevice_.QueueFamilyIndex().Present())
     {
         CreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
@@ -185,7 +186,7 @@ bool SwapChain::Initialize(const Device& Device_, const Surface& Surface_, const
     }
 
     m_Images.Resize(Count);
-    
+
     Result = vkGetSwapchainImagesKHR(DeviceHandle, m_SwapChain, &Count, m_Images.Data());
 
     if (Result != VK_SUCCESS)
@@ -206,12 +207,10 @@ bool SwapChain::Initialize(const Device& Device_, const Surface& Surface_, const
         ImageViewInfo.image = m_Images[I];
         ImageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
         ImageViewInfo.format = m_Format;
-        ImageViewInfo.components = {
+        ImageViewInfo.components = { VK_COMPONENT_SWIZZLE_IDENTITY,
             VK_COMPONENT_SWIZZLE_IDENTITY,
             VK_COMPONENT_SWIZZLE_IDENTITY,
-            VK_COMPONENT_SWIZZLE_IDENTITY,
-            VK_COMPONENT_SWIZZLE_IDENTITY
-        };
+            VK_COMPONENT_SWIZZLE_IDENTITY };
         ImageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         ImageViewInfo.subresourceRange.baseMipLevel = 0;
         ImageViewInfo.subresourceRange.levelCount = 1;
@@ -253,11 +252,8 @@ bool SwapChain::InitializeFramebuffers(const Device& Device_, const GraphicsPipe
         CreateInfo.height = m_Extents.height;
         CreateInfo.layers = 1;
 
-        VkResult Result { vkCreateFramebuffer(
-            Device_.GetLogicalDevice().Handle(),
-            &CreateInfo,
-            nullptr,
-            &m_Framebuffers[I])
+        VkResult Result {
+            vkCreateFramebuffer(Device_.GetLogicalDevice().Handle(), &CreateInfo, nullptr, &m_Framebuffers[I])
         };
 
         if (Result != VK_SUCCESS)
@@ -388,8 +384,10 @@ VkExtent2D SwapChain::BestExtents(const VkSurfaceCapabilitiesKHR& Capabilities, 
     }
     else
     {
-        Result.width = Clamp<i32>(DefaultExtents.width, Capabilities.minImageExtent.width, Capabilities.maxImageExtent.width);
-        Result.height = Clamp<i32>(DefaultExtents.height, Capabilities.minImageExtent.height, Capabilities.maxImageExtent.height);
+        Result.width =
+            Clamp<i32>(DefaultExtents.width, Capabilities.minImageExtent.width, Capabilities.maxImageExtent.width);
+        Result.height =
+            Clamp<i32>(DefaultExtents.height, Capabilities.minImageExtent.height, Capabilities.maxImageExtent.height);
     }
 
     return Result;

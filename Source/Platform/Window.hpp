@@ -26,8 +26,8 @@ SOFTWARE.
 
 #pragma once
 
-#include "../Core/Types.hpp"
 #include "../Core/Math/Vector2.hpp"
+#include "../Core/Types.hpp"
 
 namespace LevelSketch
 {
@@ -38,7 +38,9 @@ namespace Platform
 class Window
 {
 public:
-    virtual ~Window() {}
+    virtual ~Window()
+    {
+    }
 
     virtual void* Handle() const = 0;
     virtual bool Create(const char* Title, i32 X, i32 Y, i32 Width, i32 Height) = 0;

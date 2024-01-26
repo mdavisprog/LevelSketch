@@ -33,9 +33,9 @@ SOFTWARE.
 #include <string>
 
 #if defined(WINDOWS)
-    #define PATH_SEPARATOR "\\"
+#define PATH_SEPARATOR "\\"
 #else
-    #define PATH_SEPARATOR "/"
+#define PATH_SEPARATOR "/"
 #endif
 
 namespace LevelSketch

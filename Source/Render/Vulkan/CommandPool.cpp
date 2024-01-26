@@ -121,4 +121,3 @@ const CommandBuffer& CommandPool::Buffer(u64 Index) const
 }
 }
 }
-

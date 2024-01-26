@@ -36,7 +36,7 @@ using DisplayLink = LevelSketch::Platform::Mac::DisplayLink;
 {
 }
 
--(instancetype) initWithFrame:(CGRect)Frame
+- (instancetype)initWithFrame:(CGRect)Frame
 {
     self = [super initWithFrame:Frame];
 
@@ -51,12 +51,12 @@ using DisplayLink = LevelSketch::Platform::Mac::DisplayLink;
     return self;
 }
 
--(CALayer*) makeBackingLayer
+- (CALayer*)makeBackingLayer
 {
     return [CAMetalLayer layer];
 }
 
--(void) viewDidMoveToWindow
+- (void)viewDidMoveToWindow
 {
     @autoreleasepool
     {
@@ -74,7 +74,7 @@ using DisplayLink = LevelSketch::Platform::Mac::DisplayLink;
     }
 }
 
--(void) windowWillClose:(NSNotification*)Notification
+- (void)windowWillClose:(NSNotification*)Notification
 {
     @autoreleasepool
     {

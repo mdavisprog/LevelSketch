@@ -60,12 +60,12 @@ bool Window::Create(const char* Title, int X, int Y, int Width, int Height)
     {
         WindowBridge* Bridge = [WindowBridge alloc];
 
-        Bridge.Window = [[NSWindow alloc]
-            initWithContentRect:NSMakeRect(X, Y, Width, Height)
-            styleMask:(NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable)
-            backing:NSBackingStoreBuffered
-            defer:NO
-        ];
+        const NSWindowStyleMask StyleMask { NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |
+                                            NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable };
+        Bridge.Window = [[NSWindow alloc] initWithContentRect:NSMakeRect(X, Y, Width, Height)
+                                                    styleMask:StyleMask
+                                                      backing:NSBackingStoreBuffered
+                                                        defer:NO];
 
         [Bridge.Window setTitle:[NSString stringWithUTF8String:Title]];
         [Bridge.Window setAcceptsMouseMovedEvents:YES];
@@ -75,8 +75,7 @@ bool Window::Create(const char* Title, int X, int Y, int Width, int Height)
         [NotificationCenter addObserverForName:NSWindowWillCloseNotification
                                         object:Bridge.Window
                                          queue:[NSOperationQueue mainQueue]
-                                    usingBlock:^(NSNotification*)
-                                    {
+                                    usingBlock:^(NSNotification*) {
                                         // Do not call Close()! The NSWindow object is already being
                                         // closed. Only need to reduce the ref count of the bridge
                                         // object.
@@ -94,8 +93,8 @@ bool Window::Create(const char* Title, int X, int Y, int Width, int Height)
                                             Platform::Instance()->CloseWindow(PlatformWindow);
 
                                             // FIXME: Currently unable to determine why NSApplication is not ending
-                                            // the run loop after all windows are closed. Performing this as an alternative
-                                            // to end the loop.
+                                            // the run loop after all windows are closed. Performing this as an
+                                            // alternative to end the loop.
                                             if (Platform::Instance()->WindowCount() == 0)
                                             {
                                                 [NSApp stop:nil];

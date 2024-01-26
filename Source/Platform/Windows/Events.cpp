@@ -44,23 +44,21 @@ static Vector2i Position(LPARAM Param)
 
 LRESULT Event::WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
-    LevelSketch::Platform::Window* Window { reinterpret_cast<LevelSketch::Platform::Window*>(GetWindowLongPtrW(hWnd, GWLP_USERDATA)) };
+    LevelSketch::Platform::Window* Window { reinterpret_cast<LevelSketch::Platform::Window*>(
+        GetWindowLongPtrW(hWnd, GWLP_USERDATA)) };
 
     switch (Msg)
     {
-    case WM_CLOSE:
-        Window->Close();
-        break;
+    case WM_CLOSE: Window->Close(); break;
 
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        break;
-    
+    case WM_DESTROY: PostQuitMessage(0); break;
+
     case WM_MOUSEMOVE:
     {
         Platform::Event::OnMouseMove MouseMove { Position(lParam) };
         EventQueue::Instance().Push({ MouseMove }, Window);
-    } break;
+    }
+    break;
 
     case WM_LBUTTONDOWN:
     case WM_LBUTTONUP:
@@ -82,7 +80,8 @@ LRESULT Event::WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
         const bool Pressed { Msg == WM_LBUTTONDOWN || Msg == WM_RBUTTONDOWN || Msg == WM_MBUTTONDOWN };
         Platform::Event::OnMouseButton MouseButton { Button, Pressed, Position(lParam) };
         EventQueue::Instance().Push({ MouseButton }, Window);
-    } break;
+    }
+    break;
 
     default: break;
     }

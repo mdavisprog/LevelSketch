@@ -24,10 +24,10 @@ SOFTWARE.
 
 */
 
-#include "Core.hpp"
 #include "../../Core/CommandLine.hpp"
 #include "../TestSuite.hpp"
 #include "../Utility.hpp"
+#include "Core.hpp"
 
 namespace LevelSketch
 {
@@ -78,10 +78,7 @@ static bool Has()
 
 UniquePtr<TestSuite> CommandLineTests()
 {
-    return TestSuite::New("CommandLine", {
-        TEST_CASE(Set),
-        TEST_CASE(Has)
-    });
+    return TestSuite::New("CommandLine", { TEST_CASE(Set), TEST_CASE(Has) });
 }
 
 }

@@ -29,7 +29,7 @@ SOFTWARE.
 #import <AppKit/AppKit.h>
 #import <QuartzCore/CAMetalLayer.h>
 
-@interface View : NSView<CALayerDelegate>
+@interface View : NSView <CALayerDelegate>
 
 @property(nonatomic, nonnull, readonly) CAMetalLayer* MetalLayer;
 @property(nonatomic, getter=IsPaused) BOOL Paused;

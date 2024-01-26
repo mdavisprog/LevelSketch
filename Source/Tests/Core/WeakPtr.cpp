@@ -24,11 +24,11 @@ SOFTWARE.
 
 */
 
-#include "Core.hpp"
 #include "../../Core/Memory/WeakPtr.hpp"
 #include "../../Core/Compiler.hpp"
 #include "../TestSuite.hpp"
 #include "../Utility.hpp"
+#include "Core.hpp"
 
 namespace LevelSketch
 {
@@ -40,7 +40,9 @@ namespace Core
 class Object
 {
 public:
-    Object() {}
+    Object()
+    {
+    }
 };
 
 static bool Empty()
@@ -96,9 +98,11 @@ static bool WeakCopy()
     return true;
 }
 
+// clang-format off
 #if defined(CLANG)
-    PUSH_DISABLE_WARNING(-Wself-assign-overloaded)
+PUSH_DISABLE_WARNING(-Wself-assign-overloaded)
 #endif
+// clang-format on
 
 static bool SelfCopy()
 {
@@ -112,18 +116,17 @@ static bool SelfCopy()
 }
 
 #if defined(CLANG)
-    POP_DISABLE_WARNING
+POP_DISABLE_WARNING
 #endif
 
 UniquePtr<TestSuite> WeakPtrTests()
 {
-    return TestSuite::New("WeakPtr", {
-        TEST_CASE(Empty),
-        TEST_CASE(WeakLock),
-        TEST_CASE(WeakRefDestroyed),
-        TEST_CASE(WeakCopy),
-        TEST_CASE(SelfCopy)
-    });
+    return TestSuite::New("WeakPtr",
+        { TEST_CASE(Empty),
+            TEST_CASE(WeakLock),
+            TEST_CASE(WeakRefDestroyed),
+            TEST_CASE(WeakCopy),
+            TEST_CASE(SelfCopy) });
 }
 
 }

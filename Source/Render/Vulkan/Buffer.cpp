@@ -41,11 +41,7 @@ Buffer::Buffer()
 {
 }
 
-bool Buffer::Initialize(
-    const Device& Device_,
-    u64 Size,
-    VkBufferUsageFlags Usage,
-    VkMemoryPropertyFlags MemProperties)
+bool Buffer::Initialize(const Device& Device_, u64 Size, VkBufferUsageFlags Usage, VkMemoryPropertyFlags MemProperties)
 {
     VkBufferCreateInfo CreateInfo {};
     CreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -53,12 +49,7 @@ bool Buffer::Initialize(
     CreateInfo.usage = Usage;
     CreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    VkResult Result { vkCreateBuffer(
-        Device_.GetLogicalDevice().Handle(),
-        &CreateInfo,
-        nullptr,
-        &m_Handle)
-    };
+    VkResult Result { vkCreateBuffer(Device_.GetLogicalDevice().Handle(), &CreateInfo, nullptr, &m_Handle) };
 
     if (Result != VK_SUCCESS)
     {
@@ -94,24 +85,16 @@ bool Buffer::Initialize(
     AllocInfo.allocationSize = MemoryReqs.size;
     AllocInfo.memoryTypeIndex = MemoryType;
 
-    Result = vkAllocateMemory(
-        Device_.GetLogicalDevice().Handle(),
-        &AllocInfo,
-        nullptr,
-        &m_Memory);
-    
+    Result = vkAllocateMemory(Device_.GetLogicalDevice().Handle(), &AllocInfo, nullptr, &m_Memory);
+
     if (Result != VK_SUCCESS)
     {
         Core::Console::Error("Failed to allocate memory. Error: %s", Errors::ToString(Result));
         return false;
     }
 
-    Result = vkBindBufferMemory(
-        Device_.GetLogicalDevice().Handle(),
-        m_Handle,
-        m_Memory,
-        0);
-    
+    Result = vkBindBufferMemory(Device_.GetLogicalDevice().Handle(), m_Handle, m_Memory, 0);
+
     if (Result != VK_SUCCESS)
     {
         Core::Console::Error("Failed to bind vertex buffer memory. Error: %s", Errors::ToString(Result));
@@ -145,14 +128,7 @@ bool Buffer::Map(const Device& Device_, u64 Size)
         return true;
     }
 
-    VkResult Result { vkMapMemory(
-        Device_.GetLogicalDevice().Handle(),
-        m_Memory,
-        0,
-        Size,
-        0,
-        &m_Ptr)
-    };
+    VkResult Result { vkMapMemory(Device_.GetLogicalDevice().Handle(), m_Memory, 0, Size, 0, &m_Ptr) };
 
     if (Result != VK_SUCCESS)
     {
@@ -191,11 +167,10 @@ bool Buffer::Upload(const Device& Device_, const CommandPool& Pool, const void* 
 
     Buffer Staging {};
 
-    if (!Staging.Initialize(
-        Device_,
-        Size,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+    if (!Staging.Initialize(Device_,
+            Size,
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
     {
         Core::Console::Error("Failed to create staging buffer for upload.");
         return false;
@@ -218,12 +193,8 @@ bool Buffer::Upload(const Device& Device_, const CommandPool& Pool, const void* 
     AllocInfo.commandBufferCount = 1;
 
     VkCommandBuffer CommandBuffer { VK_NULL_HANDLE };
-    
-    VkResult Result { vkAllocateCommandBuffers(
-        Device_.GetLogicalDevice().Handle(),
-        &AllocInfo,
-        &CommandBuffer)
-    };
+
+    VkResult Result { vkAllocateCommandBuffers(Device_.GetLogicalDevice().Handle(), &AllocInfo, &CommandBuffer) };
 
     if (Result != VK_SUCCESS)
     {
@@ -232,13 +203,8 @@ bool Buffer::Upload(const Device& Device_, const CommandPool& Pool, const void* 
         return false;
     }
 
-    auto CleanupFn = [&]() -> void
-    {
-        vkFreeCommandBuffers(
-            Device_.GetLogicalDevice().Handle(),
-            Pool.Handle(),
-            1,
-            &CommandBuffer);
+    auto CleanupFn = [&]() -> void {
+        vkFreeCommandBuffers(Device_.GetLogicalDevice().Handle(), Pool.Handle(), 1, &CommandBuffer);
         Staging.Shutdown(Device_);
     };
 

@@ -38,7 +38,7 @@ SOFTWARE.
 #define ARRAY_GRANULARITY 16
 
 #ifndef ARRAY_COUNT
-    #define ARRAY_COUNT(X) (sizeof(X) / sizeof(X[0]))
+#define ARRAY_COUNT(X) (sizeof(X) / sizeof(X[0]))
 #endif
 
 namespace LevelSketch
@@ -181,7 +181,7 @@ public:
 
             for (u64 I = 0; I < m_Size; I++)
             {
-                new(static_cast<void*>(&m_Data[I])) T;
+                new (static_cast<void*>(&m_Data[I])) T;
                 m_Data[I] = Other.m_Data[I];
             }
         }
@@ -224,7 +224,7 @@ public:
 
             for (u64 I = m_Size; I < Size - m_Size; I++)
             {
-                new(static_cast<void*>(&m_Data[I])) T;
+                new (static_cast<void*>(&m_Data[I])) T;
             }
         }
 
@@ -274,7 +274,7 @@ public:
     {
         ConditionalGrow();
 
-        new(static_cast<void*>(&m_Data[m_Size])) T(Value);
+        new (static_cast<void*>(&m_Data[m_Size])) T(Value);
         m_Size++;
 
         return *this;
@@ -284,7 +284,7 @@ public:
     {
         ConditionalGrow();
 
-        new(static_cast<void*>(&m_Data[m_Size])) T(std::move(Value));
+        new (static_cast<void*>(&m_Data[m_Size])) T(std::move(Value));
         m_Size++;
 
         return *this;

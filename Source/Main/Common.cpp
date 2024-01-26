@@ -25,21 +25,21 @@ SOFTWARE.
 */
 
 #include "Common.hpp"
-#include <cstdio>
-#include "../External/OctaneGUI/OctaneGUI.h"
 #include "../Core/CommandLine.hpp"
 #include "../Core/Console.hpp"
 #include "../Core/Defines.hpp"
 #include "../Engine/Engine.hpp"
+#include "../External/OctaneGUI/OctaneGUI.h"
 #include "../Platform/Debugger.hpp"
 #include "../Platform/EventQueue.hpp"
 #include "../Platform/FileSystem.hpp"
 #include "../Platform/Platform.hpp"
 #include "../Platform/Window.hpp"
 #include "../Render/Renderer.hpp"
+#include <cstdio>
 
 #ifdef WITH_TESTS
-    #include "../Tests/System.hpp"
+#include "../Tests/System.hpp"
 #endif
 
 namespace LevelSketch
@@ -79,21 +79,23 @@ static OctaneGUI::Event Transform(const Platform::Event& Event)
     case Platform::Event::Type::MouseMove:
     {
         const Platform::Event::OnMouseMove& Data { Event.GetData().MouseMove };
-        return OctaneGUI::Event(OctaneGUI::Event::MouseMove(static_cast<f32>(Data.Position.X), static_cast<f32>(Data.Position.Y)));
-    } break;
+        return OctaneGUI::Event(
+            OctaneGUI::Event::MouseMove(static_cast<f32>(Data.Position.X), static_cast<f32>(Data.Position.Y)));
+    }
+    break;
 
     case Platform::Event::Type::MouseButton:
     {
         const Platform::Event::OnMouseButton& Data { Event.GetData().MouseButton };
-        const OctaneGUI::Event::Type Type { Data.Pressed ? OctaneGUI::Event::Type::MousePressed : OctaneGUI::Event::Type::MouseReleased };
-        return OctaneGUI::Event(
-            Type,
-            OctaneGUI::Event::MouseButton(
-                Transform(Data.Button),
+        const OctaneGUI::Event::Type Type { Data.Pressed ? OctaneGUI::Event::Type::MousePressed
+                                                         : OctaneGUI::Event::Type::MouseReleased };
+        return OctaneGUI::Event(Type,
+            OctaneGUI::Event::MouseButton(Transform(Data.Button),
                 static_cast<f32>(Data.Position.X),
                 static_cast<f32>(Data.Position.Y),
                 OctaneGUI::Mouse::Count::Single));
-    } break;
+    }
+    break;
 
     case Platform::Event::Type::None:
     default: break;
@@ -110,13 +112,12 @@ static void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Ac
     {
         if (g_Windows.find(Window) == g_Windows.end())
         {
-            Platform::Window* Win = Platform::Platform::Instance()->NewWindow(
-                OctaneGUI::String::ToMultiByte(Window->GetTitle()).c_str(),
-                (int)Window->GetPosition().X,
-                (int)Window->GetPosition().Y,
-                (int)Window->GetSize().X,
-                (int)Window->GetSize().Y
-            );
+            Platform::Window* Win =
+                Platform::Platform::Instance()->NewWindow(OctaneGUI::String::ToMultiByte(Window->GetTitle()).c_str(),
+                    (int)Window->GetPosition().X,
+                    (int)Window->GetPosition().Y,
+                    (int)Window->GetSize().X,
+                    (int)Window->GetSize().Y);
 
             if (Win != nullptr)
             {
@@ -137,7 +138,7 @@ static void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Ac
                     }
 
                     const Vector2 Scale { Win->ContentScale() };
-                    Window->SetRenderScale({Scale.X, Scale.Y});
+                    Window->SetRenderScale({ Scale.X, Scale.Y });
                 }
                 else
                 {
@@ -150,7 +151,8 @@ static void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Ac
                 printf("Failed to create window!\n");
             }
         }
-    } break;
+    }
+    break;
 
     case OctaneGUI::WindowAction::Destroy:
     {
@@ -159,7 +161,8 @@ static void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Ac
             Platform::Platform::Instance()->CloseWindow(g_Windows[Window]);
             g_Windows.erase(Window);
         }
-    } break;
+    }
+    break;
 
     case OctaneGUI::WindowAction::Raise:
     {
@@ -167,7 +170,8 @@ static void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Ac
         {
             g_Windows[Window]->Focus();
         }
-    } break;
+    }
+    break;
 
     case OctaneGUI::WindowAction::Position:
     {
@@ -175,7 +179,8 @@ static void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Ac
         {
             g_Windows[Window]->SetPosition((int)Window->GetPosition().X, (int)Window->GetPosition().Y);
         }
-    } break;
+    }
+    break;
 
     case OctaneGUI::WindowAction::Enable:
     case OctaneGUI::WindowAction::Disable:
@@ -297,17 +302,14 @@ i32 Main(i32 Argc, const char** Argv)
     }
 
     g_Application = new OctaneGUI::Application();
-    g_Application
-        ->SetOnWindowAction(OnWindowAction)
+    g_Application->SetOnWindowAction(OnWindowAction)
         .SetOnEvent(OnEvent)
         .SetOnLoadTexture(OnLoadTexture)
         .SetOnPaint(OnPaint);
 
     std::unordered_map<std::string, OctaneGUI::ControlList> List;
-    bool Success = g_Application
-        ->SetCommandLine(Argc, const_cast<char**>(Argv))
-        .Initialize(Stream, List);
-    
+    bool Success = g_Application->SetCommandLine(Argc, const_cast<char**>(Argv)).Initialize(Stream, List);
+
     if (!Success)
     {
         printf("Failed to initialize application!\n");
