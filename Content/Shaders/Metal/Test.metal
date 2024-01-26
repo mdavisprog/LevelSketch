@@ -46,11 +46,13 @@ struct Uniforms
     metal::float4x4 Orthographic;
 };
 
-vertex RasterizerData VertexMain(Vertex3 Vertex [[ stage_in ]], constant Uniforms& Uniforms_ [[ buffer(1) ]])
+vertex RasterizerData VertexMain(
+    Vertex3 Vertex [[ stage_in ]],
+    constant Uniforms& Uniforms_ [[ buffer(1) ]])
 {
     RasterizerData Out;
 
-    Out.Position = float4(Vertex.Position, 1.0) * Uniforms_.Projection;
+    Out.Position = Uniforms_.Projection * Uniforms_.View * Uniforms_.Model * float4(Vertex.Position, 1.0);
     Out.UV = Vertex.UV;
     Out.Color = Vertex.Color;
 

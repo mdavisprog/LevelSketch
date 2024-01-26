@@ -238,8 +238,8 @@ static inline Matrix4f PerspectiveMatrixRH(f32 FOVAngle, f32 Aspect, f32 Near, f
     {
         XScale, 0.0f, 0.0f, 0.0f,
         0.0f, YScale, 0.0f, 0.0,
-        0.0f, 0.0f, Far / (Far - Near), 1.0f,
-        0.0f, 0.0f, -Near * (Far / (Far - Near)), 0.0f
+        0.0f, 0.0f, Far / (Far - Near), -Near * (Far / (Far - Near)),
+        0.0f, 0.0f, 1.0, 0.0f
     };
 }
 
