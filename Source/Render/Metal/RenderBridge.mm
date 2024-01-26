@@ -322,6 +322,10 @@ void RenderBridge::Render(CAMetalLayer* Layer, f64 ScaleFactor)
 
         [CommandBuffer presentDrawable:Drawable];
         [CommandBuffer commit];
+
+        // TODO: Implement a frames in flight system with a fence that is signaled
+        // when GPU work is complete.
+        [CommandBuffer waitUntilCompleted];
     }
 }
 
