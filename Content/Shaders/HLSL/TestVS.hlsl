@@ -43,7 +43,7 @@ PSInput Main(float4 position : POSITION, float2 uv : TEXCOORD, float4 color : CO
 {
     PSInput result;
 
-    result.position = mul(float4(position.xyz, 1.0), Projection);
+    result.position = mul(Projection, float4(position.xyz, 1.0));
     result.uv = uv;
     result.color = color;
 
