@@ -203,7 +203,8 @@ bool Buffer::Upload(const Device& Device_, const CommandPool& Pool, const void* 
         return false;
     }
 
-    auto CleanupFn = [&]() -> void {
+    auto CleanupFn = [&]() -> void
+    {
         vkFreeCommandBuffers(Device_.GetLogicalDevice().Handle(), Pool.Handle(), 1, &CommandBuffer);
         Staging.Shutdown(Device_);
     };

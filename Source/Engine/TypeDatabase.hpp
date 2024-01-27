@@ -44,14 +44,23 @@ public:
     template<typename T>
     Type* Register(const char* Name)
     {
-        return InternalRegister(Name, []() -> void* { return new T; });
+        return InternalRegister(Name,
+            []() -> void*
+            {
+                return new T;
+            });
     }
 
     template<typename T, typename U>
     Type* Register(const char* Name, const char* Parent)
     {
         static_assert(std::is_base_of_v<U, T>, "Type T is not a child of type U!");
-        return InternalRegister(Name, Parent, []() -> void* { return new T; });
+        return InternalRegister(Name,
+            Parent,
+            []() -> void*
+            {
+                return new T;
+            });
     }
 
     Type* GetType(const char* Name) const;

@@ -35,7 +35,7 @@ AllowShortCaseLabelsOnASingleLine: true
 AllowShortEnumsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: Never
-AllowShortLambdasOnASingleLine: All
+AllowShortLambdasOnASingleLine: None
 AllowShortLoopsOnASingleLine: false
 AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakAfterReturnType: None
@@ -59,7 +59,7 @@ BraceWrapping:
     AfterUnion:      true
     BeforeCatch:     true
     BeforeElse:      true
-    BeforeLambdaBody: false
+    BeforeLambdaBody: true
     BeforeWhile:     false
     IndentBraces:    false
     SplitEmptyFunction: true

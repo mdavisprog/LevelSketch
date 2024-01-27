@@ -125,7 +125,8 @@ static bool Deleter()
     {
     };
 
-    const auto OnFree = [&](Class* Obj) {
+    const auto OnFree = [&](Class* Obj)
+    {
         delete Obj;
         Count++;
     };
