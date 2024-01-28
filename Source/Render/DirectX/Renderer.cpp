@@ -36,6 +36,7 @@ SOFTWARE.
 #include "../../Core/Math/Vector2.hpp"
 #include "../../Core/Math/Vertex.hpp"
 #include "../../Platform/Window.hpp"
+#include "Adapter.hpp"
 #include "Renderer.hpp"
 #include "Shader.hpp"
 #include "Utility.hpp"
@@ -283,26 +284,13 @@ void Renderer::UploadGUIData(OctaneGUI::Window*, const OctaneGUI::VertexBuffer& 
 
 bool Renderer::LoadPipeline(Platform::Window* Window)
 {
-    u32 FactoryFlags { 0 };
-
-#if defined(DEBUG)
-    Microsoft::WRL::ComPtr<ID3D12Debug> DebugController;
-    if (D3D12GetDebugInterface(IID_PPV_ARGS(&DebugController)) == S_OK)
+    Adapter Adapter_ {};
+    if (!Adapter_.Initialize())
     {
-        DebugController->EnableDebugLayer();
-        FactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
-    }
-#endif
-
-    Microsoft::WRL::ComPtr<IDXGIFactory4> Factory;
-    if (CreateDXGIFactory2(FactoryFlags, IID_PPV_ARGS(&Factory)) != S_OK)
-    {
-        printf("Failed in CreateDXGIFactor2!\n");
         return false;
     }
 
-    Microsoft::WRL::ComPtr<IDXGIAdapter1> Adapter { GetHardwareAdapter(Factory.Get()) };
-    if (D3D12CreateDevice(Adapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_Device)) != S_OK)
+    if (D3D12CreateDevice(Adapter_.GetAdapter(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_Device)) != S_OK)
     {
         printf("Failed in D3D12CreateDevice!\n");
         return false;
@@ -312,9 +300,7 @@ bool Renderer::LoadPipeline(Platform::Window* Window)
     InfoQueue::Initialize(m_Device.Get());
 #endif
 
-    DXGI_ADAPTER_DESC1 Description;
-    Adapter->GetDesc1(&Description);
-    SummaryMut().Vendor = Core::Containers::ToString(Description.Description);
+    Adapter_.FillSummary(SummaryMut());
 
     D3D12_COMMAND_QUEUE_DESC CommandQueueDescription { 0 };
     CommandQueueDescription.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
@@ -337,7 +323,7 @@ bool Renderer::LoadPipeline(Platform::Window* Window)
 
     const HWND Handle { reinterpret_cast<HWND>(Window->Handle()) };
     Microsoft::WRL::ComPtr<IDXGISwapChain1> SwapChain;
-    if (Factory->CreateSwapChainForHwnd(m_CommandQueue.Get(),
+    if (Adapter_.GetFactory()->CreateSwapChainForHwnd(m_CommandQueue.Get(),
             Handle,
             &SwapChainDescription,
             nullptr,
@@ -348,7 +334,7 @@ bool Renderer::LoadPipeline(Platform::Window* Window)
         return false;
     }
 
-    if (Factory->MakeWindowAssociation(Handle, DXGI_MWA_NO_ALT_ENTER) != S_OK)
+    if (Adapter_.GetFactory()->MakeWindowAssociation(Handle, DXGI_MWA_NO_ALT_ENTER) != S_OK)
     {
         printf("Failed to make window association!\n");
         return false;
@@ -752,56 +738,6 @@ bool Renderer::LoadAssets(Platform::Window* Window)
     WaitForPreviousFrame();
 
     return true;
-}
-
-IDXGIAdapter1* Renderer::GetHardwareAdapter(IDXGIFactory1* Factory) const
-{
-    Microsoft::WRL::ComPtr<IDXGIAdapter1> Adapter;
-    Microsoft::WRL::ComPtr<IDXGIFactory6> Factory6;
-    if (Factory->QueryInterface(IID_PPV_ARGS(&Factory6)) == S_OK)
-    {
-        for (UINT I = 0;
-             Factory6->EnumAdapterByGpuPreference(I, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&Adapter)) ==
-             S_OK;
-             ++I)
-        {
-            DXGI_ADAPTER_DESC1 Description;
-            Adapter->GetDesc1(&Description);
-
-            if (Description.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
-            {
-                continue;
-            }
-
-            // D3D12CreateDevice will return S_FALSE if ppDevice is null.
-            if (D3D12CreateDevice(Adapter.Get(), D3D_FEATURE_LEVEL_12_0, _uuidof(ID3D12Device), nullptr) == S_FALSE)
-            {
-                break;
-            }
-        }
-    }
-
-    if (Adapter.Get() == nullptr)
-    {
-        for (UINT I = 0; Factory->EnumAdapters1(I, &Adapter) == S_OK; ++I)
-        {
-            DXGI_ADAPTER_DESC1 Description;
-            Adapter->GetDesc1(&Description);
-
-            if (Description.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
-            {
-                continue;
-            }
-
-            // D3D12CreateDevice will return S_FALSE if ppDevice is null.
-            if (D3D12CreateDevice(Adapter.Get(), D3D_FEATURE_LEVEL_12_0, _uuidof(ID3D12Device), nullptr) == S_FALSE)
-            {
-                break;
-            }
-        }
-    }
-
-    return Adapter.Detach();
 }
 
 void Renderer::WaitForPreviousFrame()

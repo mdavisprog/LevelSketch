@@ -73,7 +73,6 @@ public:
 private:
     bool LoadPipeline(Platform::Window* Window);
     bool LoadAssets(Platform::Window* Window);
-    IDXGIAdapter1* GetHardwareAdapter(IDXGIFactory1* Factory) const;
     void WaitForPreviousFrame();
     bool ExecuteCommands();
     bool ResetCommands();
