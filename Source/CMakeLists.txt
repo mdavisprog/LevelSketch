@@ -65,6 +65,7 @@ if(WIN32)
     set(SOURCE
         ${SOURCE}
         Platform/Windows/Debugger.cpp
+        Platform/Windows/Errors.cpp
         Platform/Windows/Events.cpp
         Platform/Windows/FileSystem.cpp
         Platform/Windows/Mutex.cpp
