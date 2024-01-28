@@ -46,6 +46,8 @@ namespace Render
 namespace DirectX
 {
 
+class SwapChain;
+
 #define FRAME_COUNT 2
 #define MAX_DESCRIPTORS 1000
 
@@ -82,7 +84,6 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Device> m_Device;
     Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_CommandQueue;
     Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_CommandAllocator;
-    Microsoft::WRL::ComPtr<IDXGISwapChain3> m_SwapChain;
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_RTVHeap; // Render Target View
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_SRVHeap; // Shader Target View
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_DSVHeap; // Depth Stencil View
@@ -110,6 +111,8 @@ private:
     u8* m_ConstantBufferAddress { nullptr };
     ConstantBufferData m_ConstantBufferData {};
     u64 m_ConstantBufferTableOffset { 0 };
+
+    UniquePtr<SwapChain> m_SwapChain { nullptr };
 };
 
 }

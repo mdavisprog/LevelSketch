@@ -39,6 +39,7 @@ SOFTWARE.
 #include "Adapter.hpp"
 #include "Renderer.hpp"
 #include "Shader.hpp"
+#include "SwapChain.hpp"
 #include "Utility.hpp"
 
 #include <cstdio>
@@ -210,10 +211,7 @@ void Renderer::Render(Platform::Window* Window)
 
     ExecuteCommands();
 
-    if (m_SwapChain->Present(1, 0) != S_OK)
-    {
-        printf("Failed to present!\n");
-    }
+    m_SwapChain->Present(1, 0);
 
     WaitForPreviousFrame();
 
@@ -311,42 +309,13 @@ bool Renderer::LoadPipeline(Platform::Window* Window)
         return false;
     }
 
-    const Core::Math::Vector2i Size { Window->Size() };
-    DXGI_SWAP_CHAIN_DESC1 SwapChainDescription { 0 };
-    SwapChainDescription.BufferCount = FRAME_COUNT;
-    SwapChainDescription.Width = (UINT)Size.X;
-    SwapChainDescription.Height = (UINT)Size.Y;
-    SwapChainDescription.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    SwapChainDescription.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    SwapChainDescription.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-    SwapChainDescription.SampleDesc.Count = 1;
-
-    const HWND Handle { reinterpret_cast<HWND>(Window->Handle()) };
-    Microsoft::WRL::ComPtr<IDXGISwapChain1> SwapChain;
-    if (Adapter_.GetFactory()->CreateSwapChainForHwnd(m_CommandQueue.Get(),
-            Handle,
-            &SwapChainDescription,
-            nullptr,
-            nullptr,
-            &SwapChain) != S_OK)
+    m_SwapChain = UniquePtr<SwapChain>::New();
+    if (!m_SwapChain->Initialize(Window, Adapter_, FRAME_COUNT, m_CommandQueue.Get()))
     {
-        printf("Failed to create swap chain!\n");
         return false;
     }
 
-    if (Adapter_.GetFactory()->MakeWindowAssociation(Handle, DXGI_MWA_NO_ALT_ENTER) != S_OK)
-    {
-        printf("Failed to make window association!\n");
-        return false;
-    }
-
-    if (SwapChain.As(&m_SwapChain) != S_OK)
-    {
-        printf("Failed to retrieve swap chain!\n");
-        return false;
-    }
-
-    m_FrameIndex = m_SwapChain->GetCurrentBackBufferIndex();
+    m_FrameIndex = m_SwapChain->BackBufferIndex();
 
     D3D12_DESCRIPTOR_HEAP_DESC RTVHeapDesc { 0 };
     RTVHeapDesc.NumDescriptors = FRAME_COUNT;
@@ -384,7 +353,7 @@ bool Renderer::LoadPipeline(Platform::Window* Window)
     D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle { m_RTVHeap->GetCPUDescriptorHandleForHeapStart() };
     for (UINT I = 0; I < FRAME_COUNT; ++I)
     {
-        if (m_SwapChain->GetBuffer(I, IID_PPV_ARGS(&m_RenderTargets[I])) != S_OK)
+        if (m_SwapChain->Get()->GetBuffer(I, IID_PPV_ARGS(&m_RenderTargets[I])) != S_OK)
         {
             printf("Failed to get buffer %d for swap chain!\n", I);
             return false;
@@ -762,7 +731,7 @@ void Renderer::WaitForPreviousFrame()
         }
     }
 
-    m_FrameIndex = m_SwapChain->GetCurrentBackBufferIndex();
+    m_FrameIndex = m_SwapChain->BackBufferIndex();
 }
 
 bool Renderer::ExecuteCommands()
