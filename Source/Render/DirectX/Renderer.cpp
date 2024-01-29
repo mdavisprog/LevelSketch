@@ -38,6 +38,7 @@ SOFTWARE.
 #include "../../Platform/Window.hpp"
 #include "Adapter.hpp"
 #include "CommandQueue.hpp"
+#include "Device.hpp"
 #include "Renderer.hpp"
 #include "Shader.hpp"
 #include "SwapChain.hpp"
@@ -95,16 +96,24 @@ Renderer::Renderer()
 
 bool Renderer::Initialize()
 {
+    m_Device = UniquePtr<Device>::New();
+
+    if (!m_Device->Initialize())
+    {
+        return false;
+    }
+
+#if defined(DEBUG)
+    InfoQueue::Initialize(m_Device->Get());
+#endif
+
+    m_Device->GetAdapter()->FillSummary(SummaryMut());
+
     return true;
 }
 
 bool Renderer::Initialize(Platform::Window* Window)
 {
-    if (m_Device != nullptr)
-    {
-        return true;
-    }
-
     if (!LoadPipeline(Window))
     {
         return false;
@@ -230,7 +239,7 @@ u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8)
     }
 
     Texture Tex;
-    if (!Tex.Create(m_Device.Get(), Width, Height))
+    if (!Tex.Create(m_Device->Get(), Width, Height))
     {
         return 0;
     }
@@ -283,32 +292,14 @@ void Renderer::UploadGUIData(OctaneGUI::Window*, const OctaneGUI::VertexBuffer& 
 
 bool Renderer::LoadPipeline(Platform::Window* Window)
 {
-    Adapter Adapter_ {};
-    if (!Adapter_.Initialize())
-    {
-        return false;
-    }
-
-    if (D3D12CreateDevice(Adapter_.GetAdapter(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_Device)) != S_OK)
-    {
-        printf("Failed in D3D12CreateDevice!\n");
-        return false;
-    }
-
-#if defined(DEBUG)
-    InfoQueue::Initialize(m_Device.Get());
-#endif
-
-    Adapter_.FillSummary(SummaryMut());
-
     m_CommandQueue = UniquePtr<CommandQueue>::New();
-    if (!m_CommandQueue->Initialize(m_Device.Get()))
+    if (!m_CommandQueue->Initialize(m_Device->Get()))
     {
         return false;
     }
 
     m_SwapChain = UniquePtr<SwapChain>::New();
-    if (!m_SwapChain->Initialize(Window, Adapter_, m_CommandQueue.Get(), FRAME_COUNT))
+    if (!m_SwapChain->Initialize(Window, m_Device->GetAdapter(), m_CommandQueue.Get(), FRAME_COUNT))
     {
         return false;
     }
@@ -319,7 +310,7 @@ bool Renderer::LoadPipeline(Platform::Window* Window)
     RTVHeapDesc.NumDescriptors = FRAME_COUNT;
     RTVHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
     RTVHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    if (m_Device->CreateDescriptorHeap(&RTVHeapDesc, IID_PPV_ARGS(&m_RTVHeap)) != S_OK)
+    if (m_Device->Get()->CreateDescriptorHeap(&RTVHeapDesc, IID_PPV_ARGS(&m_RTVHeap)) != S_OK)
     {
         printf("Failed to create descriptor heap!\n");
         return false;
@@ -329,7 +320,7 @@ bool Renderer::LoadPipeline(Platform::Window* Window)
     DSVHeapDesc.NumDescriptors = 1;
     DSVHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
     DSVHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    if (m_Device->CreateDescriptorHeap(&DSVHeapDesc, IID_PPV_ARGS(&m_DSVHeap)) != S_OK)
+    if (m_Device->Get()->CreateDescriptorHeap(&DSVHeapDesc, IID_PPV_ARGS(&m_DSVHeap)) != S_OK)
     {
         Core::Console::Error("Failed to create depth stencil view.");
         return false;
@@ -339,14 +330,14 @@ bool Renderer::LoadPipeline(Platform::Window* Window)
     SRVHeapDesc.NumDescriptors = MAX_DESCRIPTORS;
     SRVHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     SRVHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-    if (m_Device->CreateDescriptorHeap(&SRVHeapDesc, IID_PPV_ARGS(&m_SRVHeap)) != S_OK)
+    if (m_Device->Get()->CreateDescriptorHeap(&SRVHeapDesc, IID_PPV_ARGS(&m_SRVHeap)) != S_OK)
     {
         Core::Console::WriteLine("Failed to create SRV descriptor heap.");
         return false;
     }
 
-    m_HeapDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-    m_SRVHeapDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    m_HeapDescriptorSize = m_Device->Get()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    m_SRVHeapDescriptorSize = m_Device->Get()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle { m_RTVHeap->GetCPUDescriptorHandleForHeapStart() };
     for (UINT I = 0; I < FRAME_COUNT; ++I)
@@ -357,11 +348,12 @@ bool Renderer::LoadPipeline(Platform::Window* Window)
             return false;
         }
 
-        m_Device->CreateRenderTargetView(m_RenderTargets[I].Get(), nullptr, CPUHandle);
+        m_Device->Get()->CreateRenderTargetView(m_RenderTargets[I].Get(), nullptr, CPUHandle);
         CPUHandle.ptr = SIZE_T(INT64(CPUHandle.ptr) + INT64(1) * INT64(m_HeapDescriptorSize));
     }
 
-    if (m_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_CommandAllocator)) != S_OK)
+    if (m_Device->Get()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_CommandAllocator)) !=
+        S_OK)
     {
         printf("Failed to create command allocator!\n");
         return false;
@@ -374,7 +366,8 @@ bool Renderer::LoadAssets(Platform::Window* Window)
 {
     {
         D3D12_FEATURE_DATA_ROOT_SIGNATURE FeatureData { D3D_ROOT_SIGNATURE_VERSION_1_1 };
-        if (m_Device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &FeatureData, sizeof(FeatureData)) != S_OK)
+        if (m_Device->Get()->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &FeatureData, sizeof(FeatureData)) !=
+            S_OK)
         {
             Core::Console::WriteLine("Root signature version 1.1 is not supported.");
             FeatureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
@@ -426,7 +419,7 @@ bool Renderer::LoadAssets(Platform::Window* Window)
             return false;
         }
 
-        if (m_Device->CreateRootSignature(0,
+        if (m_Device->Get()->CreateRootSignature(0,
                 Signature->GetBufferPointer(),
                 Signature->GetBufferSize(),
                 IID_PPV_ARGS(&m_RootSignature)) != S_OK)
@@ -479,7 +472,7 @@ bool Renderer::LoadAssets(Platform::Window* Window)
     GraphicsDesc.DepthStencilState = Utility::MakeDepthStencilDescription();
     GraphicsDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 
-    if (m_Device->CreateGraphicsPipelineState(&GraphicsDesc, IID_PPV_ARGS(&m_PipelineState)) != S_OK)
+    if (m_Device->Get()->CreateGraphicsPipelineState(&GraphicsDesc, IID_PPV_ARGS(&m_PipelineState)) != S_OK)
     {
         Core::Console::WriteLine("Failed to create default graphics pipeline state!");
         return false;
@@ -553,13 +546,13 @@ bool Renderer::LoadAssets(Platform::Window* Window)
     GraphicsDesc.BlendState.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
     GraphicsDesc.BlendState.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 
-    if (m_Device->CreateGraphicsPipelineState(&GraphicsDesc, IID_PPV_ARGS(&m_PipelineStateGUI)) != S_OK)
+    if (m_Device->Get()->CreateGraphicsPipelineState(&GraphicsDesc, IID_PPV_ARGS(&m_PipelineStateGUI)) != S_OK)
     {
         Core::Console::WriteLine("Failed to create GUI graphics pipeline state!");
         return false;
     }
 
-    if (m_Device->CreateCommandList(0,
+    if (m_Device->Get()->CreateCommandList(0,
             D3D12_COMMAND_LIST_TYPE_DIRECT,
             m_CommandAllocator.Get(),
             m_PipelineState.Get(),
@@ -569,7 +562,7 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         return false;
     }
 
-    if (m_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence)) != S_OK)
+    if (m_Device->Get()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence)) != S_OK)
     {
         printf("Failed to create fence!\n");
         return false;
@@ -583,7 +576,7 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         return false;
     }
 
-    m_RenderBuffer.Initialize(m_Device.Get(), 1000, 1000);
+    m_RenderBuffer.Initialize(m_Device->Get(), 1000, 1000);
 
     // Vertex Buffer
     {
@@ -627,7 +620,7 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         ClearValue.DepthStencil.Depth = 1.0f;
         ClearValue.DepthStencil.Stencil = 0;
 
-        if (m_Device->CreateCommittedResource(&HeapProps,
+        if (m_Device->Get()->CreateCommittedResource(&HeapProps,
                 D3D12_HEAP_FLAG_NONE,
                 &ResourceDesc,
                 D3D12_RESOURCE_STATE_DEPTH_WRITE,
@@ -638,12 +631,12 @@ bool Renderer::LoadAssets(Platform::Window* Window)
             return false;
         }
 
-        m_Device->CreateDepthStencilView(m_DepthStencil.Get(),
+        m_Device->Get()->CreateDepthStencilView(m_DepthStencil.Get(),
             &DSVDesc,
             m_DSVHeap->GetCPUDescriptorHandleForHeapStart());
     }
 
-    m_RenderBufferGUI.Initialize(m_Device.Get(), 100000, 100000);
+    m_RenderBufferGUI.Initialize(m_Device->Get(), 100000, 100000);
     m_RenderBufferGUI.SetStride(sizeof(OctaneGUI::Vertex)).SetFormat(DXGI_FORMAT_R32_UINT);
 
     // Constant Buffer
@@ -653,7 +646,7 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         ResourceDesc.Width = sizeof(ConstantBufferData);
         ResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 
-        if (m_Device->CreateCommittedResource(&HeapProps,
+        if (m_Device->Get()->CreateCommittedResource(&HeapProps,
                 D3D12_HEAP_FLAG_NONE,
                 &ResourceDesc,
                 D3D12_RESOURCE_STATE_GENERIC_READ,
@@ -671,7 +664,7 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         m_ConstantBufferTableOffset = (MAX_DESCRIPTORS - 1) * m_SRVHeapDescriptorSize;
         D3D12_CPU_DESCRIPTOR_HANDLE CPUDesc { m_SRVHeap->GetCPUDescriptorHandleForHeapStart() };
         CPUDesc.ptr += m_ConstantBufferTableOffset;
-        m_Device->CreateConstantBufferView(&ConstantBufferView, CPUDesc);
+        m_Device->Get()->CreateConstantBufferView(&ConstantBufferView, CPUDesc);
 
         D3D12_RANGE Range { 0, 0 };
         if (m_ConstantBuffer->Map(0, &Range, reinterpret_cast<void**>(&m_ConstantBufferAddress)) != S_OK)

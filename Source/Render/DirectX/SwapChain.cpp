@@ -43,7 +43,7 @@ SwapChain::SwapChain()
 }
 
 bool SwapChain::Initialize(Platform::Window* Window,
-    const Adapter& Adapter_,
+    Adapter const* Adapter_,
     CommandQueue const* CommandQueue_,
     i32 BufferCount)
 {
@@ -60,7 +60,7 @@ bool SwapChain::Initialize(Platform::Window* Window,
     Microsoft::WRL::ComPtr<IDXGISwapChain1> SwapChain;
     const HWND Handle { reinterpret_cast<HWND>(Window->Handle()) };
     HRESULT Result {
-        Adapter_.GetFactory()
+        Adapter_->GetFactory()
             ->CreateSwapChainForHwnd(CommandQueue_->Get(), Handle, &SwapChainDescription, nullptr, nullptr, &SwapChain)
     };
 
@@ -71,7 +71,7 @@ bool SwapChain::Initialize(Platform::Window* Window,
         return false;
     }
 
-    Result = Adapter_.GetFactory()->MakeWindowAssociation(Handle, DXGI_MWA_NO_ALT_ENTER);
+    Result = Adapter_->GetFactory()->MakeWindowAssociation(Handle, DXGI_MWA_NO_ALT_ENTER);
 
     if (FAILED(Result))
     {

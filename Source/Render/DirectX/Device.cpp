@@ -24,47 +24,54 @@ SOFTWARE.
 
 */
 
-#pragma once
-
-#include "../../Core/Types.hpp"
-#include <d3d12.h>
-#include <dxgi1_6.h>
-#include <wrl/client.h>
+#include "Device.hpp"
+#include "../../Core/Console.hpp"
+#include "../../Platform/Windows/Errors.hpp"
+#include "Adapter.hpp"
 
 namespace LevelSketch
 {
-
-namespace Platform
-{
-class Window;
-}
-
 namespace Render
 {
 namespace DirectX
 {
 
-class Adapter;
-class CommandQueue;
-
-class SwapChain
+Device::Device()
 {
-public:
-    SwapChain();
+}
 
-    bool Initialize(Platform::Window* Window,
-        Adapter const* Adapter_,
-        CommandQueue const* CommandQueue_,
-        i32 BufferCount);
+Device::~Device()
+{
+}
 
-    bool Present(u32 SyncInterval, u32 Flags) const;
-    u32 BackBufferIndex() const;
-    IDXGISwapChain4* Get() const;
+bool Device::Initialize()
+{
+    m_Adapter = UniquePtr<Adapter>::New();
+    if (!m_Adapter->Initialize())
+    {
+        return false;
+    }
 
-private:
-    Microsoft::WRL::ComPtr<IDXGISwapChain4> m_SwapChain { nullptr };
-    Platform::Window* m_Window { nullptr };
-};
+    HRESULT Result { D3D12CreateDevice(m_Adapter->GetAdapter(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_Device)) };
+
+    if (FAILED(Result))
+    {
+        Core::Console::Error("Failed to create device. Error: %s", Platform::Windows::Errors::ToString(Result).Data());
+        return false;
+    }
+
+    return true;
+}
+
+ID3D12Device9* Device::Get() const
+{
+    return m_Device.Get();
+}
+
+Adapter* Device::GetAdapter() const
+{
+    return m_Adapter.Get();
+}
 
 }
 }

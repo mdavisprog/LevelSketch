@@ -74,6 +74,7 @@ if(WIN32)
 
         Render/DirectX/Adapter.cpp
         Render/DirectX/CommandQueue.cpp
+        Render/DirectX/Device.cpp
         Render/DirectX/RenderBuffer.cpp
         Render/DirectX/Renderer.cpp
         Render/DirectX/Shader.cpp

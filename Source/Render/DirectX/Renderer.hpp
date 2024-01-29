@@ -47,6 +47,7 @@ namespace DirectX
 {
 
 class CommandQueue;
+class Device;
 class SwapChain;
 
 #define FRAME_COUNT 2
@@ -82,7 +83,6 @@ private:
     u64 GetTextureOffset(u32 ID) const;
 
     UINT m_FrameIndex { 0 };
-    Microsoft::WRL::ComPtr<ID3D12Device> m_Device;
     Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_CommandAllocator;
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_RTVHeap; // Render Target View
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_SRVHeap; // Shader Target View
@@ -112,6 +112,7 @@ private:
     ConstantBufferData m_ConstantBufferData {};
     u64 m_ConstantBufferTableOffset { 0 };
 
+    UniquePtr<Device> m_Device { nullptr };
     UniquePtr<CommandQueue> m_CommandQueue { nullptr };
     UniquePtr<SwapChain> m_SwapChain { nullptr };
 };

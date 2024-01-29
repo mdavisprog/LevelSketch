@@ -26,44 +26,33 @@ SOFTWARE.
 
 #pragma once
 
-#include "../../Core/Types.hpp"
+#include "../../Core/Memory/UniquePtr.hpp"
+#include "../Renderer.hpp"
 #include <d3d12.h>
-#include <dxgi1_6.h>
 #include <wrl/client.h>
 
 namespace LevelSketch
 {
-
-namespace Platform
-{
-class Window;
-}
-
 namespace Render
 {
 namespace DirectX
 {
 
 class Adapter;
-class CommandQueue;
 
-class SwapChain
+class Device
 {
 public:
-    SwapChain();
+    Device();
+    ~Device();
 
-    bool Initialize(Platform::Window* Window,
-        Adapter const* Adapter_,
-        CommandQueue const* CommandQueue_,
-        i32 BufferCount);
-
-    bool Present(u32 SyncInterval, u32 Flags) const;
-    u32 BackBufferIndex() const;
-    IDXGISwapChain4* Get() const;
+    bool Initialize();
+    ID3D12Device9* Get() const;
+    Adapter* GetAdapter() const;
 
 private:
-    Microsoft::WRL::ComPtr<IDXGISwapChain4> m_SwapChain { nullptr };
-    Platform::Window* m_Window { nullptr };
+    Microsoft::WRL::ComPtr<ID3D12Device9> m_Device { nullptr };
+    UniquePtr<Adapter> m_Adapter { nullptr };
 };
 
 }
