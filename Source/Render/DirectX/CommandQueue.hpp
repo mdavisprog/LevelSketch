@@ -28,42 +28,27 @@ SOFTWARE.
 
 #include "../../Core/Types.hpp"
 #include <d3d12.h>
-#include <dxgi1_6.h>
-#include <wrl.h>
+#include <wrl/client.h>
 
 namespace LevelSketch
 {
-
-namespace Platform
-{
-class Window;
-}
-
 namespace Render
 {
 namespace DirectX
 {
 
-class Adapter;
-class CommandQueue;
-
-class SwapChain
+class CommandQueue
 {
 public:
-    SwapChain();
+    CommandQueue();
 
-    bool Initialize(Platform::Window* Window,
-        const Adapter& Adapter_,
-        CommandQueue const* CommandQueue_,
-        i32 BufferCount);
-
-    bool Present(u32 SyncInterval, u32 Flags) const;
-    u32 BackBufferIndex() const;
-    IDXGISwapChain4* Get() const;
+    bool Initialize(ID3D12Device* Device);
+    bool Signal(ID3D12Fence* Fence, u64 Value) const;
+    void Execute(u32 Count, ID3D12CommandList* const* Lists) const;
+    ID3D12CommandQueue* Get() const;
 
 private:
-    Microsoft::WRL::ComPtr<IDXGISwapChain4> m_SwapChain { nullptr };
-    Platform::Window* m_Window { nullptr };
+    Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_CommandQueue { nullptr };
 };
 
 }

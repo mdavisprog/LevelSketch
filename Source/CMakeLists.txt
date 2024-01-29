@@ -73,6 +73,7 @@ if(WIN32)
         Platform/Windows/Window.cpp
 
         Render/DirectX/Adapter.cpp
+        Render/DirectX/CommandQueue.cpp
         Render/DirectX/RenderBuffer.cpp
         Render/DirectX/Renderer.cpp
         Render/DirectX/Shader.cpp

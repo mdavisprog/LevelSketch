@@ -29,6 +29,7 @@ SOFTWARE.
 #include "../../Platform/Window.hpp"
 #include "../../Platform/Windows/Errors.hpp"
 #include "Adapter.hpp"
+#include "CommandQueue.hpp"
 
 namespace LevelSketch
 {
@@ -43,8 +44,8 @@ SwapChain::SwapChain()
 
 bool SwapChain::Initialize(Platform::Window* Window,
     const Adapter& Adapter_,
-    i32 BufferCount,
-    ID3D12CommandQueue* CommandQueue)
+    CommandQueue const* CommandQueue_,
+    i32 BufferCount)
 {
     const Core::Math::Vector2i Size { Window->Size() };
     DXGI_SWAP_CHAIN_DESC1 SwapChainDescription { 0 };
@@ -60,7 +61,7 @@ bool SwapChain::Initialize(Platform::Window* Window,
     const HWND Handle { reinterpret_cast<HWND>(Window->Handle()) };
     HRESULT Result {
         Adapter_.GetFactory()
-            ->CreateSwapChainForHwnd(CommandQueue, Handle, &SwapChainDescription, nullptr, nullptr, &SwapChain)
+            ->CreateSwapChainForHwnd(CommandQueue_->Get(), Handle, &SwapChainDescription, nullptr, nullptr, &SwapChain)
     };
 
     if (FAILED(Result))

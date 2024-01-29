@@ -37,6 +37,7 @@ SOFTWARE.
 #include "../../Core/Math/Vertex.hpp"
 #include "../../Platform/Window.hpp"
 #include "Adapter.hpp"
+#include "CommandQueue.hpp"
 #include "Renderer.hpp"
 #include "Shader.hpp"
 #include "SwapChain.hpp"
@@ -300,17 +301,14 @@ bool Renderer::LoadPipeline(Platform::Window* Window)
 
     Adapter_.FillSummary(SummaryMut());
 
-    D3D12_COMMAND_QUEUE_DESC CommandQueueDescription { 0 };
-    CommandQueueDescription.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-    CommandQueueDescription.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-    if (m_Device->CreateCommandQueue(&CommandQueueDescription, IID_PPV_ARGS(&m_CommandQueue)) != S_OK)
+    m_CommandQueue = UniquePtr<CommandQueue>::New();
+    if (!m_CommandQueue->Initialize(m_Device.Get()))
     {
-        printf("Failed to create device command queue!\n");
         return false;
     }
 
     m_SwapChain = UniquePtr<SwapChain>::New();
-    if (!m_SwapChain->Initialize(Window, Adapter_, FRAME_COUNT, m_CommandQueue.Get()))
+    if (!m_SwapChain->Initialize(Window, Adapter_, m_CommandQueue.Get(), FRAME_COUNT))
     {
         return false;
     }
@@ -712,9 +710,8 @@ bool Renderer::LoadAssets(Platform::Window* Window)
 void Renderer::WaitForPreviousFrame()
 {
     const UINT64 Fence { m_FenceValue };
-    if (m_CommandQueue->Signal(m_Fence.Get(), Fence) != S_OK)
+    if (!m_CommandQueue->Signal(m_Fence.Get(), Fence))
     {
-        printf("Failed to signal command queue!\n");
         return;
     }
     m_FenceValue++;
@@ -743,7 +740,7 @@ bool Renderer::ExecuteCommands()
     }
 
     ID3D12CommandList* CommandLists[] { m_CommandList.Get() };
-    m_CommandQueue->ExecuteCommandLists(_countof(CommandLists), CommandLists);
+    m_CommandQueue->Execute(_countof(CommandLists), CommandLists);
 
     return true;
 }
