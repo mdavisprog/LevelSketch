@@ -26,7 +26,7 @@ SOFTWARE.
 
 #pragma once
 
-#include <wrl.h>
+#include <wrl/client.h>
 
 struct ID3D12Device;
 struct ID3D12InfoQueue;
