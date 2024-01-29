@@ -29,6 +29,7 @@ SOFTWARE.
 #include "../../Platform/Window.hpp"
 #include "../../Platform/Windows/Errors.hpp"
 #include "Adapter.hpp"
+#include "CommandAllocator.hpp"
 #include "CommandQueue.hpp"
 #include "DescriptorHeap.hpp"
 #include "SwapChain.hpp"
@@ -70,6 +71,12 @@ bool Device::Initialize()
         return false;
     }
 
+    m_CommandAllocator = UniquePtr<CommandAllocator>::New();
+    if (!m_CommandAllocator->Initialize(this))
+    {
+        return false;
+    }
+
     if (!CreateHeaps())
     {
         return false;
@@ -99,6 +106,11 @@ ID3D12Device9* Device::Get() const
 Adapter const* Device::GetAdapter() const
 {
     return m_Adapter.Get();
+}
+
+CommandAllocator const* Device::GetCommandAllocator() const
+{
+    return m_CommandAllocator.Get();
 }
 
 CommandQueue const* Device::GetCommandQueue() const

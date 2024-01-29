@@ -37,6 +37,7 @@ SOFTWARE.
 #include "../../Core/Math/Vertex.hpp"
 #include "../../Platform/Window.hpp"
 #include "Adapter.hpp"
+#include "CommandAllocator.hpp"
 #include "CommandQueue.hpp"
 #include "DescriptorHeap.hpp"
 #include "Device.hpp"
@@ -316,13 +317,6 @@ bool Renderer::LoadPipeline(Platform::Window* Window)
         m_Device->Get()->CreateRenderTargetView(m_RenderTargets[I].Get(), nullptr, m_Device->RTVHeap()->CPUOffset(I));
     }
 
-    if (m_Device->Get()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_CommandAllocator)) !=
-        S_OK)
-    {
-        printf("Failed to create command allocator!\n");
-        return false;
-    }
-
     return true;
 }
 
@@ -518,7 +512,7 @@ bool Renderer::LoadAssets(Platform::Window* Window)
 
     if (m_Device->Get()->CreateCommandList(0,
             D3D12_COMMAND_LIST_TYPE_DIRECT,
-            m_CommandAllocator.Get(),
+            m_Device->GetCommandAllocator()->Get(),
             m_PipelineState.Get(),
             IID_PPV_ARGS(&m_CommandList)) != S_OK)
     {
@@ -701,13 +695,12 @@ bool Renderer::ExecuteCommands()
 
 bool Renderer::ResetCommands()
 {
-    if (m_CommandAllocator->Reset() != S_OK)
+    if (!m_Device->GetCommandAllocator()->Reset())
     {
-        Core::Console::Warning("Failed to reset command allocator!");
         return false;
     }
 
-    if (m_CommandList->Reset(m_CommandAllocator.Get(), m_PipelineState.Get()) != S_OK)
+    if (m_CommandList->Reset(m_Device->GetCommandAllocator()->Get(), m_PipelineState.Get()) != S_OK)
     {
         Core::Console::Warning("Failed to reset command list!");
         return false;

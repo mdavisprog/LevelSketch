@@ -73,6 +73,7 @@ if(WIN32)
         Platform/Windows/Window.cpp
 
         Render/DirectX/Adapter.cpp
+        Render/DirectX/CommandAllocator.cpp
         Render/DirectX/CommandQueue.cpp
         Render/DirectX/DescriptorHeap.cpp
         Render/DirectX/Device.cpp

@@ -46,6 +46,7 @@ namespace DirectX
 {
 
 class Adapter;
+class CommandAllocator;
 class CommandQueue;
 class DescriptorHeap;
 class SwapChain;
@@ -61,6 +62,7 @@ public:
 
     ID3D12Device9* Get() const;
     Adapter const* GetAdapter() const;
+    CommandAllocator const* GetCommandAllocator() const;
     CommandQueue const* GetCommandQueue() const;
 
     SwapChain const* GetSwapChain(Platform::Window* Window) const;
@@ -78,6 +80,7 @@ private:
 
     Microsoft::WRL::ComPtr<ID3D12Device9> m_Device { nullptr };
     UniquePtr<Adapter> m_Adapter { nullptr };
+    UniquePtr<CommandAllocator> m_CommandAllocator { nullptr };
     UniquePtr<CommandQueue> m_CommandQueue { nullptr };
     Array<UniquePtr<SwapChain>> m_SwapChains {};
 
