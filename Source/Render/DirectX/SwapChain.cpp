@@ -116,6 +116,11 @@ IDXGISwapChain4* SwapChain::Get() const
     return m_SwapChain.Get();
 }
 
+Platform::Window* SwapChain::GetWindow() const
+{
+    return m_Window;
+}
+
 }
 }
 }

@@ -56,6 +56,7 @@ public:
     bool Present(u32 SyncInterval, u32 Flags) const;
     u32 BackBufferIndex() const;
     IDXGISwapChain4* Get() const;
+    Platform::Window* GetWindow() const;
 
 private:
     Microsoft::WRL::ComPtr<IDXGISwapChain4> m_SwapChain { nullptr };

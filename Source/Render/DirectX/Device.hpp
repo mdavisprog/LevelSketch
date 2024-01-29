@@ -26,6 +26,7 @@ SOFTWARE.
 
 #pragma once
 
+#include "../../Core/Containers/Array.hpp"
 #include "../../Core/Memory/UniquePtr.hpp"
 #include "../Renderer.hpp"
 #include <d3d12.h>
@@ -33,6 +34,12 @@ SOFTWARE.
 
 namespace LevelSketch
 {
+
+namespace Platform
+{
+class Window;
+}
+
 namespace Render
 {
 namespace DirectX
@@ -40,6 +47,7 @@ namespace DirectX
 
 class Adapter;
 class CommandQueue;
+class SwapChain;
 
 class Device
 {
@@ -48,14 +56,22 @@ public:
     ~Device();
 
     bool Initialize();
+    bool Initialize(Platform::Window* Window);
+
     ID3D12Device9* Get() const;
-    Adapter* GetAdapter() const;
-    CommandQueue* GetCommandQueue() const;
+    Adapter const* GetAdapter() const;
+    CommandQueue const* GetCommandQueue() const;
+    SwapChain const* GetSwapChain(Platform::Window* Window) const;
+    SwapChain const* FirstSwapChain() const;
+    u64 NumSwapChains() const;
 
 private:
     Microsoft::WRL::ComPtr<ID3D12Device9> m_Device { nullptr };
     UniquePtr<Adapter> m_Adapter { nullptr };
     UniquePtr<CommandQueue> m_CommandQueue { nullptr };
+    Array<UniquePtr<SwapChain>> m_SwapChains {};
+
+    u32 m_BufferCount { 2 };
 };
 
 }

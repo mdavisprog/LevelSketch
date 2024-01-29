@@ -26,9 +26,11 @@ SOFTWARE.
 
 #include "Device.hpp"
 #include "../../Core/Console.hpp"
+#include "../../Platform/Window.hpp"
 #include "../../Platform/Windows/Errors.hpp"
 #include "Adapter.hpp"
 #include "CommandQueue.hpp"
+#include "SwapChain.hpp"
 
 namespace LevelSketch
 {
@@ -70,19 +72,60 @@ bool Device::Initialize()
     return true;
 }
 
+bool Device::Initialize(Platform::Window* Window)
+{
+    UniquePtr<SwapChain> SwapChain_ { UniquePtr<SwapChain>::New() };
+    if (!SwapChain_->Initialize(Window, this, m_BufferCount))
+    {
+        return false;
+    }
+
+    m_SwapChains.Push(std::move(SwapChain_));
+
+    return true;
+}
+
 ID3D12Device9* Device::Get() const
 {
     return m_Device.Get();
 }
 
-Adapter* Device::GetAdapter() const
+Adapter const* Device::GetAdapter() const
 {
     return m_Adapter.Get();
 }
 
-CommandQueue* Device::GetCommandQueue() const
+CommandQueue const* Device::GetCommandQueue() const
 {
     return m_CommandQueue.Get();
+}
+
+SwapChain const* Device::GetSwapChain(Platform::Window* Window) const
+{
+    for (const UniquePtr<SwapChain>& Item : m_SwapChains)
+    {
+        if (Item->GetWindow() == Window)
+        {
+            return Item.Get();
+        }
+    }
+
+    return nullptr;
+}
+
+SwapChain const* Device::FirstSwapChain() const
+{
+    if (m_SwapChains.IsEmpty())
+    {
+        return nullptr;
+    }
+
+    return m_SwapChains[0].Get();
+}
+
+u64 Device::NumSwapChains() const
+{
+    return m_SwapChains.Size();
 }
 
 }

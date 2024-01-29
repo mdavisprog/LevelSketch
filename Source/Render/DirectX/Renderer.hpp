@@ -113,7 +113,6 @@ private:
     u64 m_ConstantBufferTableOffset { 0 };
 
     UniquePtr<Device> m_Device { nullptr };
-    UniquePtr<SwapChain> m_SwapChain { nullptr };
 };
 
 }

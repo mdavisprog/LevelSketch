@@ -114,17 +114,28 @@ bool Renderer::Initialize()
 
 bool Renderer::Initialize(Platform::Window* Window)
 {
-    if (!LoadPipeline(Window))
+    const bool FirstWindow { m_Device->NumSwapChains() == 0 };
+
+    if (!m_Device->Initialize(Window))
     {
         return false;
     }
 
-    if (!LoadAssets(Window))
+    if (FirstWindow)
     {
-        return false;
+        if (!LoadPipeline(Window))
+        {
+            return false;
+        }
+
+        if (!LoadAssets(Window))
+        {
+            return false;
+        }
+
+        SetInitialized(true);
     }
 
-    SetInitialized(true);
     return true;
 }
 
@@ -221,7 +232,7 @@ void Renderer::Render(Platform::Window* Window)
 
     ExecuteCommands();
 
-    m_SwapChain->Present(1, 0);
+    m_Device->GetSwapChain(Window)->Present(1, 0);
 
     WaitForPreviousFrame();
 
@@ -292,13 +303,7 @@ void Renderer::UploadGUIData(OctaneGUI::Window*, const OctaneGUI::VertexBuffer& 
 
 bool Renderer::LoadPipeline(Platform::Window* Window)
 {
-    m_SwapChain = UniquePtr<SwapChain>::New();
-    if (!m_SwapChain->Initialize(Window, m_Device.Get(), FRAME_COUNT))
-    {
-        return false;
-    }
-
-    m_FrameIndex = m_SwapChain->BackBufferIndex();
+    m_FrameIndex = m_Device->GetSwapChain(Window)->BackBufferIndex();
 
     D3D12_DESCRIPTOR_HEAP_DESC RTVHeapDesc { 0 };
     RTVHeapDesc.NumDescriptors = FRAME_COUNT;
@@ -336,7 +341,7 @@ bool Renderer::LoadPipeline(Platform::Window* Window)
     D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle { m_RTVHeap->GetCPUDescriptorHandleForHeapStart() };
     for (UINT I = 0; I < FRAME_COUNT; ++I)
     {
-        if (m_SwapChain->Get()->GetBuffer(I, IID_PPV_ARGS(&m_RenderTargets[I])) != S_OK)
+        if (m_Device->GetSwapChain(Window)->Get()->GetBuffer(I, IID_PPV_ARGS(&m_RenderTargets[I])) != S_OK)
         {
             printf("Failed to get buffer %d for swap chain!\n", I);
             return false;
@@ -715,7 +720,8 @@ void Renderer::WaitForPreviousFrame()
         }
     }
 
-    m_FrameIndex = m_SwapChain->BackBufferIndex();
+    // TODO: Investigate moving this to only when a present call is made.
+    m_FrameIndex = m_Device->FirstSwapChain()->BackBufferIndex();
 }
 
 bool Renderer::ExecuteCommands()
