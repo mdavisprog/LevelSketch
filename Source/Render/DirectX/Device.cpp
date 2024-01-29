@@ -28,6 +28,7 @@ SOFTWARE.
 #include "../../Core/Console.hpp"
 #include "../../Platform/Windows/Errors.hpp"
 #include "Adapter.hpp"
+#include "CommandQueue.hpp"
 
 namespace LevelSketch
 {
@@ -60,6 +61,12 @@ bool Device::Initialize()
         return false;
     }
 
+    m_CommandQueue = UniquePtr<CommandQueue>::New();
+    if (!m_CommandQueue->Initialize(this))
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -71,6 +78,11 @@ ID3D12Device9* Device::Get() const
 Adapter* Device::GetAdapter() const
 {
     return m_Adapter.Get();
+}
+
+CommandQueue* Device::GetCommandQueue() const
+{
+    return m_CommandQueue.Get();
 }
 
 }

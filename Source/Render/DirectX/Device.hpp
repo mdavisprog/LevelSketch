@@ -39,6 +39,7 @@ namespace DirectX
 {
 
 class Adapter;
+class CommandQueue;
 
 class Device
 {
@@ -49,10 +50,12 @@ public:
     bool Initialize();
     ID3D12Device9* Get() const;
     Adapter* GetAdapter() const;
+    CommandQueue* GetCommandQueue() const;
 
 private:
     Microsoft::WRL::ComPtr<ID3D12Device9> m_Device { nullptr };
     UniquePtr<Adapter> m_Adapter { nullptr };
+    UniquePtr<CommandQueue> m_CommandQueue { nullptr };
 };
 
 }

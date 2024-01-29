@@ -292,14 +292,8 @@ void Renderer::UploadGUIData(OctaneGUI::Window*, const OctaneGUI::VertexBuffer& 
 
 bool Renderer::LoadPipeline(Platform::Window* Window)
 {
-    m_CommandQueue = UniquePtr<CommandQueue>::New();
-    if (!m_CommandQueue->Initialize(m_Device->Get()))
-    {
-        return false;
-    }
-
     m_SwapChain = UniquePtr<SwapChain>::New();
-    if (!m_SwapChain->Initialize(Window, m_Device->GetAdapter(), m_CommandQueue.Get(), FRAME_COUNT))
+    if (!m_SwapChain->Initialize(Window, m_Device.Get(), FRAME_COUNT))
     {
         return false;
     }
@@ -703,7 +697,7 @@ bool Renderer::LoadAssets(Platform::Window* Window)
 void Renderer::WaitForPreviousFrame()
 {
     const UINT64 Fence { m_FenceValue };
-    if (!m_CommandQueue->Signal(m_Fence.Get(), Fence))
+    if (!m_Device->GetCommandQueue()->Signal(m_Fence.Get(), Fence))
     {
         return;
     }
@@ -733,7 +727,7 @@ bool Renderer::ExecuteCommands()
     }
 
     ID3D12CommandList* CommandLists[] { m_CommandList.Get() };
-    m_CommandQueue->Execute(_countof(CommandLists), CommandLists);
+    m_Device->GetCommandQueue()->Execute(_countof(CommandLists), CommandLists);
 
     return true;
 }

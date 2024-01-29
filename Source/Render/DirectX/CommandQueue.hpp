@@ -37,12 +37,14 @@ namespace Render
 namespace DirectX
 {
 
+class Device;
+
 class CommandQueue
 {
 public:
     CommandQueue();
 
-    bool Initialize(ID3D12Device* Device);
+    bool Initialize(Device const* Device_);
     bool Signal(ID3D12Fence* Fence, u64 Value) const;
     void Execute(u32 Count, ID3D12CommandList* const* Lists) const;
     ID3D12CommandQueue* Get() const;

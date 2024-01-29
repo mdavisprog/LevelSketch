@@ -44,18 +44,14 @@ namespace Render
 namespace DirectX
 {
 
-class Adapter;
-class CommandQueue;
+class Device;
 
 class SwapChain
 {
 public:
     SwapChain();
 
-    bool Initialize(Platform::Window* Window,
-        Adapter const* Adapter_,
-        CommandQueue const* CommandQueue_,
-        i32 BufferCount);
+    bool Initialize(Platform::Window* Window, Device const* Device_, i32 BufferCount);
 
     bool Present(u32 SyncInterval, u32 Flags) const;
     u32 BackBufferIndex() const;

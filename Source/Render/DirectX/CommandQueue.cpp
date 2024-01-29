@@ -27,6 +27,7 @@ SOFTWARE.
 #include "CommandQueue.hpp"
 #include "../../Core/Console.hpp"
 #include "../../Platform/Windows/Errors.hpp"
+#include "Device.hpp"
 
 namespace LevelSketch
 {
@@ -39,13 +40,13 @@ CommandQueue::CommandQueue()
 {
 }
 
-bool CommandQueue::Initialize(ID3D12Device* Device)
+bool CommandQueue::Initialize(Device const* Device_)
 {
     D3D12_COMMAND_QUEUE_DESC CommandQueueDescription { 0 };
     CommandQueueDescription.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
     CommandQueueDescription.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 
-    HRESULT Result { Device->CreateCommandQueue(&CommandQueueDescription, IID_PPV_ARGS(&m_CommandQueue)) };
+    HRESULT Result { Device_->Get()->CreateCommandQueue(&CommandQueueDescription, IID_PPV_ARGS(&m_CommandQueue)) };
 
     if (FAILED(Result))
     {

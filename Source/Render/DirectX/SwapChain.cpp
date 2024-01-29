@@ -30,6 +30,7 @@ SOFTWARE.
 #include "../../Platform/Windows/Errors.hpp"
 #include "Adapter.hpp"
 #include "CommandQueue.hpp"
+#include "Device.hpp"
 
 namespace LevelSketch
 {
@@ -42,10 +43,7 @@ SwapChain::SwapChain()
 {
 }
 
-bool SwapChain::Initialize(Platform::Window* Window,
-    Adapter const* Adapter_,
-    CommandQueue const* CommandQueue_,
-    i32 BufferCount)
+bool SwapChain::Initialize(Platform::Window* Window, Device const* Device_, i32 BufferCount)
 {
     const Core::Math::Vector2i Size { Window->Size() };
     DXGI_SWAP_CHAIN_DESC1 SwapChainDescription { 0 };
@@ -59,10 +57,12 @@ bool SwapChain::Initialize(Platform::Window* Window,
 
     Microsoft::WRL::ComPtr<IDXGISwapChain1> SwapChain;
     const HWND Handle { reinterpret_cast<HWND>(Window->Handle()) };
-    HRESULT Result {
-        Adapter_->GetFactory()
-            ->CreateSwapChainForHwnd(CommandQueue_->Get(), Handle, &SwapChainDescription, nullptr, nullptr, &SwapChain)
-    };
+    HRESULT Result { Device_->GetAdapter()->GetFactory()->CreateSwapChainForHwnd(Device_->GetCommandQueue()->Get(),
+        Handle,
+        &SwapChainDescription,
+        nullptr,
+        nullptr,
+        &SwapChain) };
 
     if (FAILED(Result))
     {
@@ -71,7 +71,7 @@ bool SwapChain::Initialize(Platform::Window* Window,
         return false;
     }
 
-    Result = Adapter_->GetFactory()->MakeWindowAssociation(Handle, DXGI_MWA_NO_ALT_ENTER);
+    Result = Device_->GetAdapter()->GetFactory()->MakeWindowAssociation(Handle, DXGI_MWA_NO_ALT_ENTER);
 
     if (FAILED(Result))
     {
