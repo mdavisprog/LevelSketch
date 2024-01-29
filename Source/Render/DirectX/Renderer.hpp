@@ -84,7 +84,6 @@ private:
 
     UINT m_FrameIndex { 0 };
     Microsoft::WRL::ComPtr<ID3D12Resource> m_RenderTargets[FRAME_COUNT];
-    Microsoft::WRL::ComPtr<ID3D12RootSignature> m_RootSignature;
     Microsoft::WRL::ComPtr<ID3D12PipelineState> m_PipelineState;
     Microsoft::WRL::ComPtr<ID3D12PipelineState> m_PipelineStateGUI;
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList1> m_CommandList;

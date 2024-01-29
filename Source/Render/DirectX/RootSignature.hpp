@@ -27,6 +27,7 @@ SOFTWARE.
 #pragma once
 
 #include <d3d12.h>
+#include <wrl/client.h>
 
 namespace LevelSketch
 {
@@ -34,23 +35,22 @@ namespace Render
 {
 namespace DirectX
 {
-namespace Utility
+
+class Device;
+
+class RootSignature
 {
+public:
+    RootSignature();
 
-D3D12_HEAP_PROPERTIES MakeHeapProperties(D3D12_HEAP_TYPE Type = D3D12_HEAP_TYPE_DEFAULT);
-D3D12_RESOURCE_DESC MakeResourceDescription(D3D12_RESOURCE_DIMENSION Dimension = D3D12_RESOURCE_DIMENSION_BUFFER,
-    DXGI_FORMAT Format = DXGI_FORMAT_UNKNOWN);
+    bool Initialize(Device const* Device_);
 
-D3D12_RESOURCE_BARRIER MakeResourceBarrierTransition(ID3D12Resource* Resource,
-    D3D12_RESOURCE_STATES Before,
-    D3D12_RESOURCE_STATES After,
-    UINT Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-    D3D12_RESOURCE_BARRIER_FLAGS Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
+    ID3D12RootSignature* Get() const;
 
-D3D12_GRAPHICS_PIPELINE_STATE_DESC MakeDefaultGraphicsPipelineState();
-D3D12_DEPTH_STENCIL_DESC MakeDepthStencilDescription();
+private:
+    Microsoft::WRL::ComPtr<ID3D12RootSignature> m_Signature { nullptr };
+};
 
-}
 }
 }
 }

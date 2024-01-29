@@ -79,6 +79,7 @@ if(WIN32)
         Render/DirectX/Device.cpp
         Render/DirectX/RenderBuffer.cpp
         Render/DirectX/Renderer.cpp
+        Render/DirectX/RootSignature.cpp
         Render/DirectX/Shader.cpp
         Render/DirectX/SwapChain.cpp
         Render/DirectX/Texture.cpp

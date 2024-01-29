@@ -32,6 +32,7 @@ SOFTWARE.
 #include "CommandAllocator.hpp"
 #include "CommandQueue.hpp"
 #include "DescriptorHeap.hpp"
+#include "RootSignature.hpp"
 #include "SwapChain.hpp"
 
 namespace LevelSketch
@@ -82,6 +83,12 @@ bool Device::Initialize()
         return false;
     }
 
+    m_RootSignature = UniquePtr<RootSignature>::New();
+    if (!m_RootSignature->Initialize(this))
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -116,6 +123,11 @@ CommandAllocator const* Device::GetCommandAllocator() const
 CommandQueue const* Device::GetCommandQueue() const
 {
     return m_CommandQueue.Get();
+}
+
+RootSignature const* Device::GetRootSignature() const
+{
+    return m_RootSignature.Get();
 }
 
 SwapChain const* Device::GetSwapChain(Platform::Window* Window) const

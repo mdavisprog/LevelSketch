@@ -42,6 +42,7 @@ SOFTWARE.
 #include "DescriptorHeap.hpp"
 #include "Device.hpp"
 #include "Renderer.hpp"
+#include "RootSignature.hpp"
 #include "Shader.hpp"
 #include "SwapChain.hpp"
 #include "Utility.hpp"
@@ -154,7 +155,7 @@ void Renderer::Render(Platform::Window* Window)
         return;
     }
 
-    m_CommandList->SetGraphicsRootSignature(m_RootSignature.Get());
+    m_CommandList->SetGraphicsRootSignature(m_Device->GetRootSignature()->Get());
 
     ID3D12DescriptorHeap* Heaps[] = { m_Device->SRVHeap()->Get() };
     m_CommandList->SetDescriptorHeaps(_countof(Heaps), Heaps);
@@ -322,71 +323,6 @@ bool Renderer::LoadPipeline(Platform::Window* Window)
 
 bool Renderer::LoadAssets(Platform::Window* Window)
 {
-    {
-        D3D12_FEATURE_DATA_ROOT_SIGNATURE FeatureData { D3D_ROOT_SIGNATURE_VERSION_1_1 };
-        if (m_Device->Get()->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &FeatureData, sizeof(FeatureData)) !=
-            S_OK)
-        {
-            Core::Console::WriteLine("Root signature version 1.1 is not supported.");
-            FeatureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
-        }
-
-        D3D12_DESCRIPTOR_RANGE1 DescRange[2] { Utility::MakeDescriptorRange1(D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-                                                   D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC),
-            Utility::MakeDescriptorRange1(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC) };
-
-        D3D12_ROOT_PARAMETER1 RootParameters[2];
-        RootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-        RootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-        RootParameters[0].DescriptorTable.NumDescriptorRanges = 1;
-        RootParameters[0].DescriptorTable.pDescriptorRanges = &DescRange[0];
-
-        RootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-        RootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-        RootParameters[1].DescriptorTable.NumDescriptorRanges = 1;
-        RootParameters[1].DescriptorTable.pDescriptorRanges = &DescRange[1];
-
-        D3D12_STATIC_SAMPLER_DESC Sampler = { 0 };
-        Sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
-        Sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-        Sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-        Sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-        Sampler.MipLODBias = 0.0f;
-        Sampler.MaxAnisotropy = 0;
-        Sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-        Sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-        Sampler.MinLOD = 0.0f;
-        Sampler.MaxLOD = D3D12_FLOAT32_MAX;
-        Sampler.ShaderRegister = 0;
-        Sampler.RegisterSpace = 0;
-        Sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-
-        D3D12_VERSIONED_ROOT_SIGNATURE_DESC RootSignatureDesc { 0 };
-        RootSignatureDesc.Version = D3D_ROOT_SIGNATURE_VERSION_1_1;
-        RootSignatureDesc.Desc_1_1.NumParameters = _countof(RootParameters);
-        RootSignatureDesc.Desc_1_1.pParameters = RootParameters;
-        RootSignatureDesc.Desc_1_1.NumStaticSamplers = 1;
-        RootSignatureDesc.Desc_1_1.pStaticSamplers = &Sampler;
-        RootSignatureDesc.Desc_1_1.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-
-        Microsoft::WRL::ComPtr<ID3DBlob> Signature;
-        Microsoft::WRL::ComPtr<ID3DBlob> Error;
-        if (D3D12SerializeVersionedRootSignature(&RootSignatureDesc, &Signature, &Error) != S_OK)
-        {
-            printf("Failed to serialize root signature!\n");
-            return false;
-        }
-
-        if (m_Device->Get()->CreateRootSignature(0,
-                Signature->GetBufferPointer(),
-                Signature->GetBufferSize(),
-                IID_PPV_ARGS(&m_RootSignature)) != S_OK)
-        {
-            printf("Failed to create root signature!\n");
-            return false;
-        }
-    }
-
     u32 CompileFlags { 0 };
 
 #if defined(_DEBUG)
@@ -424,7 +360,7 @@ bool Renderer::LoadAssets(Platform::Window* Window)
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC GraphicsDesc { Utility::MakeDefaultGraphicsPipelineState() };
     GraphicsDesc.InputLayout = { VertexShader.InputElements(), VertexShader.NumInputElements() };
-    GraphicsDesc.pRootSignature = m_RootSignature.Get();
+    GraphicsDesc.pRootSignature = m_Device->GetRootSignature()->Get();
     GraphicsDesc.VS = { VertexShader.Blob()->GetBufferPointer(), VertexShader.Blob()->GetBufferSize() };
     GraphicsDesc.PS = { PixelShader.Blob()->GetBufferPointer(), PixelShader.Blob()->GetBufferSize() };
     GraphicsDesc.DepthStencilState = Utility::MakeDepthStencilDescription();

@@ -139,18 +139,6 @@ D3D12_DEPTH_STENCIL_DESC MakeDepthStencilDescription()
     return Result;
 }
 
-D3D12_DESCRIPTOR_RANGE1 MakeDescriptorRange1(D3D12_DESCRIPTOR_RANGE_TYPE Type, D3D12_DESCRIPTOR_RANGE_FLAGS Flags)
-{
-    D3D12_DESCRIPTOR_RANGE1 Result;
-    Result.RangeType = Type;
-    Result.NumDescriptors = 1;
-    Result.BaseShaderRegister = 0;
-    Result.RegisterSpace = 0;
-    Result.Flags = Flags;
-    Result.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-    return Result;
-}
-
 }
 }
 }

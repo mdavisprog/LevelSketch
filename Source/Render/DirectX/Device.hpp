@@ -49,6 +49,7 @@ class Adapter;
 class CommandAllocator;
 class CommandQueue;
 class DescriptorHeap;
+class RootSignature;
 class SwapChain;
 
 class Device
@@ -64,6 +65,7 @@ public:
     Adapter const* GetAdapter() const;
     CommandAllocator const* GetCommandAllocator() const;
     CommandQueue const* GetCommandQueue() const;
+    RootSignature const* GetRootSignature() const;
 
     SwapChain const* GetSwapChain(Platform::Window* Window) const;
     SwapChain const* FirstSwapChain() const;
@@ -82,6 +84,7 @@ private:
     UniquePtr<Adapter> m_Adapter { nullptr };
     UniquePtr<CommandAllocator> m_CommandAllocator { nullptr };
     UniquePtr<CommandQueue> m_CommandQueue { nullptr };
+    UniquePtr<RootSignature> m_RootSignature { nullptr };
     Array<UniquePtr<SwapChain>> m_SwapChains {};
 
     UniquePtr<DescriptorHeap> m_RTV { nullptr };
