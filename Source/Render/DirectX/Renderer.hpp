@@ -84,9 +84,6 @@ private:
 
     UINT m_FrameIndex { 0 };
     Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_CommandAllocator;
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_RTVHeap; // Render Target View
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_SRVHeap; // Shader Target View
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_DSVHeap; // Depth Stencil View
     Microsoft::WRL::ComPtr<ID3D12Resource> m_RenderTargets[FRAME_COUNT];
     Microsoft::WRL::ComPtr<ID3D12RootSignature> m_RootSignature;
     Microsoft::WRL::ComPtr<ID3D12PipelineState> m_PipelineState;
@@ -94,8 +91,6 @@ private:
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList1> m_CommandList;
     Microsoft::WRL::ComPtr<ID3D12Fence> m_Fence;
     Microsoft::WRL::ComPtr<ID3D12Resource> m_DepthStencil;
-    UINT m_HeapDescriptorSize { 0 };
-    UINT m_SRVHeapDescriptorSize { 0 };
     UINT64 m_FenceValue { 0 };
     HANDLE m_FenceEvent { nullptr };
 
@@ -110,7 +105,7 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource> m_ConstantBuffer;
     u8* m_ConstantBufferAddress { nullptr };
     ConstantBufferData m_ConstantBufferData {};
-    u64 m_ConstantBufferTableOffset { 0 };
+    u64 m_ConstantBufferIndex { 0 };
 
     UniquePtr<Device> m_Device { nullptr };
 };

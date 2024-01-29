@@ -38,6 +38,7 @@ SOFTWARE.
 #include "../../Platform/Window.hpp"
 #include "Adapter.hpp"
 #include "CommandQueue.hpp"
+#include "DescriptorHeap.hpp"
 #include "Device.hpp"
 #include "Renderer.hpp"
 #include "Shader.hpp"
@@ -154,10 +155,10 @@ void Renderer::Render(Platform::Window* Window)
 
     m_CommandList->SetGraphicsRootSignature(m_RootSignature.Get());
 
-    ID3D12DescriptorHeap* Heaps[] = { m_SRVHeap.Get() };
+    ID3D12DescriptorHeap* Heaps[] = { m_Device->SRVHeap()->Get() };
     m_CommandList->SetDescriptorHeaps(_countof(Heaps), Heaps);
     // TODO: Apply an offset to select a specific resource.
-    D3D12_GPU_DESCRIPTOR_HANDLE GPUDesc { m_SRVHeap->GetGPUDescriptorHandleForHeapStart() };
+    D3D12_GPU_DESCRIPTOR_HANDLE GPUDesc { m_Device->SRVHeap()->GPUOffset(0) };
     GPUDesc.ptr += GetTextureOffset(m_DefaultTexture);
     m_CommandList->SetGraphicsRootDescriptorTable(0, GPUDesc);
 
@@ -173,9 +174,8 @@ void Renderer::Render(Platform::Window* Window)
         D3D12_RESOURCE_STATE_RENDER_TARGET) };
     m_CommandList->ResourceBarrier(1, &Barrier);
 
-    D3D12_CPU_DESCRIPTOR_HANDLE RTVCPUDesc { m_RTVHeap->GetCPUDescriptorHandleForHeapStart() };
-    D3D12_CPU_DESCRIPTOR_HANDLE DSVCPUDesc { m_DSVHeap->GetCPUDescriptorHandleForHeapStart() };
-    RTVCPUDesc.ptr = SIZE_T(INT64(RTVCPUDesc.ptr) + INT64(m_FrameIndex) * INT64(m_HeapDescriptorSize));
+    D3D12_CPU_DESCRIPTOR_HANDLE RTVCPUDesc { m_Device->RTVHeap()->CPUOffset(m_FrameIndex) };
+    D3D12_CPU_DESCRIPTOR_HANDLE DSVCPUDesc { m_Device->DSVHeap()->CPUOffset(0) };
     m_CommandList->OMSetRenderTargets(1, &RTVCPUDesc, FALSE, &DSVCPUDesc);
 
     // Begin World rendering
@@ -185,8 +185,7 @@ void Renderer::Render(Platform::Window* Window)
     m_CommandList->ClearRenderTargetView(RTVCPUDesc, ClearColor, 0, nullptr);
     m_CommandList->ClearDepthStencilView(DSVCPUDesc, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-    GPUDesc = m_SRVHeap->GetGPUDescriptorHandleForHeapStart();
-    GPUDesc.ptr += m_ConstantBufferTableOffset;
+    GPUDesc = m_Device->SRVHeap()->GPUOffset(m_ConstantBufferIndex);
     m_CommandList->SetGraphicsRootDescriptorTable(1, GPUDesc);
     std::memcpy(m_ConstantBufferAddress, &m_ConstantBufferData, sizeof(m_ConstantBufferData));
 
@@ -201,7 +200,7 @@ void Renderer::Render(Platform::Window* Window)
 
     for (const OctaneGUI::DrawCommand& Command : m_GUICommands)
     {
-        GPUDesc = m_SRVHeap->GetGPUDescriptorHandleForHeapStart();
+        GPUDesc = m_Device->SRVHeap()->GPUOffset(0);
 
         if (Command.TextureID() == 0)
         {
@@ -257,8 +256,8 @@ u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8)
 
     Microsoft::WRL::ComPtr<ID3D12Resource> UploadResource;
     if (!Tex.Upload(m_CommandList.Get(),
-            m_SRVHeap.Get(),
-            m_Textures.Size() * m_SRVHeapDescriptorSize,
+            m_Device->SRVHeap()->Get(),
+            m_Textures.Size() * m_Device->SRVHeap()->DescriptorSize(),
             Data,
             UploadResource))
     {
@@ -304,41 +303,8 @@ void Renderer::UploadGUIData(OctaneGUI::Window*, const OctaneGUI::VertexBuffer& 
 bool Renderer::LoadPipeline(Platform::Window* Window)
 {
     m_FrameIndex = m_Device->GetSwapChain(Window)->BackBufferIndex();
+    m_ConstantBufferIndex = m_Device->MaxSRVDescriptors() - 1;
 
-    D3D12_DESCRIPTOR_HEAP_DESC RTVHeapDesc { 0 };
-    RTVHeapDesc.NumDescriptors = FRAME_COUNT;
-    RTVHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-    RTVHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    if (m_Device->Get()->CreateDescriptorHeap(&RTVHeapDesc, IID_PPV_ARGS(&m_RTVHeap)) != S_OK)
-    {
-        printf("Failed to create descriptor heap!\n");
-        return false;
-    }
-
-    D3D12_DESCRIPTOR_HEAP_DESC DSVHeapDesc { 0 };
-    DSVHeapDesc.NumDescriptors = 1;
-    DSVHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-    DSVHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    if (m_Device->Get()->CreateDescriptorHeap(&DSVHeapDesc, IID_PPV_ARGS(&m_DSVHeap)) != S_OK)
-    {
-        Core::Console::Error("Failed to create depth stencil view.");
-        return false;
-    }
-
-    D3D12_DESCRIPTOR_HEAP_DESC SRVHeapDesc { 0 };
-    SRVHeapDesc.NumDescriptors = MAX_DESCRIPTORS;
-    SRVHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    SRVHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-    if (m_Device->Get()->CreateDescriptorHeap(&SRVHeapDesc, IID_PPV_ARGS(&m_SRVHeap)) != S_OK)
-    {
-        Core::Console::WriteLine("Failed to create SRV descriptor heap.");
-        return false;
-    }
-
-    m_HeapDescriptorSize = m_Device->Get()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-    m_SRVHeapDescriptorSize = m_Device->Get()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-    D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle { m_RTVHeap->GetCPUDescriptorHandleForHeapStart() };
     for (UINT I = 0; I < FRAME_COUNT; ++I)
     {
         if (m_Device->GetSwapChain(Window)->Get()->GetBuffer(I, IID_PPV_ARGS(&m_RenderTargets[I])) != S_OK)
@@ -347,8 +313,7 @@ bool Renderer::LoadPipeline(Platform::Window* Window)
             return false;
         }
 
-        m_Device->Get()->CreateRenderTargetView(m_RenderTargets[I].Get(), nullptr, CPUHandle);
-        CPUHandle.ptr = SIZE_T(INT64(CPUHandle.ptr) + INT64(1) * INT64(m_HeapDescriptorSize));
+        m_Device->Get()->CreateRenderTargetView(m_RenderTargets[I].Get(), nullptr, m_Device->RTVHeap()->CPUOffset(I));
     }
 
     if (m_Device->Get()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_CommandAllocator)) !=
@@ -630,9 +595,7 @@ bool Renderer::LoadAssets(Platform::Window* Window)
             return false;
         }
 
-        m_Device->Get()->CreateDepthStencilView(m_DepthStencil.Get(),
-            &DSVDesc,
-            m_DSVHeap->GetCPUDescriptorHandleForHeapStart());
+        m_Device->Get()->CreateDepthStencilView(m_DepthStencil.Get(), &DSVDesc, m_Device->DSVHeap()->CPUOffset(0));
     }
 
     m_RenderBufferGUI.Initialize(m_Device->Get(), 100000, 100000);
@@ -660,9 +623,7 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         ConstantBufferView.BufferLocation = m_ConstantBuffer->GetGPUVirtualAddress();
         ConstantBufferView.SizeInBytes = sizeof(ConstantBufferData);
 
-        m_ConstantBufferTableOffset = (MAX_DESCRIPTORS - 1) * m_SRVHeapDescriptorSize;
-        D3D12_CPU_DESCRIPTOR_HANDLE CPUDesc { m_SRVHeap->GetCPUDescriptorHandleForHeapStart() };
-        CPUDesc.ptr += m_ConstantBufferTableOffset;
+        D3D12_CPU_DESCRIPTOR_HANDLE CPUDesc { m_Device->SRVHeap()->CPUOffset(m_ConstantBufferIndex) };
         m_Device->Get()->CreateConstantBufferView(&ConstantBufferView, CPUDesc);
 
         D3D12_RANGE Range { 0, 0 };

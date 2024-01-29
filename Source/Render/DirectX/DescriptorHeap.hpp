@@ -26,67 +26,38 @@ SOFTWARE.
 
 #pragma once
 
-#include "../../Core/Containers/Array.hpp"
-#include "../../Core/Memory/UniquePtr.hpp"
-#include "../Renderer.hpp"
+#include "../../Core/Types.hpp"
 #include <d3d12.h>
 #include <wrl/client.h>
 
 namespace LevelSketch
 {
-
-namespace Platform
-{
-class Window;
-}
-
 namespace Render
 {
 namespace DirectX
 {
 
-class Adapter;
-class CommandQueue;
-class DescriptorHeap;
-class SwapChain;
+class Device;
 
-class Device
+class DescriptorHeap
 {
 public:
-    Device();
-    ~Device();
+    DescriptorHeap();
 
-    bool Initialize();
-    bool Initialize(Platform::Window* Window);
+    bool Initialize(Device const* Device_,
+        D3D12_DESCRIPTOR_HEAP_TYPE Type,
+        u32 NumDescriptors,
+        D3D12_DESCRIPTOR_HEAP_FLAGS Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
 
-    ID3D12Device9* Get() const;
-    Adapter const* GetAdapter() const;
-    CommandQueue const* GetCommandQueue() const;
+    D3D12_CPU_DESCRIPTOR_HANDLE CPUOffset(u64 Index) const;
+    D3D12_GPU_DESCRIPTOR_HANDLE GPUOffset(u64 Index) const;
+    u64 DescriptorSize() const;
 
-    SwapChain const* GetSwapChain(Platform::Window* Window) const;
-    SwapChain const* FirstSwapChain() const;
-    u64 NumSwapChains() const;
-
-    DescriptorHeap* RTVHeap() const;
-    DescriptorHeap* SRVHeap() const;
-    DescriptorHeap* DSVHeap() const;
-
-    u64 MaxSRVDescriptors() const;
+    ID3D12DescriptorHeap* Get() const;
 
 private:
-    bool CreateHeaps();
-
-    Microsoft::WRL::ComPtr<ID3D12Device9> m_Device { nullptr };
-    UniquePtr<Adapter> m_Adapter { nullptr };
-    UniquePtr<CommandQueue> m_CommandQueue { nullptr };
-    Array<UniquePtr<SwapChain>> m_SwapChains {};
-
-    UniquePtr<DescriptorHeap> m_RTV { nullptr };
-    UniquePtr<DescriptorHeap> m_DSV { nullptr };
-    UniquePtr<DescriptorHeap> m_SRV { nullptr };
-
-    u32 m_BufferCount { 2 };
-    u32 m_MaxSRVDescriptors { 100 };
+    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_Heap { nullptr };
+    u64 m_DescriptorSize { 0 };
 };
 
 }

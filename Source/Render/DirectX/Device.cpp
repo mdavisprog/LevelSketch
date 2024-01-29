@@ -30,6 +30,7 @@ SOFTWARE.
 #include "../../Platform/Windows/Errors.hpp"
 #include "Adapter.hpp"
 #include "CommandQueue.hpp"
+#include "DescriptorHeap.hpp"
 #include "SwapChain.hpp"
 
 namespace LevelSketch
@@ -65,6 +66,11 @@ bool Device::Initialize()
 
     m_CommandQueue = UniquePtr<CommandQueue>::New();
     if (!m_CommandQueue->Initialize(this))
+    {
+        return false;
+    }
+
+    if (!CreateHeaps())
     {
         return false;
     }
@@ -126,6 +132,52 @@ SwapChain const* Device::FirstSwapChain() const
 u64 Device::NumSwapChains() const
 {
     return m_SwapChains.Size();
+}
+
+DescriptorHeap* Device::RTVHeap() const
+{
+    return m_RTV.Get();
+}
+
+DescriptorHeap* Device::SRVHeap() const
+{
+    return m_SRV.Get();
+}
+
+DescriptorHeap* Device::DSVHeap() const
+{
+    return m_DSV.Get();
+}
+
+u64 Device::MaxSRVDescriptors() const
+{
+    return m_MaxSRVDescriptors;
+}
+
+bool Device::CreateHeaps()
+{
+    m_RTV = UniquePtr<DescriptorHeap>::New();
+    if (!m_RTV->Initialize(this, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2))
+    {
+        return false;
+    }
+
+    m_DSV = UniquePtr<DescriptorHeap>::New();
+    if (!m_DSV->Initialize(this, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1))
+    {
+        return false;
+    }
+
+    m_SRV = UniquePtr<DescriptorHeap>::New();
+    if (!m_SRV->Initialize(this,
+            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+            m_MaxSRVDescriptors,
+            D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE))
+    {
+        return false;
+    }
+
+    return true;
 }
 
 }
