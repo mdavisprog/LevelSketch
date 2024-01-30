@@ -35,7 +35,7 @@ cbuffer ConstantBuffer : register(b0)
 {
     float4x4 Model;
     float4x4 View;
-    float4x4 Projection;
+    float4x4 Perspective;
     float4x4 Orthographic;
 }
 
@@ -43,7 +43,7 @@ PSInput Main(float2 position : POSITION, float2 uv : TEXCOORD, float4 color : CO
 {
     PSInput result;
 
-    result.position = mul(float4(position, 0.0, 1.0), Orthographic);
+    result.position = mul(Orthographic, float4(position, 0.0, 1.0));
     result.uv = uv;
     result.color = color;
 

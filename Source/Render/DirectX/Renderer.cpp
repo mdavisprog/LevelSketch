@@ -93,6 +93,17 @@ static Array<u8> GenerateTexture(u32 Width, u32 Height)
     return Result;
 }
 
+static Matrix4f Perspective(Platform::Window* Window)
+{
+    return Core::Math::PerspectiveMatrixRH(45.0f, Window->AspectRatio(), 0.1f, 100.f).Transpose();
+}
+
+static Matrix4f Orthographic(Platform::Window* Window)
+{
+    const Rectf Bounds { 0.0f, 0.0f, static_cast<f32>(Window->Size().X), static_cast<f32>(Window->Size().Y) };
+    return Core::Math::OrthographicMatrixRH(Bounds, -1.0f, 1.0f).Transpose();
+}
+
 Renderer::Renderer()
     : LevelSketch::Render::Renderer()
 {
@@ -191,6 +202,9 @@ void Renderer::Render(Platform::Window* Window)
 
     GPUDesc = m_Device->SRVHeap()->GPUOffset(m_ConstantBufferIndex);
     CommandList->SetGraphicsRootDescriptorTable(1, GPUDesc);
+
+    m_ConstantBufferData.Perspective = Perspective(Window);
+    m_ConstantBufferData.Orthographic = Orthographic(Window);
     std::memcpy(m_ConstantBufferAddress, &m_ConstantBufferData, sizeof(m_ConstantBufferData));
 
     CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -535,11 +549,6 @@ bool Renderer::LoadAssets(Platform::Window* Window)
             Core::Console::Error("Failed to map constant buffer memory.");
             return false;
         }
-
-        Rectf Bounds { 0.0f, 0.0f, (f32)Window->Size().X, (f32)Window->Size().Y };
-        m_ConstantBufferData.Projection =
-            Core::Math::PerspectiveMatrixRH(45.0f, Window->AspectRatio(), 0.1f, 100.0f).Transpose();
-        m_ConstantBufferData.Orthographic = Core::Math::OrthographicMatrixRH(Bounds, -1.0f, 1.0f).Transpose();
     }
 
     // Upload Vertex/Index buffers. The Load texture function will reset the command list.
