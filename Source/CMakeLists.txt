@@ -84,6 +84,7 @@ if(WIN32)
         Render/DirectX/SwapChain.cpp
         Render/DirectX/Texture.cpp
         Render/DirectX/Utility.cpp
+        Render/DirectX/Viewport.cpp
     )
 
     if(BUILD_TYPE_DEBUG)

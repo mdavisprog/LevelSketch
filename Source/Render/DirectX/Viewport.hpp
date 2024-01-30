@@ -28,7 +28,6 @@ SOFTWARE.
 
 #include "../../Core/Containers/Array.hpp"
 #include "../../Core/Memory/UniquePtr.hpp"
-#include "../Renderer.hpp"
 #include <d3d12.h>
 #include <wrl/client.h>
 
@@ -45,46 +44,29 @@ namespace Render
 namespace DirectX
 {
 
-class Adapter;
-class CommandAllocator;
-class CommandQueue;
 class DescriptorHeap;
-class RootSignature;
+class Device;
 class SwapChain;
 
-class Device
+class Viewport
 {
 public:
-    Device();
-    ~Device();
+    Viewport();
 
-    bool Initialize();
+    bool Initialize(Platform::Window* Window, Device const* Device_, u32 BufferCount);
+    void UpdateFrameIndex();
+    bool Present(u32 SyncInterval, u32 Flags) const;
 
-    ID3D12Device9* Get() const;
-    Adapter const* GetAdapter() const;
-    CommandAllocator const* GetCommandAllocator() const;
-    CommandQueue const* GetCommandQueue() const;
-    RootSignature const* GetRootSignature() const;
-
-    DescriptorHeap* SRVHeap() const;
-    DescriptorHeap* DSVHeap() const;
-
-    u64 MaxSRVDescriptors() const;
+    Platform::Window* GetWindow() const;
+    D3D12_CPU_DESCRIPTOR_HANDLE RTVCPUOffset() const;
+    ID3D12Resource* CurrentRenderTarget() const;
 
 private:
-    bool CreateHeaps();
-
-    Microsoft::WRL::ComPtr<ID3D12Device9> m_Device { nullptr };
-    UniquePtr<Adapter> m_Adapter { nullptr };
-    UniquePtr<CommandAllocator> m_CommandAllocator { nullptr };
-    UniquePtr<CommandQueue> m_CommandQueue { nullptr };
-    UniquePtr<RootSignature> m_RootSignature { nullptr };
-
-    UniquePtr<DescriptorHeap> m_DSV { nullptr };
-    UniquePtr<DescriptorHeap> m_SRV { nullptr };
-
-    u32 m_BufferCount { 2 };
-    u32 m_MaxSRVDescriptors { 100 };
+    Platform::Window* m_Window { nullptr };
+    UniquePtr<SwapChain> m_SwapChain { nullptr };
+    UniquePtr<DescriptorHeap> m_RTV { nullptr };
+    Array<Microsoft::WRL::ComPtr<ID3D12Resource>> m_RenderTargets {};
+    u32 m_FrameIndex { 0 };
 };
 
 }

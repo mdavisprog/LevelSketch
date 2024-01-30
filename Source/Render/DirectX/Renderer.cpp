@@ -46,6 +46,7 @@ SOFTWARE.
 #include "Shader.hpp"
 #include "SwapChain.hpp"
 #include "Utility.hpp"
+#include "Viewport.hpp"
 
 #include <cstdio>
 
@@ -111,26 +112,24 @@ bool Renderer::Initialize()
 #endif
 
     m_Device->GetAdapter()->FillSummary(SummaryMut());
+    m_ConstantBufferIndex = m_Device->MaxSRVDescriptors() - 1;
 
     return true;
 }
 
 bool Renderer::Initialize(Platform::Window* Window)
 {
-    const bool FirstWindow { m_Device->NumSwapChains() == 0 };
+    const bool FirstWindow { m_Viewports.Size() == 0 };
 
-    if (!m_Device->Initialize(Window))
+    UniquePtr<Viewport> NewViewport { UniquePtr<Viewport>::New() };
+    if (!NewViewport->Initialize(Window, m_Device.Get(), 2))
     {
         return false;
     }
+    m_Viewports.Push(std::move(NewViewport));
 
     if (FirstWindow)
     {
-        if (!LoadPipeline(Window))
-        {
-            return false;
-        }
-
         if (!LoadAssets(Window))
         {
             return false;
@@ -155,6 +154,8 @@ void Renderer::Render(Platform::Window* Window)
         return;
     }
 
+    Viewport* Viewport_ { GetViewportFor(Window) };
+
     m_CommandList->SetGraphicsRootSignature(m_Device->GetRootSignature()->Get());
 
     ID3D12DescriptorHeap* Heaps[] = { m_Device->SRVHeap()->Get() };
@@ -171,12 +172,12 @@ void Renderer::Render(Platform::Window* Window)
     m_CommandList->RSSetViewports(1, &View);
     m_CommandList->RSSetScissorRects(1, &Scissor);
 
-    D3D12_RESOURCE_BARRIER Barrier { Utility::MakeResourceBarrierTransition(m_RenderTargets[m_FrameIndex].Get(),
+    D3D12_RESOURCE_BARRIER Barrier { Utility::MakeResourceBarrierTransition(Viewport_->CurrentRenderTarget(),
         D3D12_RESOURCE_STATE_PRESENT,
         D3D12_RESOURCE_STATE_RENDER_TARGET) };
     m_CommandList->ResourceBarrier(1, &Barrier);
 
-    D3D12_CPU_DESCRIPTOR_HANDLE RTVCPUDesc { m_Device->RTVHeap()->CPUOffset(m_FrameIndex) };
+    D3D12_CPU_DESCRIPTOR_HANDLE RTVCPUDesc { Viewport_->RTVCPUOffset() };
     D3D12_CPU_DESCRIPTOR_HANDLE DSVCPUDesc { m_Device->DSVHeap()->CPUOffset(0) };
     m_CommandList->OMSetRenderTargets(1, &RTVCPUDesc, FALSE, &DSVCPUDesc);
 
@@ -233,9 +234,9 @@ void Renderer::Render(Platform::Window* Window)
 
     ExecuteCommands();
 
-    m_Device->GetSwapChain(Window)->Present(1, 0);
-
+    Viewport_->Present(1, 0);
     WaitForPreviousFrame();
+    Viewport_->UpdateFrameIndex();
 
 #if defined(DEBUG)
     InfoQueue::Poll();
@@ -300,25 +301,6 @@ void Renderer::UploadGUIData(OctaneGUI::Window*, const OctaneGUI::VertexBuffer& 
     {
         m_GUICommands.Push(Command);
     }
-}
-
-bool Renderer::LoadPipeline(Platform::Window* Window)
-{
-    m_FrameIndex = m_Device->GetSwapChain(Window)->BackBufferIndex();
-    m_ConstantBufferIndex = m_Device->MaxSRVDescriptors() - 1;
-
-    for (UINT I = 0; I < FRAME_COUNT; ++I)
-    {
-        if (m_Device->GetSwapChain(Window)->Get()->GetBuffer(I, IID_PPV_ARGS(&m_RenderTargets[I])) != S_OK)
-        {
-            printf("Failed to get buffer %d for swap chain!\n", I);
-            return false;
-        }
-
-        m_Device->Get()->CreateRenderTargetView(m_RenderTargets[I].Get(), nullptr, m_Device->RTVHeap()->CPUOffset(I));
-    }
-
-    return true;
 }
 
 bool Renderer::LoadAssets(Platform::Window* Window)
@@ -610,9 +592,6 @@ void Renderer::WaitForPreviousFrame()
             printf("Failed to set event on completion!\n");
         }
     }
-
-    // TODO: Investigate moving this to only when a present call is made.
-    m_FrameIndex = m_Device->FirstSwapChain()->BackBufferIndex();
 }
 
 bool Renderer::ExecuteCommands()
@@ -656,6 +635,19 @@ u64 Renderer::GetTextureOffset(u32 ID) const
     }
 
     return 0;
+}
+
+Viewport* Renderer::GetViewportFor(Platform::Window* Window) const
+{
+    for (const UniquePtr<Viewport>& Item : m_Viewports)
+    {
+        if (Item->GetWindow() == Window)
+        {
+            return Item.Get();
+        }
+    }
+
+    return nullptr;
 }
 
 }

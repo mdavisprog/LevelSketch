@@ -49,6 +49,7 @@ namespace DirectX
 class CommandQueue;
 class Device;
 class SwapChain;
+class Viewport;
 
 #define FRAME_COUNT 2
 #define MAX_DESCRIPTORS 1000
@@ -75,15 +76,13 @@ public:
     virtual void UploadGUIData(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer) override;
 
 private:
-    bool LoadPipeline(Platform::Window* Window);
     bool LoadAssets(Platform::Window* Window);
     void WaitForPreviousFrame();
     bool ExecuteCommands();
     bool ResetCommands();
     u64 GetTextureOffset(u32 ID) const;
+    Viewport* GetViewportFor(Platform::Window* Window) const;
 
-    UINT m_FrameIndex { 0 };
-    Microsoft::WRL::ComPtr<ID3D12Resource> m_RenderTargets[FRAME_COUNT];
     Microsoft::WRL::ComPtr<ID3D12PipelineState> m_PipelineState;
     Microsoft::WRL::ComPtr<ID3D12PipelineState> m_PipelineStateGUI;
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList1> m_CommandList;
@@ -106,6 +105,7 @@ private:
     u64 m_ConstantBufferIndex { 0 };
 
     UniquePtr<Device> m_Device { nullptr };
+    Array<UniquePtr<Viewport>> m_Viewports {};
 };
 
 }
