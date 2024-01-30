@@ -32,6 +32,7 @@ SOFTWARE.
 
 #include <cstdlib>
 #include <initializer_list>
+#include <memory>
 #include <new>
 #include <utility>
 
@@ -181,7 +182,7 @@ public:
 
             for (u64 I = 0; I < m_Size; I++)
             {
-                new (static_cast<void*>(&m_Data[I])) T;
+                new (std::addressof(m_Data[I])) T;
                 m_Data[I] = Other.m_Data[I];
             }
         }
@@ -224,7 +225,7 @@ public:
 
             for (u64 I = m_Size; I < Size - m_Size; I++)
             {
-                new (static_cast<void*>(&m_Data[I])) T;
+                new (std::addressof(m_Data[I])) T;
             }
         }
 
@@ -274,7 +275,7 @@ public:
     {
         ConditionalGrow();
 
-        new (static_cast<void*>(&m_Data[m_Size])) T(Value);
+        new (std::addressof(m_Data[m_Size])) T(Value);
         m_Size++;
 
         return *this;
@@ -284,7 +285,7 @@ public:
     {
         ConditionalGrow();
 
-        new (static_cast<void*>(&m_Data[m_Size])) T(std::move(Value));
+        new (std::addressof(m_Data[m_Size])) T(std::move(Value));
         m_Size++;
 
         return *this;
@@ -338,7 +339,7 @@ public:
         // Call destructor on each element.
         for (u64 I = Index; I < Last; I++)
         {
-            Destructor<T>(static_cast<void*>(&m_Data[I]));
+            Destructor<T>(std::addressof(m_Data[I]));
         }
 
         // Copy/Move remaining elements down to fill in destroyed slots.
@@ -422,7 +423,7 @@ private:
         for (u64 I = 0; I < Size; I++)
         {
             U& Item { static_cast<U*>(Ptr)[I] };
-            Destructor<U>(static_cast<void*>(&Item));
+            Destructor<U>(std::addressof(Item));
         }
     }
 
