@@ -70,7 +70,7 @@ public:
         return { Y * Other.Z - Z * Other.Y, Z * Other.X - X * Other.Z, X * Other.Y - Y * Other.X };
     }
 
-    Vector3<T> Dot(const Vector3<T>& Other) const
+    T Dot(const Vector3<T>& Other) const
     {
         return { X * Other.X + Y * Other.Y + Z * Other.Z };
     }
