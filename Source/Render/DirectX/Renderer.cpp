@@ -203,6 +203,7 @@ void Renderer::Render(Platform::Window* Window)
     GPUDesc = m_Device->SRVHeap()->GPUOffset(m_ConstantBufferIndex);
     CommandList->SetGraphicsRootDescriptorTable(1, GPUDesc);
 
+    m_ConstantBufferData.View = Matrix4f::LookAtLH({ 0.0f, 0.0f, -5.0f }, {}, { 0.0f, 1.0f, 0.0f }).Transpose();
     m_ConstantBufferData.Perspective = Perspective(Window);
     m_ConstantBufferData.Orthographic = Orthographic(Window);
     std::memcpy(m_ConstantBufferAddress, &m_ConstantBufferData, sizeof(m_ConstantBufferData));
