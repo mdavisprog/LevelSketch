@@ -95,7 +95,7 @@ static Array<u8> GenerateTexture(u32 Width, u32 Height)
 
 static Matrix4f Perspective(Platform::Window* Window)
 {
-    return Core::Math::PerspectiveMatrixRH(45.0f, Window->AspectRatio(), 0.1f, 100.f).Transpose();
+    return Core::Math::PerspectiveMatrixLH(45.0f, Window->AspectRatio(), 0.1f, 100.f).Transpose();
 }
 
 static Matrix4f Orthographic(Platform::Window* Window)

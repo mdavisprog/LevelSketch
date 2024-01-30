@@ -49,18 +49,18 @@ public:
     static Matrix4<T> Identity;
     static Matrix4<T> Zero;
 
-    static Matrix4<T> LookAt(const Vector3<T>& Eye, const Vector3<T>& Center, const Vector3<T>& Up)
+    static Matrix4<T> LookAtLH(const Vector3<T>& Eye, const Vector3<T>& Center, const Vector3<T>& Up)
     {
-        const Vector3<T> Forward { (Eye - Center).Normalize() };
-        const Vector3<T> Side { Forward.Cross(Up).Normalize() };
-        const Vector3<T> dUp { Side.Cross(Forward) };
+        const Vector3<T> Forward { (Center - Eye).Normalize() };
+        const Vector3<T> Side { Up.Cross(Forward).Normalize() };
+        const Vector3<T> dUp { Forward.Cross(Side) };
 
         return
         {
-            Side.X, Side.Y, Side.Z, 0,
-            dUp.X, dUp.Y, dUp.Z, 0,
-            Forward.X, Forward.Y, Forward.Z, 0,
-            Eye.X, Eye.Y, Eye.Z, 1
+            Side.X, dUp.X, Forward.X, 0,
+            Side.Y, dUp.Y, Forward.Y, 0,
+            Side.Z, dUp.Z, Forward.Z, 0,
+            -(Eye.Dot(Side)), -(Eye.Dot(dUp)), -(Eye.Dot(Forward)), 1
         };
     }
 
@@ -230,17 +230,17 @@ static inline Matrix4<T> operator*(const Matrix4<T>& A, const Matrix4<T>& B)
     return Result;
 }
 
-static inline Matrix4f PerspectiveMatrixRH(f32 FOVAngle, f32 Aspect, f32 Near, f32 Far)
+static inline Matrix4f PerspectiveMatrixLH(f32 FOVAngle, f32 Aspect, f32 Near, f32 Far)
 {
     const f32 FOVRad { FOVAngle * DEG2RAD };
     const f32 YScale { 1.0f / Tan<f32>(FOVRad * 0.5f) };
-    const float XScale { YScale * Aspect };
+    const float XScale { YScale / Aspect };
     return
     {
         XScale, 0.0f, 0.0f, 0.0f,
         0.0f, YScale, 0.0f, 0.0,
-        0.0f, 0.0f, Far / (Far - Near), -Near * (Far / (Far - Near)),
-        0.0f, 0.0f, 1.0, 0.0f
+        0.0f, 0.0f, Far / (Far - Near), 1.0f,
+        0.0f, 0.0f, (-Near * Far) / (Far - Near), 0.0f
     };
 }
 
