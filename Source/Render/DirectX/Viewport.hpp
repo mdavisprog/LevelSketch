@@ -52,6 +52,7 @@ class Viewport
 {
 public:
     Viewport();
+    ~Viewport();
 
     bool Initialize(Platform::Window* Window, Device const* Device_, u32 BufferCount);
     void UpdateFrameIndex();

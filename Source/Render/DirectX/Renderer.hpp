@@ -85,7 +85,6 @@ private:
 
     Microsoft::WRL::ComPtr<ID3D12PipelineState> m_PipelineState;
     Microsoft::WRL::ComPtr<ID3D12PipelineState> m_PipelineStateGUI;
-    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList1> m_CommandList;
     Microsoft::WRL::ComPtr<ID3D12Fence> m_Fence;
     Microsoft::WRL::ComPtr<ID3D12Resource> m_DepthStencil;
     UINT64 m_FenceValue { 0 };

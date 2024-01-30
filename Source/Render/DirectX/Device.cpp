@@ -30,6 +30,7 @@ SOFTWARE.
 #include "../../Platform/Windows/Errors.hpp"
 #include "Adapter.hpp"
 #include "CommandAllocator.hpp"
+#include "CommandList.hpp"
 #include "CommandQueue.hpp"
 #include "DescriptorHeap.hpp"
 #include "RootSignature.hpp"
@@ -78,6 +79,12 @@ bool Device::Initialize()
         return false;
     }
 
+    m_CommandList = UniquePtr<CommandList>::New();
+    if (!m_CommandList->Initialize(this, m_CommandAllocator.Get()))
+    {
+        return false;
+    }
+
     if (!CreateHeaps())
     {
         return false;
@@ -105,6 +112,11 @@ Adapter const* Device::GetAdapter() const
 CommandAllocator const* Device::GetCommandAllocator() const
 {
     return m_CommandAllocator.Get();
+}
+
+CommandList const* Device::GetCommandList() const
+{
+    return m_CommandList.Get();
 }
 
 CommandQueue const* Device::GetCommandQueue() const

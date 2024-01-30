@@ -38,13 +38,13 @@ SOFTWARE.
 #include "../../Platform/Window.hpp"
 #include "Adapter.hpp"
 #include "CommandAllocator.hpp"
+#include "CommandList.hpp"
 #include "CommandQueue.hpp"
 #include "DescriptorHeap.hpp"
 #include "Device.hpp"
 #include "Renderer.hpp"
 #include "RootSignature.hpp"
 #include "Shader.hpp"
-#include "SwapChain.hpp"
 #include "Utility.hpp"
 #include "Viewport.hpp"
 
@@ -156,50 +156,51 @@ void Renderer::Render(Platform::Window* Window)
 
     Viewport* Viewport_ { GetViewportFor(Window) };
 
-    m_CommandList->SetGraphicsRootSignature(m_Device->GetRootSignature()->Get());
+    ID3D12GraphicsCommandList1* CommandList { m_Device->GetCommandList()->Get() };
+    CommandList->SetGraphicsRootSignature(m_Device->GetRootSignature()->Get());
 
     ID3D12DescriptorHeap* Heaps[] = { m_Device->SRVHeap()->Get() };
-    m_CommandList->SetDescriptorHeaps(_countof(Heaps), Heaps);
+    CommandList->SetDescriptorHeaps(_countof(Heaps), Heaps);
     // TODO: Apply an offset to select a specific resource.
     D3D12_GPU_DESCRIPTOR_HANDLE GPUDesc { m_Device->SRVHeap()->GPUOffset(0) };
     GPUDesc.ptr += GetTextureOffset(m_DefaultTexture);
-    m_CommandList->SetGraphicsRootDescriptorTable(0, GPUDesc);
+    CommandList->SetGraphicsRootDescriptorTable(0, GPUDesc);
 
     const Core::Math::Vector2i Size { Window->Size() };
     D3D12_VIEWPORT View { 0.0f, 0.0f, (FLOAT)Size.X, (FLOAT)Size.Y, 0.0f, 1.0f };
     D3D12_RECT Scissor { 0, 0, (LONG)Size.X, (LONG)Size.Y };
 
-    m_CommandList->RSSetViewports(1, &View);
-    m_CommandList->RSSetScissorRects(1, &Scissor);
+    CommandList->RSSetViewports(1, &View);
+    CommandList->RSSetScissorRects(1, &Scissor);
 
     D3D12_RESOURCE_BARRIER Barrier { Utility::MakeResourceBarrierTransition(Viewport_->CurrentRenderTarget(),
         D3D12_RESOURCE_STATE_PRESENT,
         D3D12_RESOURCE_STATE_RENDER_TARGET) };
-    m_CommandList->ResourceBarrier(1, &Barrier);
+    CommandList->ResourceBarrier(1, &Barrier);
 
     D3D12_CPU_DESCRIPTOR_HANDLE RTVCPUDesc { Viewport_->RTVCPUOffset() };
     D3D12_CPU_DESCRIPTOR_HANDLE DSVCPUDesc { m_Device->DSVHeap()->CPUOffset(0) };
-    m_CommandList->OMSetRenderTargets(1, &RTVCPUDesc, FALSE, &DSVCPUDesc);
+    CommandList->OMSetRenderTargets(1, &RTVCPUDesc, FALSE, &DSVCPUDesc);
 
     // Begin World rendering
-    m_CommandList->SetPipelineState(m_PipelineState.Get());
+    CommandList->SetPipelineState(m_PipelineState.Get());
 
     const float ClearColor[] { 0.0f, 0.2f, 0.4f, 1.0f };
-    m_CommandList->ClearRenderTargetView(RTVCPUDesc, ClearColor, 0, nullptr);
-    m_CommandList->ClearDepthStencilView(DSVCPUDesc, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+    CommandList->ClearRenderTargetView(RTVCPUDesc, ClearColor, 0, nullptr);
+    CommandList->ClearDepthStencilView(DSVCPUDesc, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
     GPUDesc = m_Device->SRVHeap()->GPUOffset(m_ConstantBufferIndex);
-    m_CommandList->SetGraphicsRootDescriptorTable(1, GPUDesc);
+    CommandList->SetGraphicsRootDescriptorTable(1, GPUDesc);
     std::memcpy(m_ConstantBufferAddress, &m_ConstantBufferData, sizeof(m_ConstantBufferData));
 
-    m_CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    m_RenderBuffer.BindViews(m_CommandList.Get());
-    m_CommandList->DrawIndexedInstanced(3, 1, 0, 0, 0);
+    CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    m_RenderBuffer.BindViews(CommandList);
+    CommandList->DrawIndexedInstanced(3, 1, 0, 0, 0);
 
     // Begin GUI rendering
-    m_CommandList->SetPipelineState(m_PipelineStateGUI.Get());
-    m_CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    m_RenderBufferGUI.BindViews(m_CommandList.Get());
+    CommandList->SetPipelineState(m_PipelineStateGUI.Get());
+    CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    m_RenderBufferGUI.BindViews(CommandList);
 
     for (const OctaneGUI::DrawCommand& Command : m_GUICommands)
     {
@@ -223,14 +224,14 @@ void Renderer::Render(Platform::Window* Window)
             Clip.bottom = static_cast<LONG>(Command.Clip().Max.Y);
         };
 
-        m_CommandList->RSSetScissorRects(1, &Clip);
-        m_CommandList->SetGraphicsRootDescriptorTable(0, GPUDesc);
-        m_CommandList->DrawIndexedInstanced(Command.IndexCount(), 1, Command.IndexOffset(), Command.VertexOffset(), 0);
+        CommandList->RSSetScissorRects(1, &Clip);
+        CommandList->SetGraphicsRootDescriptorTable(0, GPUDesc);
+        CommandList->DrawIndexedInstanced(Command.IndexCount(), 1, Command.IndexOffset(), Command.VertexOffset(), 0);
     }
 
     Barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
     Barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-    m_CommandList->ResourceBarrier(1, &Barrier);
+    CommandList->ResourceBarrier(1, &Barrier);
 
     ExecuteCommands();
 
@@ -258,7 +259,7 @@ u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8)
     }
 
     Microsoft::WRL::ComPtr<ID3D12Resource> UploadResource;
-    if (!Tex.Upload(m_CommandList.Get(),
+    if (!Tex.Upload(m_Device->GetCommandList()->Get(),
             m_Device->SRVHeap()->Get(),
             m_Textures.Size() * m_Device->SRVHeap()->DescriptorSize(),
             Data,
@@ -428,16 +429,6 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         return false;
     }
 
-    if (m_Device->Get()->CreateCommandList(0,
-            D3D12_COMMAND_LIST_TYPE_DIRECT,
-            m_Device->GetCommandAllocator()->Get(),
-            m_PipelineState.Get(),
-            IID_PPV_ARGS(&m_CommandList)) != S_OK)
-    {
-        printf("Failed to create command list!\n");
-        return false;
-    }
-
     if (m_Device->Get()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence)) != S_OK)
     {
         printf("Failed to create fence!\n");
@@ -596,13 +587,12 @@ void Renderer::WaitForPreviousFrame()
 
 bool Renderer::ExecuteCommands()
 {
-    if (m_CommandList->Close() != S_OK)
+    if (!m_Device->GetCommandList()->Close())
     {
-        Core::Console::Warning("Failed to close command list.");
         return false;
     }
 
-    ID3D12CommandList* CommandLists[] { m_CommandList.Get() };
+    ID3D12CommandList* CommandLists[] { m_Device->GetCommandList()->Get() };
     m_Device->GetCommandQueue()->Execute(_countof(CommandLists), CommandLists);
 
     return true;
@@ -615,9 +605,8 @@ bool Renderer::ResetCommands()
         return false;
     }
 
-    if (m_CommandList->Reset(m_Device->GetCommandAllocator()->Get(), m_PipelineState.Get()) != S_OK)
+    if (!m_Device->GetCommandList()->Reset())
     {
-        Core::Console::Warning("Failed to reset command list!");
         return false;
     }
 

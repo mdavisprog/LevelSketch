@@ -42,6 +42,10 @@ Viewport::Viewport()
 {
 }
 
+Viewport::~Viewport()
+{
+}
+
 bool Viewport::Initialize(Platform::Window* Window, Device const* Device_, u32 BufferCount)
 {
     m_RTV = UniquePtr<DescriptorHeap>::New();

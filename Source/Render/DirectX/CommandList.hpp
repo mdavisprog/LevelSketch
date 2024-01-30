@@ -26,68 +26,33 @@ SOFTWARE.
 
 #pragma once
 
-#include "../../Core/Containers/Array.hpp"
-#include "../../Core/Memory/UniquePtr.hpp"
-#include "../Renderer.hpp"
 #include <d3d12.h>
 #include <wrl/client.h>
 
 namespace LevelSketch
 {
-
-namespace Platform
-{
-class Window;
-}
-
 namespace Render
 {
 namespace DirectX
 {
 
-class Adapter;
 class CommandAllocator;
-class CommandList;
-class CommandQueue;
-class DescriptorHeap;
-class RootSignature;
-class SwapChain;
+class Device;
 
-class Device
+class CommandList
 {
 public:
-    Device();
-    ~Device();
+    CommandList();
 
-    bool Initialize();
+    bool Initialize(Device const* Device_, CommandAllocator* Allocator);
+    bool Close() const;
+    bool Reset() const;
 
-    ID3D12Device9* Get() const;
-    Adapter const* GetAdapter() const;
-    CommandAllocator const* GetCommandAllocator() const;
-    CommandList const* GetCommandList() const;
-    CommandQueue const* GetCommandQueue() const;
-    RootSignature const* GetRootSignature() const;
-
-    DescriptorHeap* SRVHeap() const;
-    DescriptorHeap* DSVHeap() const;
-
-    u64 MaxSRVDescriptors() const;
+    ID3D12GraphicsCommandList1* Get() const;
 
 private:
-    bool CreateHeaps();
-
-    Microsoft::WRL::ComPtr<ID3D12Device9> m_Device { nullptr };
-    UniquePtr<Adapter> m_Adapter { nullptr };
-    UniquePtr<CommandAllocator> m_CommandAllocator { nullptr };
-    UniquePtr<CommandList> m_CommandList { nullptr };
-    UniquePtr<CommandQueue> m_CommandQueue { nullptr };
-    UniquePtr<RootSignature> m_RootSignature { nullptr };
-
-    UniquePtr<DescriptorHeap> m_DSV { nullptr };
-    UniquePtr<DescriptorHeap> m_SRV { nullptr };
-
-    u32 m_BufferCount { 2 };
-    u32 m_MaxSRVDescriptors { 100 };
+    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList1> m_Commands { nullptr };
+    CommandAllocator* m_Allocator { nullptr };
 };
 
 }
