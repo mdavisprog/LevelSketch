@@ -40,11 +40,38 @@ template<typename T>
 struct Vector3
 {
 public:
+    static const Vector3<T> Zero;
     static const Vector3<T> Up;
+    static const Vector3<T> Right;
+    static const Vector3<T> Forward;
 
     T X { 0 };
     T Y { 0 };
     T Z { 0 };
+
+    Vector3<T>& operator+=(const Vector3<T>& Other)
+    {
+        X += Other.X;
+        Y += Other.Y;
+        Z += Other.Z;
+        return *this;
+    }
+
+    Vector3<T>& operator-=(const Vector3<T>& Other)
+    {
+        X -= Other.X;
+        Y -= Other.Y;
+        Z -= Other.Z;
+        return *this;
+    }
+
+    Vector3<T>& operator*=(const Vector3<T>& Other)
+    {
+        X *= Other.X;
+        Y *= Other.Y;
+        Z *= Other.Z;
+        return *this;
+    }
 
     T Length() const
     {
@@ -79,7 +106,16 @@ public:
 };
 
 template<typename T>
+const Vector3<T> Vector3<T>::Zero { 0, 0, 0 };
+
+template<typename T>
 const Vector3<T> Vector3<T>::Up { 0, 1, 0 };
+
+template<typename T>
+const Vector3<T> Vector3<T>::Right { 1, 0, 0 };
+
+template<typename T>
+const Vector3<T> Vector3<T>::Forward { 0, 0, 1 };
 
 typedef Vector3<f32> Vector3f;
 typedef Vector3<f64> Vector3d; // double
@@ -94,6 +130,12 @@ template<typename T>
 static Vector3<T> operator-(const Vector3<T>& A, const Vector3<T>& B)
 {
     return { A.X - B.X, A.Y - B.Y, A.Z - B.Z };
+}
+
+template<typename T>
+static Vector3<T> operator*(const Vector3<T>& A, T Scalar)
+{
+    return { A.X * Scalar, A.Y * Scalar, A.Z * Scalar };
 }
 
 }
