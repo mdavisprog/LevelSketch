@@ -36,6 +36,9 @@ namespace Math
 {
 
 template<typename T>
+struct Matrix4;
+
+template<typename T>
 struct Vector2;
 
 typedef Vector2<f32> Vector2f;
@@ -46,12 +49,16 @@ struct Vector3;
 
 typedef Vector3<f32> Vector3f;
 
+template<typename T>
+struct Vertex3;
+
 }
 }
 
+using Matrix4f = Core::Math::Matrix4<f32>;
 using Vector2 = Core::Math::Vector2f;
 using Vector2i = Core::Math::Vector2i;
-
 using Vector3 = Core::Math::Vector3f;
+using Vertex3 = Core::Math::Vertex3<f32>;
 
 }

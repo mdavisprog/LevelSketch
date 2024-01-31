@@ -40,6 +40,8 @@ template<typename T>
 struct Vector3
 {
 public:
+    static const Vector3<T> Up;
+
     T X { 0 };
     T Y { 0 };
     T Z { 0 };
@@ -75,6 +77,9 @@ public:
         return { X * Other.X + Y * Other.Y + Z * Other.Z };
     }
 };
+
+template<typename T>
+const Vector3<T> Vector3<T>::Up { 0, 1, 0 };
 
 typedef Vector3<f32> Vector3f;
 typedef Vector3<f64> Vector3d; // double
