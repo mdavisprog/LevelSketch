@@ -28,6 +28,7 @@ SOFTWARE.
 
 #include "../Core/Math/Vector2.hpp"
 #include "../Core/Types.hpp"
+#include "Keyboard.hpp"
 #include "Mouse.hpp"
 
 namespace LevelSketch
@@ -59,6 +60,7 @@ public:
         None,
         MouseMove,
         MouseButton,
+        Key,
     };
 
     //
@@ -77,6 +79,12 @@ public:
         Vector2i Position {};
     };
 
+    struct OnKey
+    {
+        Keyboard::Key Key { Keyboard::Key::None };
+        bool Pressed { false };
+    };
+
     //
     // Union
     //
@@ -85,6 +93,7 @@ public:
     {
         OnMouseMove MouseMove;
         OnMouseButton MouseButton;
+        OnKey Key;
     };
 
     Event()
@@ -101,6 +110,12 @@ public:
         : m_Type(Type::MouseButton)
     {
         m_Data.MouseButton = Data;
+    }
+
+    Event(const OnKey& Data)
+        : m_Type(Type::Key)
+    {
+        m_Data.Key = Data;
     }
 
     Type GetType() const
