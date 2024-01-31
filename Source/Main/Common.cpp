@@ -28,6 +28,8 @@ SOFTWARE.
 #include "../Core/CommandLine.hpp"
 #include "../Core/Console.hpp"
 #include "../Core/Defines.hpp"
+#include "../Core/Math/Matrix.hpp"
+#include "../Core/Math/Vector3.hpp"
 #include "../Engine/Engine.hpp"
 #include "../External/OctaneGUI/OctaneGUI.h"
 #include "../Platform/Debugger.hpp"
@@ -57,6 +59,8 @@ public:
 static OctaneGUI::Application* g_Application { nullptr };
 static std::unordered_map<OctaneGUI::Window*, LevelSketch::Platform::Window*> g_Windows {};
 static Array<UIEvent> g_UIEvents {};
+static Vector3 g_CameraPosition { 0.0f, 0.0f, -20.0f };
+static Vector3 g_CameraDirection { 0.0f, 0.0f, 1.0f };
 
 static OctaneGUI::Mouse::Button Transform(const Platform::Mouse::Button::Type Button)
 {
@@ -139,6 +143,9 @@ static void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Ac
 
                     const Vector2 Scale { Win->ContentScale() };
                     Window->SetRenderScale({ Scale.X, Scale.Y });
+
+                    Render::Renderer::Instance()->UpdateViewMatrix(
+                        Matrix4f::LookAtLH(g_CameraPosition, g_CameraPosition + g_CameraDirection, Vector3::Up));
                 }
                 else
                 {
