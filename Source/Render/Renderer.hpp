@@ -27,6 +27,7 @@ SOFTWARE.
 #pragma once
 
 #include "../Core/Containers/String.hpp"
+#include "../Core/Math/Forwards.hpp"
 #include "../Core/Memory/UniquePtr.hpp"
 
 namespace OctaneGUI
@@ -73,6 +74,9 @@ public:
     virtual void Render(Platform::Window* Window) = 0;
     virtual u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel = 4);
     virtual void UploadGUIData(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer);
+
+    // Temporary
+    virtual void UpdateViewMatrix(const Matrix4f& View);
 
     bool Initialized() const;
     const DriverSummary& Summary() const;

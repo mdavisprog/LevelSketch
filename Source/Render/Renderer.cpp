@@ -81,6 +81,10 @@ void Renderer::UploadGUIData(OctaneGUI::Window*, const OctaneGUI::VertexBuffer&)
 {
 }
 
+void Renderer::UpdateViewMatrix(const Matrix4f&)
+{
+}
+
 bool Renderer::Initialized() const
 {
     return m_Initialized;

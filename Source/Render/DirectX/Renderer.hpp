@@ -74,6 +74,7 @@ public:
     virtual void Render(Platform::Window* Window) override;
     virtual u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel = 4) override;
     virtual void UploadGUIData(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer) override;
+    virtual void UpdateViewMatrix(const Matrix4f& View) override;
 
 private:
     bool LoadAssets(Platform::Window* Window);
