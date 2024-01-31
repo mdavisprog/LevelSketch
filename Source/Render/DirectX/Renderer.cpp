@@ -462,11 +462,10 @@ bool Renderer::LoadAssets(Platform::Window* Window)
 
     // Vertex Buffer
     {
-        const float Offset { 0.25f };
-        const float AspectRatio { Window->AspectRatio() };
-        Vertices[0] = { { 0.0f, Offset * AspectRatio, 5.0f }, { 0.5f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } };
-        Vertices[1] = { { -Offset, -Offset * AspectRatio, 5.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } };
-        Vertices[2] = { { Offset, -Offset * AspectRatio, 5.0f }, { 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } };
+        const float Offset { 1.0f };
+        Vertices[0] = { { 0.0f, Offset, 0.0f }, { 0.5f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } };
+        Vertices[1] = { { -Offset, -Offset, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } };
+        Vertices[2] = { { Offset, -Offset, 0.0f }, { 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } };
 
         m_RenderBuffer.SetStride(sizeof(Vertex3)).UploadVertexData(Vertices, sizeof(Vertices));
     }
