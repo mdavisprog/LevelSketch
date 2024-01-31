@@ -56,7 +56,7 @@ LRESULT Event::WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
     case WM_MOUSEMOVE:
     {
         Platform::Event::OnMouseMove MouseMove { Position(lParam) };
-        EventQueue::Instance().Push({ MouseMove }, Window);
+        EventQueue::Instance().Push(MouseMove, Window);
     }
     break;
 
@@ -79,7 +79,58 @@ LRESULT Event::WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 
         const bool Pressed { Msg == WM_LBUTTONDOWN || Msg == WM_RBUTTONDOWN || Msg == WM_MBUTTONDOWN };
         Platform::Event::OnMouseButton MouseButton { Button, Pressed, Position(lParam) };
-        EventQueue::Instance().Push({ MouseButton }, Window);
+        EventQueue::Instance().Push(MouseButton, Window);
+    }
+    break;
+
+    case WM_KEYDOWN:
+    case WM_KEYUP:
+    {
+        Keyboard::Key Key { Keyboard::Key::None };
+        switch (wParam)
+        {
+        case 0x30: Key = Keyboard::Key::Zero; break;
+        case 0x31: Key = Keyboard::Key::One; break;
+        case 0x32: Key = Keyboard::Key::Two; break;
+        case 0x33: Key = Keyboard::Key::Three; break;
+        case 0x34: Key = Keyboard::Key::Four; break;
+        case 0x35: Key = Keyboard::Key::Five; break;
+        case 0x36: Key = Keyboard::Key::Six; break;
+        case 0x37: Key = Keyboard::Key::Seven; break;
+        case 0x38: Key = Keyboard::Key::Eight; break;
+        case 0x39: Key = Keyboard::Key::Nine; break;
+        case 0x41: Key = Keyboard::Key::A; break;
+        case 0x42: Key = Keyboard::Key::B; break;
+        case 0x43: Key = Keyboard::Key::C; break;
+        case 0x44: Key = Keyboard::Key::D; break;
+        case 0x45: Key = Keyboard::Key::E; break;
+        case 0x46: Key = Keyboard::Key::F; break;
+        case 0x47: Key = Keyboard::Key::G; break;
+        case 0x48: Key = Keyboard::Key::H; break;
+        case 0x49: Key = Keyboard::Key::I; break;
+        case 0x4A: Key = Keyboard::Key::J; break;
+        case 0x4B: Key = Keyboard::Key::K; break;
+        case 0x4C: Key = Keyboard::Key::L; break;
+        case 0x4D: Key = Keyboard::Key::M; break;
+        case 0x4E: Key = Keyboard::Key::N; break;
+        case 0x4F: Key = Keyboard::Key::O; break;
+        case 0x50: Key = Keyboard::Key::P; break;
+        case 0x51: Key = Keyboard::Key::Q; break;
+        case 0x52: Key = Keyboard::Key::R; break;
+        case 0x53: Key = Keyboard::Key::S; break;
+        case 0x54: Key = Keyboard::Key::T; break;
+        case 0x55: Key = Keyboard::Key::U; break;
+        case 0x56: Key = Keyboard::Key::V; break;
+        case 0x57: Key = Keyboard::Key::W; break;
+        case 0x58: Key = Keyboard::Key::X; break;
+        case 0x59: Key = Keyboard::Key::Y; break;
+        case 0x5A: Key = Keyboard::Key::Z; break;
+        default: break;
+        }
+
+        const bool Pressed { Msg == WM_KEYDOWN };
+        const Platform::Event::OnKey OnKey { Key, Pressed };
+        EventQueue::Instance().Push(OnKey, Window);
     }
     break;
 
