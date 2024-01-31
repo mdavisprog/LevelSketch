@@ -61,6 +61,42 @@ static std::unordered_map<OctaneGUI::Window*, LevelSketch::Platform::Window*> g_
 static Array<UIEvent> g_UIEvents {};
 static Vector3 g_CameraPosition { 0.0f, 0.0f, -20.0f };
 static Vector3 g_CameraDirection { 0.0f, 0.0f, 1.0f };
+static Vector3 g_CameraVelocity {};
+static const float g_CameraSpeed { 10.0f };
+
+static void UpdateCamera(f32 DeltaTime)
+{
+    g_CameraPosition += g_CameraVelocity * DeltaTime;
+
+    Render::Renderer::Instance()->UpdateViewMatrix(
+        Matrix4f::LookAtLH(g_CameraPosition, g_CameraPosition + g_CameraDirection, Vector3::Up));
+}
+
+static void HandleKeyEvent(const Platform::Event::OnKey& OnKey)
+{
+    switch (OnKey.Key)
+    {
+    case Platform::Keyboard::Key::A: g_CameraVelocity.X = OnKey.Pressed ? -g_CameraSpeed : 0.0f; break;
+    case Platform::Keyboard::Key::D: g_CameraVelocity.X = OnKey.Pressed ? g_CameraSpeed : 0.0f; break;
+    case Platform::Keyboard::Key::W: g_CameraVelocity.Z = OnKey.Pressed ? g_CameraSpeed : 0.0f; break;
+    case Platform::Keyboard::Key::S: g_CameraVelocity.Z = OnKey.Pressed ? -g_CameraSpeed : 0.0f; break;
+    default: break;
+    }
+}
+
+static void HandleEvent(const Platform::Event& Event)
+{
+    switch (Event.GetType())
+    {
+    case Platform::Event::Type::Key:
+    {
+        HandleKeyEvent(Event.GetData().Key);
+    }
+    break;
+
+    default: break;
+    }
+}
 
 static OctaneGUI::Mouse::Button Transform(const Platform::Mouse::Button::Type Button)
 {
@@ -68,7 +104,7 @@ static OctaneGUI::Mouse::Button Transform(const Platform::Mouse::Button::Type Bu
     {
     case Platform::Mouse::Button::Middle: return OctaneGUI::Mouse::Button::Middle;
     case Platform::Mouse::Button::Right: return OctaneGUI::Mouse::Button::Right;
-    case Platform::Mouse::Button::Left:
+    case Platform::Mouse::Button::Left: return OctaneGUI::Mouse::Button::Left;
     case Platform::Mouse::Button::None:
     default: break;
     }
@@ -143,9 +179,6 @@ static void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Ac
 
                     const Vector2 Scale { Win->ContentScale() };
                     Window->SetRenderScale({ Scale.X, Scale.Y });
-
-                    Render::Renderer::Instance()->UpdateViewMatrix(
-                        Matrix4f::LookAtLH(g_CameraPosition, g_CameraPosition + g_CameraDirection, Vector3::Up));
                 }
                 else
                 {
@@ -238,7 +271,7 @@ static void OnPaint(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Bu
     Render::Renderer::Instance()->UploadGUIData(Window, Buffer);
 }
 
-static bool OnPlatformFrame(const Platform::TimingData&)
+static bool OnPlatformFrame(const Platform::TimingData& TimingData)
 {
     if (!g_Application->IsRunning())
     {
@@ -249,7 +282,10 @@ static bool OnPlatformFrame(const Platform::TimingData&)
     for (const Platform::Event& Event : Events)
     {
         g_UIEvents.Push({ Transform(Event), Event.GetWindow() });
+        HandleEvent(Event);
     }
+
+    UpdateCamera(TimingData.DeltaSeconds);
 
     g_Application->RunFrame();
 
