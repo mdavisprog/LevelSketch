@@ -252,7 +252,7 @@ static inline Matrix4f PerspectiveMatrixLH(f32 FOVAngle, f32 Aspect, f32 Near, f
     };
 }
 
-static inline Matrix4f OrthographicMatrixRH(Rectf Viewport, f32 Near, f32 Far)
+static inline Matrix4f OrthographicMatrixLH(Rectf Viewport, f32 Near, f32 Far)
 {
     const f32 L { Viewport.Left() };
     const f32 R { Viewport.Right() };
@@ -263,10 +263,10 @@ static inline Matrix4f OrthographicMatrixRH(Rectf Viewport, f32 Near, f32 Far)
     const f32 Range { 1.0f / (Near - Far) };
     return
     {
-        2.0f * ReciprocalWidth, 0.0f, 0.0f, -(L + R) * ReciprocalWidth,
-        0.0f, 2.0f * ReciprocalHeight, 0.0f, -(T + B) * ReciprocalHeight,
-        0.0f, 0.0f, Range, Range * Near,
-        0.0f, 0.0f, 0.0f, 1.0f
+        2.0f * ReciprocalWidth, 0.0f, 0.0f, 0.0f,
+        0.0f, 2.0f * ReciprocalHeight, 0.0f, 0.0f,
+        0.0f, 0.0f, Range, 0.0f,
+        -(L + R) * ReciprocalWidth, -(T + B) * ReciprocalHeight, Range * Near, 1.0f
     };
 }
 
