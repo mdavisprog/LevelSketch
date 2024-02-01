@@ -43,8 +43,8 @@ PSInput Main(float4 position : POSITION, float2 uv : TEXCOORD, float4 color : CO
 {
     PSInput result;
 
-    float4x4 MVP = mul(Model, mul(View, Perspective));
-    result.position = mul(float4(position.xyz, 1.0), MVP);
+    float4x4 MVP = mul(Perspective, mul(View, Model));
+    result.position = mul(MVP, float4(position.xyz, 1.0));
     result.uv = uv;
     result.color = color;
 
