@@ -78,6 +78,14 @@ public:
         return *this;
     }
 
+    Vector3<T>& operator*=(T Scalar)
+    {
+        X *= Scalar;
+        Y *= Scalar;
+        Z *= Scalar;
+        return *this;
+    }
+
     T Length() const
     {
         return Sqrt(X * X + Y * Y + Z * Z);
@@ -107,6 +115,26 @@ public:
     T Dot(const Vector3<T>& Other) const
     {
         return { X * Other.X + Y * Other.Y + Z * Other.Z };
+    }
+
+    Vector3<T>& Clamp(T Length)
+    {
+        T Current { X * X + Y * Y + Z * Z };
+
+        if (Current > 0)
+        {
+            Current = Sqrt<T>(Current);
+
+            if (Current > Length)
+            {
+                const T Scale { Length / Current };
+                X *= Scale;
+                Y *= Scale;
+                Z *= Scale;
+            }
+        }
+
+        return *this;
     }
 };
 

@@ -28,8 +28,7 @@ SOFTWARE.
 #include "../Core/CommandLine.hpp"
 #include "../Core/Console.hpp"
 #include "../Core/Defines.hpp"
-#include "../Core/Math/Matrix.hpp"
-#include "../Core/Math/Vector3.hpp"
+#include "../Engine/Camera.hpp"
 #include "../Engine/Engine.hpp"
 #include "../External/OctaneGUI/OctaneGUI.h"
 #include "../Platform/Debugger.hpp"
@@ -59,28 +58,33 @@ public:
 static OctaneGUI::Application* g_Application { nullptr };
 static std::unordered_map<OctaneGUI::Window*, LevelSketch::Platform::Window*> g_Windows {};
 static Array<UIEvent> g_UIEvents {};
-static Vector3 g_CameraPosition { 0.0f, 0.0f, -20.0f };
-static Vector3 g_CameraDirection { 0.0f, 0.0f, 1.0f };
-static Vector3 g_CameraVelocity {};
-static const float g_CameraSpeed { 10.0f };
+static Engine::Camera g_Camera { { 0.0f, 0.0f, -20.0f } };
 
 static void UpdateCamera(f32 DeltaTime)
 {
-    g_CameraPosition += g_CameraVelocity * DeltaTime;
-
-    Render::Renderer::Instance()->UpdateViewMatrix(
-        Matrix4f::LookAtLH(g_CameraPosition, g_CameraPosition + g_CameraDirection, Vector3::Up));
+    g_Camera.Update(DeltaTime);
+    Render::Renderer::Instance()->UpdateViewMatrix(g_Camera.ToViewMatrix());
 }
 
 static void HandleKeyEvent(const Platform::Event::OnKey& OnKey)
 {
+    u8 Flags { Engine::Camera::Movement::None };
     switch (OnKey.Key)
     {
-    case Platform::Keyboard::Key::A: g_CameraVelocity.X = OnKey.Pressed ? -g_CameraSpeed : 0.0f; break;
-    case Platform::Keyboard::Key::D: g_CameraVelocity.X = OnKey.Pressed ? g_CameraSpeed : 0.0f; break;
-    case Platform::Keyboard::Key::W: g_CameraVelocity.Z = OnKey.Pressed ? g_CameraSpeed : 0.0f; break;
-    case Platform::Keyboard::Key::S: g_CameraVelocity.Z = OnKey.Pressed ? -g_CameraSpeed : 0.0f; break;
+    case Platform::Keyboard::Key::A: Flags |= Engine::Camera::Movement::Left; break;
+    case Platform::Keyboard::Key::D: Flags |= Engine::Camera::Movement::Right; break;
+    case Platform::Keyboard::Key::W: Flags |= Engine::Camera::Movement::Forward; break;
+    case Platform::Keyboard::Key::S: Flags |= Engine::Camera::Movement::Backward; break;
     default: break;
+    }
+
+    if (OnKey.Pressed)
+    {
+        g_Camera.SetMovement(Flags);
+    }
+    else
+    {
+        g_Camera.ClearMovement(Flags);
     }
 }
 

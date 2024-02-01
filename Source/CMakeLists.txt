@@ -36,6 +36,7 @@ set(SOURCE
     Core/CommandLine.cpp
     Core/Console.cpp
 
+    Engine/Camera.cpp
     Engine/Engine.cpp
     Engine/Type.cpp
     Engine/TypeDatabase.cpp
