@@ -59,6 +59,8 @@ static OctaneGUI::Application* g_Application { nullptr };
 static std::unordered_map<OctaneGUI::Window*, LevelSketch::Platform::Window*> g_Windows {};
 static Array<UIEvent> g_UIEvents {};
 static Engine::Camera g_Camera { { 0.0f, 0.0f, -20.0f } };
+static bool g_RotateCmaera { false };
+static Vector2i m_LastMousePos {};
 
 static void UpdateCamera(f32 DeltaTime)
 {
@@ -95,6 +97,29 @@ static void HandleEvent(const Platform::Event& Event)
     case Platform::Event::Type::Key:
     {
         HandleKeyEvent(Event.GetData().Key);
+    }
+    break;
+
+    case Platform::Event::Type::MouseButton:
+    {
+        if (Event.GetData().MouseButton.Button == Platform::Mouse::Button::Left)
+        {
+            g_RotateCmaera = Event.GetData().MouseButton.Pressed;
+        }
+    }
+    break;
+
+    case Platform::Event::Type::MouseMove:
+    {
+        const Vector2i MousePos { Event.GetData().MouseMove.Position };
+        const Vector2i MouseDelta { MousePos - m_LastMousePos };
+
+        if (g_RotateCmaera)
+        {
+            g_Camera.Yaw(static_cast<f32>(MouseDelta.X)).Pitch(static_cast<f32>(-MouseDelta.Y));
+        }
+
+        m_LastMousePos = MousePos;
     }
     break;
 
