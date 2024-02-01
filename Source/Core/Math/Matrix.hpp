@@ -83,6 +83,51 @@ public:
         };
     }
 
+    static Matrix4<T> RotationX(T Angle)
+    {
+        const T Theta { Angle * DEG2RAD };
+        const T Cosine { Cos<T>(Theta) };
+        const T Sine { Sin<T>(Theta) };
+        
+        return
+        {
+            1, 0, 0, 0,
+            0, Cosine, -Sine, 0,
+            0, Sine, Cosine, 0,
+            0, 0, 0, 1
+        };
+    }
+
+    static Matrix4<T> RotationY(T Angle)
+    {
+        const T Theta { Angle * DEG2RAD };
+        const T Cosine { Cos<T>(Theta) };
+        const T Sine { Sin<T>(Theta) };
+        
+        return
+        {
+            Cosine, 0, Sine, 0,
+            0, 1, 0, 0,
+            -Sine, 0, Cosine, 0,
+            0, 0, 0, 1
+        };
+    }
+
+    static Matrix4<T> RotationZ(T Angle)
+    {
+        const T Theta { Angle * DEG2RAD };
+        const T Cosine { Cos<T>(Theta) };
+        const T Sine { Sin<T>(Theta) };
+        
+        return
+        {
+            Cosine, -Sine, 0, 0,
+            Sine, Cosine, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        };
+    }
+
     static Matrix4<T> LookAtLH(const Vector3<T>& Eye, const Vector3<T>& Center, const Vector3<T>& Up)
     {
         const Vector3<T> Forward { (Center - Eye).Normalize() };

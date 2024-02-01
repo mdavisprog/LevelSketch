@@ -26,7 +26,7 @@ SOFTWARE.
 
 #pragma once
 
-#include "../Core/Math/Matrix.hpp"
+#include "../Core/Math/Rotation.hpp"
 
 namespace LevelSketch
 {
@@ -59,17 +59,21 @@ public:
 
     Camera& SetSpeed(f32 Speed);
 
+    Camera& Pitch(f32 Delta);
+    Camera& Yaw(f32 Delta);
+
     Matrix4f ToViewMatrix() const;
 
     Camera& Update(float DeltaTime);
 
 private:
     Vector3 m_Position {};
-    Vector3 m_Direction { Vector3::Forward };
+    Rotation m_Rotation {};
     Vector3 m_Velocity {};
     u8 m_Movement { Movement::None };
     f32 m_Speed { 2.0f };
     f32 m_MaxSpeed { 20.0f };
+    f32 m_RotationSpeed { 0.05f };
 };
 
 }

@@ -69,9 +69,21 @@ Camera& Camera::SetSpeed(f32 Speed)
     return *this;
 }
 
+Camera& Camera::Pitch(f32 Delta)
+{
+    m_Rotation.AddPitch(Delta * m_RotationSpeed);
+    return *this;
+}
+
+Camera& Camera::Yaw(f32 Delta)
+{
+    m_Rotation.AddYaw(Delta * m_RotationSpeed);
+    return *this;
+}
+
 Matrix4f Camera::ToViewMatrix() const
 {
-    return Matrix4f::LookAtLH(m_Position, m_Position + m_Direction, Vector3::Up);
+    return Matrix4f::LookAtLH(m_Position, m_Position + m_Rotation.ToMatrix() * Vector3::Forward, Vector3::Up);
 }
 
 Camera& Camera::Update(float DeltaTime)
@@ -97,7 +109,7 @@ Camera& Camera::Update(float DeltaTime)
     }
 
     m_Velocity.Clamp(m_MaxSpeed);
-    m_Position += m_Velocity * DeltaTime;
+    m_Position += m_Rotation.ToMatrix() * m_Velocity * DeltaTime;
     m_Velocity *= 0.9f;
 
     return *this;

@@ -27,6 +27,7 @@ SOFTWARE.
 #include "../../Core/Math/Math.hpp"
 #include "../../Core/Math/Color.hpp"
 #include "../../Core/Math/Matrix.hpp"
+#include "../../Core/Math/Rotation.hpp"
 #include "../../Core/Math/Vector2.hpp"
 #include "../../Core/Math/Vector3.hpp"
 #include "../TestSuite.hpp"
@@ -210,6 +211,14 @@ static bool Scale()
 }
 // clang-format on
 
+static bool RotationToVector()
+{
+    VERIFY((Rotation {}.ToMatrix() * Vector3::Forward) == Vector3::Forward);
+    VERIFY((Rotation { 0.0f, 90.0f, 0.0f }.ToMatrix() * Vector3::Forward) == Vector3::Right);
+    VERIFY((Rotation { 90.0f, 0.0f, 0.0f }.ToMatrix() * Vector3::Forward) == Vector3::Up);
+    return true;
+}
+
 UniquePtr<TestSuite> MathTests()
 {
     return TestSuite::New("Math",
@@ -224,7 +233,8 @@ UniquePtr<TestSuite> MathTests()
             TEST_CASE(Matrix::Multiply),
             TEST_CASE(Matrix::Transpose),
             TEST_CASE(Matrix::Translation),
-            TEST_CASE(Matrix::Scale) });
+            TEST_CASE(Matrix::Scale),
+            TEST_CASE(RotationToVector) });
 }
 
 }
