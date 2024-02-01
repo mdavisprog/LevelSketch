@@ -96,7 +96,7 @@ static Array<u8> GenerateTexture(u32 Width, u32 Height)
 static Matrix4f Orthographic(Platform::Window* Window)
 {
     const Rectf Bounds { 0.0f, 0.0f, static_cast<f32>(Window->Size().X), static_cast<f32>(Window->Size().Y) };
-    return Core::Math::OrthographicMatrixRH(Bounds, -1.0f, 1.0f).Transpose();
+    return Core::Math::OrthographicMatrixLH(Bounds, -1.0f, 1.0f);
 }
 
 Renderer::Renderer()
