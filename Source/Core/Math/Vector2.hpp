@@ -43,6 +43,24 @@ public:
     T Y { 0 };
 };
 
+template<typename T>
+static inline Vector2<T> operator+(const Vector2<T>& A, const Vector2<T>& B)
+{
+    return { A.X + B.X, A.Y + B.Y };
+}
+
+template<typename T>
+static inline Vector2<T> operator-(const Vector2<T>& A, const Vector2<T>& B)
+{
+    return { A.X - B.X, A.Y - B.Y };
+}
+
+template<typename T>
+static inline Vector2<T> operator*(const Vector2<T>& A, const Vector2<T>& B)
+{
+    return { A.X * B.X, A.Y * B.Y };
+}
+
 typedef Vector2<i32> Vector2i;
 typedef Vector2<f32> Vector2f;
 

@@ -40,11 +40,6 @@ namespace Tests
 namespace Core
 {
 
-static bool IsNearlyEqual(f32 A, f32 B, f32 Precision = 1e-7f)
-{
-    return Absf(A - B) <= Precision;
-}
-
 static bool CommonOps()
 {
     VERIFY(Abs(-5) == 5);
@@ -56,7 +51,7 @@ static bool CommonOps()
 
     constexpr const f32 Angle { 90.0f * DEG2RAD };
     VERIFY(Sin<f32>(Angle) == 1.0f);
-    VERIFY(IsNearlyEqual(Cos<f32>(Angle), 0.0f));
+    VERIFY(LevelSketch::Core::Math::IsNearlyEqual(Cos<f32>(Angle), 0.0f));
     VERIFY(FMod<f32>(4.0f, 4.0f) == 0.0f);
     return true;
 }

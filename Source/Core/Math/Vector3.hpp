@@ -51,7 +51,7 @@ public:
 
     bool operator==(const Vector3<T>& Other) const
     {
-        return X == Other.X && Y == Other.Y && Z == Other.Z;
+        return IsNearlyEqual(X, Other.X) && IsNearlyEqual(Y, Other.Y) && IsNearlyEqual(Z, Other.Z);
     }
 
     Vector3<T>& operator+=(const Vector3<T>& Other)
@@ -154,19 +154,25 @@ typedef Vector3<f32> Vector3f;
 typedef Vector3<f64> Vector3d; // double
 
 template<typename T>
-static Vector3<T> operator+(const Vector3<T>& A, const Vector3<T>& B)
+static inline Vector3<T> operator+(const Vector3<T>& A, const Vector3<T>& B)
 {
     return { A.X + B.X, A.Y + B.Y, A.Z + B.Z };
 }
 
 template<typename T>
-static Vector3<T> operator-(const Vector3<T>& A, const Vector3<T>& B)
+static inline Vector3<T> operator-(const Vector3<T>& A, const Vector3<T>& B)
 {
     return { A.X - B.X, A.Y - B.Y, A.Z - B.Z };
 }
 
 template<typename T>
-static Vector3<T> operator*(const Vector3<T>& A, T Scalar)
+static inline Vector3<T> operator*(const Vector3<T>& A, const Vector3<T>& B)
+{
+    return { A.X * B.X, A.Y * B.Y, A.Z * B.Z };
+}
+
+template<typename T>
+static inline Vector3<T> operator*(const Vector3<T>& A, T Scalar)
 {
     return { A.X * Scalar, A.Y * Scalar, A.Z * Scalar };
 }

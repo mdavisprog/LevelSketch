@@ -53,6 +53,11 @@ static constexpr f32 Absf(f32 Value)
     return Value < 0.0f ? Value * -1.0f : Value;
 }
 
+static constexpr bool IsNearlyEqual(f32 A, f32 B, f32 Epsilon = 1e-7f)
+{
+    return Absf(A - B) <= Epsilon;
+}
+
 template<typename T>
 static constexpr T Min(const T& A, const T& B)
 {
