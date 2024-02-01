@@ -30,6 +30,7 @@ SOFTWARE.
 #include "Math.hpp"
 #include "Rect.hpp"
 #include "Vector3.hpp"
+#include "Vector4.hpp"
 
 #include <initializer_list>
 
@@ -41,13 +42,46 @@ namespace Math
 {
 // clang-format off
 
-// ROW-MAJOR
+// COLUMN-MAJOR
 template<typename T>
 struct Matrix4
 {
 public:
     static Matrix4<T> Identity;
     static Matrix4<T> Zero;
+
+    static Matrix4<T> Translation(const Vector3<T>& Translate)
+    {
+        return
+        {
+            1, 0, 0, Translate.X,
+            0, 1, 0, Translate.Y,
+            0, 0, 1, Translate.Z,
+            0, 0, 0, 1
+        };
+    }
+
+    static Matrix4<T> Scale(T Scalar)
+    {
+        return
+        {
+            Scalar, 0, 0, 0,
+            0, Scalar, 0, 0,
+            0, 0, Scalar, 0,
+            0, 0, 0, 1
+        };
+    }
+
+    static Matrix4<T> Scale(const Vector3<T>& Scale)
+    {
+        return
+        {
+            Scale.X, 0, 0, 0,
+            0, Scale.Y, 0, 0,
+            0, 0, Scale.Z, 0,
+            0, 0, 0, 1
+        };
+    }
 
     static Matrix4<T> LookAtLH(const Vector3<T>& Eye, const Vector3<T>& Center, const Vector3<T>& Up)
     {
@@ -117,52 +151,14 @@ public:
         };
     }
 
-    Matrix4<T> RotateX(T Angle) const
+    Vector4<T> Row(u32 Index) const
     {
-        const T CosRad { Cos<T>(Angle * DEG2RAD) };
-        const T SinRad { Sin<T>(Angle * DEG2RAD) };
-
-        Matrix4<T> Rotation
-        {
-            1, 0, 0, 0,
-            0, CosRad, -SinRad, 0,
-            0, SinRad, CosRad, 0,
-            0, 0, 0, 1
-        };
-
-        return *this * Rotation;
+        return { Data[Index * 4], Data[Index * 4 + 1], Data[Index * 4 + 2], Data[Index * 4 + 3] };
     }
 
-    Matrix4<T> RotateY(T Angle) const
+    Vector4<T> Column(u32 Index) const
     {
-        const T CosRad { Cos<T>(Angle * DEG2RAD) };
-        const T SinRad { Sin<T>(Angle * DEG2RAD) };
-
-        Matrix4<T> Rotation
-        {
-            CosRad, 0, SinRad, 0,
-            0, 1, 0, 0,
-            -SinRad, 0, CosRad, 0,
-            0, 0, 0, 1
-        };
-
-        return *this * Rotation;
-    }
-
-    Matrix4<T> RotateZ(T Angle) const
-    {
-        const T CosRad { Cos<T>(Angle * DEG2RAD) };
-        const T SinRad { Sin<T>(Angle * DEG2RAD) };
-
-        Matrix4<T> Rotation
-        {
-            CosRad, -SinRad, 0, 0,
-            SinRad, CosRad, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1
-        };
-
-        return *this * Rotation;
+        return { Data[Index], Data[Index + (1 * 4)], Data[Index + (2 * 4)], Data[Index + (3 * 4)] };
     }
 };
 
@@ -178,29 +174,27 @@ Matrix4<T> Matrix4<T>::Identity
 template<typename T>
 Matrix4<T> Matrix4<T>::Zero { 0 };
 
-typedef Matrix4<f32> Matrix4f;
-
 template<typename T>
-static inline Matrix4<T> operator*(const Matrix4<T>& A, T Scalar)
+static inline Matrix4<T> operator+(const Matrix4<T>& A, const Matrix4<T>& B)
 {
-    Matrix4<T> Result {};
+    Matrix4<T> Result;
 
     for (u32 I = 0; I < 16; I++)
     {
-        Result[I] = A[I] * Scalar;
+        Result[I] = A[I] + B[I];
     }
 
     return Result;
 }
 
 template<typename T>
-static inline Matrix4<T> operator*(T Scalar, const Matrix4<T>& A)
+static inline Matrix4<T> operator-(const Matrix4<T>& A, const Matrix4<T>& B)
 {
-    Matrix4<T> Result {};
+    Matrix4<T> Result;
 
     for (u32 I = 0; I < 16; I++)
     {
-        Result[I] = Scalar * A[I];
+        Result[I] = A[I] - B[I];
     }
 
     return Result;
@@ -230,6 +224,20 @@ static inline Matrix4<T> operator*(const Matrix4<T>& A, const Matrix4<T>& B)
     return Result;
 }
 
+template<typename T>
+static inline Vector3<T> operator*(const Matrix4<T>& A, const Vector3<T>& Vec)
+{
+    return
+    {
+        A[0] * Vec.X + A[1] * Vec.Y + A[2] * Vec.Z + A[3],
+        A[4] * Vec.X + A[5] * Vec.Y + A[6] * Vec.Z + A[7],
+        A[8] * Vec.X + A[9] * Vec.Y + A[10] * Vec.Z + A[11]
+    };
+}
+
+typedef Matrix4<f32> Matrix4f;
+
+// Uses clip space depth of [0, 1]. This seems to be the standard across DirectX, Metal, and Vulkan.
 static inline Matrix4f PerspectiveMatrixLH(f32 FOVAngle, f32 Aspect, f32 Near, f32 Far)
 {
     const f32 FOVRad { FOVAngle * DEG2RAD };

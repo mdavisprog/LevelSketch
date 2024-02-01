@@ -95,55 +95,125 @@ static bool ColorOps()
     return true;
 }
 
-static bool MatrixOps()
+// clang-format off
+namespace Matrix
 {
-    Matrix4f Instance {};
-    for (i32 I = 0; I < 16; I++)
-    {
-        VERIFY(Instance[I] == 0.0f);
-    }
 
-    // clang-format off
-    const Matrix4f Identity {
+static const Matrix4f Ascending
+{
+    1.0f, 2.0f, 3.0f, 4.0f,
+    5.0f, 6.0f, 7.0f, 8.0f,
+    9.0f, 10.0f, 11.0f, 12.0f,
+    13.0f, 14.0f, 15.0f, 16.0f
+};
+
+static const Matrix4f Descending
+{
+    16.0f, 15.0f, 14.0f, 13.0f,
+    12.0f, 11.0f, 10.0f, 9.0f,
+    8.0f, 7.0f, 6.0f, 5.0f,
+    4.0f, 3.0f, 2.0f, 1.0f
+};
+
+static bool Identity()
+{
+    const Matrix4f A
+    {
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 1.0f
     };
 
-    Instance = Matrix4f::Identity;
-    VERIFY(Instance == Identity);
+    VERIFY(A == Matrix4f::Identity);
 
-    Instance = {
-        1.0f, 2.0f, 3.0f, 4.0f,
-        5.0f, 6.0f, 7.0f, 8.0f,
-        9.0f, 10.0f, 11.0f, 12.0f,
-        13.0f, 14.0f, 15.0f, 16.0f
-    };
-    VERIFY(Instance.Transpose() == Matrix4f({
-        1.0f, 5.0f, 9.0f, 13.0f,
-        2.0f, 6.0f, 10.0f, 14.0f,
-        3.0f, 7.0f, 11.0f, 15.0f,
-        4.0f, 8.0f, 12.0f, 16.0f
+    return true;
+}
+
+static bool RowColumnAccess()
+{
+    VERIFY(Ascending.Row(0) == (Vector4{1.0f, 2.0f, 3.0f, 4.0f}));
+    VERIFY(Ascending.Row(1) == (Vector4{5.0f, 6.0f, 7.0f, 8.0f}));
+    VERIFY(Ascending.Row(2) == (Vector4{9.0f, 10.0f, 11.0f, 12.0f}));
+    VERIFY(Ascending.Row(3) == (Vector4{13.0f, 14.0f, 15.0f, 16.0f}));
+    VERIFY(Ascending.Column(0) == (Vector4{1.0f, 5.0f, 9.0f, 13.0f}));
+    VERIFY(Ascending.Column(1) == (Vector4{2.0f, 6.0f, 10.0f, 14.0f}));
+    VERIFY(Ascending.Column(2) == (Vector4{3.0f, 7.0f, 11.0f, 15.0f}));
+    VERIFY(Ascending.Column(3) == (Vector4{4.0f, 8.0f, 12.0f, 16.0f}));
+    return true;
+}
+
+static bool Add()
+{
+    VERIFY(Ascending + Ascending == (Matrix4f
+    {
+        2.0f, 4.0f, 6.0f, 8.0f,
+        10.0f, 12.0f, 14.0f, 16.0f,
+        18.0f, 20.0f, 22.0f, 24.0f,
+        26.0f, 28.0f, 30.0f, 32.0f
     }));
+    return true;
+}
 
-    Matrix4f B = {
-        16.0f, 15.0f, 14.0f, 13.0f,
-        12.0f, 11.0f, 10.0f, 9.0f,
-        8.0f, 7.0f, 6.0f, 5.0f,
-        4.0f, 3.0f, 2.0f, 1.0f
-    };
+static bool Subtract()
+{
+    VERIFY(Ascending - Descending == (Matrix4f
+    {
+        -15.0f, -13.0f, -11.0f, -9.0f,
+        -7.0f, -5.0f, -3.0f, -1.0f,
+        1.0f, 3.0f, 5.0f, 7.0f,
+        9.0f, 11.0f, 13.0f, 15.0f
+    }))
+    return true;
+}
 
-    VERIFY(Instance * B == Matrix4f({
+static bool Multiply()
+{
+    VERIFY(Ascending * Descending == (Matrix4f
+    {
         80.0f, 70.0f, 60.0f, 50.0f,
         240.0f, 214.0f, 188.0f, 162.0f,
         400.0f, 358.0f, 316.0f, 274.0f,
         560.0f, 502.0f, 444.0f, 386.0f
     }));
-    // clang-format on
-
+    VERIFY(Descending * Ascending == (Matrix4f
+    {
+        386.0f, 444.0f, 502.0f, 560.0f,
+        274.0f, 316.0f, 358.0f, 400.0f,
+        162.0f, 188.0f, 214.0f, 240.0f,
+        50.0f, 60.0f, 70.0f, 80.0f
+    }));
     return true;
 }
+
+static bool Transpose()
+{
+    VERIFY(Ascending.Transpose() == (Matrix4f
+    {
+        1.0f, 5.0f, 9.0f, 13.0f,
+        2.0f, 6.0f, 10.0f, 14.0f,
+        3.0f, 7.0f, 11.0f, 15.0f,
+        4.0f, 8.0f, 12.0f, 16.0f
+    }));
+    return true;
+}
+
+static bool Translation()
+{
+    const Matrix4f A { Matrix4f::Translation({1.0f, 2.0f, 3.0f}) };
+    VERIFY(A * (Vector3{1.0f, 2.0f, 3.0f}) == (Vector3{2.0f, 4.0f, 6.0f}));
+    return true;
+}
+
+static bool Scale()
+{
+    const Matrix4f A { Matrix4f::Scale(2.0f) };
+    VERIFY(A * (Vector3{1.0f, 2.0f, 3.0f}) == (Vector3{2.0f, 4.0f, 6.0f}));
+    return true;
+}
+
+}
+// clang-format on
 
 UniquePtr<TestSuite> MathTests()
 {
@@ -152,7 +222,14 @@ UniquePtr<TestSuite> MathTests()
             TEST_CASE(Vector2Ops),
             TEST_CASE(Vector3Ops),
             TEST_CASE(ColorOps),
-            TEST_CASE(MatrixOps) });
+            TEST_CASE(Matrix::Identity),
+            TEST_CASE(Matrix::RowColumnAccess),
+            TEST_CASE(Matrix::Add),
+            TEST_CASE(Matrix::Subtract),
+            TEST_CASE(Matrix::Multiply),
+            TEST_CASE(Matrix::Transpose),
+            TEST_CASE(Matrix::Translation),
+            TEST_CASE(Matrix::Scale) });
 }
 
 }

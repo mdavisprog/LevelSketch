@@ -49,6 +49,11 @@ public:
     T Y { 0 };
     T Z { 0 };
 
+    bool operator==(const Vector3<T>& Other) const
+    {
+        return X == Other.X && Y == Other.Y && Z == Other.Z;
+    }
+
     Vector3<T>& operator+=(const Vector3<T>& Other)
     {
         X += Other.X;
