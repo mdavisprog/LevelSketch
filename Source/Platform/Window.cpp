@@ -25,6 +25,8 @@ SOFTWARE.
 */
 
 #include "Window.hpp"
+#include "../Core/Math/Rect.hpp"
+#include "../Core/Math/Vector2.hpp"
 
 namespace LevelSketch
 {
@@ -38,7 +40,7 @@ Vector2 Window::ContentScale() const
 
 f32 Window::AspectRatio() const
 {
-    const Core::Math::Vector2i Size { this->Size() };
+    const Vector2i Size { this->Size() };
 
     if (Size.Y == 0.0f)
     {
@@ -46,6 +48,13 @@ f32 Window::AspectRatio() const
     }
 
     return (f32)Size.X / (f32)Size.Y;
+}
+
+Recti Window::Bounds() const
+{
+    const Vector2i Position { this->Position() };
+    const Vector2i Size { this->Size() };
+    return { Position.X, Position.Y, Size.X, Size.Y };
 }
 
 }

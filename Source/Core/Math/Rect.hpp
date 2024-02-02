@@ -27,6 +27,7 @@ SOFTWARE.
 #pragma once
 
 #include "../Types.hpp"
+#include "Vector2.hpp"
 
 namespace LevelSketch
 {
@@ -59,6 +60,11 @@ public:
     T Bottom() const
     {
         return Y + H;
+    }
+
+    bool Contains(const Vector2<T>& Point) const
+    {
+        return X < Point.X && Point.X < Right() && Y < Point.Y && Point.Y < Bottom();
     }
 };
 

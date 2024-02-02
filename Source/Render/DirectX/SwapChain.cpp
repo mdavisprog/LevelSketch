@@ -26,6 +26,7 @@ SOFTWARE.
 
 #include "SwapChain.hpp"
 #include "../../Core/Console.hpp"
+#include "../../Core/Math/Vector2.hpp"
 #include "../../Platform/Window.hpp"
 #include "../../Platform/Windows/Errors.hpp"
 #include "Adapter.hpp"

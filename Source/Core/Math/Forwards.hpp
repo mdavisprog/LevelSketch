@@ -36,6 +36,12 @@ namespace Math
 {
 
 template<typename T>
+struct Rect;
+
+typedef Rect<f32> Rectf;
+typedef Rect<i32> Recti;
+
+template<typename T>
 struct Matrix4;
 
 template<typename T>
@@ -55,6 +61,8 @@ struct Vertex3;
 }
 }
 
+using Rectf = Core::Math::Rectf;
+using Recti = Core::Math::Recti;
 using Matrix4f = Core::Math::Matrix4<f32>;
 using Vector2 = Core::Math::Vector2f;
 using Vector2i = Core::Math::Vector2i;

@@ -26,7 +26,7 @@ SOFTWARE.
 
 #pragma once
 
-#include "../Core/Math/Vector2.hpp"
+#include "../Core/Math/Forwards.hpp"
 #include "../Core/Types.hpp"
 
 namespace LevelSketch
@@ -56,6 +56,7 @@ public:
     virtual bool IsOpen() const = 0;
 
     f32 AspectRatio() const;
+    Recti Bounds() const;
 };
 
 }
