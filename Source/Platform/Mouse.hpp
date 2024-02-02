@@ -26,10 +26,14 @@ SOFTWARE.
 
 #pragma once
 
+#include "../Core/Math/Forwards.hpp"
+
 namespace LevelSketch
 {
 namespace Platform
 {
+
+class Window;
 
 class Mouse
 {
@@ -48,6 +52,9 @@ public:
     static void Show();
     static void Hide();
     static bool IsVisible();
+
+    static void SetPosition(const Vector2i& Position);
+    static void SetPosition(Window* Target, const Vector2i& Position);
 
 private:
     Mouse();

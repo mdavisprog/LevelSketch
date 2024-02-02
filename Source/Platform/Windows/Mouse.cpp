@@ -27,7 +27,9 @@ SOFTWARE.
 #pragma once
 
 #include "../Mouse.hpp"
+#include "../../Core/Math/Vector2.hpp"
 #include "Common.hpp"
+#include "Window.hpp"
 
 namespace LevelSketch
 {
@@ -61,6 +63,19 @@ bool Mouse::IsVisible()
     }
 
     return Info.flags & CURSOR_SHOWING;
+}
+
+void Mouse::SetPosition(const Vector2i& Position)
+{
+    SetCursorPos(Position.X, Position.Y);
+}
+
+void Mouse::SetPosition(Window* Target, const Vector2i& Position)
+{
+    const HWND hTarget { reinterpret_cast<HWND>(Target->Handle()) };
+    POINT Point { Position.X, Position.Y };
+    ClientToScreen(hTarget, &Point);
+    SetPosition({ Point.x, Point.y });
 }
 
 }
