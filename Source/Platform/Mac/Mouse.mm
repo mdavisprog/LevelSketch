@@ -24,47 +24,35 @@ SOFTWARE.
 
 */
 
-struct RasterizerData
+#include "../Mouse.hpp"
+#include "../../Core/Math/Vector2.hpp"
+#include "../Window.hpp"
+
+namespace LevelSketch
 {
-    float4 Position [[position]];
-    float2 UV;
-    float4 Color;
-};
-
-struct Vertex2
+namespace Platform
 {
-    float2 Position [[ attribute(0) ]];
-    float2 UV [[ attribute(1) ]];
-    uchar4 Color [[ attribute(2) ]];
-};
 
-struct Uniforms
+void Mouse::Show()
 {
-    metal::float4x4 Model;
-    metal::float4x4 View;
-    metal::float4x4 Perspective;
-    metal::float4x4 Orthographic;
-};
-
-vertex RasterizerData VertexMain(Vertex2 Vertex [[ stage_in ]], constant Uniforms& Uniforms_ [[ buffer(1) ]])
-{
-    RasterizerData Out;
-
-    Out.Position = Uniforms_.Orthographic * float4(Vertex.Position, 0.0, 1.0);
-    Out.UV = Vertex.UV;
-    Out.Color = float4(Vertex.Color) / float4(255.0);
-
-    return Out;
 }
 
-fragment half4 PixelMain(RasterizerData Data [[stage_in]], metal::texture2d<half, metal::access::sample> Texture [[ texture(0) ]])
+void Mouse::Hide()
 {
-    constexpr metal::sampler LinearSampler(
-        metal::coord::normalized,
-        metal::min_filter::linear,
-        metal::mag_filter::linear,
-        metal::mip_filter::linear
-    );
-    half4 TexColor = Texture.sample(LinearSampler, Data.UV);
-    return half4(Data.Color) * TexColor;
+}
+
+bool Mouse::IsVisible()
+{
+    return true;
+}
+
+void Mouse::SetPosition(const Vector2i&)
+{
+}
+
+void Mouse::SetPosition(Window*, const Vector2i&)
+{
+}
+
+}
 }

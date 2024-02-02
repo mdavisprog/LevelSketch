@@ -26,6 +26,7 @@ SOFTWARE.
 
 #include "Window.hpp"
 #include "../../Core/Assert.hpp"
+#include "../../Core/Math/Vector2.hpp"
 #include "Platform.hpp"
 #include "WindowBridge.hpp"
 

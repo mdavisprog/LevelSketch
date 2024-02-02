@@ -66,7 +66,7 @@ struct Uniforms
 {
     Matrix4f Model { Matrix4f::Identity };
     Matrix4f View { Matrix4f::Identity };
-    Matrix4f Projection { Matrix4f::Identity };
+    Matrix4f Perspective { Matrix4f::Identity };
     Matrix4f Orthographic { Matrix4f::Identity };
 };
 

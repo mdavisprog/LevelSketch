@@ -203,9 +203,8 @@ bool RenderBridge::Initialize(CAMetalLayer* Layer, Platform::Window*)
             static_cast<f32>(Layer.drawableSize.width),
             static_cast<f32>(Layer.drawableSize.height) };
 
-        m_Uniforms.Projection =
-            Core::Math::PerspectiveMatrixRH(75.0f, AspectRatio(Layer.drawableSize), 0.1f, 100.0f).Transpose();
-        m_Uniforms.Orthographic = Core::Math::OrthographicMatrixRH(Bounds, -1.0f, 1.0f).Transpose();
+        m_Uniforms.Perspective = Core::Math::PerspectiveMatrixLH(75.0f, AspectRatio(Layer.drawableSize), 0.1f, 100.0f);
+        m_Uniforms.Orthographic = Core::Math::OrthographicMatrixLH(Bounds, -1.0f, 1.0f);
 
         const u8 WhiteTexture[4] { 255, 255, 255, 255 };
         const u32 ID = LoadTexture(WhiteTexture, 1, 1, 4);

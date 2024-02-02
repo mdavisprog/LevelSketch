@@ -42,7 +42,7 @@ struct Uniforms
 {
     metal::float4x4 Model;
     metal::float4x4 View;
-    metal::float4x4 Projection;
+    metal::float4x4 Perspective;
     metal::float4x4 Orthographic;
 };
 
@@ -52,7 +52,7 @@ vertex RasterizerData VertexMain(
 {
     RasterizerData Out;
 
-    Out.Position = Uniforms_.Projection * Uniforms_.View * Uniforms_.Model * float4(Vertex.Position, 1.0);
+    Out.Position = Uniforms_.Perspective * Uniforms_.View * Uniforms_.Model * float4(Vertex.Position, 1.0);
     Out.UV = Vertex.UV;
     Out.Color = Vertex.Color;
 
