@@ -30,6 +30,30 @@ SOFTWARE.
 
 namespace Platform = LevelSketch::Platform;
 
+static LevelSketch::Vector2i TransformPosition(const NSView* View, NSPoint Position)
+{
+    return { static_cast<i32>(Position.x), static_cast<i32>(View.superview.frame.size.height - Position.y) };
+}
+
+static bool IsPressed(NSEventType Type)
+{
+    return Type == NSEventTypeLeftMouseDown || Type == NSEventTypeRightMouseDown;
+}
+
+static Platform::Mouse::Button::Type ToButton(NSEventType Type)
+{
+    switch (Type)
+    {
+    case NSEventTypeLeftMouseDown:
+    case NSEventTypeLeftMouseUp: return Platform::Mouse::Button::Left;
+    case NSEventTypeRightMouseDown:
+    case NSEventTypeRightMouseUp: return Platform::Mouse::Button::Right;
+    default: break;
+    }
+
+    return Platform::Mouse::Button::None;
+}
+
 @implementation EventView
 
 - (BOOL)acceptsFirstResponder
@@ -52,7 +76,37 @@ namespace Platform = LevelSketch::Platform;
     [self HandleEvent:Event];
 }
 
+- (void)mouseDragged:(NSEvent*)Event
+{
+    [self HandleEvent:Event];
+}
+
 - (void)mouseDown:(NSEvent*)Event
+{
+    [self HandleEvent:Event];
+}
+
+- (void)mouseUp:(NSEvent*)Event
+{
+    [self HandleEvent:Event];
+}
+
+- (void)rightMouseMoved:(NSEvent*)Event
+{
+    [self HandleEvent:Event];
+}
+
+- (void)rightMouseDragged:(NSEvent*)Event
+{
+    [self HandleEvent:Event];
+}
+
+- (void)rightMouseDown:(NSEvent*)Event
+{
+    [self HandleEvent:Event];
+}
+
+- (void)rightMouseUp:(NSEvent*)Event
 {
     [self HandleEvent:Event];
 }
@@ -63,13 +117,26 @@ namespace Platform = LevelSketch::Platform;
     {
 
     case NSEventTypeMouseMoved:
+    case NSEventTypeLeftMouseDragged:
+    case NSEventTypeRightMouseDragged:
     {
-        NSPoint Position { Event.locationInWindow };
-        Position.y = self.superview.frame.size.height - Position.y;
-
-        Platform::Event::OnMouseMove MouseMove { { static_cast<i32>(Position.x), static_cast<i32>(Position.y) } };
+        Platform::Event::OnMouseMove MouseMove { TransformPosition(self, Event.locationInWindow) };
 
         Platform::EventQueue::Instance().Push(MouseMove, _Window);
+    }
+    break;
+
+    case NSEventTypeLeftMouseDown:
+    case NSEventTypeLeftMouseUp:
+    case NSEventTypeRightMouseDown:
+    case NSEventTypeRightMouseUp:
+    {
+        Platform::Event::OnMouseButton MouseButton {};
+        MouseButton.Button = ToButton(Event.type);
+        MouseButton.Pressed = IsPressed(Event.type);
+        MouseButton.Position = TransformPosition(self, Event.locationInWindow);
+
+        Platform::EventQueue::Instance().Push(MouseButton, _Window);
     }
     break;
 
