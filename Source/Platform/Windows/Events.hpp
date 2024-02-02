@@ -26,6 +26,7 @@ SOFTWARE.
 
 #pragma once
 
+#include "../../Core/Math/Vector2.hpp"
 #include "Common.hpp"
 
 namespace LevelSketch
@@ -39,6 +40,9 @@ class Event final
 {
 public:
     static LRESULT WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+
+private:
+    static Vector2i s_MousePosition;
 };
 
 }

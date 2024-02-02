@@ -26,6 +26,7 @@ SOFTWARE.
 
 #include "Window.hpp"
 #include "../../Core/Math/Vector2.hpp"
+#include "Platform.hpp"
 
 #include <string>
 
@@ -75,6 +76,13 @@ bool Window::Create(const char* Title, int X, int Y, int Width, int Height)
     if (IsOpen())
     {
         SetWindowLongPtrW(m_Handle, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+    }
+
+    Platform* Platform_ { static_cast<Platform*>(Platform::Platform::Instance().Get()) };
+    if (!Platform_->RegisterRawInputDevice(m_Handle))
+    {
+        Close();
+        return false;
     }
 
     return IsOpen();

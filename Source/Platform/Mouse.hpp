@@ -38,6 +38,12 @@ class Window;
 class Mouse
 {
 public:
+    enum class MoveMode
+    {
+        Absolute,
+        Relative
+    };
+
     struct Button
     {
         enum Type
@@ -56,7 +62,12 @@ public:
     static void SetPosition(const Vector2i& Position);
     static void SetPosition(Window* Target, const Vector2i& Position);
 
+    static void SetMoveMode(MoveMode Mode);
+    static MoveMode GetMoveMode();
+
 private:
+    static MoveMode s_MoveMode;
+
     Mouse();
 };
 

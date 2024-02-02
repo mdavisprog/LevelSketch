@@ -27,10 +27,12 @@ SOFTWARE.
 #include "Platform.hpp"
 #include "../../Core/Console.hpp"
 #include "../../Core/Math/Math.hpp"
+#include "Errors.hpp"
 #include "Events.hpp"
 #include "Window.hpp"
 
 #include <cstdio>
+#include <hidusage.h>
 
 namespace LevelSketch
 {
@@ -95,6 +97,30 @@ void Platform::UpdateTimingData(TimingData& Data)
     const u64 DeltaTicks = Core::Math::Min(static_cast<u64>(Current.QuadPart - m_LastTime.QuadPart), m_MaxDeltaTicks);
     m_LastTime = Current;
     Data.DeltaSeconds = static_cast<float>(DeltaTicks) / static_cast<float>(m_Frequency.QuadPart);
+}
+
+bool Platform::RegisterRawInputDevice(HWND Target)
+{
+    if (m_RegisteredDevice)
+    {
+        return true;
+    }
+
+    RAWINPUTDEVICE Rid[1];
+    Rid[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
+    Rid[0].usUsage = HID_USAGE_GENERIC_MOUSE;
+    Rid[0].dwFlags = RIDEV_INPUTSINK;
+    Rid[0].hwndTarget = Target;
+
+    if (!RegisterRawInputDevices(Rid, 1, sizeof(Rid[0])))
+    {
+        const DWORD Error { GetLastError() };
+        Core::Console::Error("Failed to register raw input device. Error: %s", Errors::ToString(Error).Data());
+        return false;
+    }
+
+    m_RegisteredDevice = true;
+    return true;
 }
 
 }

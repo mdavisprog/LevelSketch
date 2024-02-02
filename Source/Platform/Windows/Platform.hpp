@@ -45,6 +45,8 @@ public:
     virtual void Shutdown() override;
     virtual const char* Name() const override;
 
+    bool RegisterRawInputDevice(HWND Target);
+
 protected:
     virtual UniquePtr<LevelSketch::Platform::Window> InternalNewWindow() const override;
     virtual void UpdateTimingData(TimingData& Data) override;
@@ -53,6 +55,7 @@ private:
     LARGE_INTEGER m_Frequency {};
     LARGE_INTEGER m_LastTime {};
     u64 m_MaxDeltaTicks { 0 };
+    bool m_RegisteredDevice { false };
 };
 
 }

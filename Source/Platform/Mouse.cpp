@@ -31,6 +31,18 @@ namespace LevelSketch
 namespace Platform
 {
 
+void Mouse::SetMoveMode(MoveMode Mode)
+{
+    s_MoveMode = Mode;
+}
+
+Mouse::MoveMode Mouse::GetMoveMode()
+{
+    return s_MoveMode;
+}
+
+Mouse::MoveMode Mouse::s_MoveMode { Mouse::MoveMode::Absolute };
+
 Mouse::Mouse()
 {
 }

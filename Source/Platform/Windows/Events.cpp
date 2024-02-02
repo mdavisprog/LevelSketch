@@ -37,6 +37,8 @@ namespace Platform
 namespace Windows
 {
 
+Vector2i Event::s_MousePosition {};
+
 static Vector2i Position(LPARAM Param)
 {
     return { GET_X_LPARAM(Param), GET_Y_LPARAM(Param) };
@@ -55,8 +57,12 @@ LRESULT Event::WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 
     case WM_MOUSEMOVE:
     {
-        Platform::Event::OnMouseMove MouseMove { Position(lParam) };
-        EventQueue::Instance().Push(MouseMove, Window);
+        if (Mouse::GetMoveMode() == Mouse::MoveMode::Absolute)
+        {
+            s_MousePosition = Position(lParam);
+            Platform::Event::OnMouseMove MouseMove { s_MousePosition };
+            EventQueue::Instance().Push(MouseMove, Window);
+        }
     }
     break;
 
@@ -67,6 +73,8 @@ LRESULT Event::WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
     case WM_RBUTTONDOWN:
     case WM_RBUTTONUP:
     {
+        s_MousePosition = Position(lParam);
+
         Mouse::Button::Type Button { Mouse::Button::Left };
         switch (Msg)
         {
@@ -78,8 +86,37 @@ LRESULT Event::WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
         }
 
         const bool Pressed { Msg == WM_LBUTTONDOWN || Msg == WM_RBUTTONDOWN || Msg == WM_MBUTTONDOWN };
-        Platform::Event::OnMouseButton MouseButton { Button, Pressed, Position(lParam) };
+        Platform::Event::OnMouseButton MouseButton { Button, Pressed, s_MousePosition };
         EventQueue::Instance().Push(MouseButton, Window);
+    }
+    break;
+
+    case WM_INPUT:
+    {
+        if (Mouse::GetMoveMode() == Mouse::MoveMode::Relative)
+        {
+            RAWINPUT RawInput {};
+            u32 Size { sizeof(RawInput) };
+
+            const u32 Result { GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam),
+                RID_INPUT,
+                &RawInput,
+                &Size,
+                sizeof(RAWINPUTHEADER)) };
+            if (Result != static_cast<u32>(-1))
+            {
+                if (RawInput.header.dwType == RIM_TYPEMOUSE)
+                {
+                    if (!(RawInput.data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE))
+                    {
+                        s_MousePosition.X += RawInput.data.mouse.lLastX;
+                        s_MousePosition.Y += RawInput.data.mouse.lLastY;
+                        Platform::Event::OnMouseMove MouseMove { s_MousePosition };
+                        EventQueue::Instance().Push(MouseMove, Window);
+                    }
+                }
+            }
+        }
     }
     break;
 
