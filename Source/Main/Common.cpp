@@ -59,8 +59,9 @@ static OctaneGUI::Application* g_Application { nullptr };
 static std::unordered_map<OctaneGUI::Window*, LevelSketch::Platform::Window*> g_Windows {};
 static Array<UIEvent> g_UIEvents {};
 static Engine::Camera g_Camera { { 0.0f, 0.0f, -20.0f } };
-static bool g_RotateCmaera { false };
-static Vector2i m_LastMousePos {};
+static bool g_RotateCamera { false };
+static Vector2i g_LastMousePos {};
+static Vector2i g_LockedMousePos {};
 
 static void UpdateCamera(f32 DeltaTime)
 {
@@ -104,22 +105,36 @@ static void HandleEvent(const Platform::Event& Event)
     {
         if (Event.GetData().MouseButton.Button == Platform::Mouse::Button::Left)
         {
-            g_RotateCmaera = Event.GetData().MouseButton.Pressed;
+            g_RotateCamera = Event.GetData().MouseButton.Pressed;
+
+            if (g_RotateCamera)
+            {
+                Platform::Mouse::Hide();
+                Platform::Mouse::SetMoveMode(Platform::Mouse::MoveMode::Relative);
+                g_LockedMousePos = Event.GetData().MouseButton.Position;
+            }
+            else
+            {
+                Platform::Mouse::Show();
+                Platform::Mouse::SetMoveMode(Platform::Mouse::MoveMode::Absolute);
+            }
         }
     }
     break;
 
     case Platform::Event::Type::MouseMove:
     {
-        const Vector2i MousePos { Event.GetData().MouseMove.Position };
-        const Vector2i MouseDelta { MousePos - m_LastMousePos };
+        const Platform::Event::OnMouseMove& OnMouseMove { Event.GetData().MouseMove };
+        const Vector2i MousePos { OnMouseMove.Position };
+        const Vector2i MouseDelta { MousePos - g_LastMousePos };
 
-        if (g_RotateCmaera)
+        if (g_RotateCamera)
         {
             g_Camera.Yaw(static_cast<f32>(MouseDelta.X)).Pitch(static_cast<f32>(-MouseDelta.Y));
+            Platform::Mouse::SetPosition(Event.GetWindow(), g_LockedMousePos);
         }
 
-        m_LastMousePos = MousePos;
+        g_LastMousePos = MousePos;
     }
     break;
 
