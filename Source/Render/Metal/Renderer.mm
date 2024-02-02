@@ -109,6 +109,11 @@ void Renderer::UploadGUIData(OctaneGUI::Window*, const OctaneGUI::VertexBuffer& 
     m_RenderBridge->UploadGUIData(Buffer);
 }
 
+void Renderer::UpdateViewMatrix(const Matrix4f& View)
+{
+    m_RenderBridge->UpdateViewMatrix(View);
+}
+
 }
 }
 }

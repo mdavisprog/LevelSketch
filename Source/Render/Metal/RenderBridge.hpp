@@ -80,6 +80,7 @@ public:
 
     u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel);
     void UploadGUIData(const OctaneGUI::VertexBuffer& Buffer);
+    void UpdateViewMatrix(const Matrix4f& View);
 
 private:
     // The size should already be scaled.

@@ -184,7 +184,7 @@ bool RenderBridge::Initialize(CAMetalLayer* Layer, Platform::Window*)
         m_RenderBuffer.Initialize(m_Device, 1000, 1000);
         m_RenderBufferGUI.Initialize(m_Device, 100000, 100000);
 
-        const f32 Offset { 0.5f };
+        const f32 Offset { 1.0f };
         // clang-format off
         const Vertex3 Vertices[3]
         {
@@ -203,7 +203,7 @@ bool RenderBridge::Initialize(CAMetalLayer* Layer, Platform::Window*)
             static_cast<f32>(Layer.drawableSize.width),
             static_cast<f32>(Layer.drawableSize.height) };
 
-        m_Uniforms.Perspective = Core::Math::PerspectiveMatrixLH(75.0f, AspectRatio(Layer.drawableSize), 0.1f, 100.0f);
+        m_Uniforms.Perspective = Core::Math::PerspectiveMatrixLH(45.0f, AspectRatio(Layer.drawableSize), 0.1f, 100.0f);
         m_Uniforms.Orthographic = Core::Math::OrthographicMatrixLH(Bounds, -1.0f, 1.0f);
 
         const u8 WhiteTexture[4] { 255, 255, 255, 255 };
@@ -373,6 +373,11 @@ void RenderBridge::UploadGUIData(const OctaneGUI::VertexBuffer& Buffer)
     {
         m_GUICommands.Push(Command);
     }
+}
+
+void RenderBridge::UpdateViewMatrix(const Matrix4f& View)
+{
+    m_Uniforms.View = View;
 }
 
 RenderBridge& RenderBridge::UpdateDepthBuffer(const CGSize& Size)
