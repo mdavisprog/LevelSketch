@@ -26,32 +26,42 @@ SOFTWARE.
 
 #pragma once
 
+#include "../Mouse.hpp"
+#include "Common.hpp"
+
 namespace LevelSketch
 {
 namespace Platform
 {
 
-class Mouse
+void Mouse::Show()
 {
-public:
-    struct Button
+    if (!IsVisible())
     {
-        enum Type
-        {
-            None = 0,
-            Left = 1 << 0,
-            Middle = 1 << 1,
-            Right = 1 << 2
-        };
-    };
+        ShowCursor(TRUE);
+    }
+}
 
-    static void Show();
-    static void Hide();
-    static bool IsVisible();
+void Mouse::Hide()
+{
+    if (IsVisible())
+    {
+        ShowCursor(FALSE);
+    }
+}
 
-private:
-    Mouse();
-};
+bool Mouse::IsVisible()
+{
+    CURSORINFO Info {};
+    Info.cbSize = sizeof(Info);
+
+    if (!GetCursorInfo(&Info))
+    {
+        return false;
+    }
+
+    return Info.flags & CURSOR_SHOWING;
+}
 
 }
 }

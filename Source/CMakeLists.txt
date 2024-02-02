@@ -70,6 +70,7 @@ if(WIN32)
         Platform/Windows/Errors.cpp
         Platform/Windows/Events.cpp
         Platform/Windows/FileSystem.cpp
+        Platform/Windows/Mouse.cpp
         Platform/Windows/Mutex.cpp
         Platform/Windows/Platform.cpp
         Platform/Windows/Window.cpp
