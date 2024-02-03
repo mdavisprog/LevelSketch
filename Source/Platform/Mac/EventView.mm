@@ -28,6 +28,8 @@ SOFTWARE.
 #include "EventView.hpp"
 #include "../EventQueue.hpp"
 
+#import <Carbon/Carbon.h>
+
 namespace Platform = LevelSketch::Platform;
 
 static LevelSketch::Vector2i TransformPosition(const NSView* View, NSPoint Position)
@@ -52,6 +54,52 @@ static Platform::Mouse::Button::Type ToButton(NSEventType Type)
     }
 
     return Platform::Mouse::Button::None;
+}
+
+static Platform::Keyboard::Key ToKey(unsigned short KeyCode)
+{
+    switch (KeyCode)
+    {
+    case kVK_ANSI_A: return Platform::Keyboard::Key::A;
+    case kVK_ANSI_B: return Platform::Keyboard::Key::B;
+    case kVK_ANSI_C: return Platform::Keyboard::Key::C;
+    case kVK_ANSI_D: return Platform::Keyboard::Key::D;
+    case kVK_ANSI_E: return Platform::Keyboard::Key::E;
+    case kVK_ANSI_F: return Platform::Keyboard::Key::F;
+    case kVK_ANSI_G: return Platform::Keyboard::Key::G;
+    case kVK_ANSI_H: return Platform::Keyboard::Key::H;
+    case kVK_ANSI_I: return Platform::Keyboard::Key::I;
+    case kVK_ANSI_J: return Platform::Keyboard::Key::J;
+    case kVK_ANSI_K: return Platform::Keyboard::Key::K;
+    case kVK_ANSI_L: return Platform::Keyboard::Key::L;
+    case kVK_ANSI_M: return Platform::Keyboard::Key::M;
+    case kVK_ANSI_N: return Platform::Keyboard::Key::N;
+    case kVK_ANSI_O: return Platform::Keyboard::Key::O;
+    case kVK_ANSI_P: return Platform::Keyboard::Key::P;
+    case kVK_ANSI_Q: return Platform::Keyboard::Key::Q;
+    case kVK_ANSI_R: return Platform::Keyboard::Key::R;
+    case kVK_ANSI_S: return Platform::Keyboard::Key::S;
+    case kVK_ANSI_T: return Platform::Keyboard::Key::T;
+    case kVK_ANSI_U: return Platform::Keyboard::Key::U;
+    case kVK_ANSI_V: return Platform::Keyboard::Key::V;
+    case kVK_ANSI_W: return Platform::Keyboard::Key::W;
+    case kVK_ANSI_X: return Platform::Keyboard::Key::X;
+    case kVK_ANSI_Y: return Platform::Keyboard::Key::Y;
+    case kVK_ANSI_Z: return Platform::Keyboard::Key::Z;
+    case kVK_ANSI_1: return Platform::Keyboard::Key::One;
+    case kVK_ANSI_2: return Platform::Keyboard::Key::Two;
+    case kVK_ANSI_3: return Platform::Keyboard::Key::Three;
+    case kVK_ANSI_4: return Platform::Keyboard::Key::Four;
+    case kVK_ANSI_5: return Platform::Keyboard::Key::Five;
+    case kVK_ANSI_6: return Platform::Keyboard::Key::Six;
+    case kVK_ANSI_7: return Platform::Keyboard::Key::Seven;
+    case kVK_ANSI_8: return Platform::Keyboard::Key::Eight;
+    case kVK_ANSI_9: return Platform::Keyboard::Key::Nine;
+    case kVK_ANSI_0: return Platform::Keyboard::Key::Zero;
+    default: break;
+    }
+
+    return Platform::Keyboard::Key::None;
 }
 
 @implementation EventView
@@ -111,6 +159,16 @@ static Platform::Mouse::Button::Type ToButton(NSEventType Type)
     [self HandleEvent:Event];
 }
 
+- (void)keyDown:(NSEvent*)Event
+{
+    [self HandleEvent:Event];
+}
+
+- (void)keyUp:(NSEvent*)Event
+{
+    [self HandleEvent:Event];
+}
+
 - (void)HandleEvent:(NSEvent*)Event
 {
     switch (Event.type)
@@ -137,6 +195,14 @@ static Platform::Mouse::Button::Type ToButton(NSEventType Type)
         MouseButton.Position = TransformPosition(self, Event.locationInWindow);
 
         Platform::EventQueue::Instance().Push(MouseButton, _Window);
+    }
+    break;
+
+    case NSEventTypeKeyDown:
+    case NSEventTypeKeyUp:
+    {
+        const Platform::Event::OnKey Key { ToKey(Event.keyCode), Event.type == NSEventTypeKeyDown };
+        Platform::EventQueue::Instance().Push(Key, _Window);
     }
     break;
 
