@@ -177,6 +177,11 @@ LRESULT Event::WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
     return DefWindowProcW(hWnd, Msg, wParam, lParam);
 }
 
+void Event::SetMousePosition(const Vector2i& Position)
+{
+    s_MousePosition = Position;
+}
+
 }
 }
 }

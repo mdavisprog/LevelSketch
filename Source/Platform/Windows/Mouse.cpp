@@ -29,6 +29,7 @@ SOFTWARE.
 #include "../Mouse.hpp"
 #include "../../Core/Math/Vector2.hpp"
 #include "Common.hpp"
+#include "Events.hpp"
 #include "Window.hpp"
 
 namespace LevelSketch
@@ -68,14 +69,19 @@ bool Mouse::IsVisible()
 void Mouse::SetPosition(const Vector2i& Position)
 {
     SetCursorPos(Position.X, Position.Y);
+    Windows::Event::SetMousePosition(Position);
 }
 
 void Mouse::SetPosition(Window* Target, const Vector2i& Position)
 {
-    const HWND hTarget { reinterpret_cast<HWND>(Target->Handle()) };
+    const HWND TargetHandle { reinterpret_cast<HWND>(Target->Handle()) };
     POINT Point { Position.X, Position.Y };
-    ClientToScreen(hTarget, &Point);
+    MapWindowPoints(TargetHandle, HWND_DESKTOP, &Point, 1);
     SetPosition({ Point.x, Point.y });
+    // The event's mouse position works off of the window's local coordinates. The
+    // SetCursorPos function requires the position to be in screen coordinates. Will overrwrite
+    // these coordinates with the given coordinates.
+    Windows::Event::SetMousePosition(Position);
 }
 
 }
