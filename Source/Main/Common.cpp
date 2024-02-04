@@ -125,13 +125,14 @@ static void HandleEvent(const Platform::Event& Event)
     case Platform::Event::Type::MouseMove:
     {
         const Platform::Event::OnMouseMove& OnMouseMove { Event.GetData().MouseMove };
-        const Vector2i MousePos { OnMouseMove.Position };
+        Vector2i MousePos { OnMouseMove.Position };
         const Vector2i MouseDelta { MousePos - g_LastMousePos };
 
         if (g_RotateCamera)
         {
             g_Camera.Yaw(static_cast<f32>(MouseDelta.X)).Pitch(static_cast<f32>(-MouseDelta.Y));
             Platform::Mouse::SetPosition(Event.GetWindow(), g_LockedMousePos);
+            MousePos = g_LockedMousePos;
         }
 
         g_LastMousePos = MousePos;
