@@ -122,9 +122,22 @@ static bool Remove()
     return true;
 }
 
+static bool Clear()
+{
+    HashMap<i32, i32> Instance;
+    Instance[1] = 1;
+    Instance[2] = 2;
+    Instance[3] = 3;
+    VERIFY(Instance.Size() == 3);
+    Instance.Clear();
+    VERIFY(Instance.Size() == 0);
+    return true;
+}
+
 UniquePtr<TestSuite> HashMapTests()
 {
-    return TestSuite::New("HashMap", { TEST_CASE(Empty), TEST_CASE(Index), TEST_CASE(BucketGrow), TEST_CASE(Remove) });
+    return TestSuite::New("HashMap",
+        { TEST_CASE(Empty), TEST_CASE(Index), TEST_CASE(BucketGrow), TEST_CASE(Remove), TEST_CASE(Clear) });
 }
 
 }

@@ -89,6 +89,11 @@ public:
         m_Buckets.Resize(Constants::BucketSize());
     }
 
+    ~HashMap()
+    {
+        Clear();
+    }
+
     bool IsEmpty() const
     {
         return m_Size == 0;
@@ -129,6 +134,12 @@ public:
         }
 
         return false;
+    }
+
+    void Clear()
+    {
+        m_Buckets.Clear();
+        m_Size = 0;
     }
 
 private:
