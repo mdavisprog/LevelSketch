@@ -74,8 +74,15 @@ public:
 template<typename K, typename V, typename KTraits = Traits::Base<K>, typename Constants = HashMapConstants>
 class HashMap
 {
+private:
+    struct Entry
+    {
+        Pair<K, V> Contents;
+        bool Occupied { false };
+    };
+
 public:
-    using ValueType = Pair<K, V>;
+    using ValueType = Entry;
     using BucketType = Array<ValueType>;
 
     HashMap(HashMap&&) = default;
@@ -113,7 +120,7 @@ public:
     {
         ConditionalGrow();
         ValueType* Result { TryInsert(Key) };
-        return Result->Second;
+        return Result->Contents.Second;
     }
 
     bool Remove(const K& Key)
@@ -122,11 +129,12 @@ public:
         {
             for (u64 I = 0; I < Bucket.Size(); I++)
             {
-                const ValueType& Value { Bucket[I] };
+                ValueType& Value { Bucket[I] };
 
-                if (Value.First == Key)
+                if (Value.Contents.First == Key)
                 {
                     Bucket.Remove(I);
+                    Value.Occupied = false;
                     m_Size--;
                     return true;
                 }
@@ -150,7 +158,7 @@ private:
 
         for (const ValueType& Value : Bucket)
         {
-            if (Value.First == Key)
+            if (Value.Contents.First == Key)
             {
                 return &Value;
             }
@@ -166,14 +174,14 @@ private:
 
         for (ValueType& Value : Bucket)
         {
-            if (Value.First == Key)
+            if (Value.Contents.First == Key)
             {
                 return &Value;
             }
         }
 
         m_Size++;
-        Bucket.Push(MakePair(Key, V(0)));
+        Bucket.Push({ MakePair(Key, V(0)), true });
         return &Bucket.Back();
     }
 
@@ -197,15 +205,15 @@ private:
             {
                 for (ValueType& Value : Bucket)
                 {
-                    ValueType* Element { TryInsert(Value.First) };
+                    ValueType* Element { TryInsert(Value.Contents.First) };
 
                     if constexpr (std::is_nothrow_move_constructible_v<V> || !std::is_copy_constructible_v<V>)
                     {
-                        Element->Second = std::move(Value.Second);
+                        Element->Contents.Second = std::move(Value.Contents.Second);
                     }
                     else
                     {
-                        Element->Second = Value.Second;
+                        Element->Contents.Second = Value.Contents.Second;
                     }
                 }
             }
