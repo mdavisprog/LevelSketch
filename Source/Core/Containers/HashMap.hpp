@@ -150,6 +150,24 @@ public:
         m_Size = 0;
     }
 
+    Array<K> Keys() const
+    {
+        Array<K> Result;
+
+        for (const BucketType& Bucket : m_Buckets)
+        {
+            for (const ValueType& Value : Bucket)
+            {
+                if (Value.Occupied)
+                {
+                    Result.Push(Value.Contents.First);
+                }
+            }
+        }
+
+        return Result;
+    }
+
 private:
     ValueType const* Find(const K& Key) const
     {

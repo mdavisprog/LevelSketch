@@ -134,10 +134,43 @@ static bool Clear()
     return true;
 }
 
+static bool Keys()
+{
+    HashMap<i32, i32> Instance;
+    Instance[5] = 5;
+    Instance[25] = 25;
+    Instance[10] = 10;
+    Array<i32> Keys { Instance.Keys() };
+    VERIFY(Keys.Size() == 3);
+    for (i32 Key : Keys)
+    {
+        if (Key == 5)
+        {
+            VERIFY(Instance[Key] == 5);
+        }
+        else if (Key == 25)
+        {
+            VERIFY(Instance[Key] == 25);
+        }
+        else if (Key == 10)
+        {
+            VERIFY(Instance[Key] == 10);
+        }
+    }
+    Instance.Remove(25);
+    VERIFY(Instance.Keys() == (Array<i32> { 5, 10 }));
+    return true;
+}
+
 UniquePtr<TestSuite> HashMapTests()
 {
     return TestSuite::New("HashMap",
-        { TEST_CASE(Empty), TEST_CASE(Index), TEST_CASE(BucketGrow), TEST_CASE(Remove), TEST_CASE(Clear) });
+        { TEST_CASE(Empty),
+            TEST_CASE(Index),
+            TEST_CASE(BucketGrow),
+            TEST_CASE(Remove),
+            TEST_CASE(Clear),
+            TEST_CASE(Keys) });
 }
 
 }
