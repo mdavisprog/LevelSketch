@@ -48,6 +48,11 @@ String FileSystem::ApplicationDirectory()
     return GetDirectory(ApplicationPath());
 }
 
+String FileSystem::ShadersDirectory()
+{
+    return CombinePaths(ContentDirectory(), "Shaders");
+}
+
 String FileSystem::GetDirectory(const String& Path)
 {
     const u64 Forward { Path.RFind('/') };

@@ -35,6 +35,7 @@ SOFTWARE.
 #include "../../Core/Containers/Array.hpp"
 #include "../../Core/Math/Vector2.hpp"
 #include "../../Core/Math/Vertex.hpp"
+#include "../../Platform/FileSystem.hpp"
 #include "../../Platform/Window.hpp"
 #include "Adapter.hpp"
 #include "CommandAllocator.hpp"
@@ -54,6 +55,12 @@ namespace LevelSketch
 {
 namespace Render
 {
+
+String Renderer::ShadersDirectory()
+{
+    return Platform::FileSystem::CombinePaths(Platform::FileSystem::ShadersDirectory(), "HLSL");
+}
+
 namespace DirectX
 {
 
@@ -326,7 +333,7 @@ bool Renderer::LoadAssets(Platform::Window* Window)
     CompileFlags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
 
-    Shader VertexShader { Shader::LoadFromFile("Content/Shaders/HLSL/TestVS.hlsl") };
+    Shader VertexShader { Shader::LoadFromFile("TestVS.hlsl") };
     bool CompileResult =
         VertexShader.SetName("DefaultVS")
             .SetEntryPoint("Main")
@@ -346,7 +353,7 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         return false;
     }
 
-    Shader PixelShader { Shader::LoadFromFile("Content/Shaders/HLSL/TestPS.hlsl") };
+    Shader PixelShader { Shader::LoadFromFile("TestPS.hlsl") };
     PixelShader.SetName("DefaultPS").SetEntryPoint("Main").SetTarget("ps_5_0").SetCompileFlags(CompileFlags);
     CompileResult = PixelShader.Compile();
     if (!CompileResult)
@@ -370,7 +377,7 @@ bool Renderer::LoadAssets(Platform::Window* Window)
     }
 
     // Begin creation of GUI pipeline state.
-    VertexShader = Shader::LoadFromFile("Content/Shaders/HLSL/GUIVS.hlsl");
+    VertexShader = Shader::LoadFromFile("GUIVS.hlsl");
     VertexShader.SetName("GUIVS")
         .SetEntryPoint("Main")
         .SetTarget("vs_5_0")
@@ -404,7 +411,7 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         return false;
     }
 
-    PixelShader = Shader::LoadFromFile("Content/Shaders/HLSL/GUIPS.hlsl");
+    PixelShader = Shader::LoadFromFile("GUIPS.hlsl");
     CompileResult =
         PixelShader.SetName("GUIPS").SetEntryPoint("Main").SetTarget("ps_5_0").SetCompileFlags(CompileFlags).Compile();
     if (!CompileResult)

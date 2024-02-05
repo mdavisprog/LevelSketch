@@ -63,6 +63,8 @@ public:
     };
 
     static const UniquePtr<Renderer>& Instance();
+    static String ShadersDirectory();
+    static String ShaderPath(const char* FileName);
 
     virtual ~Renderer()
     {

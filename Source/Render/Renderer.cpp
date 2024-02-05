@@ -26,6 +26,7 @@ SOFTWARE.
 
 #include "Renderer.hpp"
 #include "../Core/Memory/UniquePtr.hpp"
+#include "../Platform/FileSystem.hpp"
 #include "../Platform/Platform.hpp"
 #include "../Platform/Window.hpp"
 
@@ -70,6 +71,11 @@ const UniquePtr<Renderer>& Renderer::Instance()
     };
 
     return Instance;
+}
+
+String Renderer::ShaderPath(const char* FileName)
+{
+    return Platform::FileSystem::CombinePaths(ShadersDirectory(), FileName);
 }
 
 u32 Renderer::LoadTexture(const void*, u32, u32, u8)

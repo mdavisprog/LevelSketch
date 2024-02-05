@@ -26,6 +26,7 @@ SOFTWARE.
 
 #include "Shader.hpp"
 #include "../../Platform/FileSystem.hpp"
+#include "Renderer.hpp"
 
 #include <d3dcompiler.h>
 
@@ -36,12 +37,9 @@ namespace Render
 namespace DirectX
 {
 
-Shader Shader::LoadFromFile(const char* Path)
+Shader Shader::LoadFromFile(const char* FileName)
 {
-    String FullPath { Platform::FileSystem::ApplicationDirectory() };
-    FullPath = Platform::FileSystem::CombinePaths(FullPath, Path);
-
-    const String Contents { Platform::FileSystem::ReadContents(Path) };
+    const String Contents { Platform::FileSystem::ReadContents(Renderer::ShaderPath(FileName)) };
     Shader Result;
     Result.SetSource(Contents.Data());
 

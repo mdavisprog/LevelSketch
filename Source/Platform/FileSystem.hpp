@@ -42,6 +42,8 @@ class FileSystem final
 public:
     static String ApplicationPath();
     static String ApplicationDirectory();
+    static String ContentDirectory();
+    static String ShadersDirectory();
     static String GetDirectory(const String& Path);
     static String CombinePaths(const String& A, const String& B);
     static String ReadContents(const String& Path);

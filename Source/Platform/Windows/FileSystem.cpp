@@ -59,6 +59,11 @@ String FileSystem::ApplicationPath()
     return Core::Containers::ToString(Path);
 }
 
+String FileSystem::ContentDirectory()
+{
+    return CombinePaths(ApplicationDirectory(), "Content");
+}
+
 void FileSystem::SetWorkingDirectory(const String& Path)
 {
     _chdir(Path.Data());
