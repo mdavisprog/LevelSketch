@@ -168,6 +168,22 @@ public:
         return Result;
     }
 
+    bool Contains(const K& Key) const
+    {
+        for (const BucketType& Bucket : m_Buckets)
+        {
+            for (const ValueType& Value : Bucket)
+            {
+                if (Value.Contents.First == Key)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
 private:
     ValueType const* Find(const K& Key) const
     {

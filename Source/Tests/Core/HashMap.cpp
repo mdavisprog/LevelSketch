@@ -162,6 +162,16 @@ static bool Keys()
     return true;
 }
 
+static bool Contains()
+{
+    HashMap<i32, i32> Instance;
+    Instance[5] = 5;
+    Instance[10] = 10;
+    VERIFY(Instance.Contains(5));
+    VERIFY(!Instance.Contains(6));
+    return true;
+}
+
 UniquePtr<TestSuite> HashMapTests()
 {
     return TestSuite::New("HashMap",
@@ -170,7 +180,8 @@ UniquePtr<TestSuite> HashMapTests()
             TEST_CASE(BucketGrow),
             TEST_CASE(Remove),
             TEST_CASE(Clear),
-            TEST_CASE(Keys) });
+            TEST_CASE(Keys),
+            TEST_CASE(Contains) });
 }
 
 }
