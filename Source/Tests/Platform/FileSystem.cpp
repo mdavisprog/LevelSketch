@@ -57,9 +57,31 @@ static bool GetDirectory()
     return true;
 }
 
+static bool GetFileName()
+{
+    VERIFY(FileSystem::GetFileName("C:\\Hello.txt") == "Hello.txt");
+    VERIFY(FileSystem::GetFileName("/User/Hello.txt") == "Hello.txt");
+    VERIFY(FileSystem::GetFileName("C:\\Hello\\World") == "World");
+    VERIFY(FileSystem::GetFileName("/User/Hello/World") == "World");
+    VERIFY(FileSystem::GetFileName("C:\\Hello\\World\\") == "");
+    VERIFY(FileSystem::GetFileName("/User/Hello/World/") == "");
+    VERIFY(FileSystem::GetFileName("Hello.txt") == "Hello.txt");
+    return true;
+}
+
+static bool GetBaseFileName()
+{
+    VERIFY(FileSystem::GetBaseFileName("Hello.txt") == "Hello");
+    VERIFY(FileSystem::GetBaseFileName("C:\\Hello.txt") == "Hello");
+    VERIFY(FileSystem::GetBaseFileName("/User/Hello.txt") == "Hello");
+    VERIFY(FileSystem::GetBaseFileName("Hello") == "Hello");
+    return true;
+}
+
 UniquePtr<TestSuite> FileSystemTests()
 {
-    return TestSuite::New("FileSystem", { TEST_CASE(GetDirectory) });
+    return TestSuite::New("FileSystem",
+        { TEST_CASE(GetDirectory), TEST_CASE(GetFileName), TEST_CASE(GetBaseFileName) });
 }
 
 }

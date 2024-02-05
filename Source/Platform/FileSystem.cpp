@@ -43,6 +43,20 @@ namespace LevelSketch
 namespace Platform
 {
 
+static u64 RFindSeparator(const String& Path)
+{
+    const u64 Forward { Path.RFind('/') };
+    const u64 Backward { Path.RFind('\\') };
+
+    u64 Pos { Forward };
+    if (Forward == String::NPOS || (Backward != String::NPOS && Backward > Forward))
+    {
+        Pos = Backward;
+    }
+
+    return Pos;
+}
+
 String FileSystem::ApplicationDirectory()
 {
     return GetDirectory(ApplicationPath());
@@ -55,14 +69,7 @@ String FileSystem::ShadersDirectory()
 
 String FileSystem::GetDirectory(const String& Path)
 {
-    const u64 Forward { Path.RFind('/') };
-    const u64 Backward { Path.RFind('\\') };
-
-    u64 Pos { Forward };
-    if (Forward == String::NPOS || (Backward != String::NPOS && Backward > Forward))
-    {
-        Pos = Backward;
-    }
+    const u64 Pos { RFindSeparator(Path) };
 
     if (Pos == String::NPOS)
     {
@@ -75,6 +82,37 @@ String FileSystem::GetDirectory(const String& Path)
     }
 
     return Path.Sub(0, Pos);
+}
+
+String FileSystem::GetFileName(const String& Path)
+{
+    const u64 Pos { RFindSeparator(Path) };
+
+    if (Pos == String::NPOS)
+    {
+        return Path;
+    }
+
+    if (Pos == Path.Length())
+    {
+        return "";
+    }
+
+    return Path.Sub(Pos + 1, Path.Length() - Pos + 1);
+}
+
+String FileSystem::GetBaseFileName(const String& Path)
+{
+    String Name { GetFileName(Path) };
+
+    const u64 Pos { Name.RFind('.') };
+
+    if (Pos == String::NPOS)
+    {
+        return Name;
+    }
+
+    return Name.Sub(0, Pos);
 }
 
 String FileSystem::CombinePaths(const String& A, const String& B)

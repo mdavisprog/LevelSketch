@@ -45,6 +45,8 @@ public:
     static String ContentDirectory();
     static String ShadersDirectory();
     static String GetDirectory(const String& Path);
+    static String GetFileName(const String& Path);
+    static String GetBaseFileName(const String& Path);
     static String CombinePaths(const String& A, const String& B);
     static String ReadContents(const String& Path);
     static Array<u8> ReadBinaryContents(const String& Path);
