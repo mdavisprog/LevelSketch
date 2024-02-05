@@ -41,6 +41,8 @@ set(SOURCE
     Engine/Type.cpp
     Engine/TypeDatabase.cpp
 
+    GUI/GUI.cpp
+
     Platform/Debugger.cpp
     Platform/EventQueue.cpp
     Platform/FileSystem.cpp
