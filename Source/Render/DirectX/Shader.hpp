@@ -41,9 +41,9 @@ namespace DirectX
 class Shader
 {
 public:
-    static Shader LoadFromFile(const char* FileName);
-
     Shader();
+
+    bool LoadSource(const char* Path);
 
     Shader& SetName(const char* Name);
     Shader& SetSource(const char* Source);
@@ -53,23 +53,11 @@ public:
 
     Shader& AddInputElement(D3D12_INPUT_ELEMENT_DESC Description);
     Shader& ClearInputElements();
-    D3D12_INPUT_ELEMENT_DESC* InputElements()
-    {
-        return m_InputElements.Data();
-    }
-    u32 NumInputElements() const
-    {
-        return static_cast<u32>(m_InputElements.Size());
-    }
+    const D3D12_INPUT_ELEMENT_DESC* InputElements() const;
+    u32 NumInputElements() const;
 
-    const Microsoft::WRL::ComPtr<ID3DBlob>& Blob() const
-    {
-        return m_Blob;
-    }
-    const Microsoft::WRL::ComPtr<ID3DBlob>& Errors() const
-    {
-        return m_Errors;
-    }
+    const Microsoft::WRL::ComPtr<ID3DBlob>& Blob() const;
+    const Microsoft::WRL::ComPtr<ID3DBlob>& Errors() const;
 
     bool Compile();
 

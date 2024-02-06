@@ -37,17 +37,22 @@ namespace Render
 namespace DirectX
 {
 
-Shader Shader::LoadFromFile(const char* FileName)
-{
-    const String Contents { Platform::FileSystem::ReadContents(Renderer::ShaderPath(FileName)) };
-    Shader Result;
-    Result.SetSource(Contents.Data());
-
-    return Result;
-}
-
 Shader::Shader()
 {
+}
+
+bool Shader::LoadSource(const char* Path)
+{
+    const String Contents { Platform::FileSystem::ReadContents(Path) };
+
+    if (Contents.IsEmpty())
+    {
+        return false;
+    }
+
+    m_Source = Contents;
+
+    return true;
 }
 
 Shader& Shader::SetName(const char* Name)
@@ -90,6 +95,26 @@ Shader& Shader::ClearInputElements()
 {
     m_InputElements.Clear();
     return *this;
+}
+
+const D3D12_INPUT_ELEMENT_DESC* Shader::InputElements() const
+{
+    return m_InputElements.Data();
+}
+
+u32 Shader::NumInputElements() const
+{
+    return static_cast<u32>(m_InputElements.Size());
+}
+
+const Microsoft::WRL::ComPtr<ID3DBlob>& Shader::Blob() const
+{
+    return m_Blob;
+}
+
+const Microsoft::WRL::ComPtr<ID3DBlob>& Shader::Errors() const
+{
+    return m_Errors;
 }
 
 bool Shader::Compile()

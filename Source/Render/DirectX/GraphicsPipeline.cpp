@@ -26,6 +26,7 @@ SOFTWARE.
 
 #include "GraphicsPipeline.hpp"
 #include "../../Core/Console.hpp"
+#include "../../Platform/FileSystem.hpp"
 #include "../../Platform/Windows/Errors.hpp"
 #include "../GraphicsPipelineDescription.hpp"
 #include "Device.hpp"
@@ -85,7 +86,17 @@ bool GraphicsPipeline::Initialize(Device const* Device_, const GraphicsPipelineD
 #endif
 
     const ShaderDescription& VertexShaderDesc { Description.VertexShader };
-    Shader VertexShader { Shader::LoadFromFile(VertexShaderDesc.Path.Data()) };
+    Shader VertexShader;
+
+    const String VertexShaderPath {
+        Platform::FileSystem::SetExtension(Renderer::ShaderPath(VertexShaderDesc.Path.Data()), "hlsl")
+    };
+    if (!VertexShader.LoadSource(VertexShaderPath.Data()))
+    {
+        Core::Console::Error("Failed to load vertex shader '%s'.", VertexShaderPath.Data());
+        return false;
+    }
+
     VertexShader.SetName(VertexShaderDesc.Name.Data())
         .SetEntryPoint(VertexShaderDesc.Function.Data())
         .SetCompileFlags(CompileFlags)
@@ -110,7 +121,17 @@ bool GraphicsPipeline::Initialize(Device const* Device_, const GraphicsPipelineD
     }
 
     const ShaderDescription& FragmentShaderDesc { Description.FragmentShader };
-    Shader FragmentShader { Shader::LoadFromFile(FragmentShaderDesc.Path.Data()) };
+    Shader FragmentShader;
+
+    const String FragmentShaderPath {
+        Platform::FileSystem::SetExtension(Renderer::ShaderPath(FragmentShaderDesc.Path.Data()), "hlsl")
+    };
+    if (!FragmentShader.LoadSource(FragmentShaderPath.Data()))
+    {
+        Core::Console::Error("Failed to load fragment shader '%s'.", FragmentShaderPath.Data());
+        return false;
+    }
+
     FragmentShader.SetName(FragmentShaderDesc.Name.Data())
         .SetEntryPoint(FragmentShaderDesc.Function.Data())
         .SetCompileFlags(CompileFlags)
