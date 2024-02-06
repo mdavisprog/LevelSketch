@@ -85,7 +85,11 @@ bool Device::Initialize()
         return false;
     }
 
-    if (!CreateHeaps())
+    m_SRV = UniquePtr<DescriptorHeap>::New();
+    if (!m_SRV->Initialize(this,
+            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+            m_MaxSRVDescriptors,
+            D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE))
     {
         return false;
     }
@@ -134,34 +138,9 @@ DescriptorHeap* Device::SRVHeap() const
     return m_SRV.Get();
 }
 
-DescriptorHeap* Device::DSVHeap() const
-{
-    return m_DSV.Get();
-}
-
 u64 Device::MaxSRVDescriptors() const
 {
     return m_MaxSRVDescriptors;
-}
-
-bool Device::CreateHeaps()
-{
-    m_DSV = UniquePtr<DescriptorHeap>::New();
-    if (!m_DSV->Initialize(this, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1))
-    {
-        return false;
-    }
-
-    m_SRV = UniquePtr<DescriptorHeap>::New();
-    if (!m_SRV->Initialize(this,
-            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-            m_MaxSRVDescriptors,
-            D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE))
-    {
-        return false;
-    }
-
-    return true;
 }
 
 }

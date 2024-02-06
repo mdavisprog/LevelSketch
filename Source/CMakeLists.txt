@@ -81,6 +81,7 @@ if(WIN32)
         Render/DirectX/CommandAllocator.cpp
         Render/DirectX/CommandList.cpp
         Render/DirectX/CommandQueue.cpp
+        Render/DirectX/DepthStencil.cpp
         Render/DirectX/DescriptorHeap.cpp
         Render/DirectX/Device.cpp
         Render/DirectX/GraphicsPipeline.cpp

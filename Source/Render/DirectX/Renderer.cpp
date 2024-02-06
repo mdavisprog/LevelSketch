@@ -42,6 +42,7 @@ SOFTWARE.
 #include "CommandAllocator.hpp"
 #include "CommandList.hpp"
 #include "CommandQueue.hpp"
+#include "DepthStencil.hpp"
 #include "DescriptorHeap.hpp"
 #include "Device.hpp"
 #include "GraphicsPipeline.hpp"
@@ -143,6 +144,15 @@ bool Renderer::Initialize(Platform::Window* Window)
     }
     m_Viewports.Push(std::move(NewViewport));
 
+    if (m_DepthStencil == nullptr)
+    {
+        m_DepthStencil = UniquePtr<DepthStencil>::New();
+        if (!m_DepthStencil->Initialize(m_Device.Get(), Window->Size()))
+        {
+            return false;
+        }
+    }
+
     if (FirstWindow)
     {
         if (!LoadAssets(Window))
@@ -194,7 +204,7 @@ void Renderer::Render(Platform::Window* Window)
     CommandList->ResourceBarrier(1, &Barrier);
 
     D3D12_CPU_DESCRIPTOR_HANDLE RTVCPUDesc { Viewport_->RTVCPUOffset() };
-    D3D12_CPU_DESCRIPTOR_HANDLE DSVCPUDesc { m_Device->DSVHeap()->CPUOffset(0) };
+    D3D12_CPU_DESCRIPTOR_HANDLE DSVCPUDesc { m_DepthStencil->CPUOffset() };
     CommandList->OMSetRenderTargets(1, &RTVCPUDesc, FALSE, &DSVCPUDesc);
 
     // Begin World rendering
@@ -341,7 +351,7 @@ void Renderer::UpdateViewMatrix(const Matrix4f& View)
     m_ConstantBufferData.View = View;
 }
 
-bool Renderer::LoadAssets(Platform::Window* Window)
+bool Renderer::LoadAssets(Platform::Window*)
 {
     GraphicsPipelineDescription TestDesc {};
     TestDesc.Name = "Test";
@@ -411,43 +421,6 @@ bool Renderer::LoadAssets(Platform::Window* Window)
         const u32 IndexBufferSize = sizeof(IndexBufferData);
 
         m_RenderBuffer.SetFormat(DXGI_FORMAT_R32_UINT).UploadIndexData(IndexBufferData, IndexBufferSize);
-    }
-
-    // Depth Stencil View
-    {
-        D3D12_HEAP_PROPERTIES HeapProps { Utility::MakeHeapProperties() };
-        D3D12_RESOURCE_DESC ResourceDesc { Utility::MakeResourceDescription(D3D12_RESOURCE_DIMENSION_TEXTURE2D,
-            DXGI_FORMAT_D32_FLOAT) };
-        ResourceDesc.Width = Window->Size().X;
-        ResourceDesc.Height = Window->Size().Y;
-        ResourceDesc.DepthOrArraySize = 1;
-        ResourceDesc.MipLevels = 0;
-        ResourceDesc.SampleDesc.Count = 1;
-        ResourceDesc.SampleDesc.Quality = 0;
-        ResourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-
-        D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc { 0 };
-        DSVDesc.Format = DXGI_FORMAT_D32_FLOAT;
-        DSVDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-        DSVDesc.Flags = D3D12_DSV_FLAG_NONE;
-
-        D3D12_CLEAR_VALUE ClearValue { 0 };
-        ClearValue.Format = DXGI_FORMAT_D32_FLOAT;
-        ClearValue.DepthStencil.Depth = 1.0f;
-        ClearValue.DepthStencil.Stencil = 0;
-
-        if (m_Device->Get()->CreateCommittedResource(&HeapProps,
-                D3D12_HEAP_FLAG_NONE,
-                &ResourceDesc,
-                D3D12_RESOURCE_STATE_DEPTH_WRITE,
-                &ClearValue,
-                IID_PPV_ARGS(&m_DepthStencil)) != S_OK)
-        {
-            Core::Console::Error("Failed to create depth stencil resource.");
-            return false;
-        }
-
-        m_Device->Get()->CreateDepthStencilView(m_DepthStencil.Get(), &DSVDesc, m_Device->DSVHeap()->CPUOffset(0));
     }
 
     m_RenderBufferGUI.Initialize(m_Device->Get(), 100000, 100000);

@@ -47,6 +47,7 @@ namespace DirectX
 {
 
 class CommandQueue;
+class DepthStencil;
 class Device;
 class GraphicsPipeline;
 class SwapChain;
@@ -87,7 +88,6 @@ private:
     Viewport* GetViewportFor(Platform::Window* Window) const;
 
     Microsoft::WRL::ComPtr<ID3D12Fence> m_Fence;
-    Microsoft::WRL::ComPtr<ID3D12Resource> m_DepthStencil;
     UINT64 m_FenceValue { 0 };
     HANDLE m_FenceEvent { nullptr };
 
@@ -107,6 +107,7 @@ private:
     UniquePtr<Device> m_Device { nullptr };
     Array<UniquePtr<Viewport>> m_Viewports {};
     Array<UniquePtr<GraphicsPipeline>> m_GraphicsPipelines {};
+    UniquePtr<DepthStencil> m_DepthStencil { nullptr };
 };
 
 }
