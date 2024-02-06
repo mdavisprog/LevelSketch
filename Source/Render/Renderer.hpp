@@ -48,7 +48,7 @@ class Window;
 namespace Render
 {
 
-class Context;
+struct GraphicsPipelineDescription;
 
 class Renderer
 {
@@ -75,9 +75,10 @@ public:
     virtual void Shutdown() = 0;
     virtual void Render(Platform::Window* Window) = 0;
     virtual u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel = 4);
-    virtual void UploadGUIData(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer);
+    virtual u32 CreateGraphicsPipeline(const GraphicsPipelineDescription& Description) = 0;
 
     // Temporary
+    virtual void UploadGUIData(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer);
     virtual void UpdateViewMatrix(const Matrix4f& View);
 
     bool Initialized() const;

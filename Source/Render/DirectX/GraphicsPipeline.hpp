@@ -26,28 +26,41 @@ SOFTWARE.
 
 #pragma once
 
+#include "../../Core/Types.hpp"
+
 #include <d3d12.h>
+#include <wrl/client.h>
 
 namespace LevelSketch
 {
 namespace Render
 {
+
+struct GraphicsPipelineDescription;
+
 namespace DirectX
 {
-namespace Utility
+
+class Device;
+
+class GraphicsPipeline
 {
+private:
+    static u32 s_ID;
 
-D3D12_HEAP_PROPERTIES MakeHeapProperties(D3D12_HEAP_TYPE Type = D3D12_HEAP_TYPE_DEFAULT);
-D3D12_RESOURCE_DESC MakeResourceDescription(D3D12_RESOURCE_DIMENSION Dimension = D3D12_RESOURCE_DIMENSION_BUFFER,
-    DXGI_FORMAT Format = DXGI_FORMAT_UNKNOWN);
+public:
+    GraphicsPipeline();
 
-D3D12_RESOURCE_BARRIER MakeResourceBarrierTransition(ID3D12Resource* Resource,
-    D3D12_RESOURCE_STATES Before,
-    D3D12_RESOURCE_STATES After,
-    UINT Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-    D3D12_RESOURCE_BARRIER_FLAGS Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
+    bool Initialize(Device const* Device_, const GraphicsPipelineDescription& Description);
 
-}
+    u32 ID() const;
+    ID3D12PipelineState* Get() const;
+
+private:
+    u32 m_ID { 0 };
+    Microsoft::WRL::ComPtr<ID3D12PipelineState> m_State { nullptr };
+};
+
 }
 }
 }

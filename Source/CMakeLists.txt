@@ -83,6 +83,7 @@ if(WIN32)
         Render/DirectX/CommandQueue.cpp
         Render/DirectX/DescriptorHeap.cpp
         Render/DirectX/Device.cpp
+        Render/DirectX/GraphicsPipeline.cpp
         Render/DirectX/RenderBuffer.cpp
         Render/DirectX/Renderer.cpp
         Render/DirectX/RootSignature.cpp

@@ -26,28 +26,19 @@ SOFTWARE.
 
 #pragma once
 
-#include <d3d12.h>
+#include "../Core/Containers/String.hpp"
+#include "VertexFormat.hpp"
 
 namespace LevelSketch
 {
 namespace Render
 {
-namespace DirectX
+
+struct VertexDescription
 {
-namespace Utility
-{
+    String Name {};
+    VertexFormat Format { VertexFormat::Float4 };
+};
 
-D3D12_HEAP_PROPERTIES MakeHeapProperties(D3D12_HEAP_TYPE Type = D3D12_HEAP_TYPE_DEFAULT);
-D3D12_RESOURCE_DESC MakeResourceDescription(D3D12_RESOURCE_DIMENSION Dimension = D3D12_RESOURCE_DIMENSION_BUFFER,
-    DXGI_FORMAT Format = DXGI_FORMAT_UNKNOWN);
-
-D3D12_RESOURCE_BARRIER MakeResourceBarrierTransition(ID3D12Resource* Resource,
-    D3D12_RESOURCE_STATES Before,
-    D3D12_RESOURCE_STATES After,
-    UINT Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-    D3D12_RESOURCE_BARRIER_FLAGS Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
-
-}
-}
 }
 }

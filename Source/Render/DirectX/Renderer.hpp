@@ -48,6 +48,7 @@ namespace DirectX
 
 class CommandQueue;
 class Device;
+class GraphicsPipeline;
 class SwapChain;
 class Viewport;
 
@@ -73,6 +74,7 @@ public:
     virtual void Shutdown() override;
     virtual void Render(Platform::Window* Window) override;
     virtual u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel = 4) override;
+    virtual u32 CreateGraphicsPipeline(const GraphicsPipelineDescription& Description) override;
     virtual void UploadGUIData(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer) override;
     virtual void UpdateViewMatrix(const Matrix4f& View) override;
 
@@ -84,8 +86,6 @@ private:
     u64 GetTextureOffset(u32 ID) const;
     Viewport* GetViewportFor(Platform::Window* Window) const;
 
-    Microsoft::WRL::ComPtr<ID3D12PipelineState> m_PipelineState;
-    Microsoft::WRL::ComPtr<ID3D12PipelineState> m_PipelineStateGUI;
     Microsoft::WRL::ComPtr<ID3D12Fence> m_Fence;
     Microsoft::WRL::ComPtr<ID3D12Resource> m_DepthStencil;
     UINT64 m_FenceValue { 0 };
@@ -106,6 +106,7 @@ private:
 
     UniquePtr<Device> m_Device { nullptr };
     Array<UniquePtr<Viewport>> m_Viewports {};
+    Array<UniquePtr<GraphicsPipeline>> m_GraphicsPipelines {};
 };
 
 }

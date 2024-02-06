@@ -37,12 +37,14 @@ SOFTWARE.
 #include "../../Core/Math/Vertex.hpp"
 #include "../../Platform/FileSystem.hpp"
 #include "../../Platform/Window.hpp"
+#include "../GraphicsPipelineDescription.hpp"
 #include "Adapter.hpp"
 #include "CommandAllocator.hpp"
 #include "CommandList.hpp"
 #include "CommandQueue.hpp"
 #include "DescriptorHeap.hpp"
 #include "Device.hpp"
+#include "GraphicsPipeline.hpp"
 #include "Renderer.hpp"
 #include "RootSignature.hpp"
 #include "Shader.hpp"
@@ -196,7 +198,7 @@ void Renderer::Render(Platform::Window* Window)
     CommandList->OMSetRenderTargets(1, &RTVCPUDesc, FALSE, &DSVCPUDesc);
 
     // Begin World rendering
-    CommandList->SetPipelineState(m_PipelineState.Get());
+    CommandList->SetPipelineState(m_GraphicsPipelines[0]->Get());
 
     const float ClearColor[] { 0.0f, 0.2f, 0.4f, 1.0f };
     CommandList->ClearRenderTargetView(RTVCPUDesc, ClearColor, 0, nullptr);
@@ -214,7 +216,7 @@ void Renderer::Render(Platform::Window* Window)
     CommandList->DrawIndexedInstanced(3, 1, 0, 0, 0);
 
     // Begin GUI rendering
-    CommandList->SetPipelineState(m_PipelineStateGUI.Get());
+    CommandList->SetPipelineState(m_GraphicsPipelines[1]->Get());
     CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     m_RenderBufferGUI.BindViews(CommandList);
 
@@ -292,6 +294,20 @@ u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8)
     return Tex.ID();
 }
 
+u32 Renderer::CreateGraphicsPipeline(const GraphicsPipelineDescription& Description)
+{
+    UniquePtr<GraphicsPipeline> Pipeline { UniquePtr<GraphicsPipeline>::New() };
+
+    if (!Pipeline->Initialize(m_Device.Get(), Description))
+    {
+        return 0;
+    }
+
+    const u32 Result { Pipeline->ID() };
+    m_GraphicsPipelines.Push(std::move(Pipeline));
+    return Result;
+}
+
 void Renderer::UploadGUIData(OctaneGUI::Window*, const OctaneGUI::VertexBuffer& Buffer)
 {
     if (!m_RenderBufferGUI.Initialized())
@@ -327,126 +343,39 @@ void Renderer::UpdateViewMatrix(const Matrix4f& View)
 
 bool Renderer::LoadAssets(Platform::Window* Window)
 {
-    u32 CompileFlags { 0 };
-
-#if defined(_DEBUG)
-    CompileFlags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
-#endif
-
-    Shader VertexShader { Shader::LoadFromFile("TestVS.hlsl") };
-    bool CompileResult =
-        VertexShader.SetName("DefaultVS")
-            .SetEntryPoint("Main")
-            .SetTarget("vs_5_0")
-            .SetCompileFlags(CompileFlags)
-            .AddInputElement(
-                { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 })
-            .AddInputElement(
-                { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 })
-            .AddInputElement(
-                { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 })
-            .Compile();
-    if (!CompileResult)
+    GraphicsPipelineDescription TestDesc {};
+    TestDesc.Name = "Test";
+    TestDesc.UseDepthStencilBuffer = true;
+    TestDesc.VertexShader.Name = "DefaultVS";
+    TestDesc.VertexShader.Path = "TestVS.hlsl";
+    TestDesc.VertexShader.Function = "Main";
+    TestDesc.VertexShader.VertexDescriptions.Push({ "POSITION", VertexFormat::Float3 });
+    TestDesc.VertexShader.VertexDescriptions.Push({ "TEXCOORD", VertexFormat::Float2 });
+    TestDesc.VertexShader.VertexDescriptions.Push({ "COLOR", VertexFormat::Float4 });
+    TestDesc.FragmentShader.Name = "DefaultFS";
+    TestDesc.FragmentShader.Path = "TestPS.hlsl";
+    TestDesc.FragmentShader.Function = "Main";
+    if (CreateGraphicsPipeline(TestDesc) == 0)
     {
-        Core::Console::Warning("Failed to compile vertex shader:\n%s",
-            (LPCSTR)VertexShader.Errors()->GetBufferPointer());
         return false;
     }
 
-    Shader PixelShader { Shader::LoadFromFile("TestPS.hlsl") };
-    PixelShader.SetName("DefaultPS").SetEntryPoint("Main").SetTarget("ps_5_0").SetCompileFlags(CompileFlags);
-    CompileResult = PixelShader.Compile();
-    if (!CompileResult)
+    GraphicsPipelineDescription GUIDesc {};
+    GUIDesc.Name = "GUI";
+    GUIDesc.CullMode = CullMode::None;
+    GUIDesc.UseDepthStencilBuffer = false;
+    GUIDesc.UseAlphaBlending = true;
+    GUIDesc.VertexShader.Name = "GUIVS";
+    GUIDesc.VertexShader.Path = "GUIVS.hlsl";
+    GUIDesc.VertexShader.Function = "Main";
+    GUIDesc.VertexShader.VertexDescriptions.Push({ "POSITION", VertexFormat::Float2 });
+    GUIDesc.VertexShader.VertexDescriptions.Push({ "TEXCOORD", VertexFormat::Float2 });
+    GUIDesc.VertexShader.VertexDescriptions.Push({ "COLOR", VertexFormat::Byte4 });
+    GUIDesc.FragmentShader.Name = "GUIFS";
+    GUIDesc.FragmentShader.Path = "GUIPS.hlsl";
+    GUIDesc.FragmentShader.Function = "Main";
+    if (!CreateGraphicsPipeline(GUIDesc))
     {
-        Core::Console::Warning("Failed to compile pixel shader:\n%s", (LPCSTR)PixelShader.Errors()->GetBufferPointer());
-        return false;
-    }
-
-    D3D12_GRAPHICS_PIPELINE_STATE_DESC GraphicsDesc { Utility::MakeDefaultGraphicsPipelineState() };
-    GraphicsDesc.InputLayout = { VertexShader.InputElements(), VertexShader.NumInputElements() };
-    GraphicsDesc.pRootSignature = m_Device->GetRootSignature()->Get();
-    GraphicsDesc.VS = { VertexShader.Blob()->GetBufferPointer(), VertexShader.Blob()->GetBufferSize() };
-    GraphicsDesc.PS = { PixelShader.Blob()->GetBufferPointer(), PixelShader.Blob()->GetBufferSize() };
-    GraphicsDesc.DepthStencilState = Utility::MakeDepthStencilDescription();
-    GraphicsDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-
-    if (m_Device->Get()->CreateGraphicsPipelineState(&GraphicsDesc, IID_PPV_ARGS(&m_PipelineState)) != S_OK)
-    {
-        Core::Console::WriteLine("Failed to create default graphics pipeline state!");
-        return false;
-    }
-
-    // Begin creation of GUI pipeline state.
-    VertexShader = Shader::LoadFromFile("GUIVS.hlsl");
-    VertexShader.SetName("GUIVS")
-        .SetEntryPoint("Main")
-        .SetTarget("vs_5_0")
-        .SetCompileFlags(CompileFlags)
-        .AddInputElement({ "POSITION",
-            0,
-            DXGI_FORMAT_R32G32_FLOAT,
-            0,
-            D3D12_APPEND_ALIGNED_ELEMENT,
-            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
-            0 })
-        .AddInputElement({ "TEXCOORD",
-            0,
-            DXGI_FORMAT_R32G32_FLOAT,
-            0,
-            D3D12_APPEND_ALIGNED_ELEMENT,
-            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
-            0 })
-        .AddInputElement({ "COLOR",
-            0,
-            DXGI_FORMAT_R8G8B8A8_UNORM,
-            0,
-            D3D12_APPEND_ALIGNED_ELEMENT,
-            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
-            0 });
-    CompileResult = VertexShader.Compile();
-    if (!CompileResult)
-    {
-        Core::Console::Warning("Failed to compile GUI vertex shader:\n%s",
-            (LPCSTR)VertexShader.Errors()->GetBufferPointer());
-        return false;
-    }
-
-    PixelShader = Shader::LoadFromFile("GUIPS.hlsl");
-    CompileResult =
-        PixelShader.SetName("GUIPS").SetEntryPoint("Main").SetTarget("ps_5_0").SetCompileFlags(CompileFlags).Compile();
-    if (!CompileResult)
-    {
-        Core::Console::Warning("Failed to compile GUI pixel shader:\n%s",
-            (LPCSTR)PixelShader.Errors()->GetBufferPointer());
-        return false;
-    }
-
-    GraphicsDesc.InputLayout = { VertexShader.InputElements(), VertexShader.NumInputElements() };
-    GraphicsDesc.VS = { VertexShader.Blob()->GetBufferPointer(), VertexShader.Blob()->GetBufferSize() };
-    GraphicsDesc.PS = { PixelShader.Blob()->GetBufferPointer(), PixelShader.Blob()->GetBufferSize() };
-    GraphicsDesc.DepthStencilState.DepthEnable = FALSE;
-    GraphicsDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-    GraphicsDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS;
-    GraphicsDesc.DepthStencilState.StencilEnable = FALSE;
-    GraphicsDesc.DepthStencilState.FrontFace.StencilFailOp =
-        GraphicsDesc.DepthStencilState.FrontFace.StencilDepthFailOp =
-            GraphicsDesc.DepthStencilState.FrontFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
-    GraphicsDesc.DepthStencilState.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
-    GraphicsDesc.DepthStencilState.BackFace = GraphicsDesc.DepthStencilState.FrontFace;
-    GraphicsDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
-
-    GraphicsDesc.BlendState.RenderTarget[0].BlendEnable = TRUE;
-    GraphicsDesc.BlendState.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
-    GraphicsDesc.BlendState.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-    GraphicsDesc.BlendState.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
-    GraphicsDesc.BlendState.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
-    GraphicsDesc.BlendState.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_INV_SRC_ALPHA;
-    GraphicsDesc.BlendState.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
-    GraphicsDesc.BlendState.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-
-    if (m_Device->Get()->CreateGraphicsPipelineState(&GraphicsDesc, IID_PPV_ARGS(&m_PipelineStateGUI)) != S_OK)
-    {
-        Core::Console::WriteLine("Failed to create GUI graphics pipeline state!");
         return false;
     }
 
