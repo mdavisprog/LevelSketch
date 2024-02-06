@@ -91,19 +91,9 @@ void Renderer::UpdateViewMatrix(const Matrix4f&)
 {
 }
 
-bool Renderer::Initialized() const
-{
-    return m_Initialized;
-}
-
 const Renderer::DriverSummary& Renderer::Summary() const
 {
     return m_DriverSummary;
-}
-
-void Renderer::SetInitialized(bool Initialized)
-{
-    m_Initialized = Initialized;
 }
 
 Renderer::DriverSummary& Renderer::SummaryMut()

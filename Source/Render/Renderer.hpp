@@ -81,16 +81,13 @@ public:
     virtual void UploadGUIData(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer);
     virtual void UpdateViewMatrix(const Matrix4f& View);
 
-    bool Initialized() const;
     const DriverSummary& Summary() const;
     Platform::TimingData TimingData() const;
 
 protected:
-    void SetInitialized(bool Initialized);
     DriverSummary& SummaryMut();
 
 private:
-    bool m_Initialized { false };
     DriverSummary m_DriverSummary {};
 };
 

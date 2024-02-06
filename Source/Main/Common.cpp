@@ -193,6 +193,13 @@ i32 Main(i32 Argc, const char** Argv)
         return -1;
     }
 
+    const Render::Renderer::DriverSummary& Summary { Render::Renderer::Instance()->Summary() };
+    Core::Console::WriteLine("Rendering Driver Summary");
+    Core::Console::WriteLine("Vendor: %s", Summary.Vendor.Data());
+    Core::Console::WriteLine("Renderer: %s", Summary.Renderer.Data());
+    Core::Console::WriteLine("Version: %s", Summary.Version.Data());
+    Core::Console::WriteLine("Shading Language Version: %s", Summary.ShadingLanguageVersion.Data());
+
     if (!GUI::GUI::Instance().Initialize(Argc, Argv))
     {
         return false;

@@ -200,20 +200,8 @@ void GUI::OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Acti
                 m_Windows[Window] = Win;
                 Win->Show();
 
-                const bool WasInitialized { Render::Renderer::Instance()->Initialized() };
                 if (Render::Renderer::Instance()->Initialize(Win))
                 {
-                    if (WasInitialized != Render::Renderer::Instance()->Initialized())
-                    {
-                        Core::Console::WriteLine("Rendering Driver Summary");
-                        Core::Console::WriteLine("Vendor: %s", Render::Renderer::Instance()->Summary().Vendor.Data());
-                        Core::Console::WriteLine("Renderer: %s",
-                            Render::Renderer::Instance()->Summary().Renderer.Data());
-                        Core::Console::WriteLine("Version: %s", Render::Renderer::Instance()->Summary().Version.Data());
-                        Core::Console::WriteLine("Shading Language Version: %s",
-                            Render::Renderer::Instance()->Summary().ShadingLanguageVersion.Data());
-                    }
-
                     const Vector2 Scale { Win->ContentScale() };
                     Window->SetRenderScale({ Scale.X, Scale.Y });
                 }

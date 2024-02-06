@@ -130,13 +130,16 @@ bool Renderer::Initialize()
     m_Device->GetAdapter()->FillSummary(SummaryMut());
     m_ConstantBufferIndex = m_Device->MaxSRVDescriptors() - 1;
 
+    if (!LoadAssets())
+    {
+        return false;
+    }
+
     return true;
 }
 
 bool Renderer::Initialize(Platform::Window* Window)
 {
-    const bool FirstWindow { m_Viewports.Size() == 0 };
-
     UniquePtr<Viewport> NewViewport { UniquePtr<Viewport>::New() };
     if (!NewViewport->Initialize(Window, m_Device.Get(), 2))
     {
@@ -151,16 +154,6 @@ bool Renderer::Initialize(Platform::Window* Window)
         {
             return false;
         }
-    }
-
-    if (FirstWindow)
-    {
-        if (!LoadAssets(Window))
-        {
-            return false;
-        }
-
-        SetInitialized(true);
     }
 
     return true;
@@ -351,7 +344,7 @@ void Renderer::UpdateViewMatrix(const Matrix4f& View)
     m_ConstantBufferData.View = View;
 }
 
-bool Renderer::LoadAssets(Platform::Window*)
+bool Renderer::LoadAssets()
 {
     GraphicsPipelineDescription TestDesc {};
     TestDesc.Name = "Test";

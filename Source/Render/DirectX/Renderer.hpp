@@ -80,7 +80,7 @@ public:
     virtual void UpdateViewMatrix(const Matrix4f& View) override;
 
 private:
-    bool LoadAssets(Platform::Window* Window);
+    bool LoadAssets();
     void WaitForPreviousFrame();
     bool ExecuteCommands();
     bool ResetCommands();
