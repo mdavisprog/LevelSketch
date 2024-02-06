@@ -78,10 +78,20 @@ static bool GetBaseFileName()
     return true;
 }
 
+static bool SetExtension()
+{
+    VERIFY(FileSystem::SetExtension("Hello", "txt") == "Hello.txt");
+    VERIFY(FileSystem::SetExtension("Hello.txt", "md") == "Hello.md");
+    VERIFY(FileSystem::SetExtension("C:\\Hello.txt", "md") == "C:\\Hello.md");
+    VERIFY(FileSystem::SetExtension("/User/Hello.txt", "md") == "/User/Hello.md");
+    VERIFY(FileSystem::SetExtension("C:\\Hello\\", "git") == "C:\\Hello\\.git");
+    return true;
+}
+
 UniquePtr<TestSuite> FileSystemTests()
 {
     return TestSuite::New("FileSystem",
-        { TEST_CASE(GetDirectory), TEST_CASE(GetFileName), TEST_CASE(GetBaseFileName) });
+        { TEST_CASE(GetDirectory), TEST_CASE(GetFileName), TEST_CASE(GetBaseFileName), TEST_CASE(SetExtension) });
 }
 
 }
