@@ -28,6 +28,7 @@ SOFTWARE.
 #include "../Core/CommandLine.hpp"
 #include "../Core/Console.hpp"
 #include "../Core/Defines.hpp"
+#include "../Core/Math/Vertex.hpp"
 #include "../Engine/Camera.hpp"
 #include "../Engine/Engine.hpp"
 #include "../GUI/GUI.hpp"
@@ -36,7 +37,10 @@ SOFTWARE.
 #include "../Platform/FileSystem.hpp"
 #include "../Platform/Platform.hpp"
 #include "../Platform/Window.hpp"
+#include "../Render/GraphicsPipelineDescription.hpp"
 #include "../Render/Renderer.hpp"
+#include "../Render/VertexBufferDescription.hpp"
+#include "../Render/VertexDataDescription.hpp"
 #include <cstdio>
 
 #ifdef WITH_TESTS
@@ -47,6 +51,9 @@ namespace LevelSketch
 {
 namespace Main
 {
+
+static u32 g_TestPipeline { 0 };
+static u32 g_TestBuffer { 0 };
 
 static Engine::Camera g_Camera { { 0.0f, 0.0f, -20.0f } };
 static bool g_RotateCamera { false };
@@ -153,9 +160,93 @@ static bool OnPlatformFrame(const Platform::TimingData& TimingData)
 
     GUI.RunFrame();
 
-    for (const UniquePtr<Platform::Window>& Window : Platform::Platform::Instance()->Windows())
+    const Array<UniquePtr<Platform::Window>>& Windows { Platform::Platform::Instance()->Windows() };
+
+    if (Windows.IsEmpty())
     {
-        Render::Renderer::Instance()->Render(Window.Get());
+        return true;
+    }
+
+    const UniquePtr<Render::Renderer>& Renderer { Render::Renderer::Instance() };
+
+    // The first window is the level editor window.
+    Platform::Window* Editor { Windows[0].Get() };
+
+    if (Renderer->BeginRender(Editor, { 0.0f, 0.2f, 0.4f, 1.0f }))
+    {
+        Renderer->BindGraphicsPipeline(g_TestPipeline);
+        Renderer->BindVertexBuffer(g_TestBuffer);
+        Renderer->DrawIndexed(3, 1, 0, 0, 0);
+        GUI::GUI::Instance().Render(Editor);
+        Renderer->EndRender(Editor);
+    }
+
+    // TODO: Render GUI on other windows. For now, GUI is rendered as part of the editor window.
+
+    return true;
+}
+
+static bool InitializeRendering()
+{
+    const UniquePtr<Render::Renderer>& Renderer { Render::Renderer::Instance() };
+
+    if (!Renderer->Initialize())
+    {
+        return false;
+    }
+
+    const Render::Renderer::DriverSummary& Summary { Renderer->Summary() };
+    Core::Console::WriteLine("Rendering Driver Summary");
+    Core::Console::WriteLine("Vendor: %s", Summary.Vendor.Data());
+    Core::Console::WriteLine("Renderer: %s", Summary.Renderer.Data());
+    Core::Console::WriteLine("Version: %s", Summary.Version.Data());
+    Core::Console::WriteLine("Shading Language Version: %s", Summary.ShadingLanguageVersion.Data());
+
+    Render::GraphicsPipelineDescription TestDesc {};
+    TestDesc.Name = "Test";
+    TestDesc.CullMode = Render::CullMode::Back;
+    TestDesc.UseDepthStencilBuffer = true;
+    TestDesc.VertexShader.Name = "DefaultVS";
+    TestDesc.VertexShader.Path = "TestVS";
+    TestDesc.VertexShader.Function = "Main";
+    TestDesc.VertexShader.VertexDescriptions.Push({ "POSITION", Render::VertexFormat::Float3 });
+    TestDesc.VertexShader.VertexDescriptions.Push({ "TEXCOORD", Render::VertexFormat::Float2 });
+    TestDesc.VertexShader.VertexDescriptions.Push({ "COLOR", Render::VertexFormat::Float4 });
+    TestDesc.FragmentShader.Name = "DefaultFS";
+    TestDesc.FragmentShader.Path = "TestPS";
+    TestDesc.FragmentShader.Function = "Main";
+    g_TestPipeline = Renderer->CreateGraphicsPipeline(TestDesc);
+    if (g_TestPipeline == 0)
+    {
+        return false;
+    }
+
+    Render::VertexBufferDescription TestBufferDesc {};
+    TestBufferDesc.VertexBufferSize = 1000;
+    TestBufferDesc.IndexBufferSize = 1000;
+    TestBufferDesc.Stride = sizeof(Vertex3);
+    TestBufferDesc.IndexFormat = Render::IndexFormat::U32;
+    g_TestBuffer = Renderer->CreateVertexBuffer(TestBufferDesc);
+    if (g_TestBuffer == 0)
+    {
+        return false;
+    }
+
+    const float Offset { 1.0f };
+    Vertex3 Vertices[3];
+    Vertices[0] = { { 0.0f, Offset, 5.0f }, { 0.5f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } };
+    Vertices[1] = { { -Offset, -Offset, 5.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } };
+    Vertices[2] = { { Offset, -Offset, 5.0f }, { 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } };
+    u32 IndexBufferData[] = { 0, 1, 2 };
+
+    Render::VertexDataDescription TestDataDesc {};
+    TestDataDesc.VertexData = Vertices;
+    TestDataDesc.VertexDataSize = sizeof(Vertices);
+    TestDataDesc.IndexData = IndexBufferData;
+    TestDataDesc.IndexDataSize = sizeof(IndexBufferData);
+    if (!Renderer->UploadVertexData(g_TestBuffer, TestDataDesc))
+    {
+        return false;
     }
 
     return true;
@@ -187,18 +278,10 @@ i32 Main(i32 Argc, const char** Argv)
         return -1;
     }
 
-    if (!Render::Renderer::Instance()->Initialize())
+    if (!InitializeRendering())
     {
-        printf("Failed to initialize renderer!\n");
         return -1;
     }
-
-    const Render::Renderer::DriverSummary& Summary { Render::Renderer::Instance()->Summary() };
-    Core::Console::WriteLine("Rendering Driver Summary");
-    Core::Console::WriteLine("Vendor: %s", Summary.Vendor.Data());
-    Core::Console::WriteLine("Renderer: %s", Summary.Renderer.Data());
-    Core::Console::WriteLine("Version: %s", Summary.Version.Data());
-    Core::Console::WriteLine("Shading Language Version: %s", Summary.ShadingLanguageVersion.Data());
 
     if (!GUI::GUI::Instance().Initialize(Argc, Argv))
     {

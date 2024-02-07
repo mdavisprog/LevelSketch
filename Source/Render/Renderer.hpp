@@ -30,12 +30,6 @@ SOFTWARE.
 #include "../Core/Math/Forwards.hpp"
 #include "../Core/Memory/UniquePtr.hpp"
 
-namespace OctaneGUI
-{
-class VertexBuffer;
-class Window;
-}
-
 namespace LevelSketch
 {
 
@@ -51,6 +45,7 @@ namespace Render
 struct GraphicsPipelineDescription;
 struct VertexBufferDescription;
 struct VertexDataDescription;
+struct ViewportRect;
 
 class Renderer
 {
@@ -75,16 +70,25 @@ public:
     virtual bool Initialize() = 0;
     virtual bool Initialize(Platform::Window* Window) = 0;
     virtual void Shutdown() = 0;
-    virtual void Render(Platform::Window* Window) = 0;
+
     virtual u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel = 4);
+    virtual bool BindTexture(u32 ID) = 0;
+
+    virtual bool BeginRender(Platform::Window* Window, const Colorf& ClearColor) = 0;
+    virtual void EndRender(Platform::Window* Window) = 0;
+    virtual void SetViewportRect(const ViewportRect& Rect) = 0;
+    virtual void SetScissor(const Recti& Rect) = 0;
+
     virtual u32 CreateGraphicsPipeline(const GraphicsPipelineDescription& Description) = 0;
+    virtual bool BindGraphicsPipeline(u32 ID) = 0;
+
+    virtual void DrawIndexed(u32 IndexCount, u32 InstanceCount, u32 StartIndex, u32 BaseVertex, u32 StartInstance) = 0;
 
     virtual u32 CreateVertexBuffer(const VertexBufferDescription& Description) = 0;
     virtual bool UploadVertexData(u32 ID, const VertexDataDescription& Description) = 0;
     virtual bool BindVertexBuffer(u32 ID) = 0;
 
     // Temporary
-    virtual void UploadGUIData(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer);
     virtual void UpdateViewMatrix(const Matrix4f& View);
 
     const DriverSummary& Summary() const;

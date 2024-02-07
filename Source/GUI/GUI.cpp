@@ -26,11 +26,15 @@ SOFTWARE.
 
 #include "GUI.hpp"
 #include "../Core/Console.hpp"
+#include "../Core/Math/Rect.hpp"
 #include "../Core/Math/Vector2.hpp"
 #include "../External/OctaneGUI/OctaneGUI.h"
 #include "../Platform/Platform.hpp"
 #include "../Platform/Window.hpp"
+#include "../Render/GraphicsPipelineDescription.hpp"
 #include "../Render/Renderer.hpp"
+#include "../Render/VertexBufferDescription.hpp"
+#include "../Render/VertexDataDescription.hpp"
 
 #include <unordered_map>
 #include <vector>
@@ -94,6 +98,42 @@ GUI& GUI::Instance()
 
 bool GUI::Initialize(i32 Argc, const char** Argv)
 {
+    const UniquePtr<Render::Renderer>& Renderer { Render::Renderer::Instance() };
+
+    Render::GraphicsPipelineDescription GUIDesc {};
+    GUIDesc.Name = "GUI";
+    GUIDesc.CullMode = Render::CullMode::None;
+    GUIDesc.UseDepthStencilBuffer = false;
+    GUIDesc.UseAlphaBlending = true;
+    GUIDesc.VertexShader.Name = "GUIVS";
+    GUIDesc.VertexShader.Path = "GUIVS";
+    GUIDesc.VertexShader.Function = "Main";
+    GUIDesc.VertexShader.VertexDescriptions.Push({ "POSITION", Render::VertexFormat::Float2 });
+    GUIDesc.VertexShader.VertexDescriptions.Push({ "TEXCOORD", Render::VertexFormat::Float2 });
+    GUIDesc.VertexShader.VertexDescriptions.Push({ "COLOR", Render::VertexFormat::Byte4 });
+    GUIDesc.FragmentShader.Name = "GUIFS";
+    GUIDesc.FragmentShader.Path = "GUIPS";
+    GUIDesc.FragmentShader.Function = "Main";
+    m_GUIPipeline = Renderer->CreateGraphicsPipeline(GUIDesc);
+    if (m_GUIPipeline == 0)
+    {
+        return false;
+    }
+
+    Render::VertexBufferDescription GUIBufferDesc {};
+    GUIBufferDesc.VertexBufferSize = 100000;
+    GUIBufferDesc.IndexBufferSize = 100000;
+    GUIBufferDesc.Stride = sizeof(OctaneGUI::Vertex);
+    GUIBufferDesc.IndexFormat = Render::IndexFormat::U32;
+    m_GUIBuffer = Renderer->CreateVertexBuffer(GUIBufferDesc);
+    if (m_GUIBuffer == 0)
+    {
+        return false;
+    }
+
+    const u8 WhiteTexture[4] { 0xFF, 0xFF, 0xFF, 0xFF };
+    m_WhiteTexture = Renderer->LoadTexture(WhiteTexture, 1, 1, 4);
+
     const char* Stream = R"({
         "Theme": {
             "FontPath": "Content/Fonts/Roboto-Regular.ttf",
@@ -127,9 +167,10 @@ bool GUI::Initialize(i32 Argc, const char** Argv)
                 return Render::Renderer::Instance()->LoadTexture(Data.data(), Width, Height);
             })
         .SetOnPaint(
-            [this](OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer) -> void
+            [this](OctaneGUI::Window*, const OctaneGUI::VertexBuffer& Buffer) -> void
             {
-                Render::Renderer::Instance()->UploadGUIData(Window, Buffer);
+                m_LastBuffer.Data = Buffer;
+                m_LastBuffer.Uploaded = false;
             })
         .SetCommandLine(Argc, const_cast<char**>(Argv));
 
@@ -168,6 +209,57 @@ bool GUI::IsRunning() const
 void GUI::RunFrame()
 {
     m_Application->RunFrame();
+
+    if (!m_LastBuffer.Uploaded)
+    {
+        Render::VertexDataDescription Data {};
+        Data.VertexData = const_cast<OctaneGUI::Vertex*>(m_LastBuffer.Data.GetVertices().data());
+        Data.VertexDataSize = static_cast<u64>(m_LastBuffer.Data.GetVertexCount()) * sizeof(OctaneGUI::Vertex);
+        Data.IndexData = const_cast<u32*>(m_LastBuffer.Data.GetIndices().data());
+        Data.IndexDataSize = static_cast<u64>(m_LastBuffer.Data.GetIndexCount()) * sizeof(u32);
+
+        if (!Render::Renderer::Instance()->UploadVertexData(m_GUIBuffer, Data))
+        {
+            return;
+        }
+
+        m_LastBuffer.Uploaded = true;
+    }
+}
+
+void GUI::Render(Platform::Window* Window)
+{
+    if (!m_LastBuffer.Uploaded)
+    {
+        return;
+    }
+
+    const UniquePtr<Render::Renderer>& Renderer { Render::Renderer::Instance() };
+
+    Renderer->BindGraphicsPipeline(m_GUIPipeline);
+    Renderer->BindVertexBuffer(m_GUIBuffer);
+
+    for (const OctaneGUI::DrawCommand& Command : m_LastBuffer.Data.Commands())
+    {
+        u32 Texture { m_WhiteTexture };
+        if (Command.TextureID() != 0)
+        {
+            Texture = Command.TextureID();
+        }
+
+        Recti Clip { 0, 0, Window->Size().X, Window->Size().Y };
+        if (!Command.Clip().IsZero())
+        {
+            Clip.X = static_cast<i32>(Command.Clip().Min.X);
+            Clip.Y = static_cast<i32>(Command.Clip().Min.Y);
+            Clip.W = static_cast<i32>(Command.Clip().Width());
+            Clip.H = static_cast<i32>(Command.Clip().Height());
+        };
+
+        Renderer->BindTexture(Texture);
+        Renderer->SetScissor(Clip);
+        Renderer->DrawIndexed(Command.IndexCount(), 1, Command.IndexOffset(), Command.VertexOffset(), 0);
+    }
 }
 
 GUI& GUI::PushEvent(const Platform::Event& Event)

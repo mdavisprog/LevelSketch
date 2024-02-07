@@ -24,54 +24,21 @@ SOFTWARE.
 
 */
 
-#include "CommandAllocator.hpp"
-#include "../../Core/Console.hpp"
-#include "../../Platform/Windows/Errors.hpp"
-#include "Device.hpp"
+#pragma once
+
+#include "../Core/Math/Rect.hpp"
 
 namespace LevelSketch
 {
 namespace Render
 {
-namespace DirectX
+
+struct ViewportRect
 {
+    Rectf Bounds {};
+    f32 MinDepth { 0.0f };
+    f32 MaxDepth { 0.0f };
+};
 
-CommandAllocator::CommandAllocator()
-{
-}
-
-bool CommandAllocator::Initialize(Device const* Device_)
-{
-    HRESULT Result { Device_->Get()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT,
-        IID_PPV_ARGS(&m_Allocator)) };
-
-    if (FAILED(Result))
-    {
-        Core::Console::Error("Failed to create command allocator. Error: %s",
-            Platform::Windows::Errors::ToString(Result).Data());
-        return false;
-    }
-
-    return true;
-}
-
-bool CommandAllocator::Reset() const
-{
-    HRESULT Result { m_Allocator->Reset() };
-
-    if (FAILED(Result))
-    {
-        return false;
-    }
-
-    return true;
-}
-
-ID3D12CommandAllocator* CommandAllocator::Get() const
-{
-    return m_Allocator.Get();
-}
-
-}
 }
 }

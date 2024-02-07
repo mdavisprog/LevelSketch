@@ -24,22 +24,20 @@ SOFTWARE.
 
 */
 
-// Need to include before including any Windows headers.
-#include "../../External/OctaneGUI/OctaneGUI.h"
-
 #if defined(DEBUG)
 #include "InfoQueue.hpp"
 #endif
 
 #include "../../Core/Console.hpp"
 #include "../../Core/Containers/Array.hpp"
+#include "../../Core/Math/Color.hpp"
 #include "../../Core/Math/Vector2.hpp"
 #include "../../Core/Math/Vertex.hpp"
 #include "../../Platform/FileSystem.hpp"
 #include "../../Platform/Window.hpp"
-#include "../GraphicsPipelineDescription.hpp"
 #include "../VertexBufferDescription.hpp"
 #include "../VertexDataDescription.hpp"
+#include "../ViewportRect.hpp"
 #include "Adapter.hpp"
 #include "CommandAllocator.hpp"
 #include "CommandList.hpp"
@@ -166,108 +164,6 @@ void Renderer::Shutdown()
 {
 }
 
-static Vertex3 Vertices[3];
-
-void Renderer::Render(Platform::Window* Window)
-{
-    if (!ResetCommands())
-    {
-        return;
-    }
-
-    Viewport* Viewport_ { GetViewportFor(Window) };
-
-    ID3D12GraphicsCommandList1* CommandList { m_Device->GetCommandList()->Get() };
-    CommandList->SetGraphicsRootSignature(m_Device->GetRootSignature()->Get());
-
-    ID3D12DescriptorHeap* Heaps[] = { m_Device->SRVHeap()->Get() };
-    CommandList->SetDescriptorHeaps(_countof(Heaps), Heaps);
-    // TODO: Apply an offset to select a specific resource.
-    D3D12_GPU_DESCRIPTOR_HANDLE GPUDesc { m_Device->SRVHeap()->GPUOffset(0) };
-    GPUDesc.ptr += GetTextureOffset(m_DefaultTexture);
-    CommandList->SetGraphicsRootDescriptorTable(0, GPUDesc);
-
-    const Core::Math::Vector2i Size { Window->Size() };
-    D3D12_VIEWPORT View { 0.0f, 0.0f, (FLOAT)Size.X, (FLOAT)Size.Y, 0.0f, 1.0f };
-    D3D12_RECT Scissor { 0, 0, (LONG)Size.X, (LONG)Size.Y };
-
-    CommandList->RSSetViewports(1, &View);
-    CommandList->RSSetScissorRects(1, &Scissor);
-
-    D3D12_RESOURCE_BARRIER Barrier { Utility::MakeResourceBarrierTransition(Viewport_->CurrentRenderTarget(),
-        D3D12_RESOURCE_STATE_PRESENT,
-        D3D12_RESOURCE_STATE_RENDER_TARGET) };
-    CommandList->ResourceBarrier(1, &Barrier);
-
-    D3D12_CPU_DESCRIPTOR_HANDLE RTVCPUDesc { Viewport_->RTVCPUOffset() };
-    D3D12_CPU_DESCRIPTOR_HANDLE DSVCPUDesc { m_DepthStencil->CPUOffset() };
-    CommandList->OMSetRenderTargets(1, &RTVCPUDesc, FALSE, &DSVCPUDesc);
-
-    // Begin World rendering
-    CommandList->SetPipelineState(m_GraphicsPipelines[0]->Get());
-
-    const float ClearColor[] { 0.0f, 0.2f, 0.4f, 1.0f };
-    CommandList->ClearRenderTargetView(RTVCPUDesc, ClearColor, 0, nullptr);
-    CommandList->ClearDepthStencilView(DSVCPUDesc, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-
-    GPUDesc = m_Device->SRVHeap()->GPUOffset(m_ConstantBufferIndex);
-    CommandList->SetGraphicsRootDescriptorTable(1, GPUDesc);
-
-    m_ConstantBufferData.Perspective = Core::Math::PerspectiveMatrixLH(45.0f, Window->AspectRatio(), 0.1f, 100.0f);
-    m_ConstantBufferData.Orthographic = Orthographic(Window);
-    std::memcpy(m_ConstantBufferAddress, &m_ConstantBufferData, sizeof(m_ConstantBufferData));
-
-    CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    BindVertexBuffer(1);
-    CommandList->DrawIndexedInstanced(3, 1, 0, 0, 0);
-
-    // Begin GUI rendering
-    CommandList->SetPipelineState(m_GraphicsPipelines[1]->Get());
-    CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    BindVertexBuffer(2);
-
-    for (const OctaneGUI::DrawCommand& Command : m_GUICommands)
-    {
-        GPUDesc = m_Device->SRVHeap()->GPUOffset(0);
-
-        if (Command.TextureID() == 0)
-        {
-            GPUDesc.ptr += GetTextureOffset(m_WhiteTexture);
-        }
-        else
-        {
-            GPUDesc.ptr += GetTextureOffset(Command.TextureID());
-        }
-
-        D3D12_RECT Clip { Scissor };
-        if (!Command.Clip().IsZero())
-        {
-            Clip.left = static_cast<LONG>(Command.Clip().Min.X);
-            Clip.top = static_cast<LONG>(Command.Clip().Min.Y);
-            Clip.right = static_cast<LONG>(Command.Clip().Max.X);
-            Clip.bottom = static_cast<LONG>(Command.Clip().Max.Y);
-        };
-
-        CommandList->RSSetScissorRects(1, &Clip);
-        CommandList->SetGraphicsRootDescriptorTable(0, GPUDesc);
-        CommandList->DrawIndexedInstanced(Command.IndexCount(), 1, Command.IndexOffset(), Command.VertexOffset(), 0);
-    }
-
-    Barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-    Barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-    CommandList->ResourceBarrier(1, &Barrier);
-
-    ExecuteCommands();
-
-    Viewport_->Present(1, 0);
-    WaitForPreviousFrame();
-    Viewport_->UpdateFrameIndex();
-
-#if defined(DEBUG)
-    InfoQueue::Poll();
-#endif
-}
-
 u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8)
 {
     if (!ResetCommands())
@@ -300,6 +196,129 @@ u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8)
     return Tex.ID();
 }
 
+bool Renderer::BindTexture(u32 ID)
+{
+    if (ID == 0)
+    {
+        Core::Console::Warning("Invalid texture given to BindTexture.");
+        return false;
+    }
+
+    D3D12_GPU_DESCRIPTOR_HANDLE GPUDesc { m_Device->SRVHeap()->GPUOffset(0) };
+    GPUDesc.ptr += GetTextureOffset(ID);
+    m_Device->GetCommandList()->Get()->SetGraphicsRootDescriptorTable(0, GPUDesc);
+
+    return true;
+}
+
+bool Renderer::BeginRender(Platform::Window* Window, const Colorf& ClearColor)
+{
+    if (!ResetCommands())
+    {
+        return false;
+    }
+
+    Viewport* Viewport_ { GetViewportFor(Window) };
+
+    if (Viewport_ == nullptr)
+    {
+        return false;
+    }
+
+    ID3D12GraphicsCommandList1* CommandList { m_Device->GetCommandList()->Get() };
+    CommandList->SetGraphicsRootSignature(m_Device->GetRootSignature()->Get());
+
+    ID3D12DescriptorHeap* Heaps[] = { m_Device->SRVHeap()->Get() };
+    CommandList->SetDescriptorHeaps(_countof(Heaps), Heaps);
+    // TODO: Apply an offset to select a specific resource.
+    D3D12_GPU_DESCRIPTOR_HANDLE GPUDesc { m_Device->SRVHeap()->GPUOffset(0) };
+    GPUDesc.ptr += GetTextureOffset(m_DefaultTexture);
+    CommandList->SetGraphicsRootDescriptorTable(0, GPUDesc);
+
+    const Core::Math::Vector2i Size { Window->Size() };
+    D3D12_VIEWPORT View { 0.0f, 0.0f, (FLOAT)Size.X, (FLOAT)Size.Y, 0.0f, 1.0f };
+    D3D12_RECT Scissor { 0, 0, (LONG)Size.X, (LONG)Size.Y };
+
+    CommandList->RSSetViewports(1, &View);
+    CommandList->RSSetScissorRects(1, &Scissor);
+
+    D3D12_RESOURCE_BARRIER Barrier {};
+    Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    Barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+    Barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+    Barrier.Transition.pResource = Viewport_->CurrentRenderTarget();
+    Barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+    Barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    CommandList->ResourceBarrier(1, &Barrier);
+
+    D3D12_CPU_DESCRIPTOR_HANDLE RTVCPUDesc { Viewport_->RTVCPUOffset() };
+    D3D12_CPU_DESCRIPTOR_HANDLE DSVCPUDesc { m_DepthStencil->CPUOffset() };
+    CommandList->OMSetRenderTargets(1, &RTVCPUDesc, FALSE, &DSVCPUDesc);
+
+    const float Color[] { ClearColor.R, ClearColor.G, ClearColor.B, ClearColor.A };
+    CommandList->ClearRenderTargetView(RTVCPUDesc, Color, 0, nullptr);
+    CommandList->ClearDepthStencilView(DSVCPUDesc, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
+    GPUDesc = m_Device->SRVHeap()->GPUOffset(m_ConstantBufferIndex);
+    CommandList->SetGraphicsRootDescriptorTable(1, GPUDesc);
+
+    m_ConstantBufferData.Perspective = Core::Math::PerspectiveMatrixLH(45.0f, Window->AspectRatio(), 0.1f, 100.0f);
+    m_ConstantBufferData.Orthographic = Orthographic(Window);
+    std::memcpy(m_ConstantBufferAddress, &m_ConstantBufferData, sizeof(m_ConstantBufferData));
+
+    CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    return true;
+}
+
+void Renderer::EndRender(Platform::Window* Window)
+{
+    Viewport* Viewport_ { GetViewportFor(Window) };
+
+    if (Viewport_ == nullptr)
+    {
+        return;
+    }
+
+    D3D12_RESOURCE_BARRIER Barrier {};
+    Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    Barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+    Barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+    Barrier.Transition.pResource = Viewport_->CurrentRenderTarget();
+    Barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+    Barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    m_Device->GetCommandList()->Get()->ResourceBarrier(1, &Barrier);
+
+    ExecuteCommands();
+
+    Viewport_->Present(1, 0);
+    WaitForPreviousFrame();
+    Viewport_->UpdateFrameIndex();
+
+#if defined(DEBUG)
+    InfoQueue::Poll();
+#endif
+}
+
+void Renderer::SetViewportRect(const ViewportRect& Rect)
+{
+    D3D12_VIEWPORT Viewport { Rect.Bounds.X,
+        Rect.Bounds.Y,
+        Rect.Bounds.W,
+        Rect.Bounds.H,
+        Rect.MinDepth,
+        Rect.MaxDepth };
+
+    m_Device->GetCommandList()->Get()->RSSetViewports(1, &Viewport);
+}
+
+void Renderer::SetScissor(const Recti& Rect)
+{
+    D3D12_RECT Scissor { Rect.Left(), Rect.Top(), Rect.Right(), Rect.Bottom() };
+
+    m_Device->GetCommandList()->Get()->RSSetScissorRects(1, &Scissor);
+}
+
 u32 Renderer::CreateGraphicsPipeline(const GraphicsPipelineDescription& Description)
 {
     UniquePtr<GraphicsPipeline> Pipeline { UniquePtr<GraphicsPipeline>::New() };
@@ -312,6 +331,35 @@ u32 Renderer::CreateGraphicsPipeline(const GraphicsPipelineDescription& Descript
     const u32 Result { Pipeline->ID() };
     m_GraphicsPipelines.Push(std::move(Pipeline));
     return Result;
+}
+
+bool Renderer::BindGraphicsPipeline(u32 ID)
+{
+    if (ID == 0)
+    {
+        Core::Console::Warning("Invalid graphic pipeline ID given to BindGraphicsPipeline.");
+        return false;
+    }
+
+    GraphicsPipeline* Pipeline { GetGraphicsPipeline(ID) };
+
+    if (Pipeline == nullptr)
+    {
+        return false;
+    }
+
+    m_Device->GetCommandList()->Get()->SetPipelineState(Pipeline->Get());
+
+    return true;
+}
+
+void Renderer::DrawIndexed(u32 IndexCount, u32 InstanceCount, u32 StartIndex, u32 BaseVertex, u32 StartInstance)
+{
+    m_Device->GetCommandList()->Get()->DrawIndexedInstanced(IndexCount,
+        InstanceCount,
+        StartIndex,
+        BaseVertex,
+        StartInstance);
 }
 
 u32 Renderer::CreateVertexBuffer(const VertexBufferDescription& Description)
@@ -330,6 +378,11 @@ u32 Renderer::CreateVertexBuffer(const VertexBufferDescription& Description)
 
 bool Renderer::UploadVertexData(u32 ID, const VertexDataDescription& Description)
 {
+    if (!ResetCommands())
+    {
+        return false;
+    }
+
     if (ID == 0)
     {
         Core::Console::Warning("Invalid vertex buffer ID '%d' given to UploadVertexData.", ID);
@@ -352,6 +405,13 @@ bool Renderer::UploadVertexData(u32 ID, const VertexDataDescription& Description
     {
         return false;
     }
+
+    if (!ExecuteCommands())
+    {
+        return false;
+    }
+
+    WaitForPreviousFrame();
 
     return true;
 }
@@ -376,31 +436,6 @@ bool Renderer::BindVertexBuffer(u32 ID)
     return true;
 }
 
-void Renderer::UploadGUIData(OctaneGUI::Window*, const OctaneGUI::VertexBuffer& Buffer)
-{
-    if (!ResetCommands())
-    {
-        return;
-    }
-
-    VertexDataDescription Data {};
-    Data.VertexData = const_cast<OctaneGUI::Vertex*>(Buffer.GetVertices().data());
-    Data.VertexDataSize = static_cast<u64>(Buffer.GetVertexCount()) * sizeof(OctaneGUI::Vertex);
-    Data.IndexData = const_cast<u32*>(Buffer.GetIndices().data());
-    Data.IndexDataSize = static_cast<u64>(Buffer.GetIndexCount()) * sizeof(u32);
-    UploadVertexData(2, Data);
-
-    ExecuteCommands();
-    WaitForPreviousFrame();
-
-    m_GUICommands.Clear().Reserve(Buffer.Commands().size());
-
-    for (const OctaneGUI::DrawCommand& Command : Buffer.Commands())
-    {
-        m_GUICommands.Push(Command);
-    }
-}
-
 void Renderer::UpdateViewMatrix(const Matrix4f& View)
 {
     m_ConstantBufferData.View = View;
@@ -408,42 +443,6 @@ void Renderer::UpdateViewMatrix(const Matrix4f& View)
 
 bool Renderer::LoadAssets()
 {
-    GraphicsPipelineDescription TestDesc {};
-    TestDesc.Name = "Test";
-    TestDesc.UseDepthStencilBuffer = true;
-    TestDesc.VertexShader.Name = "DefaultVS";
-    TestDesc.VertexShader.Path = "TestVS.hlsl";
-    TestDesc.VertexShader.Function = "Main";
-    TestDesc.VertexShader.VertexDescriptions.Push({ "POSITION", VertexFormat::Float3 });
-    TestDesc.VertexShader.VertexDescriptions.Push({ "TEXCOORD", VertexFormat::Float2 });
-    TestDesc.VertexShader.VertexDescriptions.Push({ "COLOR", VertexFormat::Float4 });
-    TestDesc.FragmentShader.Name = "DefaultFS";
-    TestDesc.FragmentShader.Path = "TestPS.hlsl";
-    TestDesc.FragmentShader.Function = "Main";
-    if (CreateGraphicsPipeline(TestDesc) == 0)
-    {
-        return false;
-    }
-
-    GraphicsPipelineDescription GUIDesc {};
-    GUIDesc.Name = "GUI";
-    GUIDesc.CullMode = CullMode::None;
-    GUIDesc.UseDepthStencilBuffer = false;
-    GUIDesc.UseAlphaBlending = true;
-    GUIDesc.VertexShader.Name = "GUIVS";
-    GUIDesc.VertexShader.Path = "GUIVS.hlsl";
-    GUIDesc.VertexShader.Function = "Main";
-    GUIDesc.VertexShader.VertexDescriptions.Push({ "POSITION", VertexFormat::Float2 });
-    GUIDesc.VertexShader.VertexDescriptions.Push({ "TEXCOORD", VertexFormat::Float2 });
-    GUIDesc.VertexShader.VertexDescriptions.Push({ "COLOR", VertexFormat::Byte4 });
-    GUIDesc.FragmentShader.Name = "GUIFS";
-    GUIDesc.FragmentShader.Path = "GUIPS.hlsl";
-    GUIDesc.FragmentShader.Function = "Main";
-    if (!CreateGraphicsPipeline(GUIDesc))
-    {
-        return false;
-    }
-
     if (m_Device->Get()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence)) != S_OK)
     {
         printf("Failed to create fence!\n");
@@ -457,33 +456,6 @@ bool Renderer::LoadAssets()
         printf("Failed to create fence event!\n");
         return false;
     }
-
-    const float Offset { 1.0f };
-    Vertices[0] = { { 0.0f, Offset, 5.0f }, { 0.5f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } };
-    Vertices[1] = { { -Offset, -Offset, 5.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } };
-    Vertices[2] = { { Offset, -Offset, 5.0f }, { 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } };
-    u32 IndexBufferData[] = { 0, 1, 2 };
-
-    VertexBufferDescription TestVertexBufferDesc {};
-    TestVertexBufferDesc.VertexBufferSize = 1000;
-    TestVertexBufferDesc.IndexBufferSize = 1000;
-    TestVertexBufferDesc.Stride = sizeof(Vertex3);
-    TestVertexBufferDesc.IndexFormat = IndexFormat::U32;
-    const u32 TestVertexBuffer { CreateVertexBuffer(TestVertexBufferDesc) };
-
-    VertexDataDescription TestVertexData {};
-    TestVertexData.VertexData = Vertices;
-    TestVertexData.VertexDataSize = sizeof(Vertices);
-    TestVertexData.IndexData = IndexBufferData;
-    TestVertexData.IndexDataSize = sizeof(IndexBufferData);
-    UploadVertexData(TestVertexBuffer, TestVertexData);
-
-    VertexBufferDescription GUIVertexBufferDesc {};
-    GUIVertexBufferDesc.VertexBufferSize = 100000;
-    GUIVertexBufferDesc.IndexBufferSize = 100000;
-    GUIVertexBufferDesc.Stride = sizeof(OctaneGUI::Vertex);
-    GUIVertexBufferDesc.IndexFormat = IndexFormat::U32;
-    CreateVertexBuffer(GUIVertexBufferDesc);
 
     // Constant Buffer
     {
@@ -525,9 +497,6 @@ bool Renderer::LoadAssets()
 
     // Texture
     {
-        const u8 WhiteTexture[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
-        m_WhiteTexture = LoadTexture(WhiteTexture, 1, 1);
-
         const u32 Width { 256 };
         const u32 Height { 256 };
         const Array<u8> Data { GenerateTexture(Width, Height) };
@@ -631,6 +600,27 @@ VertexBuffer* Renderer::GetVertexBuffer(u32 ID) const
     if (Result == nullptr)
     {
         Core::Console::Warning("Failed to find vertex buffer with ID '%d'.", ID);
+    }
+
+    return Result;
+}
+
+GraphicsPipeline* Renderer::GetGraphicsPipeline(u32 ID) const
+{
+    GraphicsPipeline* Result { nullptr };
+
+    for (const UniquePtr<GraphicsPipeline>& Pipeline : m_GraphicsPipelines)
+    {
+        if (Pipeline->ID() == ID)
+        {
+            Result = Pipeline.Get();
+            break;
+        }
+    }
+
+    if (Result == nullptr)
+    {
+        Core::Console::Warning("Failed to find graphics pipeline with ID '%d'.", ID);
     }
 
     return Result;

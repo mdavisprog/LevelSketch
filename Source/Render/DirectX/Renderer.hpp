@@ -28,7 +28,6 @@ SOFTWARE.
 
 #include "../../Core/Containers/Array.hpp"
 #include "../../Core/Math/Matrix.hpp"
-#include "../../External/OctaneGUI/DrawCommand.h"
 #include "../../Platform/Windows/Common.hpp"
 #include "../Renderer.hpp"
 #include "Texture.hpp"
@@ -73,15 +72,28 @@ public:
     virtual bool Initialize() override;
     virtual bool Initialize(Platform::Window* Window) override;
     virtual void Shutdown() override;
-    virtual void Render(Platform::Window* Window) override;
+
     virtual u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel = 4) override;
+    virtual bool BindTexture(u32 ID) override;
+
+    virtual bool BeginRender(Platform::Window* Window, const Colorf& ClearColor) override;
+    virtual void EndRender(Platform::Window* Window) override;
+    virtual void SetViewportRect(const ViewportRect& Rect) override;
+    virtual void SetScissor(const Recti& Rect) override;
+
     virtual u32 CreateGraphicsPipeline(const GraphicsPipelineDescription& Description) override;
+    virtual bool BindGraphicsPipeline(u32 ID) override;
+
+    virtual void DrawIndexed(u32 IndexCount,
+        u32 InstanceCount,
+        u32 StartIndex,
+        u32 BaseVertex,
+        u32 StartInstance) override;
 
     virtual u32 CreateVertexBuffer(const VertexBufferDescription& Description) override;
     virtual bool UploadVertexData(u32 ID, const VertexDataDescription& Description) override;
     virtual bool BindVertexBuffer(u32 ID) override;
 
-    virtual void UploadGUIData(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer) override;
     virtual void UpdateViewMatrix(const Matrix4f& View) override;
 
 private:
@@ -92,15 +104,14 @@ private:
     u64 GetTextureOffset(u32 ID) const;
     Viewport* GetViewportFor(Platform::Window* Window) const;
     VertexBuffer* GetVertexBuffer(u32 ID) const;
+    GraphicsPipeline* GetGraphicsPipeline(u32 ID) const;
 
     Microsoft::WRL::ComPtr<ID3D12Fence> m_Fence;
     UINT64 m_FenceValue { 0 };
     HANDLE m_FenceEvent { nullptr };
 
     Array<Texture> m_Textures {};
-    Array<OctaneGUI::DrawCommand> m_GUICommands {};
 
-    u32 m_WhiteTexture { 0 };
     u32 m_DefaultTexture { 0 };
 
     Microsoft::WRL::ComPtr<ID3D12Resource> m_ConstantBuffer;

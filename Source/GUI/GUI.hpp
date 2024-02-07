@@ -28,6 +28,7 @@ SOFTWARE.
 
 #include "../Core/Containers/HashMap.hpp"
 #include "../Core/Memory/UniquePtr.hpp"
+#include "../External/OctaneGUI/VertexBuffer.h"
 #include "../Platform/Event.hpp"
 
 namespace OctaneGUI
@@ -59,10 +60,17 @@ public:
     void Shutdown();
     bool IsRunning() const;
     void RunFrame();
+    void Render(Platform::Window* Window);
 
     GUI& PushEvent(const Platform::Event& Event);
 
 private:
+    struct Buffer
+    {
+        OctaneGUI::VertexBuffer Data {};
+        bool Uploaded { false };
+    };
+
     GUI();
 
     void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Action);
@@ -72,6 +80,10 @@ private:
     UniquePtr<OctaneGUI::Application> m_Application { nullptr };
     HashMap<OctaneGUI::Window*, Platform::Window*> m_Windows {};
     Array<Platform::Event> m_Events {};
+    Buffer m_LastBuffer {};
+    u32 m_GUIPipeline { 0 };
+    u32 m_GUIBuffer { 0 };
+    u32 m_WhiteTexture { 0 };
 };
 
 }

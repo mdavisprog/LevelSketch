@@ -83,10 +83,6 @@ u32 Renderer::LoadTexture(const void*, u32, u32, u8)
     return 0;
 }
 
-void Renderer::UploadGUIData(OctaneGUI::Window*, const OctaneGUI::VertexBuffer&)
-{
-}
-
 void Renderer::UpdateViewMatrix(const Matrix4f&)
 {
 }
