@@ -322,18 +322,6 @@ void Renderer::Shutdown()
 void Renderer::Render(Platform::Window*)
 {
     UniformBuffer& Uniforms { m_Uniforms[m_FrameIndex] };
-    Uniforms.GetUniforms().View = Matrix4f::LookAt({ 0.5f, 0.0f, -1.0f }, {}, { 0.0f, 1.0f, 0.0f }).Transpose();
-    // TODO: Revisit to get perspective matrix working. Nothing is rendered when the following is
-    // uncommented.
-    //    const f32 AspectRatio {
-    //        static_cast<f32>(m_SwapChain.Extents().width) / static_cast<f32>(m_SwapChain.Extents().height)
-    //    };
-    //    Uniforms.GetUniforms().Projection = Core::Math::PerspectiveMatrixRH(
-    //        45.0f,
-    //        AspectRatio,
-    //        0.1f,
-    //        10.0f).Transpose();
-    //    Uniforms.GetUniforms().Projection[5] *= -1.0f;
     Uniforms.UpdateBuffer();
 
     const Sync& CurrentSync { m_Syncs[m_FrameIndex] };
@@ -359,6 +347,26 @@ void Renderer::Render(Platform::Window*)
 u32 Renderer::LoadTexture(const void*, u32, u32, u8)
 {
     return 1;
+}
+
+u32 Renderer::CreateGraphicsPipeline(const GraphicsPipelineDescription&)
+{
+    return 0;
+}
+
+u32 Renderer::CreateVertexBuffer(const VertexBufferDescription&)
+{
+    return 0;
+}
+
+bool Renderer::UploadVertexData(u32, const VertexDataDescription&)
+{
+    return false;
+}
+
+bool Renderer::BindVertexBuffer(u32)
+{
+    return false;
 }
 
 void Renderer::UploadGUIData(OctaneGUI::Window*, const OctaneGUI::VertexBuffer&)

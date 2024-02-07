@@ -59,6 +59,12 @@ public:
     virtual void Shutdown() override;
     virtual void Render(Platform::Window* Window) override;
     virtual u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel = 4) override;
+    virtual u32 CreateGraphicsPipeline(const GraphicsPipelineDescription& Description) override;
+
+    virtual u32 CreateVertexBuffer(const VertexBufferDescription& Description) override;
+    virtual bool UploadVertexData(u32 ID, const VertexDataDescription& Description) override;
+    virtual bool BindVertexBuffer(u32 ID) override;
+
     virtual void UploadGUIData(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer) override;
 
 private:
