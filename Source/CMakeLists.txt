@@ -85,13 +85,13 @@ if(WIN32)
         Render/DirectX/DescriptorHeap.cpp
         Render/DirectX/Device.cpp
         Render/DirectX/GraphicsPipeline.cpp
-        Render/DirectX/RenderBuffer.cpp
         Render/DirectX/Renderer.cpp
         Render/DirectX/RootSignature.cpp
         Render/DirectX/Shader.cpp
         Render/DirectX/SwapChain.cpp
         Render/DirectX/Texture.cpp
         Render/DirectX/Utility.cpp
+        Render/DirectX/VertexBuffer.cpp
         Render/DirectX/Viewport.cpp
     )
 

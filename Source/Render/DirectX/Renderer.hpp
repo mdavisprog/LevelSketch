@@ -31,7 +31,6 @@ SOFTWARE.
 #include "../../External/OctaneGUI/DrawCommand.h"
 #include "../../Platform/Windows/Common.hpp"
 #include "../Renderer.hpp"
-#include "RenderBuffer.hpp"
 #include "Texture.hpp"
 
 #include <d3d12.h>
@@ -51,6 +50,7 @@ class DepthStencil;
 class Device;
 class GraphicsPipeline;
 class SwapChain;
+class VertexBuffer;
 class Viewport;
 
 #define FRAME_COUNT 2
@@ -76,6 +76,11 @@ public:
     virtual void Render(Platform::Window* Window) override;
     virtual u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel = 4) override;
     virtual u32 CreateGraphicsPipeline(const GraphicsPipelineDescription& Description) override;
+
+    virtual u32 CreateVertexBuffer(const VertexBufferDescription& Description) override;
+    virtual bool UploadVertexData(u32 ID, const VertexDataDescription& Description) override;
+    virtual bool BindVertexBuffer(u32 ID) override;
+
     virtual void UploadGUIData(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer) override;
     virtual void UpdateViewMatrix(const Matrix4f& View) override;
 
@@ -86,13 +91,12 @@ private:
     bool ResetCommands();
     u64 GetTextureOffset(u32 ID) const;
     Viewport* GetViewportFor(Platform::Window* Window) const;
+    VertexBuffer* GetVertexBuffer(u32 ID) const;
 
     Microsoft::WRL::ComPtr<ID3D12Fence> m_Fence;
     UINT64 m_FenceValue { 0 };
     HANDLE m_FenceEvent { nullptr };
 
-    RenderBuffer m_RenderBuffer {};
-    RenderBuffer m_RenderBufferGUI {};
     Array<Texture> m_Textures {};
     Array<OctaneGUI::DrawCommand> m_GUICommands {};
 
@@ -105,9 +109,10 @@ private:
     u64 m_ConstantBufferIndex { 0 };
 
     UniquePtr<Device> m_Device { nullptr };
+    UniquePtr<DepthStencil> m_DepthStencil { nullptr };
     Array<UniquePtr<Viewport>> m_Viewports {};
     Array<UniquePtr<GraphicsPipeline>> m_GraphicsPipelines {};
-    UniquePtr<DepthStencil> m_DepthStencil { nullptr };
+    Array<UniquePtr<VertexBuffer>> m_VertexBuffers {};
 };
 
 }

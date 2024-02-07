@@ -49,6 +49,8 @@ namespace Render
 {
 
 struct GraphicsPipelineDescription;
+struct VertexBufferDescription;
+struct VertexDataDescription;
 
 class Renderer
 {
@@ -76,6 +78,10 @@ public:
     virtual void Render(Platform::Window* Window) = 0;
     virtual u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel = 4);
     virtual u32 CreateGraphicsPipeline(const GraphicsPipelineDescription& Description) = 0;
+
+    virtual u32 CreateVertexBuffer(const VertexBufferDescription& Description) = 0;
+    virtual bool UploadVertexData(u32 ID, const VertexDataDescription& Description) = 0;
+    virtual bool BindVertexBuffer(u32 ID) = 0;
 
     // Temporary
     virtual void UploadGUIData(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer);

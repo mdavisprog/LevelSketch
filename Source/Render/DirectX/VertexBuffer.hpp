@@ -35,25 +35,33 @@ namespace LevelSketch
 {
 namespace Render
 {
+
+struct VertexBufferDescription;
+
 namespace DirectX
 {
 
-class RenderBuffer
+class Device;
+
+class VertexBuffer
 {
+private:
+    static u32 s_ID;
+
 public:
-    RenderBuffer();
+    VertexBuffer();
 
-    bool Initialize(ID3D12Device* Device, u64 VertexBufferSize, u64 IndexBufferSize);
-    bool Initialized() const;
-
-    RenderBuffer& SetStride(u32 Stride);
-    RenderBuffer& SetFormat(DXGI_FORMAT Format);
+    bool Initialize(Device const* Device_, const VertexBufferDescription& Description);
 
     bool UploadVertexData(const void* Source, u64 Size);
     bool UploadIndexData(const void* Source, u64 Size);
     void BindViews(ID3D12GraphicsCommandList* CommandList) const;
 
+    u32 ID() const;
+
 private:
+    u32 m_ID { 0 };
+
     Microsoft::WRL::ComPtr<ID3D12Resource> m_VertexBuffer {};
     Microsoft::WRL::ComPtr<ID3D12Resource> m_IndexBuffer {};
 

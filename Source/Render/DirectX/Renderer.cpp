@@ -38,6 +38,8 @@ SOFTWARE.
 #include "../../Platform/FileSystem.hpp"
 #include "../../Platform/Window.hpp"
 #include "../GraphicsPipelineDescription.hpp"
+#include "../VertexBufferDescription.hpp"
+#include "../VertexDataDescription.hpp"
 #include "Adapter.hpp"
 #include "CommandAllocator.hpp"
 #include "CommandList.hpp"
@@ -50,6 +52,7 @@ SOFTWARE.
 #include "RootSignature.hpp"
 #include "Shader.hpp"
 #include "Utility.hpp"
+#include "VertexBuffer.hpp"
 #include "Viewport.hpp"
 
 #include <cstdio>
@@ -215,13 +218,13 @@ void Renderer::Render(Platform::Window* Window)
     std::memcpy(m_ConstantBufferAddress, &m_ConstantBufferData, sizeof(m_ConstantBufferData));
 
     CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    m_RenderBuffer.BindViews(CommandList);
+    BindVertexBuffer(1);
     CommandList->DrawIndexedInstanced(3, 1, 0, 0, 0);
 
     // Begin GUI rendering
     CommandList->SetPipelineState(m_GraphicsPipelines[1]->Get());
     CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    m_RenderBufferGUI.BindViews(CommandList);
+    BindVertexBuffer(2);
 
     for (const OctaneGUI::DrawCommand& Command : m_GUICommands)
     {
@@ -311,22 +314,81 @@ u32 Renderer::CreateGraphicsPipeline(const GraphicsPipelineDescription& Descript
     return Result;
 }
 
-void Renderer::UploadGUIData(OctaneGUI::Window*, const OctaneGUI::VertexBuffer& Buffer)
+u32 Renderer::CreateVertexBuffer(const VertexBufferDescription& Description)
 {
-    if (!m_RenderBufferGUI.Initialized())
+    UniquePtr<VertexBuffer> Buffer { UniquePtr<VertexBuffer>::New() };
+
+    if (!Buffer->Initialize(m_Device.Get(), Description))
     {
-        return;
+        return 0;
     }
 
+    const u32 Result { Buffer->ID() };
+    m_VertexBuffers.Push(std::move(Buffer));
+    return Result;
+}
+
+bool Renderer::UploadVertexData(u32 ID, const VertexDataDescription& Description)
+{
+    if (ID == 0)
+    {
+        Core::Console::Warning("Invalid vertex buffer ID '%d' given to UploadVertexData.", ID);
+        return false;
+    }
+
+    VertexBuffer* Buffer { GetVertexBuffer(ID) };
+
+    if (Buffer == nullptr)
+    {
+        return false;
+    }
+
+    if (!Buffer->UploadVertexData(Description.VertexData, Description.VertexDataSize))
+    {
+        return false;
+    }
+
+    if (!Buffer->UploadIndexData(Description.IndexData, Description.IndexDataSize))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool Renderer::BindVertexBuffer(u32 ID)
+{
+    if (ID == 0)
+    {
+        Core::Console::Warning("Invalid vertex buffer ID '%d' given to BindVertexBuffer.", ID);
+        return false;
+    }
+
+    VertexBuffer* Buffer { GetVertexBuffer(ID) };
+
+    if (Buffer == nullptr)
+    {
+        return false;
+    }
+
+    Buffer->BindViews(m_Device->GetCommandList()->Get());
+
+    return true;
+}
+
+void Renderer::UploadGUIData(OctaneGUI::Window*, const OctaneGUI::VertexBuffer& Buffer)
+{
     if (!ResetCommands())
     {
         return;
     }
 
-    m_RenderBufferGUI.UploadVertexData(Buffer.GetVertices().data(),
-        static_cast<u64>(Buffer.GetVertexCount()) * sizeof(OctaneGUI::Vertex));
-    m_RenderBufferGUI.UploadIndexData(Buffer.GetIndices().data(),
-        static_cast<u64>(Buffer.GetIndexCount()) * sizeof(u32));
+    VertexDataDescription Data {};
+    Data.VertexData = const_cast<OctaneGUI::Vertex*>(Buffer.GetVertices().data());
+    Data.VertexDataSize = static_cast<u64>(Buffer.GetVertexCount()) * sizeof(OctaneGUI::Vertex);
+    Data.IndexData = const_cast<u32*>(Buffer.GetIndices().data());
+    Data.IndexDataSize = static_cast<u64>(Buffer.GetIndexCount()) * sizeof(u32);
+    UploadVertexData(2, Data);
 
     ExecuteCommands();
     WaitForPreviousFrame();
@@ -396,28 +458,32 @@ bool Renderer::LoadAssets()
         return false;
     }
 
-    m_RenderBuffer.Initialize(m_Device->Get(), 1000, 1000);
+    const float Offset { 1.0f };
+    Vertices[0] = { { 0.0f, Offset, 5.0f }, { 0.5f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } };
+    Vertices[1] = { { -Offset, -Offset, 5.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } };
+    Vertices[2] = { { Offset, -Offset, 5.0f }, { 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } };
+    u32 IndexBufferData[] = { 0, 1, 2 };
 
-    // Vertex Buffer
-    {
-        const float Offset { 1.0f };
-        Vertices[0] = { { 0.0f, Offset, 5.0f }, { 0.5f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } };
-        Vertices[1] = { { -Offset, -Offset, 5.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } };
-        Vertices[2] = { { Offset, -Offset, 5.0f }, { 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } };
+    VertexBufferDescription TestVertexBufferDesc {};
+    TestVertexBufferDesc.VertexBufferSize = 1000;
+    TestVertexBufferDesc.IndexBufferSize = 1000;
+    TestVertexBufferDesc.Stride = sizeof(Vertex3);
+    TestVertexBufferDesc.IndexFormat = IndexFormat::U32;
+    const u32 TestVertexBuffer { CreateVertexBuffer(TestVertexBufferDesc) };
 
-        m_RenderBuffer.SetStride(sizeof(Vertex3)).UploadVertexData(Vertices, sizeof(Vertices));
-    }
+    VertexDataDescription TestVertexData {};
+    TestVertexData.VertexData = Vertices;
+    TestVertexData.VertexDataSize = sizeof(Vertices);
+    TestVertexData.IndexData = IndexBufferData;
+    TestVertexData.IndexDataSize = sizeof(IndexBufferData);
+    UploadVertexData(TestVertexBuffer, TestVertexData);
 
-    // Index Buffer
-    {
-        const u32 IndexBufferData[] = { 0, 1, 2 };
-        const u32 IndexBufferSize = sizeof(IndexBufferData);
-
-        m_RenderBuffer.SetFormat(DXGI_FORMAT_R32_UINT).UploadIndexData(IndexBufferData, IndexBufferSize);
-    }
-
-    m_RenderBufferGUI.Initialize(m_Device->Get(), 100000, 100000);
-    m_RenderBufferGUI.SetStride(sizeof(OctaneGUI::Vertex)).SetFormat(DXGI_FORMAT_R32_UINT);
+    VertexBufferDescription GUIVertexBufferDesc {};
+    GUIVertexBufferDesc.VertexBufferSize = 100000;
+    GUIVertexBufferDesc.IndexBufferSize = 100000;
+    GUIVertexBufferDesc.Stride = sizeof(OctaneGUI::Vertex);
+    GUIVertexBufferDesc.IndexFormat = IndexFormat::U32;
+    CreateVertexBuffer(GUIVertexBufferDesc);
 
     // Constant Buffer
     {
@@ -547,6 +613,27 @@ Viewport* Renderer::GetViewportFor(Platform::Window* Window) const
     }
 
     return nullptr;
+}
+
+VertexBuffer* Renderer::GetVertexBuffer(u32 ID) const
+{
+    VertexBuffer* Result { nullptr };
+
+    for (const UniquePtr<VertexBuffer>& Buffer : m_VertexBuffers)
+    {
+        if (Buffer->ID() == ID)
+        {
+            Result = Buffer.Get();
+            break;
+        }
+    }
+
+    if (Result == nullptr)
+    {
+        Core::Console::Warning("Failed to find vertex buffer with ID '%d'.", ID);
+    }
+
+    return Result;
 }
 
 }
