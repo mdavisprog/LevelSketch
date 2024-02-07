@@ -47,6 +47,12 @@ namespace LevelSketch
 {
 namespace Render
 {
+
+String Renderer::ShadersDirectory()
+{
+    return Platform::FileSystem::CombinePaths(Platform::FileSystem::ContentDirectory(), "GLSL");
+}
+
 namespace Vulkan
 {
 

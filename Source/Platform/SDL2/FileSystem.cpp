@@ -41,6 +41,11 @@ String FileSystem::ApplicationPath()
     return SDL_GetBasePath();
 }
 
+String FileSystem::ContentDirectory()
+{
+    return CombinePaths(ApplicationDirectory(), "Content");
+}
+
 void FileSystem::SetWorkingDirectory(const String& Path)
 {
     int Result { chdir(Path.Data()) };
