@@ -36,6 +36,12 @@ namespace Math
 {
 
 template<typename T>
+struct Color;
+
+typedef Color<u8> Colorb;
+typedef Color<f32> Colorf;
+
+template<typename T>
 struct Rect;
 
 typedef Rect<f32> Rectf;
@@ -61,6 +67,8 @@ struct Vertex3;
 }
 }
 
+using Color = Core::Math::Colorb;
+using Colorf = Core::Math::Colorf;
 using Rectf = Core::Math::Rectf;
 using Recti = Core::Math::Recti;
 using Matrix4f = Core::Math::Matrix4<f32>;
