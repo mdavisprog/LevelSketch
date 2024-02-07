@@ -32,6 +32,7 @@ SOFTWARE.
 #include "Device.hpp"
 #include "RootSignature.hpp"
 #include "Shader.hpp"
+#include "Utility.hpp"
 
 #include <d3dcompiler.h>
 
@@ -46,23 +47,6 @@ u32 GraphicsPipeline::s_ID { 0 };
 
 GraphicsPipeline::GraphicsPipeline()
 {
-}
-
-static DXGI_FORMAT ToFormat(VertexFormat Format)
-{
-    switch (Format)
-    {
-    case VertexFormat::Byte: return DXGI_FORMAT_R8_UNORM;
-    case VertexFormat::Byte2: return DXGI_FORMAT_R8G8_UNORM;
-    case VertexFormat::Byte4: return DXGI_FORMAT_R8G8B8A8_UNORM;
-    case VertexFormat::Float: return DXGI_FORMAT_R32_FLOAT;
-    case VertexFormat::Float2: return DXGI_FORMAT_R32G32_FLOAT;
-    case VertexFormat::Float3: return DXGI_FORMAT_R32G32B32_FLOAT;
-    case VertexFormat::Float4: return DXGI_FORMAT_R32G32B32A32_FLOAT;
-    default: break;
-    }
-
-    return DXGI_FORMAT_UNKNOWN;
 }
 
 static D3D12_CULL_MODE ToCullMode(CullMode Mode)
@@ -108,7 +92,7 @@ bool GraphicsPipeline::Initialize(Device const* Device_, const GraphicsPipelineD
         Element.SemanticName = VertexDesc.Name.Data();
         Element.InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
         Element.AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
-        Element.Format = ToFormat(VertexDesc.Format);
+        Element.Format = Utility::ToDXGIFormat(VertexDesc.Format);
         VertexShader.AddInputElement(Element);
     }
 

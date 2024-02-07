@@ -25,6 +25,7 @@ SOFTWARE.
 */
 
 #include "Utility.hpp"
+#include "../VertexFormat.hpp"
 
 namespace LevelSketch
 {
@@ -34,6 +35,23 @@ namespace DirectX
 {
 namespace Utility
 {
+
+DXGI_FORMAT ToDXGIFormat(const VertexFormat& Format)
+{
+    switch (Format)
+    {
+    case VertexFormat::Byte: return DXGI_FORMAT_R8_UNORM;
+    case VertexFormat::Byte2: return DXGI_FORMAT_R8G8_UNORM;
+    case VertexFormat::Byte4: return DXGI_FORMAT_R8G8B8A8_UNORM;
+    case VertexFormat::Float: return DXGI_FORMAT_R32_FLOAT;
+    case VertexFormat::Float2: return DXGI_FORMAT_R32G32_FLOAT;
+    case VertexFormat::Float3: return DXGI_FORMAT_R32G32B32_FLOAT;
+    case VertexFormat::Float4: return DXGI_FORMAT_R32G32B32A32_FLOAT;
+    default: break;
+    }
+
+    return DXGI_FORMAT_UNKNOWN;
+}
 
 D3D12_HEAP_PROPERTIES MakeHeapProperties(D3D12_HEAP_TYPE Type)
 {

@@ -32,10 +32,15 @@ namespace LevelSketch
 {
 namespace Render
 {
+
+enum class VertexFormat;
+
 namespace DirectX
 {
 namespace Utility
 {
+
+DXGI_FORMAT ToDXGIFormat(const VertexFormat& Format);
 
 D3D12_HEAP_PROPERTIES MakeHeapProperties(D3D12_HEAP_TYPE Type = D3D12_HEAP_TYPE_DEFAULT);
 D3D12_RESOURCE_DESC MakeResourceDescription(D3D12_RESOURCE_DIMENSION Dimension = D3D12_RESOURCE_DIMENSION_BUFFER,
