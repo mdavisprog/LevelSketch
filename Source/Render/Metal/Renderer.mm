@@ -25,16 +25,19 @@ SOFTWARE.
 */
 
 #include "Renderer.hpp"
+#include "../../Core/Math/Vector2.hpp"
 #include "../../Platform/FileSystem.hpp"
 #include "../../Platform/Mac/WindowBridge.hpp"
 #include "../../Platform/Window.hpp"
 #include "CommandBuffer.hpp"
 #include "CommandQueue.hpp"
+#include "DepthStencil.hpp"
 #include "Device.hpp"
 #include "Texture.hpp"
 #include "ViewController.hpp"
 
 #import <AppKit/AppKit.h>
+#import <Metal/Metal.h>
 #import <QuartzCore/CAMetalLayer.h>
 
 namespace LevelSketch
@@ -64,6 +67,12 @@ bool Renderer::Initialize()
     m_Device = UniquePtr<Device>::New();
 
     if (!m_Device->Initialize())
+    {
+        return false;
+    }
+
+    m_DepthStencil = UniquePtr<DepthStencil>::New();
+    if (!m_DepthStencil->Initialize(m_Device.Get()))
     {
         return false;
     }
@@ -131,9 +140,12 @@ bool Renderer::BeginRender(Platform::Window* Window, const Colorf& ClearColor)
             return false;
         }
 
+        m_DepthStencil->UpdateTexture(m_Device.Get(),
+            { static_cast<i32>(Drawable.texture.width), static_cast<i32>(Drawable.texture.height) });
+
         CommandQueue* Queue { m_Device->GetCommandQueue() };
         CommandBuffer* Buffer { Queue->BeginBuffer() };
-        Buffer->BeginEncoding(ClearColor, Drawable, nullptr);
+        Buffer->BeginEncoding(ClearColor, Drawable, m_DepthStencil->Texture());
     }
 
     return true;

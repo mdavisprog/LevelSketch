@@ -116,6 +116,7 @@ elseif(APPLE)
         Render/Metal/CommandBuffer.mm
         Render/Metal/CommandEncoder.mm
         Render/Metal/CommandQueue.mm
+        Render/Metal/DepthStencil.mm
         Render/Metal/Device.mm
         Render/Metal/RenderBuffer.mm
         Render/Metal/Renderer.mm

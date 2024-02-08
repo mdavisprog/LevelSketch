@@ -37,6 +37,7 @@ namespace Render
 namespace Metal
 {
 
+class DepthStencil;
 class Device;
 class Texture;
 
@@ -75,6 +76,7 @@ public:
 
 private:
     UniquePtr<Device> m_Device { nullptr };
+    UniquePtr<DepthStencil> m_DepthStencil { nullptr };
     Array<UniquePtr<Texture>> m_Textures {};
 };
 
