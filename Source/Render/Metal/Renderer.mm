@@ -25,6 +25,7 @@ SOFTWARE.
 */
 
 #include "Renderer.hpp"
+#include "../../Platform/FileSystem.hpp"
 #include "../../Platform/Mac/WindowBridge.hpp"
 #include "../../Platform/Window.hpp"
 #include "RenderBridge.hpp"
@@ -36,6 +37,12 @@ namespace LevelSketch
 {
 namespace Render
 {
+
+String Renderer::ShadersDirectory()
+{
+    return Platform::FileSystem::CombinePaths(Platform::FileSystem::ContentDirectory(), "Metal");
+}
+
 namespace Metal
 {
 

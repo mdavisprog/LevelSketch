@@ -43,6 +43,12 @@ String FileSystem::ApplicationPath()
     return Path.UTF8String;
 }
 
+String FileSystem::ContentDirectory()
+{
+    // TODO: Properly query NSBundle for this directory.
+    return CombinePaths(ApplicationDirectory(), "Content");
+}
+
 void FileSystem::SetWorkingDirectory(const String& Path)
 {
     chdir(Path.Data());
