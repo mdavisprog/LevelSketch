@@ -42,6 +42,7 @@ namespace Render
 namespace Metal
 {
 
+class Device;
 class RenderBridge;
 
 class Renderer : public LevelSketch::Render::Renderer
@@ -79,6 +80,7 @@ public:
 
 private:
     UniquePtr<RenderBridge> m_RenderBridge { nullptr };
+    UniquePtr<Device> m_Device { nullptr };
 };
 
 }

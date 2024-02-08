@@ -113,6 +113,7 @@ elseif(APPLE)
         Platform/Mac/Window.mm
         Platform/Mac/WindowBridge.mm
 
+        Render/Metal/Device.mm
         Render/Metal/RenderBridge.mm
         Render/Metal/RenderBuffer.mm
         Render/Metal/Renderer.mm

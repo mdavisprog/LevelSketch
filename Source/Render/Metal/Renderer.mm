@@ -28,6 +28,7 @@ SOFTWARE.
 #include "../../Platform/FileSystem.hpp"
 #include "../../Platform/Mac/WindowBridge.hpp"
 #include "../../Platform/Window.hpp"
+#include "Device.hpp"
 #include "RenderBridge.hpp"
 #include "ViewController.hpp"
 
@@ -63,6 +64,13 @@ Renderer::~Renderer()
 
 bool Renderer::Initialize()
 {
+    m_Device = UniquePtr<Device>::New();
+
+    if (!m_Device->Initialize())
+    {
+        return false;
+    }
+
     return true;
 }
 
