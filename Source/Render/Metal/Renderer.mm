@@ -94,7 +94,7 @@ bool Renderer::Initialize(Platform::Window* Window)
 void Renderer::Shutdown()
 {
 }
-
+/*
 void Renderer::Render(Platform::Window* Window)
 {
     @autoreleasepool
@@ -105,15 +105,61 @@ void Renderer::Render(Platform::Window* Window)
         m_RenderBridge->Render(Layer, Bridge.Window.screen.backingScaleFactor);
     }
 }
-
+*/
 u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel)
 {
     return m_RenderBridge->LoadTexture(Data, Width, Height, BytesPerPixel);
 }
 
-void Renderer::UploadGUIData(OctaneGUI::Window*, const OctaneGUI::VertexBuffer& Buffer)
+bool Renderer::BindTexture(u32)
 {
-    m_RenderBridge->UploadGUIData(Buffer);
+    return false;
+}
+
+bool Renderer::BeginRender(Platform::Window*, const Colorf&)
+{
+    return false;
+}
+
+void Renderer::EndRender(Platform::Window*)
+{
+}
+
+void Renderer::SetViewportRect(const ViewportRect&)
+{
+}
+
+void Renderer::SetScissor(const Recti&)
+{
+}
+
+u32 Renderer::CreateGraphicsPipeline(const GraphicsPipelineDescription&)
+{
+    return 0;
+}
+
+bool Renderer::BindGraphicsPipeline(u32)
+{
+    return false;
+}
+
+void Renderer::DrawIndexed(u32, u32, u32, u32, u32)
+{
+}
+
+u32 Renderer::CreateVertexBuffer(const VertexBufferDescription&)
+{
+    return 0;
+}
+
+bool Renderer::UploadVertexData(u32, const VertexDataDescription&)
+{
+    return false;
+}
+
+bool Renderer::BindVertexBuffer(u32)
+{
+    return false;
 }
 
 void Renderer::UpdateViewMatrix(const Matrix4f& View)

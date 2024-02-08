@@ -162,7 +162,7 @@ bool GUI::Initialize(i32 Argc, const char** Argv)
                 return OnEvent(Window);
             })
         .SetOnLoadTexture(
-            [this](const std::vector<u8>& Data, u32 Width, u32 Height) -> u32
+            [](const std::vector<u8>& Data, u32 Width, u32 Height) -> u32
             {
                 return Render::Renderer::Instance()->LoadTexture(Data.data(), Width, Height);
             })
