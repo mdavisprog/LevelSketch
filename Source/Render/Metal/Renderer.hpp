@@ -26,14 +26,9 @@ SOFTWARE.
 
 #pragma once
 
+#include "../../Core/Containers/Array.hpp"
 #include "../../Core/Memory/UniquePtr.hpp"
 #include "../Renderer.hpp"
-
-namespace OctaneGUI
-{
-class VertexBuffer;
-class Window;
-}
 
 namespace LevelSketch
 {
@@ -43,7 +38,7 @@ namespace Metal
 {
 
 class Device;
-class RenderBridge;
+class Texture;
 
 class Renderer : public LevelSketch::Render::Renderer
 {
@@ -79,8 +74,8 @@ public:
     virtual void UpdateViewMatrix(const Matrix4f& View) override;
 
 private:
-    UniquePtr<RenderBridge> m_RenderBridge { nullptr };
     UniquePtr<Device> m_Device { nullptr };
+    Array<UniquePtr<Texture>> m_Textures {};
 };
 
 }

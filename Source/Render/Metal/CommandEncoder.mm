@@ -24,11 +24,7 @@ SOFTWARE.
 
 */
 
-#pragma once
-
-#include "../../Core/Memory/UniquePtr.hpp"
-
-@protocol MTLCommandQueue;
+#include "CommandEncoder.hpp"
 
 namespace LevelSketch
 {
@@ -37,26 +33,20 @@ namespace Render
 namespace Metal
 {
 
-class CommandBuffer;
-class Device;
-
-class CommandQueue final
+CommandEncoder::CommandEncoder()
 {
-public:
-    CommandQueue();
-    ~CommandQueue();
+}
 
-    bool Initialize(Device const* Device_);
-    id<MTLCommandQueue> Get() const;
+CommandEncoder& CommandEncoder::Set(id<MTLRenderCommandEncoder> Encoder)
+{
+    m_CommandEncoder = Encoder;
+    return *this;
+}
 
-    CommandBuffer* BeginBuffer();
-    CommandBuffer* CurrentBuffer() const;
-    void EndBuffer();
-
-private:
-    id<MTLCommandQueue> m_CommandQueue { nullptr };
-    UniquePtr<CommandBuffer> m_CommandBuffer { nullptr };
-};
+id<MTLRenderCommandEncoder> CommandEncoder::Get() const
+{
+    return m_CommandEncoder;
+}
 
 }
 }

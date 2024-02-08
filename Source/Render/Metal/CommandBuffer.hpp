@@ -26,9 +26,12 @@ SOFTWARE.
 
 #pragma once
 
+#include "../../Core/Math/Forwards.hpp"
 #include "../../Core/Memory/UniquePtr.hpp"
 
-@protocol MTLCommandQueue;
+@protocol CAMetalDrawable;
+@protocol MTLCommandBuffer;
+@protocol MTLTexture;
 
 namespace LevelSketch
 {
@@ -37,25 +40,26 @@ namespace Render
 namespace Metal
 {
 
-class CommandBuffer;
-class Device;
+class CommandEncoder;
+class CommandQueue;
 
-class CommandQueue final
+class CommandBuffer final
 {
 public:
-    CommandQueue();
-    ~CommandQueue();
+    CommandBuffer();
+    ~CommandBuffer();
 
-    bool Initialize(Device const* Device_);
-    id<MTLCommandQueue> Get() const;
+    bool Initialize(CommandQueue const* Queue);
+    id<MTLCommandBuffer> Get() const;
 
-    CommandBuffer* BeginBuffer();
-    CommandBuffer* CurrentBuffer() const;
-    void EndBuffer();
+    CommandEncoder* BeginEncoding(const Colorf& ClearColor, id<CAMetalDrawable> Drawable, id<MTLTexture> DepthTexture);
+    CommandEncoder* CurrentEncoder() const;
+    void EndEncoding();
 
 private:
-    id<MTLCommandQueue> m_CommandQueue { nullptr };
-    UniquePtr<CommandBuffer> m_CommandBuffer { nullptr };
+    id<MTLCommandBuffer> m_CommandBuffer { nullptr };
+    id<CAMetalDrawable> m_Drawable { nullptr };
+    UniquePtr<CommandEncoder> m_CommandEncoder { nullptr };
 };
 
 }

@@ -26,6 +26,7 @@ SOFTWARE.
 
 #include "CommandQueue.hpp"
 #include "../../Core/Console.hpp"
+#include "CommandBuffer.hpp"
 #include "Device.hpp"
 
 #import <Metal/Metal.h>
@@ -38,6 +39,10 @@ namespace Metal
 {
 
 CommandQueue::CommandQueue()
+{
+}
+
+CommandQueue::~CommandQueue()
 {
 }
 
@@ -57,6 +62,37 @@ bool CommandQueue::Initialize(Device const* Device_)
 id<MTLCommandQueue> CommandQueue::Get() const
 {
     return m_CommandQueue;
+}
+
+CommandBuffer* CommandQueue::BeginBuffer()
+{
+    if (m_CommandBuffer == nullptr)
+    {
+        m_CommandBuffer = UniquePtr<CommandBuffer>::New();
+
+        if (!m_CommandBuffer->Initialize(this))
+        {
+            m_CommandBuffer = nullptr;
+        }
+    }
+
+    return m_CommandBuffer.Get();
+}
+
+CommandBuffer* CommandQueue::CurrentBuffer() const
+{
+    return m_CommandBuffer.Get();
+}
+
+void CommandQueue::EndBuffer()
+{
+    if (m_CommandBuffer == nullptr)
+    {
+        return;
+    }
+
+    m_CommandBuffer->EndEncoding();
+    m_CommandBuffer = nullptr;
 }
 
 }

@@ -28,11 +28,14 @@ SOFTWARE.
 #include "../../Platform/FileSystem.hpp"
 #include "../../Platform/Mac/WindowBridge.hpp"
 #include "../../Platform/Window.hpp"
+#include "CommandBuffer.hpp"
+#include "CommandQueue.hpp"
 #include "Device.hpp"
 #include "Texture.hpp"
 #include "ViewController.hpp"
 
 #import <AppKit/AppKit.h>
+#import <QuartzCore/CAMetalLayer.h>
 
 namespace LevelSketch
 {
@@ -110,13 +113,38 @@ bool Renderer::BindTexture(u32)
     return false;
 }
 
-bool Renderer::BeginRender(Platform::Window*, const Colorf&)
+bool Renderer::BeginRender(Platform::Window* Window, const Colorf& ClearColor)
 {
-    return false;
+    @autoreleasepool
+    {
+        WindowBridge* Bridge = [WindowBridge Retrieve:Window->Handle()];
+        CAMetalLayer* Layer { static_cast<CAMetalLayer*>(Bridge.Window.contentView.layer) };
+
+        const CGSize Size { Bridge.Window.frame.size };
+        const CGFloat Scale { Bridge.Window.screen.backingScaleFactor };
+        Layer.drawableSize = { Size.width * Scale, Size.height * Scale };
+
+        id<CAMetalDrawable> Drawable { [Layer nextDrawable] };
+
+        if (Drawable == nullptr)
+        {
+            return false;
+        }
+
+        CommandQueue* Queue { m_Device->GetCommandQueue() };
+        CommandBuffer* Buffer { Queue->BeginBuffer() };
+        Buffer->BeginEncoding(ClearColor, Drawable, nullptr);
+    }
+
+    return true;
 }
 
 void Renderer::EndRender(Platform::Window*)
 {
+    @autoreleasepool
+    {
+        m_Device->GetCommandQueue()->EndBuffer();
+    }
 }
 
 void Renderer::SetViewportRect(const ViewportRect&)
