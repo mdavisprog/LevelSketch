@@ -25,6 +25,8 @@ SOFTWARE.
 */
 
 #include "Texture.hpp"
+#include "../../Core/Console.hpp"
+#include "Device.hpp"
 
 #import <MetalKit/MetalKit.h>
 
@@ -35,13 +37,14 @@ namespace Render
 namespace Metal
 {
 
-bool Texture::Create(id<MTLDevice> Device, u32 Width, u32 Height)
-{
-    if (Initialized())
-    {
-        return true;
-    }
+u32 Texture::s_ID { 0 };
 
+Texture::Texture()
+{
+}
+
+bool Texture::Initialize(Device const* Device_, u32 Width, u32 Height)
+{
     MTLTextureDescriptor* TextureDesc =
         [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatRGBA8Unorm
                                                            width:Width
@@ -50,28 +53,26 @@ bool Texture::Create(id<MTLDevice> Device, u32 Width, u32 Height)
 
     TextureDesc.usage = MTLTextureUsageShaderRead;
     TextureDesc.storageMode = MTLStorageModeManaged;
-    m_Texture = [Device newTextureWithDescriptor:TextureDesc];
-    m_ID = ++s_ID;
 
-    return Initialized();
-}
+    m_Texture = [Device_->Get() newTextureWithDescriptor:TextureDesc];
 
-bool Texture::Upload(const void* Data)
-{
-    if (!Initialized())
+    if (m_Texture == nullptr)
     {
+        Core::Console::Error("Failed to create texture.");
         return false;
     }
 
-    MTLRegion Region = MTLRegionMake2D(0, 0, m_Texture.width, m_Texture.height);
-    [m_Texture replaceRegion:Region mipmapLevel:0 withBytes:Data bytesPerRow:m_Texture.width * 4];
+    m_ID = ++s_ID;
 
     return true;
 }
 
-bool Texture::Initialized() const
+bool Texture::Upload(const void* Data)
 {
-    return m_Texture != nullptr;
+    MTLRegion Region = MTLRegionMake2D(0, 0, m_Texture.width, m_Texture.height);
+    [m_Texture replaceRegion:Region mipmapLevel:0 withBytes:Data bytesPerRow:m_Texture.width * 4];
+
+    return true;
 }
 
 u32 Texture::ID() const
@@ -83,8 +84,6 @@ id<MTLTexture> Texture::Data() const
 {
     return m_Texture;
 }
-
-u32 Texture::s_ID { 0 };
 
 }
 }

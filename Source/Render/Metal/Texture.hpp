@@ -28,7 +28,6 @@ SOFTWARE.
 
 #include "../../Core/Types.hpp"
 
-@protocol MTLDevice;
 @protocol MTLTexture;
 
 namespace LevelSketch
@@ -38,26 +37,23 @@ namespace Render
 namespace Metal
 {
 
+class Device;
+
 class Texture
 {
+private:
+    static u32 s_ID;
+
 public:
-    Texture() = default;
-    Texture(const Texture&) = default;
-    Texture(Texture&&) = default;
+    Texture();
 
-    Texture& operator=(const Texture&) = default;
-    Texture& operator=(Texture&&) = default;
-
-    bool Create(id<MTLDevice> Device, u32 Width, u32 Height);
+    bool Initialize(Device const* Device_, u32 Width, u32 Height);
     bool Upload(const void* Data);
 
-    bool Initialized() const;
     u32 ID() const;
     id<MTLTexture> Data() const;
 
 private:
-    static u32 s_ID;
-
     id<MTLTexture> m_Texture { nullptr };
     u32 m_ID { 0 };
 };

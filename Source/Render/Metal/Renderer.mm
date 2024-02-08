@@ -29,7 +29,7 @@ SOFTWARE.
 #include "../../Platform/Mac/WindowBridge.hpp"
 #include "../../Platform/Window.hpp"
 #include "Device.hpp"
-#include "RenderBridge.hpp"
+#include "Texture.hpp"
 #include "ViewController.hpp"
 
 #import <AppKit/AppKit.h>
@@ -46,12 +46,6 @@ String Renderer::ShadersDirectory()
 
 namespace Metal
 {
-
-static void UpdateDrawableSize(CAMetalLayer* Layer, NSWindow* Window)
-{
-    const f64 Scale { Window.screen.backingScaleFactor };
-    Layer.drawableSize = { Window.frame.size.width * Scale, Window.frame.size.height * Scale };
-}
 
 Renderer::Renderer()
     : LevelSketch::Render::Renderer()
@@ -82,18 +76,6 @@ bool Renderer::Initialize(Platform::Window* Window)
         NSViewController* Root = [[ViewController alloc] initWithNibName:nil bundle:nil];
         Bridge.Window.contentViewController = Root;
         [Bridge OnViewCreated:Bridge.Window.contentView Window:Window];
-
-        CAMetalLayer* Layer = (CAMetalLayer*)Bridge.Window.contentView.layer;
-        UpdateDrawableSize(Layer, Bridge.Window);
-
-        if (m_RenderBridge == nullptr)
-        {
-            m_RenderBridge = UniquePtr<RenderBridge>::New();
-            if (!m_RenderBridge->Initialize(Layer, Window))
-            {
-                return false;
-            }
-        }
     }
 
     return true;
@@ -101,22 +83,26 @@ bool Renderer::Initialize(Platform::Window* Window)
 
 void Renderer::Shutdown()
 {
+    m_Textures.Clear();
 }
-/*
-void Renderer::Render(Platform::Window* Window)
+
+u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8)
 {
-    @autoreleasepool
+    UniquePtr<Texture> Texture_ { UniquePtr<Texture>::New() };
+
+    if (!Texture_->Initialize(m_Device.Get(), Width, Height))
     {
-        WindowBridge* Bridge = [WindowBridge Retrieve:Window->Handle()];
-        CAMetalLayer* Layer = (CAMetalLayer*)Bridge.Window.contentView.layer;
-        UpdateDrawableSize(Layer, Bridge.Window);
-        m_RenderBridge->Render(Layer, Bridge.Window.screen.backingScaleFactor);
+        return 0;
     }
-}
-*/
-u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel)
-{
-    return m_RenderBridge->LoadTexture(Data, Width, Height, BytesPerPixel);
+
+    if (!Texture_->Upload(Data))
+    {
+        return 0;
+    }
+
+    const u32 Result { Texture_->ID() };
+    m_Textures.Push(std::move(Texture_));
+    return Result;
 }
 
 bool Renderer::BindTexture(u32)
@@ -170,9 +156,8 @@ bool Renderer::BindVertexBuffer(u32)
     return false;
 }
 
-void Renderer::UpdateViewMatrix(const Matrix4f& View)
+void Renderer::UpdateViewMatrix(const Matrix4f&)
 {
-    m_RenderBridge->UpdateViewMatrix(View);
 }
 
 }
