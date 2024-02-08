@@ -75,6 +75,8 @@ public:
     virtual void UpdateViewMatrix(const Matrix4f& View) override;
 
 private:
+    Texture* GetTexture(u32 ID) const;
+
     UniquePtr<Device> m_Device { nullptr };
     UniquePtr<DepthStencil> m_DepthStencil { nullptr };
     Array<UniquePtr<Texture>> m_Textures {};

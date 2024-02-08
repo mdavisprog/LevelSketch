@@ -30,6 +30,7 @@ SOFTWARE.
 #include "../../Platform/Mac/WindowBridge.hpp"
 #include "../../Platform/Window.hpp"
 #include "CommandBuffer.hpp"
+#include "CommandEncoder.hpp"
 #include "CommandQueue.hpp"
 #include "DepthStencil.hpp"
 #include "Device.hpp"
@@ -117,9 +118,22 @@ u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8)
     return Result;
 }
 
-bool Renderer::BindTexture(u32)
+bool Renderer::BindTexture(u32 ID)
 {
-    return false;
+    Texture* Target { GetTexture(ID) };
+
+    if (Target == nullptr)
+    {
+        return false;
+    }
+
+    @autoreleasepool
+    {
+        CommandEncoder* Encoder { m_Device->GetCommandQueue()->CurrentBuffer()->CurrentEncoder() };
+        [Encoder->Get() setFragmentTexture:Target->Data() atIndex:0];
+    }
+
+    return true;
 }
 
 bool Renderer::BeginRender(Platform::Window* Window, const Colorf& ClearColor)
@@ -198,6 +212,19 @@ bool Renderer::BindVertexBuffer(u32)
 
 void Renderer::UpdateViewMatrix(const Matrix4f&)
 {
+}
+
+Texture* Renderer::GetTexture(u32 ID) const
+{
+    for (const UniquePtr<Texture>& Texture_ : m_Textures)
+    {
+        if (Texture_->ID() == ID)
+        {
+            return Texture_.Get();
+        }
+    }
+
+    return nullptr;
 }
 
 }
