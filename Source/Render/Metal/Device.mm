@@ -26,6 +26,7 @@ SOFTWARE.
 
 #include "Device.hpp"
 #include "../../Core/Console.hpp"
+#include "CommandQueue.hpp"
 
 #import <Metal/Metal.h>
 
@@ -40,6 +41,10 @@ Device::Device()
 {
 }
 
+Device::~Device()
+{
+}
+
 bool Device::Initialize()
 {
     m_Device = MTLCreateSystemDefaultDevice();
@@ -50,12 +55,24 @@ bool Device::Initialize()
         return false;
     }
 
+    m_CommandQueue = UniquePtr<CommandQueue>::New();
+
+    if (!m_CommandQueue->Initialize(this))
+    {
+        return false;
+    }
+
     return true;
 }
 
 id<MTLDevice> Device::Get() const
 {
     return m_Device;
+}
+
+CommandQueue* Device::GetCommandQueue() const
+{
+    return m_CommandQueue.Get();
 }
 
 }

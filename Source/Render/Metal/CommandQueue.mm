@@ -24,11 +24,11 @@ SOFTWARE.
 
 */
 
-#pragma once
+#include "CommandQueue.hpp"
+#include "../../Core/Console.hpp"
+#include "Device.hpp"
 
-#include "../../Core/Memory/UniquePtr.hpp"
-
-@protocol MTLDevice;
+#import <Metal/Metal.h>
 
 namespace LevelSketch
 {
@@ -37,23 +37,27 @@ namespace Render
 namespace Metal
 {
 
-class CommandQueue;
-
-class Device
+CommandQueue::CommandQueue()
 {
-public:
-    Device();
-    ~Device();
+}
 
-    bool Initialize();
-    id<MTLDevice> Get() const;
+bool CommandQueue::Initialize(Device const* Device_)
+{
+    m_CommandQueue = [Device_->Get() newCommandQueue];
 
-    CommandQueue* GetCommandQueue() const;
+    if (m_CommandQueue == nullptr)
+    {
+        Core::Console::Error("Failed to create command queue.");
+        return false;
+    }
 
-private:
-    id<MTLDevice> m_Device { nullptr };
-    UniquePtr<CommandQueue> m_CommandQueue { nullptr };
-};
+    return true;
+}
+
+id<MTLCommandQueue> CommandQueue::Get() const
+{
+    return m_CommandQueue;
+}
 
 }
 }

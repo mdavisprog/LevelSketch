@@ -26,9 +26,7 @@ SOFTWARE.
 
 #pragma once
 
-#include "../../Core/Memory/UniquePtr.hpp"
-
-@protocol MTLDevice;
+@protocol MTLCommandQueue;
 
 namespace LevelSketch
 {
@@ -37,22 +35,18 @@ namespace Render
 namespace Metal
 {
 
-class CommandQueue;
+class Device;
 
-class Device
+class CommandQueue
 {
 public:
-    Device();
-    ~Device();
+    CommandQueue();
 
-    bool Initialize();
-    id<MTLDevice> Get() const;
-
-    CommandQueue* GetCommandQueue() const;
+    bool Initialize(Device const* Device_);
+    id<MTLCommandQueue> Get() const;
 
 private:
-    id<MTLDevice> m_Device { nullptr };
-    UniquePtr<CommandQueue> m_CommandQueue { nullptr };
+    id<MTLCommandQueue> m_CommandQueue { nullptr };
 };
 
 }
