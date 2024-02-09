@@ -324,7 +324,7 @@ void Renderer::Shutdown()
 
     Loader::Instance().Shutdown();
 }
-
+/*
 void Renderer::Render(Platform::Window*)
 {
     UniformBuffer& Uniforms { m_Uniforms[m_FrameIndex] };
@@ -349,15 +349,46 @@ void Renderer::Render(Platform::Window*)
 
     m_FrameIndex = (m_FrameIndex + 1) % FRAMES_IN_FLIGHT;
 }
-
+*/
 u32 Renderer::LoadTexture(const void*, u32, u32, u8)
 {
     return 1;
 }
 
+bool Renderer::BindTexture(u32)
+{
+    return false;
+}
+
+bool Renderer::BeginRender(Platform::Window*, const Colorf&)
+{
+    return false;
+}
+
+void Renderer::EndRender(Platform::Window*)
+{
+}
+
+void Renderer::SetViewportRect(const ViewportRect&)
+{
+}
+
+void Renderer::SetScissor(const Recti&)
+{
+}
+
 u32 Renderer::CreateGraphicsPipeline(const GraphicsPipelineDescription&)
 {
     return 0;
+}
+
+bool Renderer::BindGraphicsPipeline(u32)
+{
+    return false;
+}
+
+void Renderer::DrawIndexed(u32, u32, u32, u32, u32)
+{
 }
 
 u32 Renderer::CreateVertexBuffer(const VertexBufferDescription&)
@@ -373,10 +404,6 @@ bool Renderer::UploadVertexData(u32, const VertexDataDescription&)
 bool Renderer::BindVertexBuffer(u32)
 {
     return false;
-}
-
-void Renderer::UploadGUIData(OctaneGUI::Window*, const OctaneGUI::VertexBuffer&)
-{
 }
 
 bool Renderer::GetRequiredExtensionProperties(const Array<VkExtensionProperties>& Properties,
