@@ -119,6 +119,18 @@ bool GraphicsPipeline::Initialize(Device const* Device_, const GraphicsPipelineD
         PipelineDesc.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
         PipelineDesc.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
 
+        if (Description.UseAlphaBlending)
+        {
+            PipelineDesc.rasterSampleCount = 1;
+            PipelineDesc.colorAttachments[0].blendingEnabled = YES;
+            PipelineDesc.colorAttachments[0].rgbBlendOperation = MTLBlendOperationAdd;
+            PipelineDesc.colorAttachments[0].sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
+            PipelineDesc.colorAttachments[0].destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+            PipelineDesc.colorAttachments[0].alphaBlendOperation = MTLBlendOperationAdd;
+            PipelineDesc.colorAttachments[0].sourceAlphaBlendFactor = MTLBlendFactorOne;
+            PipelineDesc.colorAttachments[0].destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+        }
+
         u64 Offset { 0 };
         for (u64 I = 0; I < VertexShaderDesc.VertexDescriptions.Size(); I++)
         {
