@@ -117,8 +117,7 @@ bool GraphicsPipeline::Initialize(Device const* Device_, const GraphicsPipelineD
         PipelineDesc.vertexFunction = VertexShaderFunction;
         PipelineDesc.fragmentFunction = FragmentShaderFunction;
         PipelineDesc.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
-        PipelineDesc.depthAttachmentPixelFormat =
-            Description.UseDepthStencilBuffer ? MTLPixelFormatDepth32Float : MTLPixelFormatInvalid;
+        PipelineDesc.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
 
         u64 Offset { 0 };
         for (u64 I = 0; I < VertexShaderDesc.VertexDescriptions.Size(); I++)
@@ -145,6 +144,26 @@ bool GraphicsPipeline::Initialize(Device const* Device_, const GraphicsPipelineD
                 [[Error localizedDescription] UTF8String]);
             return false;
         }
+
+        MTLDepthStencilDescriptor* DepthStencilDesc = [MTLDepthStencilDescriptor new];
+        if (Description.UseDepthStencilBuffer)
+        {
+            DepthStencilDesc.depthCompareFunction = MTLCompareFunctionLess;
+            DepthStencilDesc.depthWriteEnabled = YES;
+        }
+        else
+        {
+            DepthStencilDesc.depthCompareFunction = MTLCompareFunctionAlways;
+            DepthStencilDesc.depthWriteEnabled = NO;
+        }
+
+        m_DepthStencil = [Device_->Get() newDepthStencilStateWithDescriptor:DepthStencilDesc];
+
+        if (m_DepthStencil == nullptr)
+        {
+            Core::Console::Error("Failed to create depth stencil state.");
+            return false;
+        }
     }
 
     m_ID = ++s_ID;
@@ -156,6 +175,11 @@ bool GraphicsPipeline::Initialize(Device const* Device_, const GraphicsPipelineD
 id<MTLRenderPipelineState> GraphicsPipeline::Get() const
 {
     return m_State;
+}
+
+id<MTLDepthStencilState> GraphicsPipeline::DepthStencil() const
+{
+    return m_DepthStencil;
 }
 
 u32 GraphicsPipeline::ID() const

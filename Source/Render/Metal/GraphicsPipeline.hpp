@@ -52,11 +52,13 @@ public:
 
     bool Initialize(Device const* Device_, const GraphicsPipelineDescription& Description);
     id<MTLRenderPipelineState> Get() const;
+    id<MTLDepthStencilState> DepthStencil() const;
     u32 ID() const;
     MTLCullMode CullMode() const;
 
 private:
     id<MTLRenderPipelineState> m_State { nullptr };
+    id<MTLDepthStencilState> m_DepthStencil { nullptr };
     u32 m_ID { 0 };
     MTLCullMode m_CullMode { MTLCullModeNone };
 };

@@ -266,6 +266,7 @@ bool Renderer::BindGraphicsPipeline(u32 ID)
     CommandEncoder* Encoder { m_Device->GetCommandQueue()->CurrentBuffer()->CurrentEncoder() };
     [Encoder->Get() setRenderPipelineState:Pipeline->Get()];
     [Encoder->Get() setCullMode:Pipeline->CullMode()];
+    [Encoder->Get() setDepthStencilState:Pipeline->DepthStencil()];
 
     return true;
 }
