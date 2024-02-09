@@ -35,6 +35,8 @@ namespace Render
 namespace Metal
 {
 
+class VertexBuffer;
+
 class CommandEncoder final
 {
 public:
@@ -43,8 +45,12 @@ public:
     CommandEncoder& Set(id<MTLRenderCommandEncoder> Encoder);
     id<MTLRenderCommandEncoder> Get() const;
 
+    CommandEncoder& Bind(VertexBuffer* Buffer);
+    VertexBuffer const* Buffer() const;
+
 private:
     id<MTLRenderCommandEncoder> m_CommandEncoder { nullptr };
+    VertexBuffer* m_Buffer { nullptr };
 };
 
 }

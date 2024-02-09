@@ -24,44 +24,48 @@ SOFTWARE.
 
 */
 
-#include "CommandEncoder.hpp"
-#include "VertexBuffer.hpp"
+#pragma once
 
-#import <Metal/Metal.h>
+#include "../../Core/Types.hpp"
+
+@protocol MTLBuffer;
 
 namespace LevelSketch
 {
 namespace Render
 {
+
+struct VertexBufferDescription;
+struct VertexDataDescription;
+
 namespace Metal
 {
 
-CommandEncoder::CommandEncoder()
-{
-}
+class Device;
 
-CommandEncoder& CommandEncoder::Set(id<MTLRenderCommandEncoder> Encoder)
+class VertexBuffer
 {
-    m_CommandEncoder = Encoder;
-    return *this;
-}
+private:
+    static u32 s_ID;
 
-id<MTLRenderCommandEncoder> CommandEncoder::Get() const
-{
-    return m_CommandEncoder;
-}
+public:
+    VertexBuffer();
 
-CommandEncoder& CommandEncoder::Bind(VertexBuffer* Buffer)
-{
-    [m_CommandEncoder setVertexBuffer:Buffer->GetVertexBuffer() offset:0 atIndex:0];
-    m_Buffer = Buffer;
-    return *this;
-}
+    bool Initialize(Device const* Device_, const VertexBufferDescription& Description);
+    bool Upload(const VertexDataDescription& Description);
 
-VertexBuffer const* CommandEncoder::Buffer() const
-{
-    return m_Buffer;
-}
+    id<MTLBuffer> GetVertexBuffer() const;
+    id<MTLBuffer> GetIndexBuffer() const;
+
+    u32 IndexType() const;
+    u32 ID() const;
+
+private:
+    id<MTLBuffer> m_VertexBuffer { nullptr };
+    id<MTLBuffer> m_IndexBuffer { nullptr };
+    u32 m_IndexType { 0 };
+    u32 m_ID { 0 };
+};
 
 }
 }

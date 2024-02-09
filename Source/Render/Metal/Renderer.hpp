@@ -40,6 +40,7 @@ namespace Metal
 class DepthStencil;
 class Device;
 class Texture;
+class VertexBuffer;
 
 class Renderer : public LevelSketch::Render::Renderer
 {
@@ -76,10 +77,12 @@ public:
 
 private:
     Texture* GetTexture(u32 ID) const;
+    VertexBuffer* GetVertexBuffer(u32 ID) const;
 
     UniquePtr<Device> m_Device { nullptr };
     UniquePtr<DepthStencil> m_DepthStencil { nullptr };
     Array<UniquePtr<Texture>> m_Textures {};
+    Array<UniquePtr<VertexBuffer>> m_VertexBuffers {};
 };
 
 }

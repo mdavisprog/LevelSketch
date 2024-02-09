@@ -25,6 +25,7 @@ SOFTWARE.
 */
 
 #include "Renderer.hpp"
+#include "../../Core/Console.hpp"
 #include "../../Core/Math/Vector2.hpp"
 #include "../../Platform/FileSystem.hpp"
 #include "../../Platform/Mac/WindowBridge.hpp"
@@ -35,6 +36,7 @@ SOFTWARE.
 #include "DepthStencil.hpp"
 #include "Device.hpp"
 #include "Texture.hpp"
+#include "VertexBuffer.hpp"
 #include "ViewController.hpp"
 
 #import <AppKit/AppKit.h>
@@ -195,19 +197,48 @@ void Renderer::DrawIndexed(u32, u32, u32, u32, u32)
 {
 }
 
-u32 Renderer::CreateVertexBuffer(const VertexBufferDescription&)
+u32 Renderer::CreateVertexBuffer(const VertexBufferDescription& Description)
 {
-    return 0;
+    UniquePtr<VertexBuffer> Buffer { UniquePtr<VertexBuffer>::New() };
+
+    if (!Buffer->Initialize(m_Device.Get(), Description))
+    {
+        return 0;
+    }
+
+    const u32 Result { Buffer->ID() };
+    m_VertexBuffers.Push(std::move(Buffer));
+    return Result;
 }
 
-bool Renderer::UploadVertexData(u32, const VertexDataDescription&)
+bool Renderer::UploadVertexData(u32 ID, const VertexDataDescription& Description)
 {
-    return false;
+    VertexBuffer* Buffer { GetVertexBuffer(ID) };
+
+    if (Buffer == nullptr)
+    {
+        Core::Console::Warning("Failed to find vertex buffer with ID '%d' in UploadVertexData.", ID);
+        return false;
+    }
+
+    Buffer->Upload(Description);
+
+    return true;
 }
 
-bool Renderer::BindVertexBuffer(u32)
+bool Renderer::BindVertexBuffer(u32 ID)
 {
-    return false;
+    VertexBuffer* Buffer { GetVertexBuffer(ID) };
+
+    if (Buffer == nullptr)
+    {
+        Core::Console::Warning("Failed to find vertex buffer with ID '%d' in BindVertexBuffer.", ID);
+        return false;
+    }
+
+    m_Device->GetCommandQueue()->CurrentBuffer()->CurrentEncoder()->Bind(Buffer);
+
+    return true;
 }
 
 void Renderer::UpdateViewMatrix(const Matrix4f&)
@@ -221,6 +252,19 @@ Texture* Renderer::GetTexture(u32 ID) const
         if (Texture_->ID() == ID)
         {
             return Texture_.Get();
+        }
+    }
+
+    return nullptr;
+}
+
+VertexBuffer* Renderer::GetVertexBuffer(u32 ID) const
+{
+    for (const UniquePtr<VertexBuffer>& Buffer : m_VertexBuffers)
+    {
+        if (Buffer->ID() == ID)
+        {
+            return Buffer.Get();
         }
     }
 
