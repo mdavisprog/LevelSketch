@@ -30,8 +30,6 @@ SOFTWARE.
 #include "../VertexDataDescription.hpp"
 #include "Device.hpp"
 
-#import <Metal/Metal.h>
-
 namespace LevelSketch
 {
 namespace Render
@@ -66,6 +64,7 @@ bool VertexBuffer::Initialize(Device const* Device_, const VertexBufferDescripti
     }
 
     m_IndexType = Description.IndexFormat == IndexFormat::U16 ? MTLIndexTypeUInt16 : MTLIndexTypeUInt32;
+    m_Stride = Description.Stride;
     m_ID = ++s_ID;
 
     return true;
@@ -88,9 +87,19 @@ id<MTLBuffer> VertexBuffer::GetIndexBuffer() const
     return m_IndexBuffer;
 }
 
-u32 VertexBuffer::IndexType() const
+MTLIndexType VertexBuffer::IndexType() const
 {
     return m_IndexType;
+}
+
+u64 VertexBuffer::IndexTypeSize() const
+{
+    return m_IndexType == MTLIndexTypeUInt16 ? sizeof(u16) : sizeof(u32);
+}
+
+u64 VertexBuffer::Stride() const
+{
+    return m_Stride;
 }
 
 u32 VertexBuffer::ID() const

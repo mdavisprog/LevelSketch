@@ -28,7 +28,7 @@ SOFTWARE.
 
 #include "../../Core/Types.hpp"
 
-@protocol MTLBuffer;
+#import <Metal/Metal.h>
 
 namespace LevelSketch
 {
@@ -57,13 +57,16 @@ public:
     id<MTLBuffer> GetVertexBuffer() const;
     id<MTLBuffer> GetIndexBuffer() const;
 
-    u32 IndexType() const;
+    MTLIndexType IndexType() const;
+    u64 IndexTypeSize() const;
+    u64 Stride() const;
     u32 ID() const;
 
 private:
     id<MTLBuffer> m_VertexBuffer { nullptr };
     id<MTLBuffer> m_IndexBuffer { nullptr };
-    u32 m_IndexType { 0 };
+    MTLIndexType m_IndexType { MTLIndexTypeUInt32 };
+    u64 m_Stride { 0 };
     u32 m_ID { 0 };
 };
 

@@ -214,8 +214,30 @@ bool Renderer::BindGraphicsPipeline(u32 ID)
     return true;
 }
 
-void Renderer::DrawIndexed(u32, u32, u32, u32, u32)
+void Renderer::DrawIndexed(u32 IndexCount, u32, u32 StartIndex, u32 BaseVertex, u32)
 {
+    CommandEncoder* Encoder { m_Device->GetCommandQueue()->CurrentBuffer()->CurrentEncoder() };
+    if (Encoder == nullptr)
+    {
+        return;
+    }
+
+    VertexBuffer const* Buffer { Encoder->Buffer() };
+    if (Buffer == nullptr)
+    {
+        Core::Console::Warning("No bound vertex buffer for DrawIndexed.");
+        return;
+    }
+
+    @autoreleasepool
+    {
+        [Encoder->Get() setVertexBufferOffset:BaseVertex * Buffer->Stride() atIndex:0];
+        [Encoder->Get() drawIndexedPrimitives:MTLPrimitiveTypeTriangle
+                                   indexCount:IndexCount
+                                    indexType:Buffer->IndexType()
+                                  indexBuffer:Buffer->GetIndexBuffer()
+                            indexBufferOffset:StartIndex * Buffer->IndexTypeSize()];
+    }
 }
 
 u32 Renderer::CreateVertexBuffer(const VertexBufferDescription& Description)
