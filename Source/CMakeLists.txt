@@ -119,7 +119,6 @@ elseif(APPLE)
         Render/Metal/DepthStencil.mm
         Render/Metal/Device.mm
         Render/Metal/GraphicsPipeline.mm
-        Render/Metal/RenderBuffer.mm
         Render/Metal/Renderer.mm
         Render/Metal/Shader.mm
         Render/Metal/Texture.mm
