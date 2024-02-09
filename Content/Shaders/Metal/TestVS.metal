@@ -46,7 +46,7 @@ struct Uniforms
     metal::float4x4 Orthographic;
 };
 
-vertex RasterizerData VertexMain(
+vertex RasterizerData Main(
     Vertex3 Vertex [[ stage_in ]],
     constant Uniforms& Uniforms_ [[ buffer(1) ]])
 {
@@ -57,9 +57,4 @@ vertex RasterizerData VertexMain(
     Out.Color = Vertex.Color;
 
     return Out;
-}
-
-fragment float4 PixelMain(RasterizerData Data [[stage_in]])
-{
-    return Data.Color;
 }

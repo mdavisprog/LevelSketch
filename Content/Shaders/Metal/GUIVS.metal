@@ -24,42 +24,35 @@ SOFTWARE.
 
 */
 
-#pragma once
-
-#include "../Core/Types.hpp"
-
-namespace LevelSketch
+struct RasterizerData
 {
-namespace Render
-{
-
-enum class VertexFormat
-{
-    Byte,
-    Byte2,
-    Byte4,
-    Float,
-    Float2,
-    Float3,
-    Float4
+    float4 Position [[position]];
+    float2 UV;
+    float4 Color;
 };
 
-static inline u64 VertexFormatSize(VertexFormat Format)
+struct Vertex2
 {
-    switch (Format)
-    {
-    case VertexFormat::Byte: return sizeof(u8);
-    case VertexFormat::Byte2: return sizeof(u8) * 2;
-    case VertexFormat::Byte4: return sizeof(u8) * 4;
-    case VertexFormat::Float: return sizeof(f32);
-    case VertexFormat::Float2: return sizeof(f32) * 2;
-    case VertexFormat::Float3: return sizeof(f32) * 3;
-    case VertexFormat::Float4: return sizeof(f32) * 4;
-    default: break;
-    }
+    float2 Position [[ attribute(0) ]];
+    float2 UV [[ attribute(1) ]];
+    uchar4 Color [[ attribute(2) ]];
+};
 
-    return 0;
-}
+struct Uniforms
+{
+    metal::float4x4 Model;
+    metal::float4x4 View;
+    metal::float4x4 Perspective;
+    metal::float4x4 Orthographic;
+};
 
-}
+vertex RasterizerData Main(Vertex2 Vertex [[ stage_in ]], constant Uniforms& Uniforms_ [[ buffer(1) ]])
+{
+    RasterizerData Out;
+
+    Out.Position = Uniforms_.Orthographic * float4(Vertex.Position, 0.0, 1.0);
+    Out.UV = Vertex.UV;
+    Out.Color = float4(Vertex.Color) / float4(255.0);
+
+    return Out;
 }

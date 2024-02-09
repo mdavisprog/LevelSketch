@@ -31,33 +31,7 @@ struct RasterizerData
     float4 Color;
 };
 
-struct Vertex2
-{
-    float2 Position [[ attribute(0) ]];
-    float2 UV [[ attribute(1) ]];
-    uchar4 Color [[ attribute(2) ]];
-};
-
-struct Uniforms
-{
-    metal::float4x4 Model;
-    metal::float4x4 View;
-    metal::float4x4 Perspective;
-    metal::float4x4 Orthographic;
-};
-
-vertex RasterizerData VertexMain(Vertex2 Vertex [[ stage_in ]], constant Uniforms& Uniforms_ [[ buffer(1) ]])
-{
-    RasterizerData Out;
-
-    Out.Position = Uniforms_.Orthographic * float4(Vertex.Position, 0.0, 1.0);
-    Out.UV = Vertex.UV;
-    Out.Color = float4(Vertex.Color) / float4(255.0);
-
-    return Out;
-}
-
-fragment half4 PixelMain(RasterizerData Data [[stage_in]], metal::texture2d<half, metal::access::sample> Texture [[ texture(0) ]])
+fragment half4 Main(RasterizerData Data [[stage_in]], metal::texture2d<half, metal::access::sample> Texture [[ texture(0) ]])
 {
     constexpr metal::sampler LinearSampler(
         metal::coord::normalized,

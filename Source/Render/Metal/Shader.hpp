@@ -26,7 +26,6 @@ SOFTWARE.
 
 #pragma once
 
-@protocol MTLDevice;
 @protocol MTLFunction;
 @protocol MTLLibrary;
 
@@ -37,29 +36,20 @@ namespace Render
 namespace Metal
 {
 
+class Device;
+
 class Shader
 {
 public:
     Shader();
 
-    bool LoadFile(id<MTLDevice> Device, const char* Path);
-    bool Load(id<MTLDevice> Device, const char* Source);
-    bool IsLoaded() const;
+    bool LoadFile(Device const* Device_, const char* Path);
+    bool Load(Device const* Device_, const char* Source);
 
-    bool LoadVertex(const char* Name);
-    bool LoadPixel(const char* Name);
-
-    id<MTLFunction> Vertex() const;
-    id<MTLFunction> Pixel() const;
-
-    Shader& Clear();
-
-private:
     id<MTLFunction> LoadFunction(const char* Name) const;
 
-    id<MTLLibrary> m_Shaders { nullptr };
-    id<MTLFunction> m_Vertex { nullptr };
-    id<MTLFunction> m_Pixel { nullptr };
+private:
+    id<MTLLibrary> m_Library { nullptr };
 };
 
 }

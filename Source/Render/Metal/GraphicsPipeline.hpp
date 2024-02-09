@@ -26,40 +26,39 @@ SOFTWARE.
 
 #pragma once
 
-#include "../Core/Types.hpp"
+#include "../../Core/Types.hpp"
+
+@protocol MTLRenderPipelineState;
 
 namespace LevelSketch
 {
 namespace Render
 {
 
-enum class VertexFormat
+struct GraphicsPipelineDescription;
+
+namespace Metal
 {
-    Byte,
-    Byte2,
-    Byte4,
-    Float,
-    Float2,
-    Float3,
-    Float4
+
+class Device;
+
+class GraphicsPipeline
+{
+private:
+    static u32 s_ID;
+
+public:
+    GraphicsPipeline();
+
+    bool Initialize(Device const* Device_, const GraphicsPipelineDescription& Description);
+    id<MTLRenderPipelineState> Get() const;
+    u32 ID() const;
+
+private:
+    id<MTLRenderPipelineState> m_State { nullptr };
+    u32 m_ID { 0 };
 };
 
-static inline u64 VertexFormatSize(VertexFormat Format)
-{
-    switch (Format)
-    {
-    case VertexFormat::Byte: return sizeof(u8);
-    case VertexFormat::Byte2: return sizeof(u8) * 2;
-    case VertexFormat::Byte4: return sizeof(u8) * 4;
-    case VertexFormat::Float: return sizeof(f32);
-    case VertexFormat::Float2: return sizeof(f32) * 2;
-    case VertexFormat::Float3: return sizeof(f32) * 3;
-    case VertexFormat::Float4: return sizeof(f32) * 4;
-    default: break;
-    }
-
-    return 0;
 }
-
 }
 }

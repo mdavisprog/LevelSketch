@@ -24,42 +24,14 @@ SOFTWARE.
 
 */
 
-#pragma once
-
-#include "../Core/Types.hpp"
-
-namespace LevelSketch
+struct RasterizerData
 {
-namespace Render
-{
-
-enum class VertexFormat
-{
-    Byte,
-    Byte2,
-    Byte4,
-    Float,
-    Float2,
-    Float3,
-    Float4
+    float4 Position [[position]];
+    float2 UV;
+    float4 Color;
 };
 
-static inline u64 VertexFormatSize(VertexFormat Format)
+fragment float4 Main(RasterizerData Data [[stage_in]])
 {
-    switch (Format)
-    {
-    case VertexFormat::Byte: return sizeof(u8);
-    case VertexFormat::Byte2: return sizeof(u8) * 2;
-    case VertexFormat::Byte4: return sizeof(u8) * 4;
-    case VertexFormat::Float: return sizeof(f32);
-    case VertexFormat::Float2: return sizeof(f32) * 2;
-    case VertexFormat::Float3: return sizeof(f32) * 3;
-    case VertexFormat::Float4: return sizeof(f32) * 4;
-    default: break;
-    }
-
-    return 0;
-}
-
-}
+    return Data.Color;
 }

@@ -39,6 +39,7 @@ namespace Metal
 
 class DepthStencil;
 class Device;
+class GraphicsPipeline;
 class Texture;
 class VertexBuffer;
 
@@ -78,11 +79,13 @@ public:
 private:
     Texture* GetTexture(u32 ID) const;
     VertexBuffer* GetVertexBuffer(u32 ID) const;
+    GraphicsPipeline* GetGraphicsPipeline(u32 ID) const;
 
     UniquePtr<Device> m_Device { nullptr };
     UniquePtr<DepthStencil> m_DepthStencil { nullptr };
     Array<UniquePtr<Texture>> m_Textures {};
     Array<UniquePtr<VertexBuffer>> m_VertexBuffers {};
+    Array<UniquePtr<GraphicsPipeline>> m_GraphicsPipelines {};
 };
 
 }

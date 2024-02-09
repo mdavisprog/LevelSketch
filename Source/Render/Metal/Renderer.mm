@@ -35,6 +35,7 @@ SOFTWARE.
 #include "CommandQueue.hpp"
 #include "DepthStencil.hpp"
 #include "Device.hpp"
+#include "GraphicsPipeline.hpp"
 #include "Texture.hpp"
 #include "VertexBuffer.hpp"
 #include "ViewController.hpp"
@@ -50,7 +51,7 @@ namespace Render
 
 String Renderer::ShadersDirectory()
 {
-    return Platform::FileSystem::CombinePaths(Platform::FileSystem::ContentDirectory(), "Metal");
+    return Platform::FileSystem::CombinePaths(Platform::FileSystem::ShadersDirectory(), "Metal");
 }
 
 namespace Metal
@@ -183,14 +184,34 @@ void Renderer::SetScissor(const Recti&)
 {
 }
 
-u32 Renderer::CreateGraphicsPipeline(const GraphicsPipelineDescription&)
+u32 Renderer::CreateGraphicsPipeline(const GraphicsPipelineDescription& Description)
 {
-    return 0;
+    UniquePtr<GraphicsPipeline> Pipeline { UniquePtr<GraphicsPipeline>::New() };
+
+    if (!Pipeline->Initialize(m_Device.Get(), Description))
+    {
+        return 0;
+    }
+
+    const u32 Result { Pipeline->ID() };
+    m_GraphicsPipelines.Push(std::move(Pipeline));
+    return Result;
 }
 
-bool Renderer::BindGraphicsPipeline(u32)
+bool Renderer::BindGraphicsPipeline(u32 ID)
 {
-    return false;
+    GraphicsPipeline* Pipeline { GetGraphicsPipeline(ID) };
+
+    if (Pipeline == nullptr)
+    {
+        Core::Console::Warning("Failed to find graphics pipeline with ID '%d' for BindGraphicsPipeline.", ID);
+        return false;
+    }
+
+    CommandEncoder* Encoder { m_Device->GetCommandQueue()->CurrentBuffer()->CurrentEncoder() };
+    [Encoder->Get() setRenderPipelineState:Pipeline->Get()];
+
+    return true;
 }
 
 void Renderer::DrawIndexed(u32, u32, u32, u32, u32)
@@ -265,6 +286,19 @@ VertexBuffer* Renderer::GetVertexBuffer(u32 ID) const
         if (Buffer->ID() == ID)
         {
             return Buffer.Get();
+        }
+    }
+
+    return nullptr;
+}
+
+GraphicsPipeline* Renderer::GetGraphicsPipeline(u32 ID) const
+{
+    for (const UniquePtr<GraphicsPipeline>& Pipeline : m_GraphicsPipelines)
+    {
+        if (Pipeline->ID() == ID)
+        {
+            return Pipeline.Get();
         }
     }
 

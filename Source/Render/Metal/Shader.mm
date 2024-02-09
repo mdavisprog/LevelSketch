@@ -27,8 +27,9 @@ SOFTWARE.
 #include "Shader.hpp"
 #include "../../Core/Console.hpp"
 #include "../../Platform/FileSystem.hpp"
+#include "Device.hpp"
 
-#import <MetalKit/MetalKit.h>
+#import <Metal/Metal.h>
 
 namespace LevelSketch
 {
@@ -41,101 +42,54 @@ Shader::Shader()
 {
 }
 
-bool Shader::LoadFile(id<MTLDevice> Device, const char* Path)
+bool Shader::LoadFile(Device const* Device_, const char* Path)
 {
-    if (IsLoaded())
-    {
-        return true;
-    }
-
     const String Contents { Platform::FileSystem::ReadContents(Path) };
-    if (!Load(Device, Contents.Data()))
+
+    if (Contents.IsEmpty())
     {
-        Core::Console::Error("Failed to compile shader file: %s.", Path);
+        Core::Console::Error("No shader contents loaded for path '%s'.", Path);
+        return false;
+    }
+
+    if (!Load(Device_, Contents.Data()))
+    {
         return false;
     }
 
     return true;
 }
 
-bool Shader::Load(id<MTLDevice> Device, const char* Source)
+bool Shader::Load(Device const* Device_, const char* Source)
 {
-    if (IsLoaded())
-    {
-        return true;
-    }
-
     NSError* Error { nullptr };
-    m_Shaders = [Device newLibraryWithSource:[NSString stringWithUTF8String:Source] options:nil error:&Error];
+    m_Library = [Device_->Get() newLibraryWithSource:[NSString stringWithUTF8String:Source] options:nil error:&Error];
 
-    if (m_Shaders == nullptr)
+    if (m_Library == nullptr)
     {
-        Core::Console::Error("Failed to compile shader.\nError: %s", [[Error localizedDescription] UTF8String]);
+        Core::Console::Error("Failed to compile shader. Error: %s", [[Error localizedDescription] UTF8String]);
         return false;
     }
 
     return true;
-}
-
-bool Shader::IsLoaded() const
-{
-    return m_Shaders != nullptr;
-}
-
-bool Shader::LoadVertex(const char* Name)
-{
-    if (m_Vertex == nullptr)
-    {
-        m_Vertex = LoadFunction(Name);
-    }
-
-    return m_Vertex != nullptr;
-}
-
-bool Shader::LoadPixel(const char* Name)
-{
-    if (m_Pixel == nullptr)
-    {
-        m_Pixel = LoadFunction(Name);
-    }
-
-    return m_Pixel != nullptr;
-}
-
-id<MTLFunction> Shader::Vertex() const
-{
-    return m_Vertex;
-}
-
-id<MTLFunction> Shader::Pixel() const
-{
-    return m_Pixel;
-}
-
-Shader& Shader::Clear()
-{
-    m_Shaders = nullptr;
-    m_Vertex = nullptr;
-    m_Pixel = nullptr;
-    return *this;
 }
 
 id<MTLFunction> Shader::LoadFunction(const char* Name) const
 {
-    if (m_Shaders == nullptr)
+    if (m_Library == nullptr)
     {
         return nullptr;
     }
 
     MTLFunctionConstantValues* ConstantValues { [MTLFunctionConstantValues new] };
     NSError* Error { nullptr };
-    id<MTLFunction> Result = [m_Shaders newFunctionWithName:[NSString stringWithUTF8String:Name]
+    id<MTLFunction> Result = [m_Library newFunctionWithName:[NSString stringWithUTF8String:Name]
                                              constantValues:ConstantValues
                                                       error:&Error];
 
     if (Result == nullptr)
     {
-        Core::Console::Error("Failed to load function '%s'.\nError: %s",
+        Core::Console::Error("Failed to load function '%s'. Error: %s",
             Name,
             [[Error localizedDescription] UTF8String]);
     }
