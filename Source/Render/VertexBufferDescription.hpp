@@ -33,7 +33,7 @@ namespace LevelSketch
 namespace Render
 {
 
-enum class IndexFormat
+enum class IndexFormatType
 {
     U16,
     U32
@@ -44,7 +44,7 @@ struct VertexBufferDescription
     u64 VertexBufferSize { 0 };
     u64 IndexBufferSize { 0 };
     u64 Stride { 0 };
-    IndexFormat IndexFormat { IndexFormat::U32 };
+    IndexFormatType IndexFormat { IndexFormatType::U32 };
 };
 
 }

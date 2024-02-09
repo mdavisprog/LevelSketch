@@ -102,7 +102,7 @@ bool GUI::Initialize(i32 Argc, const char** Argv)
 
     Render::GraphicsPipelineDescription GUIDesc {};
     GUIDesc.Name = "GUI";
-    GUIDesc.CullMode = Render::CullMode::None;
+    GUIDesc.CullMode = Render::CullModeType::None;
     GUIDesc.UseDepthStencilBuffer = false;
     GUIDesc.UseAlphaBlending = true;
     GUIDesc.VertexShader.Name = "GUIVS";
@@ -124,7 +124,7 @@ bool GUI::Initialize(i32 Argc, const char** Argv)
     GUIBufferDesc.VertexBufferSize = 100000;
     GUIBufferDesc.IndexBufferSize = 100000;
     GUIBufferDesc.Stride = sizeof(OctaneGUI::Vertex);
-    GUIBufferDesc.IndexFormat = Render::IndexFormat::U32;
+    GUIBufferDesc.IndexFormat = Render::IndexFormatType::U32;
     m_GUIBuffer = Renderer->CreateVertexBuffer(GUIBufferDesc);
     if (m_GUIBuffer == 0)
     {

@@ -204,7 +204,7 @@ static bool InitializeRendering()
 
     Render::GraphicsPipelineDescription TestDesc {};
     TestDesc.Name = "Test";
-    TestDesc.CullMode = Render::CullMode::Back;
+    TestDesc.CullMode = Render::CullModeType::Back;
     TestDesc.UseDepthStencilBuffer = true;
     TestDesc.VertexShader.Name = "DefaultVS";
     TestDesc.VertexShader.Path = "TestVS";
@@ -225,7 +225,7 @@ static bool InitializeRendering()
     TestBufferDesc.VertexBufferSize = 1000;
     TestBufferDesc.IndexBufferSize = 1000;
     TestBufferDesc.Stride = sizeof(Vertex3);
-    TestBufferDesc.IndexFormat = Render::IndexFormat::U32;
+    TestBufferDesc.IndexFormat = Render::IndexFormatType::U32;
     g_TestBuffer = Renderer->CreateVertexBuffer(TestBufferDesc);
     if (g_TestBuffer == 0)
     {

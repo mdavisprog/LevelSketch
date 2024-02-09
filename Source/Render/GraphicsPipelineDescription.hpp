@@ -33,7 +33,7 @@ namespace LevelSketch
 namespace Render
 {
 
-enum class CullMode
+enum class CullModeType
 {
     None,
     Back,
@@ -47,7 +47,7 @@ struct GraphicsPipelineDescription
     ShaderDescription FragmentShader {};
     bool UseDepthStencilBuffer { false };
     bool UseAlphaBlending { false };
-    CullMode CullMode { CullMode::Back };
+    CullModeType CullMode { CullModeType::Back };
 };
 
 }
