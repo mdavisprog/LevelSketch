@@ -85,6 +85,7 @@ static bool SetExtension()
     VERIFY(FileSystem::SetExtension("C:\\Hello.txt", "md") == "C:\\Hello.md");
     VERIFY(FileSystem::SetExtension("/User/Hello.txt", "md") == "/User/Hello.md");
     VERIFY(FileSystem::SetExtension("C:\\Hello\\", "git") == "C:\\Hello\\.git");
+    VERIFY(FileSystem::SetExtension("/User/Hello.app/Contents/World", "txt") == "/User/Hello.app/Contents/World.txt");
     return true;
 }
 

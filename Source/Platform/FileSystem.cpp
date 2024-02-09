@@ -117,13 +117,19 @@ String FileSystem::GetBaseFileName(const String& Path)
 
 String FileSystem::SetExtension(const String& Path, const String& Extension)
 {
+    const u64 SeparatorPos { RFindSeparator(Path) };
     const u64 Pos { Path.RFind('.') };
 
     String Result { Path };
 
     if (Pos != String::NPOS)
     {
-        Result = Path.Sub(0, Pos);
+        // If a path separator was found, make sure the '.' is the latest
+        // on the path.
+        if (SeparatorPos == String::NPOS || Pos > SeparatorPos)
+        {
+            Result = Path.Sub(0, Pos);
+        }
     }
 
     return Result + "." + Extension;
