@@ -162,9 +162,30 @@ bool Renderer::BeginRender(Platform::Window* Window, const Colorf& ClearColor)
         m_DepthStencil->UpdateTexture(m_Device.Get(),
             { static_cast<i32>(Drawable.texture.width), static_cast<i32>(Drawable.texture.height) });
 
+        const f32 AspectRatio { static_cast<f32>(Layer.drawableSize.width) /
+                                static_cast<f32>(Layer.drawableSize.height) };
+
+        const Rectf Bounds { 0.0f,
+            0.0f,
+            static_cast<f32>(Layer.drawableSize.width),
+            static_cast<f32>(Layer.drawableSize.height) };
+
+        m_Uniforms.Perspective = Core::Math::PerspectiveMatrixLH(45.0f, AspectRatio, 0.1f, 100.0f);
+        m_Uniforms.Orthographic = Core::Math::OrthographicMatrixLH(Bounds, -1.0f, 1.0f);
+
         CommandQueue* Queue { m_Device->GetCommandQueue() };
         CommandBuffer* Buffer { Queue->BeginBuffer() };
-        Buffer->BeginEncoding(ClearColor, Drawable, m_DepthStencil->Texture());
+        CommandEncoder* Encoder { Buffer->BeginEncoding(ClearColor, Drawable, m_DepthStencil->Texture()) };
+
+        if (Encoder == nullptr)
+        {
+            return false;
+        }
+
+        SetViewportRect({ Bounds, 0.0f, 1.0f });
+
+        [Encoder->Get() setFrontFacingWinding:MTLWindingCounterClockwise];
+        [Encoder->Get() setVertexBytes:&m_Uniforms length:sizeof(m_Uniforms) atIndex:1];
     }
 
     return true;
@@ -319,8 +340,9 @@ bool Renderer::BindVertexBuffer(u32 ID)
     return true;
 }
 
-void Renderer::UpdateViewMatrix(const Matrix4f&)
+void Renderer::UpdateViewMatrix(const Matrix4f& View)
 {
+    m_Uniforms.View = View;
 }
 
 Texture* Renderer::GetTexture(u32 ID) const

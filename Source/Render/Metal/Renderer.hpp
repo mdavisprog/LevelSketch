@@ -27,6 +27,7 @@ SOFTWARE.
 #pragma once
 
 #include "../../Core/Containers/Array.hpp"
+#include "../../Core/Math/Matrix.hpp"
 #include "../../Core/Memory/UniquePtr.hpp"
 #include "../Renderer.hpp"
 
@@ -42,6 +43,14 @@ class Device;
 class GraphicsPipeline;
 class Texture;
 class VertexBuffer;
+
+struct Uniforms
+{
+    Matrix4f Model { Matrix4f::Identity };
+    Matrix4f View { Matrix4f::Identity };
+    Matrix4f Perspective { Matrix4f::Identity };
+    Matrix4f Orthographic { Matrix4f::Identity };
+};
 
 class Renderer : public LevelSketch::Render::Renderer
 {
@@ -86,6 +95,8 @@ private:
     Array<UniquePtr<Texture>> m_Textures {};
     Array<UniquePtr<VertexBuffer>> m_VertexBuffers {};
     Array<UniquePtr<GraphicsPipeline>> m_GraphicsPipelines {};
+
+    Uniforms m_Uniforms {};
 };
 
 }
