@@ -26,10 +26,12 @@ SOFTWARE.
 
 #include "Renderer.hpp"
 #include "../../Core/Console.hpp"
+#include "../../Core/Math/Rect.hpp"
 #include "../../Core/Math/Vector2.hpp"
 #include "../../Platform/FileSystem.hpp"
 #include "../../Platform/Mac/WindowBridge.hpp"
 #include "../../Platform/Window.hpp"
+#include "../ViewportRect.hpp"
 #include "CommandBuffer.hpp"
 #include "CommandEncoder.hpp"
 #include "CommandQueue.hpp"
@@ -176,12 +178,44 @@ void Renderer::EndRender(Platform::Window*)
     }
 }
 
-void Renderer::SetViewportRect(const ViewportRect&)
+void Renderer::SetViewportRect(const ViewportRect& Rect)
 {
+    CommandEncoder* Encoder { m_Device->GetCommandQueue()->CurrentBuffer()->CurrentEncoder() };
+    if (Encoder == nullptr)
+    {
+        return;
+    }
+
+    @autoreleasepool
+    {
+        const MTLViewport Viewport { .originX = Rect.Bounds.X,
+            .originY = Rect.Bounds.Y,
+            .width = Rect.Bounds.W,
+            .height = Rect.Bounds.H,
+            .znear = Rect.MinDepth,
+            .zfar = Rect.MaxDepth };
+
+        [Encoder->Get() setViewport:Viewport];
+    }
 }
 
-void Renderer::SetScissor(const Recti&)
+void Renderer::SetScissor(const Recti& Rect)
 {
+    CommandEncoder* Encoder { m_Device->GetCommandQueue()->CurrentBuffer()->CurrentEncoder() };
+    if (Encoder == nullptr)
+    {
+        return;
+    }
+
+    @autoreleasepool
+    {
+        const MTLScissorRect Scissor { .x = static_cast<NSUInteger>(Rect.X),
+            .y = static_cast<NSUInteger>(Rect.Y),
+            .width = static_cast<NSUInteger>(Rect.W),
+            .height = static_cast<NSUInteger>(Rect.H) };
+
+        [Encoder->Get() setScissorRect:Scissor];
+    }
 }
 
 u32 Renderer::CreateGraphicsPipeline(const GraphicsPipelineDescription& Description)
@@ -210,6 +244,7 @@ bool Renderer::BindGraphicsPipeline(u32 ID)
 
     CommandEncoder* Encoder { m_Device->GetCommandQueue()->CurrentBuffer()->CurrentEncoder() };
     [Encoder->Get() setRenderPipelineState:Pipeline->Get()];
+    [Encoder->Get() setCullMode:Pipeline->CullMode()];
 
     return true;
 }

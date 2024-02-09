@@ -28,7 +28,7 @@ SOFTWARE.
 
 #include "../../Core/Types.hpp"
 
-@protocol MTLRenderPipelineState;
+#import <Metal/Metal.h>
 
 namespace LevelSketch
 {
@@ -53,10 +53,12 @@ public:
     bool Initialize(Device const* Device_, const GraphicsPipelineDescription& Description);
     id<MTLRenderPipelineState> Get() const;
     u32 ID() const;
+    MTLCullMode CullMode() const;
 
 private:
     id<MTLRenderPipelineState> m_State { nullptr };
     u32 m_ID { 0 };
+    MTLCullMode m_CullMode { MTLCullModeNone };
 };
 
 }

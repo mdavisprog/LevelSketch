@@ -32,8 +32,6 @@ SOFTWARE.
 #include "Device.hpp"
 #include "Shader.hpp"
 
-#import <Metal/Metal.h>
-
 namespace LevelSketch
 {
 namespace Render
@@ -61,6 +59,19 @@ static MTLVertexFormat ToFormat(VertexFormat Format)
     }
 
     return MTLVertexFormatInvalid;
+}
+
+static MTLCullMode ToCullMode(CullMode Mode)
+{
+    switch (Mode)
+    {
+    case CullMode::Back: return MTLCullModeBack;
+    case CullMode::Front: return MTLCullModeFront;
+    case CullMode::None:
+    default: break;
+    }
+
+    return MTLCullModeNone;
 }
 
 u32 GraphicsPipeline::s_ID { 0 };
@@ -137,6 +148,7 @@ bool GraphicsPipeline::Initialize(Device const* Device_, const GraphicsPipelineD
     }
 
     m_ID = ++s_ID;
+    m_CullMode = ToCullMode(Description.CullMode);
 
     return true;
 }
@@ -149,6 +161,11 @@ id<MTLRenderPipelineState> GraphicsPipeline::Get() const
 u32 GraphicsPipeline::ID() const
 {
     return m_ID;
+}
+
+MTLCullMode GraphicsPipeline::CullMode() const
+{
+    return m_CullMode;
 }
 
 }
