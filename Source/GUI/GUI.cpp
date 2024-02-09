@@ -247,13 +247,14 @@ void GUI::Render(Platform::Window* Window)
             Texture = Command.TextureID();
         }
 
-        Recti Clip { 0, 0, Window->Size().X, Window->Size().Y };
+        const Vector2 Scale { Window->ContentScale() };
+        Recti Clip { 0, 0, Window->Size().X * static_cast<i32>(Scale.X), Window->Size().Y * static_cast<i32>(Scale.Y) };
         if (!Command.Clip().IsZero())
         {
-            Clip.X = static_cast<i32>(Command.Clip().Min.X);
-            Clip.Y = static_cast<i32>(Command.Clip().Min.Y);
-            Clip.W = static_cast<i32>(Command.Clip().Width());
-            Clip.H = static_cast<i32>(Command.Clip().Height());
+            Clip.X = static_cast<i32>(Command.Clip().Min.X * Scale.X);
+            Clip.Y = static_cast<i32>(Command.Clip().Min.Y * Scale.Y);
+            Clip.W = static_cast<i32>(Command.Clip().Width() * Scale.X);
+            Clip.H = static_cast<i32>(Command.Clip().Height() * Scale.Y);
         };
 
         Renderer->BindTexture(Texture);
