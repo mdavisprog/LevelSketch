@@ -310,12 +310,16 @@ void Renderer::EndRender(Platform::Window*)
 {
 }
 
-void Renderer::SetViewportRect(const ViewportRect&)
+void Renderer::SetViewportRect(const ViewportRect& Rect)
 {
+    CommandBuffer const* Commands { m_CommandPool->Buffer(m_FrameIndex) };
+    Commands->SetViewport(Rect);
 }
 
-void Renderer::SetScissor(const Recti&)
+void Renderer::SetScissor(const Recti& Rect)
 {
+    CommandBuffer const* Commands { m_CommandPool->Buffer(m_FrameIndex) };
+    Commands->SetScissor(Rect);
 }
 
 u32 Renderer::CreateGraphicsPipeline(const GraphicsPipelineDescription&)

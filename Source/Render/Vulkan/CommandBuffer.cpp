@@ -26,6 +26,8 @@ SOFTWARE.
 
 #include "CommandBuffer.hpp"
 #include "../../Core/Console.hpp"
+#include "../../Core/Math/Rect.hpp"
+#include "../ViewportRect.hpp"
 #include "Buffer.hpp"
 #include "CommandPool.hpp"
 #include "Device.hpp"
@@ -90,20 +92,6 @@ bool CommandBuffer::BeginRecord(GraphicsPipeline const* Pipeline, SwapChain cons
 
     vkCmdBeginRenderPass(m_CommandBuffer, &RenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
     vkCmdBindPipeline(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Pipeline->Get());
-
-    VkViewport Viewport {};
-    Viewport.x = 0;
-    Viewport.y = 0;
-    Viewport.width = static_cast<f32>(SwapChain_->Extents().width);
-    Viewport.height = static_cast<f32>(SwapChain_->Extents().height);
-    Viewport.minDepth = 0.0f;
-    Viewport.maxDepth = 1.0f;
-    vkCmdSetViewport(m_CommandBuffer, 0, 1, &Viewport);
-
-    VkRect2D Scissor {};
-    Scissor.offset = { 0, 0 };
-    Scissor.extent = SwapChain_->Extents();
-    vkCmdSetScissor(m_CommandBuffer, 0, 1, &Scissor);
 
     return true;
 }
@@ -196,6 +184,30 @@ const CommandBuffer& CommandBuffer::DrawVerticesIndexed(u32 IndexCount,
     u32 FirstInstance) const
 {
     vkCmdDrawIndexed(m_CommandBuffer, IndexCount, InstanceCount, FirstIndex, VertexOffset, FirstInstance);
+    return *this;
+}
+
+const CommandBuffer& CommandBuffer::SetViewport(const ViewportRect& Rect) const
+{
+    VkViewport Viewport {};
+    Viewport.x = Rect.Bounds.X;
+    Viewport.y = Rect.Bounds.Y;
+    Viewport.width = Rect.Bounds.W;
+    Viewport.height = Rect.Bounds.H;
+    Viewport.minDepth = Rect.MinDepth;
+    Viewport.maxDepth = Rect.MaxDepth;
+    vkCmdSetViewport(m_CommandBuffer, 0, 1, &Viewport);
+
+    return *this;
+}
+
+const CommandBuffer& CommandBuffer::SetScissor(const Recti& Rect) const
+{
+    VkRect2D Scissor {};
+    Scissor.offset = { Rect.X, Rect.Y };
+    Scissor.extent = { static_cast<u32>(Rect.W), static_cast<u32>(Rect.H) };
+    vkCmdSetScissor(m_CommandBuffer, 0, 1, &Scissor);
+
     return *this;
 }
 

@@ -26,6 +26,7 @@ SOFTWARE.
 
 #pragma once
 
+#include "../../Core/Math/Forwards.hpp"
 #include "../../Core/Types.hpp"
 
 #include <vulkan/vulkan.hpp>
@@ -34,6 +35,9 @@ namespace LevelSketch
 {
 namespace Render
 {
+
+struct ViewportRect;
+
 namespace Vulkan
 {
 
@@ -64,6 +68,8 @@ public:
         u32 FirstIndex,
         u32 VertexOffset,
         u32 FirstInstance) const;
+    const CommandBuffer& SetViewport(const ViewportRect& Rect) const;
+    const CommandBuffer& SetScissor(const Recti& Rect) const;
 
 private:
     VkCommandBuffer m_CommandBuffer { VK_NULL_HANDLE };
