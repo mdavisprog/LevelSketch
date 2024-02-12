@@ -30,6 +30,10 @@ SOFTWARE.
 #include "../../Core/Version.hpp"
 #include "../../Platform/FileSystem.hpp"
 #include "../../Platform/Window.hpp"
+#include "../VertexBufferDescription.hpp"
+#include "../VertexDataDescription.hpp"
+#include "Buffer.hpp"
+#include "CommandBuffer.hpp"
 #include "CommandPool.hpp"
 #include "DescriptorPool.hpp"
 #include "Device.hpp"
@@ -37,6 +41,7 @@ SOFTWARE.
 #include "Loader.hpp"
 #include "Sync.hpp"
 #include "UniformBuffer.hpp"
+#include "VertexBuffer.hpp"
 #include "Viewport.hpp"
 
 #if defined(DEBUG)
@@ -212,6 +217,11 @@ void Renderer::Shutdown()
 {
     m_Device->WaitForIdle();
 
+    for (const UniquePtr<VertexBuffer>& Buffer : m_VertexBuffers)
+    {
+        Buffer->Shutdown(m_Device.Get());
+    }
+
     for (const UniquePtr<UniformBuffer>& Uniform : m_Uniforms)
     {
         Uniform->Shutdown(m_Device.Get());
@@ -322,18 +332,53 @@ void Renderer::DrawIndexed(u32, u32, u32, u32, u32)
 {
 }
 
-u32 Renderer::CreateVertexBuffer(const VertexBufferDescription&)
+u32 Renderer::CreateVertexBuffer(const VertexBufferDescription& Description)
 {
-    return 0;
+    UniquePtr<VertexBuffer> Buffer { UniquePtr<VertexBuffer>::New() };
+
+    if (!Buffer->Initialize(m_Device.Get(), Description))
+    {
+        return 0;
+    }
+
+    const u32 Result { Buffer->ID() };
+    m_VertexBuffers.Push(std::move(Buffer));
+    return Result;
 }
 
-bool Renderer::UploadVertexData(u32, const VertexDataDescription&)
+bool Renderer::UploadVertexData(u32 ID, const VertexDataDescription& Description)
 {
-    return false;
+    VertexBuffer const* Buffer { GetVertexBuffer(ID) };
+
+    if (Buffer == nullptr)
+    {
+        return false;
+    }
+
+    if (!Buffer->GetVertexBuffer()->Upload(m_Device.Get(),
+            m_CommandPool.Get(),
+            Description.VertexData,
+            Description.VertexDataSize))
+    {
+        return false;
+    }
+
+    if (!Buffer->GetIndexBuffer()->Upload(m_Device.Get(),
+            m_CommandPool.Get(),
+            Description.IndexData,
+            Description.IndexDataSize))
+    {
+        return false;
+    }
+
+    return true;
 }
 
-bool Renderer::BindVertexBuffer(u32)
+bool Renderer::BindVertexBuffer(u32 ID)
 {
+    VertexBuffer const* Buffer { GetVertexBuffer(ID) };
+    CommandBuffer const* Commands { m_CommandPool->Buffer(m_FrameIndex) };
+    Commands->BindBuffer(Buffer);
     return false;
 }
 
@@ -395,6 +440,19 @@ bool Renderer::GetExistingLayers(const Array<const char*> Layers, Array<const ch
     }
 
     return !Ptrs.IsEmpty();
+}
+
+VertexBuffer const* Renderer::GetVertexBuffer(u32 ID) const
+{
+    for (const UniquePtr<VertexBuffer>& Buffer : m_VertexBuffers)
+    {
+        if (Buffer->ID() == ID)
+        {
+            return Buffer.Get();
+        }
+    }
+
+    return nullptr;
 }
 
 }

@@ -161,7 +161,7 @@ const CommandBuffer& CommandBuffer::BindBuffer(VertexBuffer const* VertexBuffer_
     VkDeviceSize Offsets[] { 0 };
 
     vkCmdBindVertexBuffers(m_CommandBuffer, 0, 1, VertexBuffers, Offsets);
-    vkCmdBindIndexBuffer(m_CommandBuffer, VertexBuffer_->GetIndexBuffer()->Get(), 0, VK_INDEX_TYPE_UINT32);
+    vkCmdBindIndexBuffer(m_CommandBuffer, VertexBuffer_->GetIndexBuffer()->Get(), 0, VertexBuffer_->IndexType());
 
     return *this;
 }

@@ -35,6 +35,9 @@ namespace LevelSketch
 {
 namespace Render
 {
+
+struct VertexBufferDescription;
+
 namespace Vulkan
 {
 
@@ -43,14 +46,20 @@ class Device;
 
 class VertexBuffer final
 {
+private:
+    static u32 s_ID;
+
 public:
     VertexBuffer();
 
-    bool Initialize(Device const* Device_, u64 VertexSize, u64 IndexSize);
+    bool Initialize(Device const* Device_, const VertexBufferDescription& Description);
     void Shutdown(Device const* Device_);
 
     Buffer const* GetVertexBuffer() const;
     Buffer const* GetIndexBuffer() const;
+
+    VkIndexType IndexType() const;
+    u32 ID() const;
 
 private:
     bool InitializeBuffer(const UniquePtr<Buffer>& Buffer_,
@@ -60,6 +69,8 @@ private:
 
     UniquePtr<Buffer> m_VertexBuffer { nullptr };
     UniquePtr<Buffer> m_IndexBuffer { nullptr };
+    VkIndexType m_IndexType { VK_INDEX_TYPE_UINT32 };
+    u32 m_ID { 0 };
 };
 
 }

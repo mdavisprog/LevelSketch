@@ -26,6 +26,7 @@ SOFTWARE.
 
 #include "VertexBuffer.hpp"
 #include "../../Core/Console.hpp"
+#include "../VertexBufferDescription.hpp"
 #include "Buffer.hpp"
 #include "Device.hpp"
 
@@ -36,25 +37,30 @@ namespace Render
 namespace Vulkan
 {
 
+u32 VertexBuffer::s_ID { 0 };
+
 VertexBuffer::VertexBuffer()
 {
 }
 
-bool VertexBuffer::Initialize(Device const* Device_, u64 VertexSize, u64 IndexSize)
+bool VertexBuffer::Initialize(Device const* Device_, const VertexBufferDescription& Description)
 {
     m_VertexBuffer = UniquePtr<Buffer>::New();
-    if (!InitializeBuffer(m_VertexBuffer, Device_, VertexSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT))
+    if (!InitializeBuffer(m_VertexBuffer, Device_, Description.VertexBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT))
     {
         Core::Console::Error("Failed to initialize vertex buffer.");
         return false;
     }
 
     m_IndexBuffer = UniquePtr<Buffer>::New();
-    if (!InitializeBuffer(m_IndexBuffer, Device_, IndexSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT))
+    if (!InitializeBuffer(m_IndexBuffer, Device_, Description.IndexBufferSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT))
     {
         Core::Console::Error("Failed to initialize index buffer.");
         return false;
     }
+
+    m_IndexType = Description.IndexFormat == IndexFormatType::U16 ? VK_INDEX_TYPE_UINT16 : VK_INDEX_TYPE_UINT32;
+    m_ID = ++s_ID;
 
     return true;
 }
@@ -76,6 +82,16 @@ Buffer const* VertexBuffer::GetVertexBuffer() const
 Buffer const* VertexBuffer::GetIndexBuffer() const
 {
     return m_IndexBuffer.Get();
+}
+
+VkIndexType VertexBuffer::IndexType() const
+{
+    return m_IndexType;
+}
+
+u32 VertexBuffer::ID() const
+{
+    return m_ID;
 }
 
 bool VertexBuffer::InitializeBuffer(const UniquePtr<Buffer>& Buffer_,
