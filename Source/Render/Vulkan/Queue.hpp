@@ -27,7 +27,8 @@ SOFTWARE.
 #pragma once
 
 #include "../../Core/Types.hpp"
-#include "vulkan/vulkan.hpp"
+
+#include <vulkan/vulkan.hpp>
 
 namespace LevelSketch
 {
@@ -38,14 +39,13 @@ namespace Vulkan
 
 class LogicalDevice;
 
-class Queue
+class Queue final
 {
 public:
     Queue();
 
-    bool Initialize(const LogicalDevice& Device, u32 QueueFamilyIndex);
-
-    VkQueue Handle() const;
+    bool Initialize(LogicalDevice const* Device, u32 QueueFamilyIndex);
+    VkQueue Get() const;
 
 private:
     VkQueue m_Queue { VK_NULL_HANDLE };

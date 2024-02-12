@@ -1,0 +1,175 @@
+/**
+
+MIT License
+
+Copyright (c) 2024 Mitchell Davis <mdavisprog@gmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+#include "DescriptorPool.hpp"
+#include "../../Core/Console.hpp"
+#include "../../Core/Containers/Array.hpp"
+#include "Device.hpp"
+#include "Errors.hpp"
+#include "LogicalDevice.hpp"
+
+namespace LevelSketch
+{
+namespace Render
+{
+namespace Vulkan
+{
+
+DescriptorPool::DescriptorPool()
+{
+}
+
+bool DescriptorPool::Initialize(Device const* Device_, u32 Count)
+{
+    // TODO: Specify layout binding in the GraphicsPipelineDescription struct.
+    // Force a single uniform buffer binding for now.
+    Array<VkDescriptorSetLayoutBinding> LayoutBindings {};
+
+    VkDescriptorSetLayoutBinding UniformBinding {};
+    UniformBinding.binding = 0;
+    UniformBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    UniformBinding.descriptorCount = 1;
+    UniformBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    UniformBinding.pImmutableSamplers = nullptr;
+    LayoutBindings.Push(UniformBinding);
+
+    if (!CreateDescriptorSetLayout(Device_, LayoutBindings))
+    {
+        return false;
+    }
+
+    VkDescriptorPoolSize PoolSize {};
+    PoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    PoolSize.descriptorCount = Count;
+
+    VkDescriptorPoolCreateInfo CreateInfo {};
+    CreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    CreateInfo.poolSizeCount = 1;
+    CreateInfo.pPoolSizes = &PoolSize;
+    CreateInfo.maxSets = Count;
+
+    VkResult Result {
+        vkCreateDescriptorPool(Device_->GetLogicalDevice()->Get(), &CreateInfo, nullptr, &m_DescriptorPool)
+    };
+
+    if (Result != VK_SUCCESS)
+    {
+        Core::Console::Error("Failed to create descriptor pool. Error: %s", Errors::ToString(Result));
+        return false;
+    }
+
+    if (!CreateDescriptorSets(Device_, Count))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+void DescriptorPool::Shutdown(Device const* Device_)
+{
+    if (m_DescriptorSetLayout != VK_NULL_HANDLE)
+    {
+        vkDestroyDescriptorSetLayout(Device_->GetLogicalDevice()->Get(), m_DescriptorSetLayout, nullptr);
+        m_DescriptorSetLayout = VK_NULL_HANDLE;
+    }
+
+    if (m_DescriptorPool != VK_NULL_HANDLE)
+    {
+        vkDestroyDescriptorPool(Device_->GetLogicalDevice()->Get(), m_DescriptorPool, nullptr);
+        m_DescriptorPool = VK_NULL_HANDLE;
+    }
+}
+
+VkDescriptorPool DescriptorPool::Get() const
+{
+    return m_DescriptorPool;
+}
+
+VkDescriptorSetLayout DescriptorPool::GetLayout() const
+{
+    return m_DescriptorSetLayout;
+}
+
+VkDescriptorSet DescriptorPool::GetSet(u64 Index) const
+{
+    return m_DescriptorSets[Index];
+}
+
+bool DescriptorPool::CreateDescriptorSetLayout(Device const* Device_,
+    const Array<VkDescriptorSetLayoutBinding>& Bindings)
+{
+    VkDescriptorSetLayoutCreateInfo CreateInfo {};
+    CreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    CreateInfo.bindingCount = static_cast<u32>(Bindings.Size());
+    CreateInfo.pBindings = Bindings.Data();
+
+    VkResult Result {
+        vkCreateDescriptorSetLayout(Device_->GetLogicalDevice()->Get(), &CreateInfo, nullptr, &m_DescriptorSetLayout)
+    };
+
+    if (Result != VK_SUCCESS)
+    {
+        Core::Console::Error("Failed to create descriptor set layout. Error: %s", Errors::ToString(Result));
+        return false;
+    }
+
+    return true;
+}
+
+bool DescriptorPool::CreateDescriptorSets(Device const* Device_, u32 Count)
+{
+    Array<VkDescriptorSetLayout> Layouts;
+
+    for (u32 I = 0; I < Count; I++)
+    {
+        Layouts.Push(m_DescriptorSetLayout);
+    }
+
+    VkDescriptorSetAllocateInfo AllocInfo {};
+    AllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    AllocInfo.descriptorPool = m_DescriptorPool;
+    AllocInfo.descriptorSetCount = Count;
+    AllocInfo.pSetLayouts = Layouts.Data();
+
+    m_DescriptorSets.Resize(Layouts.Size());
+
+    VkResult Result {
+        vkAllocateDescriptorSets(Device_->GetLogicalDevice()->Get(), &AllocInfo, m_DescriptorSets.Data())
+    };
+
+    if (Result != VK_SUCCESS)
+    {
+        Core::Console::Error("Failed to allocate descriptor sets. Error: %s", Errors::ToString(Result));
+        return false;
+    }
+
+    return true;
+}
+
+}
+}
+}

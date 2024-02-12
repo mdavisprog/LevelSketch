@@ -26,13 +26,16 @@ SOFTWARE.
 
 #include "CommandBuffer.hpp"
 #include "../../Core/Console.hpp"
+#include "Buffer.hpp"
 #include "CommandPool.hpp"
 #include "Device.hpp"
 #include "Errors.hpp"
 #include "GraphicsPipeline.hpp"
-#include "RenderBuffer.hpp"
+#include "LogicalDevice.hpp"
+#include "Queue.hpp"
 #include "SwapChain.hpp"
 #include "Sync.hpp"
+#include "VertexBuffer.hpp"
 
 namespace LevelSketch
 {
@@ -45,29 +48,28 @@ CommandBuffer::CommandBuffer()
 {
 }
 
-void CommandBuffer::Initialize(VkCommandBuffer Handle)
+void CommandBuffer::Initialize(VkCommandBuffer CommandBuffer_)
 {
-    m_Handle = Handle;
+    m_CommandBuffer = CommandBuffer_;
 }
 
-void CommandBuffer::Shutdown(const Device& Device_, const CommandPool& Pool)
+void CommandBuffer::Shutdown(Device const* Device_, CommandPool const* Pool)
 {
-    if (m_Handle != VK_NULL_HANDLE)
+    if (m_CommandBuffer != VK_NULL_HANDLE)
     {
-        vkFreeCommandBuffers(Device_.GetLogicalDevice().Handle(), Pool.Handle(), 1, &m_Handle);
-
-        m_Handle = VK_NULL_HANDLE;
+        vkFreeCommandBuffers(Device_->GetLogicalDevice()->Get(), Pool->Get(), 1, &m_CommandBuffer);
+        m_CommandBuffer = VK_NULL_HANDLE;
     }
 }
 
-bool CommandBuffer::BeginRecord(const GraphicsPipeline& Pipeline, const SwapChain& SwapChain_, u32 FrameIndex) const
+bool CommandBuffer::BeginRecord(GraphicsPipeline const* Pipeline, SwapChain const* SwapChain_, u32 FrameIndex) const
 {
     VkCommandBufferBeginInfo BeginInfo {};
     BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     BeginInfo.flags = 0;
     BeginInfo.pInheritanceInfo = nullptr;
 
-    VkResult Result { vkBeginCommandBuffer(m_Handle, &BeginInfo) };
+    VkResult Result { vkBeginCommandBuffer(m_CommandBuffer, &BeginInfo) };
 
     if (Result != VK_SUCCESS)
     {
@@ -79,38 +81,38 @@ bool CommandBuffer::BeginRecord(const GraphicsPipeline& Pipeline, const SwapChai
 
     VkRenderPassBeginInfo RenderPassInfo {};
     RenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    RenderPassInfo.renderPass = Pipeline.RenderPass();
-    RenderPassInfo.framebuffer = SwapChain_.Framebuffer(FrameIndex);
+    RenderPassInfo.renderPass = SwapChain_->RenderPass();
+    RenderPassInfo.framebuffer = SwapChain_->Framebuffer(FrameIndex);
     RenderPassInfo.renderArea.offset = { 0, 0 };
-    RenderPassInfo.renderArea.extent = SwapChain_.Extents();
+    RenderPassInfo.renderArea.extent = SwapChain_->Extents();
     RenderPassInfo.clearValueCount = 1;
     RenderPassInfo.pClearValues = &ClearValue;
 
-    vkCmdBeginRenderPass(m_Handle, &RenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-    vkCmdBindPipeline(m_Handle, VK_PIPELINE_BIND_POINT_GRAPHICS, Pipeline.Handle());
+    vkCmdBeginRenderPass(m_CommandBuffer, &RenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Pipeline->Get());
 
     VkViewport Viewport {};
     Viewport.x = 0;
     Viewport.y = 0;
-    Viewport.width = static_cast<f32>(SwapChain_.Extents().width);
-    Viewport.height = static_cast<f32>(SwapChain_.Extents().height);
+    Viewport.width = static_cast<f32>(SwapChain_->Extents().width);
+    Viewport.height = static_cast<f32>(SwapChain_->Extents().height);
     Viewport.minDepth = 0.0f;
     Viewport.maxDepth = 1.0f;
-    vkCmdSetViewport(m_Handle, 0, 1, &Viewport);
+    vkCmdSetViewport(m_CommandBuffer, 0, 1, &Viewport);
 
     VkRect2D Scissor {};
     Scissor.offset = { 0, 0 };
-    Scissor.extent = SwapChain_.Extents();
-    vkCmdSetScissor(m_Handle, 0, 1, &Scissor);
+    Scissor.extent = SwapChain_->Extents();
+    vkCmdSetScissor(m_CommandBuffer, 0, 1, &Scissor);
 
     return true;
 }
 
 bool CommandBuffer::EndRecord() const
 {
-    vkCmdEndRenderPass(m_Handle);
+    vkCmdEndRenderPass(m_CommandBuffer);
 
-    VkResult Result = vkEndCommandBuffer(m_Handle);
+    VkResult Result = vkEndCommandBuffer(m_CommandBuffer);
 
     if (Result != VK_SUCCESS)
     {
@@ -123,24 +125,13 @@ bool CommandBuffer::EndRecord() const
 
 void CommandBuffer::Reset() const
 {
-    if (!IsValid())
-    {
-        return;
-    }
-
-    vkResetCommandBuffer(m_Handle, 0);
+    vkResetCommandBuffer(m_CommandBuffer, 0);
 }
 
-bool CommandBuffer::Submit(const Device& Device_, const Sync& Sync_) const
+bool CommandBuffer::Submit(Device const* Device_, Sync const* Sync_) const
 {
-    if (!IsValid())
-    {
-        Core::Console::Error("Failed to submit command buffer. Invalid handle.");
-        return false;
-    }
-
-    const VkSemaphore WaitSemaphores[] = { Sync_.ImageReady() };
-    const VkSemaphore SignalSemaphores[] = { Sync_.RenderFinished() };
+    const VkSemaphore WaitSemaphores[] = { Sync_->ImageReady() };
+    const VkSemaphore SignalSemaphores[] = { Sync_->RenderFinished() };
     const VkPipelineStageFlags WaitFlags[] { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
     VkSubmitInfo SubmitInfo {};
@@ -149,11 +140,11 @@ bool CommandBuffer::Submit(const Device& Device_, const Sync& Sync_) const
     SubmitInfo.pWaitSemaphores = WaitSemaphores;
     SubmitInfo.pWaitDstStageMask = WaitFlags;
     SubmitInfo.commandBufferCount = 1;
-    SubmitInfo.pCommandBuffers = &m_Handle;
+    SubmitInfo.pCommandBuffers = &m_CommandBuffer;
     SubmitInfo.signalSemaphoreCount = 1;
     SubmitInfo.pSignalSemaphores = SignalSemaphores;
 
-    VkResult Result { vkQueueSubmit(Device_.GraphicsQueue().Handle(), 1, &SubmitInfo, Sync_.Fence()) };
+    VkResult Result { vkQueueSubmit(Device_->GraphicsQueue()->Get(), 1, &SubmitInfo, Sync_->Fence()) };
 
     if (Result != VK_SUCCESS)
     {
@@ -164,27 +155,25 @@ bool CommandBuffer::Submit(const Device& Device_, const Sync& Sync_) const
     return true;
 }
 
-const CommandBuffer& CommandBuffer::BindBuffers(const RenderBuffer& Buffers) const
+const CommandBuffer& CommandBuffer::BindBuffer(VertexBuffer const* VertexBuffer_) const
 {
-    VkBuffer VertexBuffers[] { Buffers.VertexBuffer().Handle() };
+    VkBuffer VertexBuffers[] { VertexBuffer_->GetVertexBuffer()->Get() };
     VkDeviceSize Offsets[] { 0 };
 
-    vkCmdBindVertexBuffers(m_Handle, 0, 1, VertexBuffers, Offsets);
-    vkCmdBindIndexBuffer(m_Handle, Buffers.IndexBuffer().Handle(), 0, VK_INDEX_TYPE_UINT32);
+    vkCmdBindVertexBuffers(m_CommandBuffer, 0, 1, VertexBuffers, Offsets);
+    vkCmdBindIndexBuffer(m_CommandBuffer, VertexBuffer_->GetIndexBuffer()->Get(), 0, VK_INDEX_TYPE_UINT32);
 
     return *this;
 }
 
-const CommandBuffer& CommandBuffer::BindDescriptorSet(const GraphicsPipeline& Pipeline, u64 FrameIndex) const
+const CommandBuffer& CommandBuffer::BindDescriptorSet(GraphicsPipeline const* Pipeline, VkDescriptorSet Set) const
 {
-    VkDescriptorSet DescriptorSet { Pipeline.DescriptorSet(FrameIndex) };
-
-    vkCmdBindDescriptorSets(m_Handle,
+    vkCmdBindDescriptorSets(m_CommandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
-        Pipeline.PipelineLayout(),
+        Pipeline->GetLayout(),
         0,
         1,
-        &DescriptorSet,
+        &Set,
         0,
         nullptr);
 
@@ -196,7 +185,7 @@ const CommandBuffer& CommandBuffer::DrawVertices(u32 VertexCount,
     u32 FirstVertex,
     u32 FirstInstance) const
 {
-    vkCmdDraw(m_Handle, VertexCount, InstanceCount, FirstVertex, FirstInstance);
+    vkCmdDraw(m_CommandBuffer, VertexCount, InstanceCount, FirstVertex, FirstInstance);
     return *this;
 }
 
@@ -206,13 +195,8 @@ const CommandBuffer& CommandBuffer::DrawVerticesIndexed(u32 IndexCount,
     u32 VertexOffset,
     u32 FirstInstance) const
 {
-    vkCmdDrawIndexed(m_Handle, IndexCount, InstanceCount, FirstIndex, VertexOffset, FirstInstance);
+    vkCmdDrawIndexed(m_CommandBuffer, IndexCount, InstanceCount, FirstIndex, VertexOffset, FirstInstance);
     return *this;
-}
-
-bool CommandBuffer::IsValid() const
-{
-    return m_Handle != VK_NULL_HANDLE;
 }
 
 }

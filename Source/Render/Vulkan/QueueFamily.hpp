@@ -26,7 +26,7 @@ SOFTWARE.
 
 #pragma once
 
-#include "Buffer.hpp"
+#include "../../Core/Optional.hpp"
 
 namespace LevelSketch
 {
@@ -35,24 +35,10 @@ namespace Render
 namespace Vulkan
 {
 
-class Device;
-
-class RenderBuffer
+struct QueueFamily
 {
-public:
-    RenderBuffer();
-
-    bool Initialize(const Device& Device_, u64 VertexSize, u64 IndexSize);
-    void Shutdown(const Device& Device_);
-
-    const Buffer& VertexBuffer() const;
-    const Buffer& IndexBuffer() const;
-
-private:
-    bool InitializeBuffer(Buffer& Buf, const Device& Device_, u64 Size, VkBufferUsageFlags Usage) const;
-
-    Buffer m_VertexBuffer {};
-    Buffer m_IndexBuffer {};
+    Optional<u32> Graphics {};
+    Optional<u32> Present {};
 };
 
 }

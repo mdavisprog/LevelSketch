@@ -41,10 +41,12 @@ LogicalDevice::LogicalDevice()
 {
 }
 
-bool LogicalDevice::Initialize(const PhysicalDevice& PhysDevice, const Array<const char*>& Layers)
+bool LogicalDevice::Initialize(PhysicalDevice const* PhysicalDevice_, const Array<const char*>& Layers)
 {
+    const u32 Indices[] { PhysicalDevice_->GetQueueFamily().Graphics.Value(),
+        PhysicalDevice_->GetQueueFamily().Present.Value() };
     Array<u32> UniqueIndices;
-    for (u32 Index : PhysDevice.QueueFamilyIndex().Indices())
+    for (u32 Index : Indices)
     {
         if (!UniqueIndices.Contains(Index))
         {
@@ -76,14 +78,14 @@ bool LogicalDevice::Initialize(const PhysicalDevice& PhysDevice, const Array<con
     DeviceInfo.enabledExtensionCount = static_cast<u32>(PhysicalDevice::s_RequiredExtensions.Size());
     DeviceInfo.ppEnabledExtensionNames = PhysicalDevice::s_RequiredExtensions.Data();
 
-    VkResult Result { vkCreateDevice(PhysDevice.Handle(), &DeviceInfo, nullptr, &m_Device) };
+    VkResult Result { vkCreateDevice(PhysicalDevice_->Get(), &DeviceInfo, nullptr, &m_Device) };
     if (Result != VK_SUCCESS)
     {
         Core::Console::Error("Failed to create logical device. Error: %s", Errors::ToString(Result));
         return false;
     }
 
-    return m_Device != VK_NULL_HANDLE;
+    return true;
 }
 
 void LogicalDevice::Shutdown()
@@ -95,12 +97,7 @@ void LogicalDevice::Shutdown()
     }
 }
 
-bool LogicalDevice::IsValid() const
-{
-    return m_Device != nullptr;
-}
-
-VkDevice LogicalDevice::Handle() const
+VkDevice LogicalDevice::Get() const
 {
     return m_Device;
 }

@@ -27,8 +27,10 @@ SOFTWARE.
 #pragma once
 
 #include "../../Core/Containers/String.hpp"
-#include "../../Core/Optional.hpp"
-#include "vulkan/vulkan.hpp"
+#include "../../Core/Memory/UniquePtr.hpp"
+#include "QueueFamily.hpp"
+
+#include <vulkan/vulkan.hpp>
 
 namespace LevelSketch
 {
@@ -39,60 +41,16 @@ namespace Vulkan
 
 class Surface;
 
-class PhysicalDevice
+class PhysicalDevice final
 {
 public:
-    static const Array<const char*> s_RequiredExtensions;
-
-    class QueueFamily
+    struct SupportDetails
     {
-        friend class PhysicalDevice;
-
-    public:
-        bool HasGraphics() const
-        {
-            return m_Graphics.HasValue();
-        }
-        u32 Graphics() const
-        {
-            return m_Graphics.Value();
-        }
-
-        bool HasPresent() const
-        {
-            return m_Present.HasValue();
-        }
-        u32 Present() const
-        {
-            return m_Present.Value();
-        }
-
-        bool IsComplete() const
-        {
-            return HasGraphics() && HasPresent();
-        }
-
-        Array<u32> Indices() const
-        {
-            return { Graphics(), Present() };
-        }
-
-    private:
-        Optional<u32> m_Graphics {};
-        Optional<u32> m_Present {};
+        VkSurfaceCapabilitiesKHR SurfaceCapabilities {};
+        Array<VkSurfaceFormatKHR> Formats {};
+        Array<VkPresentModeKHR> PresentModes {};
     };
 
-    static Array<PhysicalDevice> GetDevices(VkInstance Instance, const Surface& Surface_);
-
-    PhysicalDevice();
-
-    void PrintInfo() const;
-    VkPhysicalDevice Handle() const;
-    bool IsValid() const;
-    const QueueFamily& QueueFamilyIndex() const;
-    bool AreRequiredExtensionsSupported() const;
-
-private:
     struct Info
     {
         u32 APIVersion_Major { 0 };
@@ -104,13 +62,21 @@ private:
         String Name {};
     };
 
-    PhysicalDevice(VkPhysicalDevice Device);
+    static const Array<const char*> s_RequiredExtensions;
 
-    PhysicalDevice& GatherInfo();
-    PhysicalDevice& FindQueueFamily(const Surface& Surface_);
+    static UniquePtr<PhysicalDevice> BestDevice(VkInstance Instance, Surface const* Surface_);
 
+    PhysicalDevice();
+
+    VkPhysicalDevice Get() const;
+    const QueueFamily& GetQueueFamily() const;
+    const SupportDetails& GetSupportDetails() const;
+    const Info& GetInfo() const;
+
+private:
     VkPhysicalDevice m_Device { VK_NULL_HANDLE };
     QueueFamily m_QueueFamily {};
+    SupportDetails m_SupportDetails {};
     Info m_Info {};
 };
 

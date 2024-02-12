@@ -26,12 +26,18 @@ SOFTWARE.
 
 #pragma once
 
-#include "vulkan/vulkan.hpp"
+#include "../../Core/Math/Vector2.hpp"
 
-#include <X11/Xlib.h>
+#include <vulkan/vulkan.hpp>
 
 namespace LevelSketch
 {
+
+namespace Platform
+{
+class Window;
+}
+
 namespace Render
 {
 namespace Vulkan
@@ -41,15 +47,21 @@ class Surface
 {
 public:
     Surface();
+    virtual ~Surface();
 
-    bool Initialize(VkInstance Instance, Window Window_, Display* Display_);
+    bool Initialize(VkInstance Instance, Platform::Window* Window);
     void Shutdown(VkInstance Instance);
 
-    bool IsValid() const;
-    VkSurfaceKHR Handle() const;
+    VkSurfaceKHR Get() const;
+    Vector2i Resolution() const;
+
+protected:
+    virtual VkSurfaceKHR InternalInitialize(VkInstance Instance, Platform::Window* Window) = 0;
+    void SetResolution(const Vector2i& Resolution);
 
 private:
     VkSurfaceKHR m_Surface { VK_NULL_HANDLE };
+    Vector2i m_Resolution {};
 };
 
 }

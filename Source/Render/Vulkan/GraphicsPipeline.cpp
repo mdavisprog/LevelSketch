@@ -27,8 +27,13 @@ SOFTWARE.
 #include "GraphicsPipeline.hpp"
 #include "../../Core/Console.hpp"
 #include "../../Core/Containers/Array.hpp"
+#include "../../Platform/FileSystem.hpp"
+#include "../GraphicsPipelineDescription.hpp"
+#include "Buffer.hpp"
+#include "DescriptorPool.hpp"
 #include "Device.hpp"
 #include "Errors.hpp"
+#include "LogicalDevice.hpp"
 #include "Renderer.hpp"
 #include "Shader.hpp"
 #include "SwapChain.hpp"
@@ -41,47 +46,115 @@ namespace Render
 namespace Vulkan
 {
 
+VkFormat ToFormat(VertexFormat Format)
+{
+    switch (Format)
+    {
+    case VertexFormat::Byte: return VK_FORMAT_R8_UNORM;
+    case VertexFormat::Byte2: return VK_FORMAT_R8G8_UNORM;
+    case VertexFormat::Byte4: return VK_FORMAT_R8G8B8A8_UNORM;
+    case VertexFormat::Float: return VK_FORMAT_R32_SFLOAT;
+    case VertexFormat::Float2: return VK_FORMAT_R32G32_SFLOAT;
+    case VertexFormat::Float3: return VK_FORMAT_R32G32B32_SFLOAT;
+    case VertexFormat::Float4: return VK_FORMAT_R32G32B32A32_SFLOAT;
+    default: break;
+    }
+
+    return VK_FORMAT_UNDEFINED;
+}
+
+VkCullModeFlagBits ToCullMode(CullModeType Type)
+{
+    switch (Type)
+    {
+    case CullModeType::Back: return VK_CULL_MODE_BACK_BIT;
+    case CullModeType::Front: return VK_CULL_MODE_FRONT_BIT;
+    case CullModeType::None:
+    default: break;
+    }
+
+    return VK_CULL_MODE_NONE;
+}
+
 GraphicsPipeline::GraphicsPipeline()
 {
 }
 
-bool GraphicsPipeline::Initialize(const Device& Device_,
-    const SwapChain& SwapChain_,
-    const Shader& Vertex,
-    const Shader& Fragment)
+bool GraphicsPipeline::Initialize(Device const* Device_,
+    DescriptorPool const* Pool,
+    SwapChain const* SwapChain_,
+    const GraphicsPipelineDescription& Description)
 {
-    if (!CreatePipelineLayout(Device_))
+    if (!CreatePipelineLayout(Device_, Pool))
     {
         return false;
     }
 
-    if (!CreateRenderPass(Device_, SwapChain_))
+    const ShaderDescription& VertexShaderDesc { Description.VertexShader };
+    Shader VertexShader {};
+    if (!VertexShader.Load(Device_,
+            Platform::FileSystem::SetExtension(Renderer::ShaderPath(VertexShaderDesc.Path.Data()), "vert").Data()))
     {
         return false;
     }
+
+    Array<VkVertexInputAttributeDescription> Attributes;
+    u64 Offset { 0 };
+    for (u32 I = 0; I < VertexShaderDesc.VertexDescriptions.Size(); I++)
+    {
+        const VertexDescription& VertexDesc { VertexShaderDesc.VertexDescriptions[I] };
+
+        VkVertexInputAttributeDescription Attribute {};
+        Attribute.binding = 0;
+        Attribute.location = I;
+        Attribute.format = ToFormat(VertexDesc.Format);
+        Attribute.offset = 0;
+        Attributes.Push(Attribute);
+
+        Offset += VertexFormatSize(VertexDesc.Format);
+    }
+
+    VkVertexInputBindingDescription VertexBinding {};
+    VertexBinding.binding = 0;
+    VertexBinding.stride = Offset;
+    VertexBinding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+    VkVertexInputBindingDescription VertexBindings[] { VertexBinding };
+
+    const ShaderDescription& FragmentShaderDesc { Description.FragmentShader };
+    Shader FragmentShader {};
+    if (!FragmentShader.Load(Device_,
+            Platform::FileSystem::SetExtension(Renderer::ShaderPath(FragmentShaderDesc.Path.Data()), "frag").Data()))
+    {
+        return false;
+    }
+
+    const auto CleanupShaders = [&]() -> void
+    {
+        VertexShader.Shutdown(Device_);
+        FragmentShader.Shutdown(Device_);
+    };
 
     VkPipelineShaderStageCreateInfo VertexInfo {};
     VertexInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     VertexInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-    VertexInfo.module = Vertex.Handle();
-    VertexInfo.pName = "main";
+    VertexInfo.module = VertexShader.Get();
+    VertexInfo.pName = VertexShaderDesc.Name.Data();
 
     VkPipelineShaderStageCreateInfo FragmentInfo {};
     FragmentInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     FragmentInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    FragmentInfo.module = Fragment.Handle();
-    FragmentInfo.pName = "main";
+    FragmentInfo.module = FragmentShader.Get();
+    FragmentInfo.pName = FragmentShaderDesc.Name.Data();
 
     VkPipelineShaderStageCreateInfo Stages[] { VertexInfo, FragmentInfo };
-
     const VkDynamicState DynamicStates[] { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 
     VkPipelineVertexInputStateCreateInfo VertexInputInfo {};
     VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    VertexInputInfo.vertexBindingDescriptionCount = static_cast<u32>(Vertex.Bindings().Size());
-    VertexInputInfo.pVertexBindingDescriptions = Vertex.Bindings().Data();
-    VertexInputInfo.vertexAttributeDescriptionCount = static_cast<u32>(Vertex.Attributes().Size());
-    VertexInputInfo.pVertexAttributeDescriptions = Vertex.Attributes().Data();
+    VertexInputInfo.vertexBindingDescriptionCount = 1;
+    VertexInputInfo.pVertexBindingDescriptions = VertexBindings;
+    VertexInputInfo.vertexAttributeDescriptionCount = static_cast<u32>(Attributes.Size());
+    VertexInputInfo.pVertexAttributeDescriptions = Attributes.Data();
 
     VkPipelineInputAssemblyStateCreateInfo InputAssemblyInfo {};
     InputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -104,7 +177,7 @@ bool GraphicsPipeline::Initialize(const Device& Device_,
     RasterInfo.rasterizerDiscardEnable = VK_FALSE;
     RasterInfo.polygonMode = VK_POLYGON_MODE_FILL;
     RasterInfo.lineWidth = 1.0f;
-    RasterInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+    RasterInfo.cullMode = ToCullMode(Description.CullMode);
     RasterInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     RasterInfo.depthBiasEnable = VK_FALSE;
     RasterInfo.depthBiasConstantFactor = 0.0f;
@@ -155,262 +228,94 @@ bool GraphicsPipeline::Initialize(const Device& Device_,
     PipelineInfo.pColorBlendState = &BlendInfo;
     PipelineInfo.pDynamicState = &DynamicInfo;
     PipelineInfo.layout = m_PipelineLayout;
-    PipelineInfo.renderPass = m_RenderPass;
+    PipelineInfo.renderPass = SwapChain_->RenderPass();
     PipelineInfo.subpass = 0;
     PipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
     PipelineInfo.basePipelineIndex = -1;
 
-    VkResult Result { vkCreateGraphicsPipelines(Device_.GetLogicalDevice().Handle(),
+    VkResult Result { vkCreateGraphicsPipelines(Device_->GetLogicalDevice()->Get(),
         VK_NULL_HANDLE,
         1,
         &PipelineInfo,
         nullptr,
-        &m_Handle) };
+        &m_Pipeline) };
 
     if (Result != VK_SUCCESS)
     {
+        CleanupShaders();
         Core::Console::Error("Failed to create graphics pipeline. Error: %s", Errors::ToString(Result));
         return false;
     }
 
+    CleanupShaders();
     return true;
 }
 
-void GraphicsPipeline::Shutdown(const Device& Device_)
+void GraphicsPipeline::Shutdown(Device const* Device_)
 {
-    if (m_Handle != VK_NULL_HANDLE)
+    if (m_Pipeline != VK_NULL_HANDLE)
     {
-        vkDestroyPipeline(Device_.GetLogicalDevice().Handle(), m_Handle, nullptr);
-        m_Handle = VK_NULL_HANDLE;
-    }
-
-    if (m_RenderPass != VK_NULL_HANDLE)
-    {
-        vkDestroyRenderPass(Device_.GetLogicalDevice().Handle(), m_RenderPass, nullptr);
-        m_RenderPass = VK_NULL_HANDLE;
+        vkDestroyPipeline(Device_->GetLogicalDevice()->Get(), m_Pipeline, nullptr);
+        m_Pipeline = VK_NULL_HANDLE;
     }
 
     if (m_PipelineLayout != VK_NULL_HANDLE)
     {
-        vkDestroyPipelineLayout(Device_.GetLogicalDevice().Handle(), m_PipelineLayout, nullptr);
+        vkDestroyPipelineLayout(Device_->GetLogicalDevice()->Get(), m_PipelineLayout, nullptr);
         m_PipelineLayout = VK_NULL_HANDLE;
     }
-
-    if (m_DescriptorSetLayout != VK_NULL_HANDLE)
-    {
-        vkDestroyDescriptorSetLayout(Device_.GetLogicalDevice().Handle(), m_DescriptorSetLayout, nullptr);
-        m_DescriptorSetLayout = VK_NULL_HANDLE;
-    }
-
-    if (m_DescriptorPool != VK_NULL_HANDLE)
-    {
-        vkDestroyDescriptorPool(Device_.GetLogicalDevice().Handle(), m_DescriptorPool, nullptr);
-        m_DescriptorPool = VK_NULL_HANDLE;
-    }
 }
 
-GraphicsPipeline& GraphicsPipeline::PushLayoutBinding(const VkDescriptorSetLayoutBinding& Binding)
+void GraphicsPipeline::BindUniformBuffer(Device const* Device_,
+    UniformBuffer const* UniformBuffer_,
+    VkDescriptorSet Set) const
 {
-    m_LayoutBindings.Push(Binding);
-    return *this;
+    VkDescriptorBufferInfo BufferInfo {};
+    BufferInfo.buffer = UniformBuffer_->Get()->Get();
+    BufferInfo.offset = 0;
+    BufferInfo.range = sizeof(UniformBuffer::Uniforms);
+
+    VkWriteDescriptorSet WriteDescriptorSet {};
+    WriteDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    WriteDescriptorSet.dstSet = Set;
+    WriteDescriptorSet.dstBinding = 0;
+    WriteDescriptorSet.dstArrayElement = 0;
+    WriteDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    WriteDescriptorSet.descriptorCount = 1;
+    WriteDescriptorSet.pBufferInfo = &BufferInfo;
+    WriteDescriptorSet.pImageInfo = nullptr;
+    WriteDescriptorSet.pTexelBufferView = nullptr;
+
+    vkUpdateDescriptorSets(Device_->GetLogicalDevice()->Get(), 1, &WriteDescriptorSet, 0, nullptr);
 }
 
-const GraphicsPipeline& GraphicsPipeline::BindUniformBuffer(const Device& Device_, const UniformBuffer* Buffers) const
+VkPipeline GraphicsPipeline::Get() const
 {
-    for (u32 I = 0; I < FRAMES_IN_FLIGHT; I++)
-    {
-        VkDescriptorBufferInfo BufferInfo {};
-        BufferInfo.buffer = Buffers[I].Handle();
-        BufferInfo.offset = 0;
-        BufferInfo.range = sizeof(UniformBuffer::Uniforms);
-
-        VkWriteDescriptorSet WriteDescriptorSet {};
-        WriteDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        WriteDescriptorSet.dstSet = m_DescriptorSets[I];
-        WriteDescriptorSet.dstBinding = 0;
-        WriteDescriptorSet.dstArrayElement = 0;
-        WriteDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        WriteDescriptorSet.descriptorCount = 1;
-        WriteDescriptorSet.pBufferInfo = &BufferInfo;
-        WriteDescriptorSet.pImageInfo = nullptr;
-        WriteDescriptorSet.pTexelBufferView = nullptr;
-
-        vkUpdateDescriptorSets(Device_.GetLogicalDevice().Handle(), 1, &WriteDescriptorSet, 0, nullptr);
-    }
-
-    return *this;
+    return m_Pipeline;
 }
 
-VkRenderPass GraphicsPipeline::RenderPass() const
-{
-    return m_RenderPass;
-}
-
-VkPipeline GraphicsPipeline::Handle() const
-{
-    return m_Handle;
-}
-
-VkPipelineLayout GraphicsPipeline::PipelineLayout() const
+VkPipelineLayout GraphicsPipeline::GetLayout() const
 {
     return m_PipelineLayout;
 }
 
-VkDescriptorSet GraphicsPipeline::DescriptorSet(u64 Index) const
+bool GraphicsPipeline::CreatePipelineLayout(Device const* Device_, DescriptorPool const* Pool)
 {
-    return m_DescriptorSets[Index];
-}
-
-bool GraphicsPipeline::CreatePipelineLayout(const Device& Device_)
-{
-    if (!CreateDescriptorSetLayout(Device_))
-    {
-        return false;
-    }
-
-    if (!CreateDescriptorPool(Device_))
-    {
-        return false;
-    }
-
-    if (!CreateDescriptorSets(Device_))
-    {
-        return false;
-    }
-
+    const VkDescriptorSetLayout Layouts { Pool->GetLayout() };
     VkPipelineLayoutCreateInfo CreateInfo {};
     CreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     CreateInfo.setLayoutCount = 1;
-    CreateInfo.pSetLayouts = &m_DescriptorSetLayout;
+    CreateInfo.pSetLayouts = &Layouts;
     CreateInfo.pushConstantRangeCount = 0;
     CreateInfo.pPushConstantRanges = nullptr;
 
     VkResult Result {
-        vkCreatePipelineLayout(Device_.GetLogicalDevice().Handle(), &CreateInfo, nullptr, &m_PipelineLayout)
+        vkCreatePipelineLayout(Device_->GetLogicalDevice()->Get(), &CreateInfo, nullptr, &m_PipelineLayout)
     };
 
     if (Result != VK_SUCCESS)
     {
         Core::Console::Error("Failed to create pipeline layout. Error: %s", Errors::ToString(Result));
-        return false;
-    }
-
-    return true;
-}
-
-bool GraphicsPipeline::CreateRenderPass(const Device& Device_, const SwapChain& SwapChain_)
-{
-    VkAttachmentDescription ColorAttachment {};
-    ColorAttachment.format = SwapChain_.Format();
-    ColorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    ColorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    ColorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    ColorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    ColorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    ColorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    ColorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-    VkAttachmentReference ColorRef {};
-    ColorRef.attachment = 0;
-    ColorRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    VkSubpassDescription SubpassDesc {};
-    SubpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    SubpassDesc.colorAttachmentCount = 1;
-    SubpassDesc.pColorAttachments = &ColorRef;
-
-    VkSubpassDependency SubpassDependency {};
-    SubpassDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    SubpassDependency.dstSubpass = 0;
-    SubpassDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    SubpassDependency.srcAccessMask = 0;
-    SubpassDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    SubpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-    VkRenderPassCreateInfo CreateInfo {};
-    CreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    CreateInfo.attachmentCount = 1;
-    CreateInfo.pAttachments = &ColorAttachment;
-    CreateInfo.subpassCount = 1;
-    CreateInfo.pSubpasses = &SubpassDesc;
-    CreateInfo.dependencyCount = 1;
-    CreateInfo.pDependencies = &SubpassDependency;
-
-    VkResult Result { vkCreateRenderPass(Device_.GetLogicalDevice().Handle(), &CreateInfo, nullptr, &m_RenderPass) };
-
-    if (Result != VK_SUCCESS)
-    {
-        Core::Console::Error("Failed to create render pass. Error: %s", Errors::ToString(Result));
-        return false;
-    }
-
-    return true;
-}
-
-bool GraphicsPipeline::CreateDescriptorSetLayout(const Device& Device_)
-{
-    VkDescriptorSetLayoutCreateInfo CreateInfo {};
-    CreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    CreateInfo.bindingCount = static_cast<u32>(m_LayoutBindings.Size());
-    CreateInfo.pBindings = m_LayoutBindings.Data();
-
-    VkResult Result {
-        vkCreateDescriptorSetLayout(Device_.GetLogicalDevice().Handle(), &CreateInfo, nullptr, &m_DescriptorSetLayout)
-    };
-
-    if (Result != VK_SUCCESS)
-    {
-        Core::Console::Error("Failed to create descriptor set layout. Error: %s", Errors::ToString(Result));
-        return false;
-    }
-
-    m_LayoutBindings.Clear();
-    return true;
-}
-
-bool GraphicsPipeline::CreateDescriptorPool(const Device& Device_)
-{
-    VkDescriptorPoolSize PoolSize {};
-    PoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    PoolSize.descriptorCount = static_cast<u32>(FRAMES_IN_FLIGHT);
-
-    VkDescriptorPoolCreateInfo CreateInfo {};
-    CreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    CreateInfo.poolSizeCount = 1;
-    CreateInfo.pPoolSizes = &PoolSize;
-    CreateInfo.maxSets = static_cast<u32>(FRAMES_IN_FLIGHT);
-
-    VkResult Result {
-        vkCreateDescriptorPool(Device_.GetLogicalDevice().Handle(), &CreateInfo, nullptr, &m_DescriptorPool)
-    };
-
-    if (Result != VK_SUCCESS)
-    {
-        Core::Console::Error("Failed to create descriptor pool. Error: %s", Errors::ToString(Result));
-        return false;
-    }
-
-    return true;
-}
-
-bool GraphicsPipeline::CreateDescriptorSets(const Device& Device_)
-{
-    VkDescriptorSetLayout Layouts[] = { m_DescriptorSetLayout, m_DescriptorSetLayout };
-    VkDescriptorSetAllocateInfo AllocInfo {};
-    AllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    AllocInfo.descriptorPool = m_DescriptorPool;
-    AllocInfo.descriptorSetCount = static_cast<u32>(FRAMES_IN_FLIGHT);
-    AllocInfo.pSetLayouts = Layouts;
-
-    m_DescriptorSets.Resize(FRAMES_IN_FLIGHT);
-
-    VkResult Result {
-        vkAllocateDescriptorSets(Device_.GetLogicalDevice().Handle(), &AllocInfo, m_DescriptorSets.Data())
-    };
-
-    if (Result != VK_SUCCESS)
-    {
-        Core::Console::Error("Failed to allocate descriptor sets. Error: %s", Errors::ToString(Result));
         return false;
     }
 

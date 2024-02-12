@@ -26,8 +26,7 @@ SOFTWARE.
 
 #pragma once
 
-#include "../../Core/Containers/Array.hpp"
-#include "vulkan/vulkan.hpp"
+#include <vulkan/vulkan.hpp>
 
 namespace LevelSketch
 {
@@ -38,27 +37,18 @@ namespace Vulkan
 
 class Device;
 
-class Shader
+class Shader final
 {
 public:
     Shader();
 
-    VkShaderModule Handle() const;
-    bool IsValid() const;
+    bool Load(Device const* Device_, const char* Path);
+    void Shutdown(Device const* Device_);
 
-    bool Load(const Device& Device_, const char* Path);
-    void Shutdown(const Device& Device_);
-
-    Shader& PushBinding(const VkVertexInputBindingDescription& Binding);
-    Shader& PushAttribute(const VkVertexInputAttributeDescription& Attribute);
-
-    const Array<VkVertexInputBindingDescription>& Bindings() const;
-    const Array<VkVertexInputAttributeDescription>& Attributes() const;
+    VkShaderModule Get() const;
 
 private:
-    VkShaderModule m_Handle { VK_NULL_HANDLE };
-    Array<VkVertexInputBindingDescription> m_Bindings {};
-    Array<VkVertexInputAttributeDescription> m_Attributes {};
+    VkShaderModule m_Module { VK_NULL_HANDLE };
 };
 
 }

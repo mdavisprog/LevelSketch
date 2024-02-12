@@ -27,7 +27,8 @@ SOFTWARE.
 #pragma once
 
 #include "../../Core/Containers/Array.hpp"
-#include "vulkan/vulkan.hpp"
+
+#include <vulkan/vulkan.hpp>
 
 namespace LevelSketch
 {
@@ -37,54 +38,37 @@ namespace Vulkan
 {
 
 class Device;
-class GraphicsPipeline;
-class PhysicalDevice;
 class Surface;
 class Sync;
 
-class SwapChain
+class SwapChain final
 {
 public:
-    struct SupportDetails
-    {
-        VkSurfaceCapabilitiesKHR SurfaceCapabilities {};
-        Array<VkSurfaceFormatKHR> Formats {};
-        Array<VkPresentModeKHR> PresentModes {};
-
-        bool IsValid() const
-        {
-            return !Formats.IsEmpty() && !PresentModes.IsEmpty();
-        }
-    };
-
-    static SupportDetails GatherDetails(const PhysicalDevice& Device, const Surface& Surface_);
-
     SwapChain();
 
-    bool Initialize(const Device& Device_, const Surface& Surface_, const VkExtent2D& DefaultExtents);
-    bool InitializeFramebuffers(const Device& Device_, const GraphicsPipeline& Pipeline);
-    void Shutdown(const Device& Device_);
+    bool Initialize(Device const* Device_, Surface const* Surface_);
+    void Shutdown(Device const* Device_);
 
-    bool Present(const Device& Device_, const Sync& Sync_, u32 FrameIndex) const;
+    bool Present(Device const* Device_, Sync const* Sync_, u32 FrameIndex) const;
 
-    VkSwapchainKHR Handle() const;
-    bool IsValid() const;
-
+    VkSwapchainKHR Get() const;
+    VkRenderPass RenderPass() const;
     VkFormat Format() const;
     VkExtent2D Extents() const;
     VkFramebuffer Framebuffer(u32 Index) const;
 
 private:
-    static VkSurfaceFormatKHR BestFormat(const Array<VkSurfaceFormatKHR>& Formats);
-    static VkPresentModeKHR BestPresentMode(const Array<VkPresentModeKHR>& Modes);
-    static VkExtent2D BestExtents(const VkSurfaceCapabilitiesKHR& Capabilities, const VkExtent2D& DefaultExtents);
+    bool InitializeImageViews(Device const* Device_);
+    bool InitializeRenderPass(Device const* Device_);
+    bool InitializeFramebuffers(Device const* Device_);
 
     VkSwapchainKHR m_SwapChain { VK_NULL_HANDLE };
+    VkFormat m_Format {};
+    VkExtent2D m_Extents {};
     Array<VkImage> m_Images {};
     Array<VkImageView> m_ImageViews {};
     Array<VkFramebuffer> m_Framebuffers {};
-    VkFormat m_Format {};
-    VkExtent2D m_Extents {};
+    VkRenderPass m_RenderPass { VK_NULL_HANDLE };
 };
 
 }

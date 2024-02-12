@@ -28,6 +28,7 @@ SOFTWARE.
 #include "../../Core/Console.hpp"
 #include "Device.hpp"
 #include "Errors.hpp"
+#include "LogicalDevice.hpp"
 #include "SwapChain.hpp"
 
 namespace LevelSketch
@@ -41,7 +42,7 @@ Sync::Sync()
 {
 }
 
-bool Sync::Initialize(const Device& Device_)
+bool Sync::Initialize(Device const* Device_)
 {
     m_ImageReady = CreateSemaphore(Device_);
     if (m_ImageReady == VK_NULL_HANDLE)
@@ -61,7 +62,7 @@ bool Sync::Initialize(const Device& Device_)
     FenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     FenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    VkResult Result { vkCreateFence(Device_.GetLogicalDevice().Handle(), &FenceInfo, nullptr, &m_Fence) };
+    VkResult Result { vkCreateFence(Device_->GetLogicalDevice()->Get(), &FenceInfo, nullptr, &m_Fence) };
 
     if (Result != VK_SUCCESS)
     {
@@ -72,24 +73,24 @@ bool Sync::Initialize(const Device& Device_)
     return true;
 }
 
-void Sync::Shutdown(const Device& Device_)
+void Sync::Shutdown(Device const* Device_)
 {
     DestroySemaphore(Device_, m_ImageReady);
     DestroySemaphore(Device_, m_RenderFinished);
 
     if (m_Fence != VK_NULL_HANDLE)
     {
-        vkDestroyFence(Device_.GetLogicalDevice().Handle(), m_Fence, nullptr);
+        vkDestroyFence(Device_->GetLogicalDevice()->Get(), m_Fence, nullptr);
         m_Fence = VK_NULL_HANDLE;
     }
 }
 
-u32 Sync::FrameIndex(const Device& Device_, const SwapChain& SwapChain_) const
+u32 Sync::FrameIndex(Device const* Device_, SwapChain const* SwapChain_) const
 {
     u32 Index { UINT32_MAX };
 
-    VkResult Result { vkAcquireNextImageKHR(Device_.GetLogicalDevice().Handle(),
-        SwapChain_.Handle(),
+    VkResult Result { vkAcquireNextImageKHR(Device_->GetLogicalDevice()->Get(),
+        SwapChain_->Get(),
         UINT64_MAX,
         m_ImageReady,
         VK_NULL_HANDLE,
@@ -103,15 +104,15 @@ u32 Sync::FrameIndex(const Device& Device_, const SwapChain& SwapChain_) const
     return Index;
 }
 
-void Sync::WaitForFence(const Device& Device_) const
+void Sync::WaitForFence(Device const* Device_) const
 {
     if (m_Fence == VK_NULL_HANDLE)
     {
         return;
     }
 
-    vkWaitForFences(Device_.GetLogicalDevice().Handle(), 1, &m_Fence, VK_TRUE, UINT64_MAX);
-    vkResetFences(Device_.GetLogicalDevice().Handle(), 1, &m_Fence);
+    vkWaitForFences(Device_->GetLogicalDevice()->Get(), 1, &m_Fence, VK_TRUE, UINT64_MAX);
+    vkResetFences(Device_->GetLogicalDevice()->Get(), 1, &m_Fence);
 
     return;
 }
@@ -131,13 +132,13 @@ VkFence Sync::Fence() const
     return m_Fence;
 }
 
-VkSemaphore Sync::CreateSemaphore(const Device& Device_)
+VkSemaphore Sync::CreateSemaphore(Device const* Device_)
 {
     VkSemaphoreCreateInfo CreateInfo {};
     CreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
     VkSemaphore Handle { VK_NULL_HANDLE };
-    VkResult Result { vkCreateSemaphore(Device_.GetLogicalDevice().Handle(), &CreateInfo, nullptr, &Handle) };
+    VkResult Result { vkCreateSemaphore(Device_->GetLogicalDevice()->Get(), &CreateInfo, nullptr, &Handle) };
 
     if (Result != VK_SUCCESS)
     {
@@ -147,11 +148,11 @@ VkSemaphore Sync::CreateSemaphore(const Device& Device_)
     return Handle;
 }
 
-void Sync::DestroySemaphore(const Device& Device_, VkSemaphore& Semaphore)
+void Sync::DestroySemaphore(Device const* Device_, VkSemaphore& Semaphore)
 {
     if (Semaphore != VK_NULL_HANDLE)
     {
-        vkDestroySemaphore(Device_.GetLogicalDevice().Handle(), Semaphore, nullptr);
+        vkDestroySemaphore(Device_->GetLogicalDevice()->Get(), Semaphore, nullptr);
         Semaphore = VK_NULL_HANDLE;
     }
 }

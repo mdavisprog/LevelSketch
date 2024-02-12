@@ -30,14 +30,14 @@ SOFTWARE.
 #include "../../Core/Version.hpp"
 #include "../../Platform/FileSystem.hpp"
 #include "../../Platform/Window.hpp"
+#include "CommandPool.hpp"
+#include "DescriptorPool.hpp"
+#include "Device.hpp"
 #include "Errors.hpp"
 #include "Loader.hpp"
-#include "Shader.hpp"
-
-#if defined(PLATFORM_SDL2)
-#include "SDL2/SDL.h"
-#include "SDL2/SDL_syswm.h"
-#endif
+#include "Sync.hpp"
+#include "UniformBuffer.hpp"
+#include "Viewport.hpp"
 
 #if defined(DEBUG)
 #include "DebugUtils.hpp"
@@ -63,6 +63,10 @@ static const Array<const char*> ValidationLayers { "VK_LAYER_KHRONOS_validation"
 
 Renderer::Renderer()
     : LevelSketch::Render::Renderer()
+{
+}
+
+Renderer::~Renderer()
 {
 }
 
@@ -133,189 +137,112 @@ bool Renderer::Initialize()
 
 bool Renderer::Initialize(Platform::Window* Window)
 {
-    if (!m_Surface.IsValid())
+    UniquePtr<Viewport> Viewport_ { UniquePtr<Viewport>::New() };
+
+    if (!Viewport_->Initialize(m_Instance, Window))
     {
-        Vector2i PixelRes {};
-#if defined(PLATFORM_SDL2)
-        SDL_Window* Handle { reinterpret_cast<SDL_Window*>(Window->Handle()) };
-        SDL_SysWMinfo Info {};
-        SDL_GetVersion(&Info.version);
-        if (SDL_GetWindowWMInfo(Handle, &Info) != SDL_TRUE)
-        {
-            Core::Console::Error("Failed to retrieve native window information. Error: %s", SDL_GetError());
-            return false;
-        }
+        return false;
+    }
 
-        if (!m_Surface.Initialize(m_Instance, Info.info.x11.window, Info.info.x11.display))
-        {
-            return false;
-        }
+    m_Viewports.Push(std::move(Viewport_));
 
-        SDL_GetWindowSizeInPixels(Handle, &PixelRes.X, &PixelRes.Y);
-#else
-#error "Renderer::Initialize(Platform::Window*) needs platform specific implementation!"
-#endif
-
+    if (m_Device == nullptr)
+    {
         Array<const char*> LayerPtrs;
 #if defined(DEBUG)
         GetExistingLayers(ValidationLayers, LayerPtrs);
 #endif
 
-        if (!m_Device.Initialize(m_Instance, m_Surface, LayerPtrs))
+        m_Device = UniquePtr<Device>::New();
+
+        if (!m_Device->Initialize(m_Instance, m_Viewports[0]->GetSurface(), LayerPtrs))
         {
             return false;
         }
 
-        if (!m_CommandPool.Initialize(m_Device))
+        m_CommandPool = UniquePtr<CommandPool>::New();
+
+        if (!m_CommandPool->Initialize(m_Device.Get()))
         {
             return false;
         }
 
-        if (!m_CommandPool.InitializeBuffers(m_Device, FRAMES_IN_FLIGHT))
+        if (!m_CommandPool->InitializeBuffers(m_Device.Get(), FRAMES_IN_FLIGHT))
         {
             return false;
         }
 
-        VkExtent2D Extents { static_cast<u32>(PixelRes.X), static_cast<u32>(PixelRes.Y) };
-        if (!m_SwapChain.Initialize(m_Device, m_Surface, Extents))
-        {
-            Core::Console::Error("Failed to initialize swap chain.");
-            return false;
-        }
+        m_DescriptorPool = UniquePtr<DescriptorPool>::New();
 
-        const String ShaderPath { Platform::FileSystem::CombinePaths(Platform::FileSystem::ApplicationPath(),
-            "Content/Shaders/GLSL") };
-
-        Shader Vertex {};
-        if (!Vertex.Load(m_Device, Platform::FileSystem::CombinePaths(ShaderPath, "Test.vert").Data()))
+        if (!m_DescriptorPool->Initialize(m_Device.Get(), FRAMES_IN_FLIGHT))
         {
             return false;
         }
 
-        VkVertexInputBindingDescription BindingDesc {};
-        BindingDesc.binding = 0;
-        BindingDesc.stride = sizeof(Vertex3);
-        BindingDesc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-        VkVertexInputAttributeDescription AttributeDesc[3] = {};
-        AttributeDesc[0].binding = 0;
-        AttributeDesc[0].location = 0;
-        AttributeDesc[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDesc[0].offset = offsetof(Vertex3, Position);
-
-        AttributeDesc[1].binding = 0;
-        AttributeDesc[1].location = 1;
-        AttributeDesc[1].format = VK_FORMAT_R32G32_SFLOAT;
-        AttributeDesc[1].offset = offsetof(Vertex3, UV);
-
-        AttributeDesc[2].binding = 0;
-        AttributeDesc[2].location = 2;
-        AttributeDesc[2].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-        AttributeDesc[2].offset = offsetof(Vertex3, Color);
-
-        Vertex.PushBinding(BindingDesc)
-            .PushAttribute(AttributeDesc[0])
-            .PushAttribute(AttributeDesc[1])
-            .PushAttribute(AttributeDesc[2]);
-
-        Shader Fragment {};
-        if (!Fragment.Load(m_Device, Platform::FileSystem::CombinePaths(ShaderPath, "Test.frag").Data()))
+        for (i32 I = 0; I < FRAMES_IN_FLIGHT; I++)
         {
-            return false;
-        }
+            UniquePtr<Sync> Sync_ { UniquePtr<Sync>::New() };
 
-        VkDescriptorSetLayoutBinding UniformBinding {};
-        UniformBinding.binding = 0;
-        UniformBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        UniformBinding.descriptorCount = 1;
-        UniformBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-        UniformBinding.pImmutableSamplers = nullptr;
-        m_Pipeline.PushLayoutBinding(UniformBinding);
-
-        if (!m_Pipeline.Initialize(m_Device, m_SwapChain, Vertex, Fragment))
-        {
-            return false;
-        }
-
-        if (!m_SwapChain.InitializeFramebuffers(m_Device, m_Pipeline))
-        {
-            return false;
-        }
-
-        for (Sync& Sync_ : m_Syncs)
-        {
-            if (!Sync_.Initialize(m_Device))
+            if (!Sync_->Initialize(m_Device.Get()))
             {
                 return false;
             }
-        }
 
-        Vertex.Shutdown(m_Device);
-        Fragment.Shutdown(m_Device);
+            m_Syncs.Push(std::move(Sync_));
 
-        // clang-format off
-        const Vertex3 Vertices[4] {
-            {{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
-            {{0.5f, -0.5f, 0.0f}, {0.0f, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
-            {{0.5f, 0.5f, 0.0f,}, {0.0f, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},
-            {{-0.5f, 0.5f, 0.0f,}, {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}}
-        };
-        // clang-format on
-        const u64 VerticesSize { sizeof(Vertex3) * ARRAY_COUNT(Vertices) };
+            UniquePtr<UniformBuffer> Uniform { UniquePtr<UniformBuffer>::New() };
 
-        const u32 Indices[] { 0, 2, 1, 0, 3, 2 };
-        const u64 IndicesSize { sizeof(u32) * ARRAY_COUNT(Indices) };
-
-        if (!m_RenderBuffer.Initialize(m_Device, VerticesSize, IndicesSize))
-        {
-            return false;
-        }
-
-        m_RenderBuffer.VertexBuffer().Upload(m_Device, m_CommandPool, Vertices, VerticesSize);
-        m_RenderBuffer.IndexBuffer().Upload(m_Device, m_CommandPool, Indices, IndicesSize);
-
-        for (UniformBuffer& Uniform : m_Uniforms)
-        {
-            if (!Uniform.Initialize(m_Device))
+            if (!Uniform->Initialize(m_Device.Get()))
             {
                 return false;
             }
-        }
 
-        m_Pipeline.BindUniformBuffer(m_Device, m_Uniforms);
+            m_Uniforms.Push(std::move(Uniform));
+        }
 
         Core::Console::WriteLine("Initialized Vulkan");
     }
+
+    m_Viewports.Back()->InitializeSwapChain(m_Device.Get());
 
     return true;
 }
 
 void Renderer::Shutdown()
 {
-    m_Device.WaitForIdle();
+    m_Device->WaitForIdle();
+
+    for (const UniquePtr<UniformBuffer>& Uniform : m_Uniforms)
+    {
+        Uniform->Shutdown(m_Device.Get());
+    }
+    m_Uniforms.Clear();
+
+    for (const UniquePtr<Sync>& Sync_ : m_Syncs)
+    {
+        Sync_->Shutdown(m_Device.Get());
+    }
+    m_Syncs.Clear();
+
+    m_DescriptorPool->Shutdown(m_Device.Get());
+    m_CommandPool->Shutdown(m_Device.Get());
+
+    for (const UniquePtr<Viewport>& Viewport_ : m_Viewports)
+    {
+        Viewport_->Shutdown(m_Instance, m_Device.Get());
+    }
+    m_Viewports.Clear();
+
+    m_Device->Shutdown();
 
 #if defined(DEBUG)
     DebugUtils::Instance().Shutdown(m_Instance);
 #endif
+    /*
+        m_RenderBuffer.Shutdown(m_Device);
 
-    m_RenderBuffer.Shutdown(m_Device);
-
-    for (UniformBuffer& Uniform : m_Uniforms)
-    {
-        Uniform.Shutdown(m_Device);
-    }
-
-    for (Sync& Sync_ : m_Syncs)
-    {
-        Sync_.Shutdown(m_Device);
-    }
-
-    m_Pipeline.Shutdown(m_Device);
-    m_SwapChain.Shutdown(m_Device);
-    m_CommandPool.Shutdown(m_Device);
-    m_Device.Shutdown();
-    m_Surface.Shutdown(m_Instance);
-
+        m_Pipeline.Shutdown(m_Device);
+    */
     if (m_Instance != nullptr)
     {
         vkDestroyInstance(m_Instance, nullptr);
@@ -329,6 +256,10 @@ void Renderer::Render(Platform::Window*)
 {
     UniformBuffer& Uniforms { m_Uniforms[m_FrameIndex] };
     Uniforms.UpdateBuffer();
+
+    // TODO: Bind uniform buffers
+    for each uniform buffer
+        Pipeline::BindUniformBuffer
 
     const Sync& CurrentSync { m_Syncs[m_FrameIndex] };
 

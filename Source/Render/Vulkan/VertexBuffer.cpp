@@ -24,8 +24,9 @@ SOFTWARE.
 
 */
 
-#include "RenderBuffer.hpp"
+#include "VertexBuffer.hpp"
 #include "../../Core/Console.hpp"
+#include "Buffer.hpp"
 #include "Device.hpp"
 
 namespace LevelSketch
@@ -35,18 +36,20 @@ namespace Render
 namespace Vulkan
 {
 
-RenderBuffer::RenderBuffer()
+VertexBuffer::VertexBuffer()
 {
 }
 
-bool RenderBuffer::Initialize(const Device& Device_, u64 VertexSize, u64 IndexSize)
+bool VertexBuffer::Initialize(Device const* Device_, u64 VertexSize, u64 IndexSize)
 {
+    m_VertexBuffer = UniquePtr<Buffer>::New();
     if (!InitializeBuffer(m_VertexBuffer, Device_, VertexSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT))
     {
         Core::Console::Error("Failed to initialize vertex buffer.");
         return false;
     }
 
+    m_IndexBuffer = UniquePtr<Buffer>::New();
     if (!InitializeBuffer(m_IndexBuffer, Device_, IndexSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT))
     {
         Core::Console::Error("Failed to initialize index buffer.");
@@ -56,30 +59,34 @@ bool RenderBuffer::Initialize(const Device& Device_, u64 VertexSize, u64 IndexSi
     return true;
 }
 
-void RenderBuffer::Shutdown(const Device& Device_)
+void VertexBuffer::Shutdown(Device const* Device_)
 {
-    m_VertexBuffer.Shutdown(Device_);
-    m_IndexBuffer.Shutdown(Device_);
+    m_VertexBuffer->Shutdown(Device_);
+    m_VertexBuffer = nullptr;
+
+    m_IndexBuffer->Shutdown(Device_);
+    m_IndexBuffer = nullptr;
 }
 
-const Buffer& RenderBuffer::VertexBuffer() const
+Buffer const* VertexBuffer::GetVertexBuffer() const
 {
-    return m_VertexBuffer;
+    return m_VertexBuffer.Get();
 }
 
-const Buffer& RenderBuffer::IndexBuffer() const
+Buffer const* VertexBuffer::GetIndexBuffer() const
 {
-    return m_IndexBuffer;
+    return m_IndexBuffer.Get();
 }
 
-bool RenderBuffer::InitializeBuffer(Buffer& Buf, const Device& Device_, u64 Size, VkBufferUsageFlags Usage) const
+bool VertexBuffer::InitializeBuffer(const UniquePtr<Buffer>& Buffer_,
+    Device const* Device_,
+    u64 Size,
+    VkBufferUsageFlags Usage) const
 {
-    if (Buf.IsValid())
-    {
-        return true;
-    }
-
-    if (!Buf.Initialize(Device_, Size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | Usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT))
+    if (!Buffer_->Initialize(Device_,
+            Size,
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT | Usage,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT))
     {
         return false;
     }

@@ -24,30 +24,46 @@ SOFTWARE.
 
 */
 
-#include "Queue.hpp"
-#include "LogicalDevice.hpp"
+#pragma once
+
+#include "../../Core/Memory/UniquePtr.hpp"
+
+#include <vulkan/vulkan.hpp>
 
 namespace LevelSketch
 {
+
+namespace Platform
+{
+class Window;
+}
+
 namespace Render
 {
 namespace Vulkan
 {
 
-Queue::Queue()
-{
-}
+class Device;
+class Surface;
+class SwapChain;
 
-bool Queue::Initialize(LogicalDevice const* Device, u32 QueueFamilyIndex)
+class Viewport final
 {
-    vkGetDeviceQueue(Device->Get(), QueueFamilyIndex, 0, &m_Queue);
-    return true;
-}
+public:
+    Viewport();
+    ~Viewport();
 
-VkQueue Queue::Get() const
-{
-    return m_Queue;
-}
+    bool Initialize(VkInstance Instance, Platform::Window* Window);
+    bool InitializeSwapChain(Device const* Device_);
+    void Shutdown(VkInstance Instance, Device const* Device_);
+
+    Surface const* GetSurface() const;
+
+private:
+    Platform::Window* m_Window { nullptr };
+    UniquePtr<Surface> m_Surface { nullptr };
+    UniquePtr<SwapChain> m_SwapChain { nullptr };
+};
 
 }
 }

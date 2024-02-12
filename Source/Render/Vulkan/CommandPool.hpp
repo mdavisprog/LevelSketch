@@ -27,7 +27,9 @@ SOFTWARE.
 #pragma once
 
 #include "../../Core/Containers/Array.hpp"
-#include "CommandBuffer.hpp"
+#include "../../Core/Memory/UniquePtr.hpp"
+
+#include <vulkan/vulkan.hpp>
 
 namespace LevelSketch
 {
@@ -36,24 +38,25 @@ namespace Render
 namespace Vulkan
 {
 
+class CommandBuffer;
 class Device;
 
-class CommandPool
+class CommandPool final
 {
 public:
     CommandPool();
+    ~CommandPool();
 
-    bool Initialize(const Device& Device_);
-    bool InitializeBuffers(const Device& Device_, u64 Count);
-    void Shutdown(const Device& Device_);
+    bool Initialize(Device const* Device_);
+    bool InitializeBuffers(Device const* Device_, u64 Count);
+    void Shutdown(Device const* Device_);
 
-    bool IsValid() const;
-    VkCommandPool Handle() const;
-    const CommandBuffer& Buffer(u64 Index) const;
+    VkCommandPool Get() const;
+    CommandBuffer const* Buffer(u64 Index) const;
 
 private:
-    VkCommandPool m_Handle { VK_NULL_HANDLE };
-    Array<CommandBuffer> m_CommandBuffers {};
+    VkCommandPool m_CommandPool { VK_NULL_HANDLE };
+    Array<UniquePtr<CommandBuffer>> m_CommandBuffers {};
 };
 
 }

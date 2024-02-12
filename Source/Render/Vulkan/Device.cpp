@@ -26,8 +26,9 @@ SOFTWARE.
 
 #include "Device.hpp"
 #include "../../Core/Console.hpp"
-#include "Surface.hpp"
-#include "SwapChain.hpp"
+#include "LogicalDevice.hpp"
+#include "PhysicalDevice.hpp"
+#include "Queue.hpp"
 
 namespace LevelSketch
 {
@@ -40,37 +41,37 @@ Device::Device()
 {
 }
 
-bool Device::Initialize(VkInstance Instance, const Surface& Surface_, const Array<const char*>& Layers)
+Device::~Device()
 {
-    if (Instance == VK_NULL_HANDLE)
-    {
-        Core::Console::Error("Failed to initialize device. Invalid VkInstance.");
-        return false;
-    }
+}
 
-    if (!Surface_.IsValid())
-    {
-        Core::Console::Error("Failed to initialize device. Invalid surface.");
-        return false;
-    }
+bool Device::Initialize(VkInstance Instance, Surface const* Surface_, const Array<const char*>& Layers)
+{
+    m_PhysicalDevice = PhysicalDevice::BestDevice(Instance, Surface_);
 
-    if (!SelectBestPhysicalDevice(Instance, Surface_))
+    if (m_PhysicalDevice == nullptr)
     {
         return false;
     }
 
-    if (!m_LogicalDevice.Initialize(m_PhysicalDevice, Layers))
+    Core::Console::WriteLine("Physical Device: %s", m_PhysicalDevice->GetInfo().Name.Data());
+
+    m_LogicalDevice = UniquePtr<LogicalDevice>::New();
+
+    if (!m_LogicalDevice->Initialize(m_PhysicalDevice.Get(), Layers))
     {
         return false;
     }
 
-    if (!m_GraphicsQueue.Initialize(m_LogicalDevice, m_PhysicalDevice.QueueFamilyIndex().Graphics()))
+    m_GraphicsQueue = UniquePtr<Queue>::New();
+    if (!m_GraphicsQueue->Initialize(m_LogicalDevice.Get(), m_PhysicalDevice->GetQueueFamily().Graphics.Value()))
     {
         Core::Console::Error("Failed to initialize graphics queue.");
         return false;
     }
 
-    if (!m_PresentQueue.Initialize(m_LogicalDevice, m_PhysicalDevice.QueueFamilyIndex().Present()))
+    m_PresentQueue = UniquePtr<Queue>::New();
+    if (!m_PresentQueue->Initialize(m_LogicalDevice.Get(), m_PhysicalDevice->GetQueueFamily().Present.Value()))
     {
         Core::Console::Error("Failed to initialize present queue.");
         return false;
@@ -81,74 +82,32 @@ bool Device::Initialize(VkInstance Instance, const Surface& Surface_, const Arra
 
 void Device::Shutdown()
 {
-    m_LogicalDevice.Shutdown();
+    m_LogicalDevice->Shutdown();
 }
 
 void Device::WaitForIdle() const
 {
-    vkDeviceWaitIdle(m_LogicalDevice.Handle());
+    vkDeviceWaitIdle(m_LogicalDevice->Get());
 }
 
-bool Device::IsValid() const
+LogicalDevice const* Device::GetLogicalDevice() const
 {
-    return m_PhysicalDevice.IsValid() && m_LogicalDevice.IsValid();
+    return m_LogicalDevice.Get();
 }
 
-const LogicalDevice& Device::GetLogicalDevice() const
+PhysicalDevice const* Device::GetPhysicalDevice() const
 {
-    return m_LogicalDevice;
+    return m_PhysicalDevice.Get();
 }
 
-const PhysicalDevice& Device::GetPhysicalDevice() const
+Queue const* Device::GraphicsQueue() const
 {
-    return m_PhysicalDevice;
+    return m_GraphicsQueue.Get();
 }
 
-const Queue& Device::GraphicsQueue() const
+Queue const* Device::PresentQueue() const
 {
-    return m_GraphicsQueue;
-}
-
-const Queue& Device::PresentQueue() const
-{
-    return m_PresentQueue;
-}
-
-bool Device::SelectBestPhysicalDevice(VkInstance Instance, const Surface& Surface_)
-{
-    Array<PhysicalDevice> Devices { PhysicalDevice::GetDevices(Instance, Surface_) };
-
-    if (Devices.IsEmpty())
-    {
-        Core::Console::Error("Failed to find a physical device.");
-        return false;
-    }
-
-    for (const PhysicalDevice& Device : Devices)
-    {
-        bool IsValid { Device.QueueFamilyIndex().IsComplete() && Device.AreRequiredExtensionsSupported() };
-
-        SwapChain::SupportDetails SwapChainDetails { SwapChain::GatherDetails(Device, Surface_) };
-        IsValid &= SwapChainDetails.IsValid();
-
-        if (IsValid)
-        {
-            m_PhysicalDevice = Device;
-            break;
-        }
-    }
-
-    if (m_PhysicalDevice.IsValid())
-    {
-        Core::Console::WriteLine("Selected Device:");
-        m_PhysicalDevice.PrintInfo();
-    }
-    else
-    {
-        Core::Console::Error("Failed to find a device that supports required queues and extensions.");
-    }
-
-    return m_PhysicalDevice.IsValid();
+    return m_PresentQueue.Get();
 }
 
 }

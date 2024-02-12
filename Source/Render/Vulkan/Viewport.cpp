@@ -24,8 +24,10 @@ SOFTWARE.
 
 */
 
-#include "Queue.hpp"
-#include "LogicalDevice.hpp"
+#include "Viewport.hpp"
+#include "Device.hpp"
+#include "SurfaceX11.hpp"
+#include "SwapChain.hpp"
 
 namespace LevelSketch
 {
@@ -34,19 +36,49 @@ namespace Render
 namespace Vulkan
 {
 
-Queue::Queue()
+Viewport::Viewport()
 {
 }
 
-bool Queue::Initialize(LogicalDevice const* Device, u32 QueueFamilyIndex)
+Viewport::~Viewport()
 {
-    vkGetDeviceQueue(Device->Get(), QueueFamilyIndex, 0, &m_Queue);
+}
+
+bool Viewport::Initialize(VkInstance Instace, Platform::Window* Window)
+{
+    m_Surface = UniquePtr<SurfaceX11>::New();
+
+    if (!m_Surface->Initialize(Instace, Window))
+    {
+        m_Surface = nullptr;
+        return false;
+    }
+
+    m_Window = Window;
     return true;
 }
 
-VkQueue Queue::Get() const
+bool Viewport::InitializeSwapChain(Device const* Device_)
 {
-    return m_Queue;
+    m_SwapChain = UniquePtr<SwapChain>::New();
+
+    if (!m_SwapChain->Initialize(Device_, m_Surface.Get()))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+void Viewport::Shutdown(VkInstance Instance, Device const* Device_)
+{
+    m_Surface->Shutdown(Instance);
+    m_SwapChain->Shutdown(Device_);
+}
+
+Surface const* Viewport::GetSurface() const
+{
+    return m_Surface.Get();
 }
 
 }

@@ -26,8 +26,11 @@ SOFTWARE.
 
 #include "CommandPool.hpp"
 #include "../../Core/Console.hpp"
+#include "CommandBuffer.hpp"
 #include "Device.hpp"
 #include "Errors.hpp"
+#include "LogicalDevice.hpp"
+#include "PhysicalDevice.hpp"
 
 namespace LevelSketch
 {
@@ -40,14 +43,18 @@ CommandPool::CommandPool()
 {
 }
 
-bool CommandPool::Initialize(const Device& Device_)
+CommandPool::~CommandPool()
+{
+}
+
+bool CommandPool::Initialize(Device const* Device_)
 {
     VkCommandPoolCreateInfo CreateInfo {};
     CreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     CreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    CreateInfo.queueFamilyIndex = Device_.GetPhysicalDevice().QueueFamilyIndex().Graphics();
+    CreateInfo.queueFamilyIndex = Device_->GetPhysicalDevice()->GetQueueFamily().Graphics.Value();
 
-    VkResult Result { vkCreateCommandPool(Device_.GetLogicalDevice().Handle(), &CreateInfo, nullptr, &m_Handle) };
+    VkResult Result { vkCreateCommandPool(Device_->GetLogicalDevice()->Get(), &CreateInfo, nullptr, &m_CommandPool) };
 
     if (Result != VK_SUCCESS)
     {
@@ -58,18 +65,18 @@ bool CommandPool::Initialize(const Device& Device_)
     return true;
 }
 
-bool CommandPool::InitializeBuffers(const Device& Device_, u64 Count)
+bool CommandPool::InitializeBuffers(Device const* Device_, u64 Count)
 {
     VkCommandBufferAllocateInfo AllocInfo {};
     AllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    AllocInfo.commandPool = m_Handle;
+    AllocInfo.commandPool = m_CommandPool;
     AllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     AllocInfo.commandBufferCount = Count;
 
     Array<VkCommandBuffer> Buffers {};
     Buffers.Resize(Count);
 
-    VkResult Result { vkAllocateCommandBuffers(Device_.GetLogicalDevice().Handle(), &AllocInfo, Buffers.Data()) };
+    VkResult Result { vkAllocateCommandBuffers(Device_->GetLogicalDevice()->Get(), &AllocInfo, Buffers.Data()) };
 
     if (Result != VK_SUCCESS)
     {
@@ -77,45 +84,40 @@ bool CommandPool::InitializeBuffers(const Device& Device_, u64 Count)
         return false;
     }
 
-    m_CommandBuffers.Resize(Count);
-
     for (u64 I = 0; I < Count; I++)
     {
-        m_CommandBuffers[I].Initialize(Buffers[I]);
+        UniquePtr<CommandBuffer> Buffer { UniquePtr<CommandBuffer>::New() };
+        Buffer->Initialize(Buffers[I]);
+        m_CommandBuffers.Push(std::move(Buffer));
     }
 
     return true;
 }
 
-void CommandPool::Shutdown(const Device& Device_)
+void CommandPool::Shutdown(Device const* Device_)
 {
-    for (CommandBuffer& Buffer : m_CommandBuffers)
+    for (const UniquePtr<CommandBuffer>& Buffer : m_CommandBuffers)
     {
-        Buffer.Shutdown(Device_, *this);
+        Buffer->Shutdown(Device_, this);
     }
 
     m_CommandBuffers.Clear();
 
-    if (m_Handle != VK_NULL_HANDLE)
+    if (m_CommandPool != VK_NULL_HANDLE)
     {
-        vkDestroyCommandPool(Device_.GetLogicalDevice().Handle(), m_Handle, nullptr);
-        m_Handle = VK_NULL_HANDLE;
+        vkDestroyCommandPool(Device_->GetLogicalDevice()->Get(), m_CommandPool, nullptr);
+        m_CommandPool = VK_NULL_HANDLE;
     }
 }
 
-bool CommandPool::IsValid() const
+VkCommandPool CommandPool::Get() const
 {
-    return m_Handle != VK_NULL_HANDLE;
+    return m_CommandPool;
 }
 
-VkCommandPool CommandPool::Handle() const
+CommandBuffer const* CommandPool::Buffer(u64 Index) const
 {
-    return m_Handle;
-}
-
-const CommandBuffer& CommandPool::Buffer(u64 Index) const
-{
-    return m_CommandBuffers[Index];
+    return m_CommandBuffers[Index].Get();
 }
 
 }

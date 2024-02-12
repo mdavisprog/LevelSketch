@@ -26,7 +26,6 @@ SOFTWARE.
 
 #include "PhysicalDevice.hpp"
 #include "../../Core/Console.hpp"
-#include "../../Core/Containers/Array.hpp"
 #include "Errors.hpp"
 #include "Surface.hpp"
 
@@ -39,84 +38,88 @@ namespace Vulkan
 
 const Array<const char*> PhysicalDevice::s_RequiredExtensions { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
-Array<PhysicalDevice> PhysicalDevice::GetDevices(VkInstance Instance, const Surface& Surface_)
+static PhysicalDevice::Info GatherInfo(VkPhysicalDevice Device)
 {
-    Array<PhysicalDevice> Devices;
+    PhysicalDevice::Info Result {};
 
-    u32 Count { 0 };
-    VkResult Result { vkEnumeratePhysicalDevices(Instance, &Count, nullptr) };
+    VkPhysicalDeviceProperties Properties;
+    vkGetPhysicalDeviceProperties(Device, &Properties);
+
+    Result.APIVersion_Major = VK_API_VERSION_MAJOR(Properties.apiVersion);
+    Result.APIVersion_Minor = VK_API_VERSION_MINOR(Properties.apiVersion);
+    Result.APIVersion_Patch = VK_API_VERSION_PATCH(Properties.apiVersion);
+    Result.DriverVersion = Properties.driverVersion;
+    Result.VendorID = Properties.vendorID;
+    Result.DeviceID = Properties.deviceID;
+    Result.Name = Properties.deviceName;
+
+    return Result;
+}
+
+static PhysicalDevice::SupportDetails QuerySupportDetails(VkPhysicalDevice Device, Surface const* Surface_)
+{
+    PhysicalDevice::SupportDetails Details {};
+
+    VkResult Result {
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Device, Surface_->Get(), &Details.SurfaceCapabilities)
+    };
+
     if (Result != VK_SUCCESS)
     {
-        Core::Console::Error("Failed to retrieve physical device count. Error: %s", Errors::ToString(Result));
-        return Devices;
+        Core::Console::Error("Failed to retrieve surface capabilities. Error: %s", Errors::ToString(Result));
+        return Details;
     }
 
-    if (Count == 0)
+    // Formats
     {
-        Core::Console::Error("No physical devices found.");
-        return Devices;
+        u32 Count { 0 };
+        Result = vkGetPhysicalDeviceSurfaceFormatsKHR(Device, Surface_->Get(), &Count, nullptr);
+
+        if (Result != VK_SUCCESS)
+        {
+            Core::Console::Error("Failed to retrieve surface formats count. Error: %s", Errors::ToString(Result));
+            return Details;
+        }
+
+        Details.Formats.Resize(Count);
+        Result = vkGetPhysicalDeviceSurfaceFormatsKHR(Device, Surface_->Get(), &Count, Details.Formats.Data());
+
+        if (Result != VK_SUCCESS)
+        {
+            Core::Console::Error("Failed to retrieve surface formats. Error: %s", Errors::ToString(Result));
+            return Details;
+        }
     }
 
-    Array<VkPhysicalDevice> PhysicalDevices;
-    PhysicalDevices.Resize(Count);
-    Result = vkEnumeratePhysicalDevices(Instance, &Count, PhysicalDevices.Data());
-    if (Result != VK_SUCCESS)
+    // Present Modes
     {
-        Core::Console::Error("Failed to retrieve physical devices. Error: %s", Errors::ToString(Result));
-        return Devices;
+        u32 Count { 0 };
+        Result = vkGetPhysicalDeviceSurfacePresentModesKHR(Device, Surface_->Get(), &Count, nullptr);
+
+        if (Result != VK_SUCCESS)
+        {
+            Core::Console::Error("Failed to retrieve surface present modes count. Error: %s", Errors::ToString(Result));
+            return Details;
+        }
+
+        Details.PresentModes.Resize(Count);
+        Result =
+            vkGetPhysicalDeviceSurfacePresentModesKHR(Device, Surface_->Get(), &Count, Details.PresentModes.Data());
+
+        if (Result != VK_SUCCESS)
+        {
+            Core::Console::Error("Failed to retrieve surface present modes. Error: %s", Errors::ToString(Result));
+            return Details;
+        }
     }
 
-    for (const VkPhysicalDevice& Device : PhysicalDevices)
-    {
-        PhysicalDevice NewDevice { Device };
-        NewDevice.GatherInfo().FindQueueFamily(Surface_);
-        Devices.Push(NewDevice);
-    }
-
-    return Devices;
+    return Details;
 }
 
-PhysicalDevice::PhysicalDevice()
+static bool AreRequiredExtensionsSupported(VkPhysicalDevice Device, const Array<const char*>& RequiredExtensions)
 {
-}
-
-void PhysicalDevice::PrintInfo() const
-{
-    Core::Console::WriteLine("Device: %s", m_Info.Name.Data());
-    Core::Console::WriteLine("API Version: %d.%d.%d",
-        m_Info.APIVersion_Major,
-        m_Info.APIVersion_Minor,
-        m_Info.APIVersion_Patch);
-    Core::Console::WriteLine("Driver Version: %d", m_Info.DriverVersion);
-    Core::Console::WriteLine("Vendor ID: %d", m_Info.VendorID);
-    Core::Console::WriteLine("Device ID: %d", m_Info.DeviceID);
-}
-
-VkPhysicalDevice PhysicalDevice::Handle() const
-{
-    return m_Device;
-}
-
-bool PhysicalDevice::IsValid() const
-{
-    return m_Device != VK_NULL_HANDLE;
-}
-
-const PhysicalDevice::QueueFamily& PhysicalDevice::QueueFamilyIndex() const
-{
-    return m_QueueFamily;
-}
-
-bool PhysicalDevice::AreRequiredExtensionsSupported() const
-{
-    if (!IsValid())
-    {
-        Core::Console::Error("Physical device has not been initialized. Unable to check for required extensions.");
-        return false;
-    }
-
     u32 Count { 0 };
-    VkResult Result { vkEnumerateDeviceExtensionProperties(m_Device, nullptr, &Count, nullptr) };
+    VkResult Result { vkEnumerateDeviceExtensionProperties(Device, nullptr, &Count, nullptr) };
     if (Result != VK_SUCCESS)
     {
         Core::Console::Error("Failed to retrieve device extension count. Error: %s", Errors::ToString(Result));
@@ -126,7 +129,7 @@ bool PhysicalDevice::AreRequiredExtensionsSupported() const
     Array<VkExtensionProperties> Extensions;
     Extensions.Resize(Count);
 
-    Result = vkEnumerateDeviceExtensionProperties(m_Device, nullptr, &Count, Extensions.Data());
+    Result = vkEnumerateDeviceExtensionProperties(Device, nullptr, &Count, Extensions.Data());
     if (Result != VK_SUCCESS)
     {
         Core::Console::Error("Failed to retrieve device extensions. Error: %s", Errors::ToString(Result));
@@ -134,7 +137,7 @@ bool PhysicalDevice::AreRequiredExtensionsSupported() const
     }
 
     Array<String> Required;
-    for (const char* Name : s_RequiredExtensions)
+    for (const char* Name : RequiredExtensions)
     {
         Required.Push(Name);
     }
@@ -144,68 +147,138 @@ bool PhysicalDevice::AreRequiredExtensionsSupported() const
         Required.Remove(Extension.extensionName);
     }
 
-    return true;
+    return Required.IsEmpty();
 }
 
-PhysicalDevice::PhysicalDevice(VkPhysicalDevice Device)
-    : m_Device(Device)
+static QueueFamily QueryQueueFamily(VkPhysicalDevice Device, Surface const* Surface_)
 {
-}
-
-PhysicalDevice& PhysicalDevice::GatherInfo()
-{
-    if (m_Device == VK_NULL_HANDLE)
-    {
-        return *this;
-    }
-
-    VkPhysicalDeviceProperties Properties;
-    vkGetPhysicalDeviceProperties(m_Device, &Properties);
-
-    m_Info.APIVersion_Major = VK_API_VERSION_MAJOR(Properties.apiVersion);
-    m_Info.APIVersion_Minor = VK_API_VERSION_MINOR(Properties.apiVersion);
-    m_Info.APIVersion_Patch = VK_API_VERSION_PATCH(Properties.apiVersion);
-    m_Info.DriverVersion = Properties.driverVersion;
-    m_Info.VendorID = Properties.vendorID;
-    m_Info.DeviceID = Properties.deviceID;
-    m_Info.Name = Properties.deviceName;
-
-    return *this;
-}
-
-PhysicalDevice& PhysicalDevice::FindQueueFamily(const Surface& Surface_)
-{
-    if (m_Device == VK_NULL_HANDLE)
-    {
-        return *this;
-    }
-
     u32 Count { 0 };
-    vkGetPhysicalDeviceQueueFamilyProperties(m_Device, &Count, nullptr);
+    vkGetPhysicalDeviceQueueFamilyProperties(Device, &Count, nullptr);
 
     Array<VkQueueFamilyProperties> Properties;
     Properties.Resize(Count);
-    vkGetPhysicalDeviceQueueFamilyProperties(m_Device, &Count, Properties.Data());
+    vkGetPhysicalDeviceQueueFamilyProperties(Device, &Count, Properties.Data());
+
+    QueueFamily QF {};
 
     u32 Index { 0 };
     for (const VkQueueFamilyProperties& Property : Properties)
     {
         if (Property.queueFlags & VK_QUEUE_GRAPHICS_BIT)
         {
-            m_QueueFamily.m_Graphics = Index;
+            QF.Graphics = Index;
         }
 
         VkBool32 Present { VK_FALSE };
-        VkResult Result { vkGetPhysicalDeviceSurfaceSupportKHR(m_Device, Index, Surface_.Handle(), &Present) };
+        VkResult Result { vkGetPhysicalDeviceSurfaceSupportKHR(Device, Index, Surface_->Get(), &Present) };
         if (Result == VK_SUCCESS && Present)
         {
-            m_QueueFamily.m_Present = Index;
+            QF.Present = Index;
         }
 
         Index++;
     }
 
-    return *this;
+    return QF;
+}
+
+UniquePtr<PhysicalDevice> PhysicalDevice::BestDevice(VkInstance Instance, Surface const* Surface_)
+{
+    u32 Count { 0 };
+    VkResult Result { vkEnumeratePhysicalDevices(Instance, &Count, nullptr) };
+    if (Result != VK_SUCCESS)
+    {
+        Core::Console::Error("Failed to retrieve physical device count. Error: %s", Errors::ToString(Result));
+        return nullptr;
+    }
+
+    if (Count == 0)
+    {
+        Core::Console::Error("No physical devices found.");
+        return nullptr;
+    }
+
+    Array<VkPhysicalDevice> PhysicalDevices;
+    PhysicalDevices.Resize(Count);
+    Result = vkEnumeratePhysicalDevices(Instance, &Count, PhysicalDevices.Data());
+    if (Result != VK_SUCCESS)
+    {
+        Core::Console::Error("Failed to retrieve physical devices. Error: %s", Errors::ToString(Result));
+        return nullptr;
+    }
+
+    struct PendingDevice
+    {
+        VkPhysicalDevice Device { VK_NULL_HANDLE };
+        QueueFamily QF {};
+        bool ExtensionsSupported { false };
+        SupportDetails Details {};
+    };
+
+    Array<PendingDevice> PendingDevices {};
+    for (VkPhysicalDevice Device : PhysicalDevices)
+    {
+        PendingDevice Pending {};
+        Pending.Device = Device;
+        Pending.QF = QueryQueueFamily(Device, Surface_);
+        Pending.ExtensionsSupported = AreRequiredExtensionsSupported(Device, s_RequiredExtensions);
+        Pending.Details = QuerySupportDetails(Device, Surface_);
+        PendingDevices.Push(Pending);
+    }
+
+    UniquePtr<PhysicalDevice> Best { nullptr };
+
+    for (const PendingDevice& Pending : PendingDevices)
+    {
+        if (!(Pending.QF.Graphics.HasValue() && Pending.QF.Present.HasValue()))
+        {
+            continue;
+        }
+
+        if (!Pending.ExtensionsSupported)
+        {
+            continue;
+        }
+
+        if (Pending.Details.Formats.IsEmpty() || Pending.Details.PresentModes.IsEmpty())
+        {
+            continue;
+        }
+
+        Best = UniquePtr<PhysicalDevice>::New();
+        Best->m_Device = Pending.Device;
+        Best->m_QueueFamily = Pending.QF;
+        Best->m_SupportDetails = Pending.Details;
+        Best->m_Info = GatherInfo(Pending.Device);
+
+        break;
+    }
+
+    return Best;
+}
+
+PhysicalDevice::PhysicalDevice()
+{
+}
+
+VkPhysicalDevice PhysicalDevice::Get() const
+{
+    return m_Device;
+}
+
+const QueueFamily& PhysicalDevice::GetQueueFamily() const
+{
+    return m_QueueFamily;
+}
+
+const PhysicalDevice::SupportDetails& PhysicalDevice::GetSupportDetails() const
+{
+    return m_SupportDetails;
+}
+
+const PhysicalDevice::Info& PhysicalDevice::GetInfo() const
+{
+    return m_Info;
 }
 
 }

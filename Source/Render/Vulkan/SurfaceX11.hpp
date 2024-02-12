@@ -24,8 +24,11 @@ SOFTWARE.
 
 */
 
-#include "Queue.hpp"
-#include "LogicalDevice.hpp"
+#pragma once
+
+#include "Surface.hpp"
+
+#include <X11/Xlib.h>
 
 namespace LevelSketch
 {
@@ -34,20 +37,15 @@ namespace Render
 namespace Vulkan
 {
 
-Queue::Queue()
+class SurfaceX11 : public Surface
 {
-}
+public:
+    SurfaceX11();
+    virtual ~SurfaceX11();
 
-bool Queue::Initialize(LogicalDevice const* Device, u32 QueueFamilyIndex)
-{
-    vkGetDeviceQueue(Device->Get(), QueueFamilyIndex, 0, &m_Queue);
-    return true;
-}
-
-VkQueue Queue::Get() const
-{
-    return m_Queue;
-}
+protected:
+    virtual VkSurfaceKHR InternalInitialize(VkInstance Instance, Platform::Window* PlatformWindow) override;
+};
 
 }
 }

@@ -24,8 +24,12 @@ SOFTWARE.
 
 */
 
-#include "Queue.hpp"
-#include "LogicalDevice.hpp"
+#pragma once
+
+#include "../../Core/Memory/UniquePtr.hpp"
+#include "../../Core/Types.hpp"
+
+#include <vulkan/vulkan.hpp>
 
 namespace LevelSketch
 {
@@ -34,20 +38,29 @@ namespace Render
 namespace Vulkan
 {
 
-Queue::Queue()
-{
-}
+class Buffer;
+class Device;
 
-bool Queue::Initialize(LogicalDevice const* Device, u32 QueueFamilyIndex)
+class VertexBuffer final
 {
-    vkGetDeviceQueue(Device->Get(), QueueFamilyIndex, 0, &m_Queue);
-    return true;
-}
+public:
+    VertexBuffer();
 
-VkQueue Queue::Get() const
-{
-    return m_Queue;
-}
+    bool Initialize(Device const* Device_, u64 VertexSize, u64 IndexSize);
+    void Shutdown(Device const* Device_);
+
+    Buffer const* GetVertexBuffer() const;
+    Buffer const* GetIndexBuffer() const;
+
+private:
+    bool InitializeBuffer(const UniquePtr<Buffer>& Buffer_,
+        Device const* Device_,
+        u64 Size,
+        VkBufferUsageFlags Usage) const;
+
+    UniquePtr<Buffer> m_VertexBuffer { nullptr };
+    UniquePtr<Buffer> m_IndexBuffer { nullptr };
+};
 
 }
 }

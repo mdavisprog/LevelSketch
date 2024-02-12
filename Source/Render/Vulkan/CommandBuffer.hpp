@@ -27,7 +27,8 @@ SOFTWARE.
 #pragma once
 
 #include "../../Core/Types.hpp"
-#include "vulkan/vulkan.hpp"
+
+#include <vulkan/vulkan.hpp>
 
 namespace LevelSketch
 {
@@ -39,24 +40,24 @@ namespace Vulkan
 class CommandPool;
 class Device;
 class GraphicsPipeline;
-class RenderBuffer;
 class SwapChain;
 class Sync;
+class VertexBuffer;
 
-class CommandBuffer
+class CommandBuffer final
 {
 public:
     CommandBuffer();
 
     void Initialize(VkCommandBuffer Handle);
-    void Shutdown(const Device& Device_, const CommandPool& Pool);
+    void Shutdown(Device const* Device_, CommandPool const* Pool);
 
-    bool BeginRecord(const GraphicsPipeline& Pipeline, const SwapChain& SwapChain_, u32 FrameIndex) const;
+    bool BeginRecord(GraphicsPipeline const* Pipeline, SwapChain const* SwapChain_, u32 FrameIndex) const;
     bool EndRecord() const;
     void Reset() const;
-    bool Submit(const Device& Device_, const Sync& Sync_) const;
-    const CommandBuffer& BindBuffers(const RenderBuffer& Buffers) const;
-    const CommandBuffer& BindDescriptorSet(const GraphicsPipeline& Pipeline, u64 FrameIndex) const;
+    bool Submit(Device const* Device_, Sync const* Sync_) const;
+    const CommandBuffer& BindBuffer(VertexBuffer const* VertexBuffer_) const;
+    const CommandBuffer& BindDescriptorSet(GraphicsPipeline const* Pipeline, VkDescriptorSet Set) const;
     const CommandBuffer& DrawVertices(u32 VertexCount, u32 InstanceCount, u32 FirstVertex, u32 FirstInstance) const;
     const CommandBuffer& DrawVerticesIndexed(u32 IndexCount,
         u32 InstanceCount,
@@ -64,10 +65,8 @@ public:
         u32 VertexOffset,
         u32 FirstInstance) const;
 
-    bool IsValid() const;
-
 private:
-    VkCommandBuffer m_Handle { VK_NULL_HANDLE };
+    VkCommandBuffer m_CommandBuffer { VK_NULL_HANDLE };
 };
 
 }

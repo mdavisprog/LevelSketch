@@ -27,8 +27,8 @@ SOFTWARE.
 #pragma once
 
 #include "../../Core/Containers/Forwards.hpp"
-#include "../../Core/Types.hpp"
-#include "vulkan/vulkan.hpp"
+
+#include <vulkan/vulkan.hpp>
 
 namespace LevelSketch
 {
@@ -39,15 +39,14 @@ namespace Vulkan
 
 class PhysicalDevice;
 
-class LogicalDevice
+class LogicalDevice final
 {
 public:
     LogicalDevice();
 
-    bool Initialize(const PhysicalDevice& PhysDevice, const Array<const char*>& Layers);
+    bool Initialize(PhysicalDevice const* PhysicalDevice_, const Array<const char*>& Layers);
     void Shutdown();
-    bool IsValid() const;
-    VkDevice Handle() const;
+    VkDevice Get() const;
 
 private:
     VkDevice m_Device { VK_NULL_HANDLE };

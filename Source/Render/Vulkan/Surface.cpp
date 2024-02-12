@@ -24,12 +24,7 @@ SOFTWARE.
 
 */
 
-#define VK_USE_PLATFORM_XLIB_KHR
-
 #include "Surface.hpp"
-#include "../../Core/Console.hpp"
-#include "Errors.hpp"
-#include "Loader.hpp"
 
 namespace LevelSketch
 {
@@ -42,31 +37,14 @@ Surface::Surface()
 {
 }
 
-bool Surface::Initialize(VkInstance Instance, Window Window_, Display* Display_)
+Surface::~Surface()
 {
-    PFN_vkCreateXlibSurfaceKHR vkCreateXlibSurfaceKHRFn {
-        Loader::Instance().LoadFn<PFN_vkCreateXlibSurfaceKHR>(Instance, "vkCreateXlibSurfaceKHR")
-    };
+}
 
-    if (vkCreateXlibSurfaceKHRFn == nullptr)
-    {
-        Core::Console::Error("Failed to find function vkCreateXlibSurfaceKHR.");
-        return false;
-    }
-
-    VkXlibSurfaceCreateInfoKHR CreateInfo {};
-    CreateInfo.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
-    CreateInfo.dpy = Display_;
-    CreateInfo.window = Window_;
-
-    VkResult Result { vkCreateXlibSurfaceKHRFn(Instance, &CreateInfo, nullptr, &m_Surface) };
-    if (Result != VK_SUCCESS)
-    {
-        Core::Console::Error("Failed to create X11 surface. Error: %s", Errors::ToString(Result));
-        return false;
-    }
-
-    return true;
+bool Surface::Initialize(VkInstance Instance, Platform::Window* Window)
+{
+    m_Surface = InternalInitialize(Instance, Window);
+    return m_Surface != VK_NULL_HANDLE;
 }
 
 void Surface::Shutdown(VkInstance Instance)
@@ -78,14 +56,19 @@ void Surface::Shutdown(VkInstance Instance)
     }
 }
 
-bool Surface::IsValid() const
-{
-    return m_Surface != VK_NULL_HANDLE;
-}
-
-VkSurfaceKHR Surface::Handle() const
+VkSurfaceKHR Surface::Get() const
 {
     return m_Surface;
+}
+
+Vector2i Surface::Resolution() const
+{
+    return m_Resolution;
+}
+
+void Surface::SetResolution(const Vector2i& Resolution)
+{
+    m_Resolution = Resolution;
 }
 
 }

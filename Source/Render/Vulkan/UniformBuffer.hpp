@@ -27,7 +27,7 @@ SOFTWARE.
 #pragma once
 
 #include "../../Core/Math/Matrix.hpp"
-#include "Buffer.hpp"
+#include "../../Core/Memory/UniquePtr.hpp"
 
 namespace LevelSketch
 {
@@ -36,31 +36,33 @@ namespace Render
 namespace Vulkan
 {
 
+class Buffer;
 class Device;
 
-class UniformBuffer
+class UniformBuffer final
 {
 public:
     struct Uniforms
     {
         Matrix4f Model { Matrix4f::Identity };
         Matrix4f View { Matrix4f::Identity };
-        Matrix4f Projection { Matrix4f::Identity };
+        Matrix4f Perspective { Matrix4f::Identity };
         Matrix4f Orthographic { Matrix4f::Identity };
     };
 
     UniformBuffer();
+    ~UniformBuffer();
 
-    bool Initialize(const Device& Device_);
-    void Shutdown(const Device& Device_);
+    bool Initialize(Device const* Device_);
+    void Shutdown(Device const* Device_);
 
     Uniforms& GetUniforms();
-    const UniformBuffer& UpdateBuffer() const;
+    void UpdateBuffer() const;
 
-    VkBuffer Handle() const;
+    Buffer const* Get() const;
 
 private:
-    Buffer m_Buffer {};
+    UniquePtr<Buffer> m_Buffer {};
     Uniforms m_Uniforms {};
 };
 

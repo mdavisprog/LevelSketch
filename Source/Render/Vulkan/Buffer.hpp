@@ -27,7 +27,8 @@ SOFTWARE.
 #pragma once
 
 #include "../../Core/Types.hpp"
-#include "vulkan/vulkan.hpp"
+
+#include <vulkan/vulkan.hpp>
 
 namespace LevelSketch
 {
@@ -39,21 +40,20 @@ namespace Vulkan
 class CommandPool;
 class Device;
 
-class Buffer
+class Buffer final
 {
 public:
     Buffer();
 
-    bool Initialize(const Device& Device_, u64 Size, VkBufferUsageFlags Usage, VkMemoryPropertyFlags MemProperties);
-    void Shutdown(const Device& Device_);
+    bool Initialize(Device const* Device_, u64 Size, VkBufferUsageFlags Usage, VkMemoryPropertyFlags MemProperties);
+    void Shutdown(Device const* Device_);
 
-    bool Map(const Device& Device_, u64 Size);
+    bool Map(Device const* Device_, u64 Size);
     void MapData(const void* Data, u64 Size) const;
-    void Unmap(const Device& Device_);
-    bool Upload(const Device& Device_, const CommandPool& Pool, const void* Data, u64 Size) const;
+    void Unmap(Device const* Device_);
+    bool Upload(Device const* Device_, CommandPool const* Pool, const void* Data, u64 Size) const;
 
-    VkBuffer Handle() const;
-    bool IsValid() const;
+    VkBuffer Get() const;
 
 private:
     VkBuffer m_Handle { VK_NULL_HANDLE };

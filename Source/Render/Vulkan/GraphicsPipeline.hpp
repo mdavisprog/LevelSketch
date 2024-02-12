@@ -26,53 +26,46 @@ SOFTWARE.
 
 #pragma once
 
-#include "../../Core/Containers/Array.hpp"
-#include "vulkan/vulkan.hpp"
+#include "../../Core/Containers/Forwards.hpp"
+
+#include <vulkan/vulkan.hpp>
 
 namespace LevelSketch
 {
 namespace Render
 {
+
+struct GraphicsPipelineDescription;
+
 namespace Vulkan
 {
 
+class DescriptorPool;
 class Device;
-class Shader;
 class SwapChain;
 class UniformBuffer;
 
-class GraphicsPipeline
+class GraphicsPipeline final
 {
 public:
     GraphicsPipeline();
 
-    bool Initialize(const Device& Device_, const SwapChain& SwapChain_, const Shader& Vertex, const Shader& Fragment);
-    void Shutdown(const Device& Device_);
+    bool Initialize(Device const* Device_,
+        DescriptorPool const* Pool,
+        SwapChain const* SwapChain_,
+        const GraphicsPipelineDescription& Description);
+    void Shutdown(Device const* Device_);
 
-    GraphicsPipeline& PushLayoutBinding(const VkDescriptorSetLayoutBinding& Binding);
-    const GraphicsPipeline& BindUniformBuffer(const Device& Device_, const UniformBuffer* Buffers) const;
+    void BindUniformBuffer(Device const* Device_, UniformBuffer const* UniformBuffer_, VkDescriptorSet Set) const;
 
-    VkRenderPass RenderPass() const;
-    VkPipeline Handle() const;
-    VkPipelineLayout PipelineLayout() const;
-    VkDescriptorSet DescriptorSet(u64 Index) const;
+    VkPipeline Get() const;
+    VkPipelineLayout GetLayout() const;
 
 private:
-    bool CreatePipelineLayout(const Device& Device_);
-    bool CreateRenderPass(const Device& Device_, const SwapChain& SwapChain_);
-    bool CreateDescriptorSetLayout(const Device& Device_);
-    bool CreateDescriptorPool(const Device& Device_);
-    bool CreateDescriptorSets(const Device& Device_);
+    bool CreatePipelineLayout(Device const* Device_, DescriptorPool const* Pool);
 
     VkPipelineLayout m_PipelineLayout { VK_NULL_HANDLE };
-    VkRenderPass m_RenderPass { VK_NULL_HANDLE };
-    VkPipeline m_Handle { VK_NULL_HANDLE };
-
-    VkDescriptorSetLayout m_DescriptorSetLayout { VK_NULL_HANDLE };
-    Array<VkDescriptorSetLayoutBinding> m_LayoutBindings {};
-
-    VkDescriptorPool m_DescriptorPool { VK_NULL_HANDLE };
-    Array<VkDescriptorSet> m_DescriptorSets {};
+    VkPipeline m_Pipeline { VK_NULL_HANDLE };
 };
 
 }

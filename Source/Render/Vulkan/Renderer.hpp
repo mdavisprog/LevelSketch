@@ -26,19 +26,11 @@ SOFTWARE.
 
 #pragma once
 
+#include "../../Core/Containers/Array.hpp"
+#include "../../Core/Memory/UniquePtr.hpp"
 #include "../Renderer.hpp"
-#include "CommandPool.hpp"
-#include "Device.hpp"
-#include "GraphicsPipeline.hpp"
-#include "LogicalDevice.hpp"
-#include "PhysicalDevice.hpp"
-#include "Queue.hpp"
-#include "RenderBuffer.hpp"
-#include "Surface.hpp"
-#include "SwapChain.hpp"
-#include "Sync.hpp"
-#include "UniformBuffer.hpp"
-#include "vulkan/vulkan.hpp"
+
+#include <vulkan/vulkan.hpp>
 
 #define FRAMES_IN_FLIGHT 2
 
@@ -49,10 +41,18 @@ namespace Render
 namespace Vulkan
 {
 
+class CommandPool;
+class DescriptorPool;
+class Device;
+class Sync;
+class Viewport;
+class UniformBuffer;
+
 class Renderer : public LevelSketch::Render::Renderer
 {
 public:
     Renderer();
+    virtual ~Renderer();
 
     virtual bool Initialize() override;
     virtual bool Initialize(Platform::Window* Window) override;
@@ -84,16 +84,12 @@ private:
     bool GetExistingLayers(const Array<const char*> Layers, Array<const char*>& Ptrs) const;
 
     VkInstance m_Instance { nullptr };
-    Surface m_Surface {};
-    Device m_Device {};
-    SwapChain m_SwapChain {};
-    GraphicsPipeline m_Pipeline {};
-    Sync m_Syncs[FRAMES_IN_FLIGHT] {};
-    CommandPool m_CommandPool {};
-    u64 m_FrameIndex { 0 };
-
-    RenderBuffer m_RenderBuffer {};
-    UniformBuffer m_Uniforms[FRAMES_IN_FLIGHT] {};
+    UniquePtr<Device> m_Device { nullptr };
+    UniquePtr<CommandPool> m_CommandPool { nullptr };
+    UniquePtr<DescriptorPool> m_DescriptorPool { nullptr };
+    Array<UniquePtr<Viewport>> m_Viewports {};
+    Array<UniquePtr<Sync>> m_Syncs {};
+    Array<UniquePtr<UniformBuffer>> m_Uniforms {};
 };
 
 }

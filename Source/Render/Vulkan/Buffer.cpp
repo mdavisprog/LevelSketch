@@ -29,6 +29,9 @@ SOFTWARE.
 #include "CommandPool.hpp"
 #include "Device.hpp"
 #include "Errors.hpp"
+#include "LogicalDevice.hpp"
+#include "PhysicalDevice.hpp"
+#include "Queue.hpp"
 
 namespace LevelSketch
 {
@@ -41,7 +44,7 @@ Buffer::Buffer()
 {
 }
 
-bool Buffer::Initialize(const Device& Device_, u64 Size, VkBufferUsageFlags Usage, VkMemoryPropertyFlags MemProperties)
+bool Buffer::Initialize(Device const* Device_, u64 Size, VkBufferUsageFlags Usage, VkMemoryPropertyFlags MemProperties)
 {
     VkBufferCreateInfo CreateInfo {};
     CreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -49,7 +52,7 @@ bool Buffer::Initialize(const Device& Device_, u64 Size, VkBufferUsageFlags Usag
     CreateInfo.usage = Usage;
     CreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    VkResult Result { vkCreateBuffer(Device_.GetLogicalDevice().Handle(), &CreateInfo, nullptr, &m_Handle) };
+    VkResult Result { vkCreateBuffer(Device_->GetLogicalDevice()->Get(), &CreateInfo, nullptr, &m_Handle) };
 
     if (Result != VK_SUCCESS)
     {
@@ -58,10 +61,10 @@ bool Buffer::Initialize(const Device& Device_, u64 Size, VkBufferUsageFlags Usag
     }
 
     VkMemoryRequirements MemoryReqs {};
-    vkGetBufferMemoryRequirements(Device_.GetLogicalDevice().Handle(), m_Handle, &MemoryReqs);
+    vkGetBufferMemoryRequirements(Device_->GetLogicalDevice()->Get(), m_Handle, &MemoryReqs);
 
     VkPhysicalDeviceMemoryProperties MemoryProps {};
-    vkGetPhysicalDeviceMemoryProperties(Device_.GetPhysicalDevice().Handle(), &MemoryProps);
+    vkGetPhysicalDeviceMemoryProperties(Device_->GetPhysicalDevice()->Get(), &MemoryProps);
 
     u32 MemoryType { UINT32_MAX };
     for (u32 I = 0; I < MemoryProps.memoryTypeCount; I++)
@@ -85,7 +88,7 @@ bool Buffer::Initialize(const Device& Device_, u64 Size, VkBufferUsageFlags Usag
     AllocInfo.allocationSize = MemoryReqs.size;
     AllocInfo.memoryTypeIndex = MemoryType;
 
-    Result = vkAllocateMemory(Device_.GetLogicalDevice().Handle(), &AllocInfo, nullptr, &m_Memory);
+    Result = vkAllocateMemory(Device_->GetLogicalDevice()->Get(), &AllocInfo, nullptr, &m_Memory);
 
     if (Result != VK_SUCCESS)
     {
@@ -93,7 +96,7 @@ bool Buffer::Initialize(const Device& Device_, u64 Size, VkBufferUsageFlags Usag
         return false;
     }
 
-    Result = vkBindBufferMemory(Device_.GetLogicalDevice().Handle(), m_Handle, m_Memory, 0);
+    Result = vkBindBufferMemory(Device_->GetLogicalDevice()->Get(), m_Handle, m_Memory, 0);
 
     if (Result != VK_SUCCESS)
     {
@@ -104,31 +107,31 @@ bool Buffer::Initialize(const Device& Device_, u64 Size, VkBufferUsageFlags Usag
     return true;
 }
 
-void Buffer::Shutdown(const Device& Device_)
+void Buffer::Shutdown(Device const* Device_)
 {
     Unmap(Device_);
 
     if (m_Memory != VK_NULL_HANDLE)
     {
-        vkFreeMemory(Device_.GetLogicalDevice().Handle(), m_Memory, nullptr);
+        vkFreeMemory(Device_->GetLogicalDevice()->Get(), m_Memory, nullptr);
         m_Memory = VK_NULL_HANDLE;
     }
 
     if (m_Handle != VK_NULL_HANDLE)
     {
-        vkDestroyBuffer(Device_.GetLogicalDevice().Handle(), m_Handle, nullptr);
+        vkDestroyBuffer(Device_->GetLogicalDevice()->Get(), m_Handle, nullptr);
         m_Handle = VK_NULL_HANDLE;
     }
 }
 
-bool Buffer::Map(const Device& Device_, u64 Size)
+bool Buffer::Map(Device const* Device_, u64 Size)
 {
     if (m_Ptr != nullptr)
     {
         return true;
     }
 
-    VkResult Result { vkMapMemory(Device_.GetLogicalDevice().Handle(), m_Memory, 0, Size, 0, &m_Ptr) };
+    VkResult Result { vkMapMemory(Device_->GetLogicalDevice()->Get(), m_Memory, 0, Size, 0, &m_Ptr) };
 
     if (Result != VK_SUCCESS)
     {
@@ -149,18 +152,18 @@ void Buffer::MapData(const void* Data, u64 Size) const
     std::memcpy(m_Ptr, Data, Size);
 }
 
-void Buffer::Unmap(const Device& Device_)
+void Buffer::Unmap(Device const* Device_)
 {
     if (m_Ptr == nullptr)
     {
         return;
     }
 
-    vkUnmapMemory(Device_.GetLogicalDevice().Handle(), m_Memory);
+    vkUnmapMemory(Device_->GetLogicalDevice()->Get(), m_Memory);
     m_Ptr = nullptr;
 }
 
-bool Buffer::Upload(const Device& Device_, const CommandPool& Pool, const void* Data, u64 Size) const
+bool Buffer::Upload(Device const* Device_, CommandPool const* Pool, const void* Data, u64 Size) const
 {
     // TODO: Would be nice to create a scoped class to handle automatic
     // shutdown for failure cases. Currently shutting down manually.
@@ -189,12 +192,12 @@ bool Buffer::Upload(const Device& Device_, const CommandPool& Pool, const void* 
     VkCommandBufferAllocateInfo AllocInfo {};
     AllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     AllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    AllocInfo.commandPool = Pool.Handle();
+    AllocInfo.commandPool = Pool->Get();
     AllocInfo.commandBufferCount = 1;
 
     VkCommandBuffer CommandBuffer { VK_NULL_HANDLE };
 
-    VkResult Result { vkAllocateCommandBuffers(Device_.GetLogicalDevice().Handle(), &AllocInfo, &CommandBuffer) };
+    VkResult Result { vkAllocateCommandBuffers(Device_->GetLogicalDevice()->Get(), &AllocInfo, &CommandBuffer) };
 
     if (Result != VK_SUCCESS)
     {
@@ -205,7 +208,7 @@ bool Buffer::Upload(const Device& Device_, const CommandPool& Pool, const void* 
 
     auto CleanupFn = [&]() -> void
     {
-        vkFreeCommandBuffers(Device_.GetLogicalDevice().Handle(), Pool.Handle(), 1, &CommandBuffer);
+        vkFreeCommandBuffers(Device_->GetLogicalDevice()->Get(), Pool->Get(), 1, &CommandBuffer);
         Staging.Shutdown(Device_);
     };
 
@@ -227,7 +230,7 @@ bool Buffer::Upload(const Device& Device_, const CommandPool& Pool, const void* 
     Region.dstOffset = 0;
     Region.size = Size;
 
-    vkCmdCopyBuffer(CommandBuffer, Staging.Handle(), m_Handle, 1, &Region);
+    vkCmdCopyBuffer(CommandBuffer, Staging.Get(), m_Handle, 1, &Region);
 
     Result = vkEndCommandBuffer(CommandBuffer);
 
@@ -243,7 +246,7 @@ bool Buffer::Upload(const Device& Device_, const CommandPool& Pool, const void* 
     SubmitInfo.commandBufferCount = 1;
     SubmitInfo.pCommandBuffers = &CommandBuffer;
 
-    Result = vkQueueSubmit(Device_.GraphicsQueue().Handle(), 1, &SubmitInfo, VK_NULL_HANDLE);
+    Result = vkQueueSubmit(Device_->GraphicsQueue()->Get(), 1, &SubmitInfo, VK_NULL_HANDLE);
 
     if (Result != VK_SUCCESS)
     {
@@ -252,7 +255,7 @@ bool Buffer::Upload(const Device& Device_, const CommandPool& Pool, const void* 
         return false;
     }
 
-    Result = vkQueueWaitIdle(Device_.GraphicsQueue().Handle());
+    Result = vkQueueWaitIdle(Device_->GraphicsQueue()->Get());
 
     if (Result != VK_SUCCESS)
     {
@@ -265,14 +268,9 @@ bool Buffer::Upload(const Device& Device_, const CommandPool& Pool, const void* 
     return true;
 }
 
-VkBuffer Buffer::Handle() const
+VkBuffer Buffer::Get() const
 {
     return m_Handle;
-}
-
-bool Buffer::IsValid() const
-{
-    return m_Handle != VK_NULL_HANDLE;
 }
 
 }

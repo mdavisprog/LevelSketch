@@ -26,43 +26,49 @@ SOFTWARE.
 
 #pragma once
 
-#include "CommandPool.hpp"
-#include "LogicalDevice.hpp"
-#include "PhysicalDevice.hpp"
-#include "Queue.hpp"
+#include "../../Core/Containers/Forwards.hpp"
+#include "../../Core/Memory/UniquePtr.hpp"
+
+#include <vulkan/vulkan.h>
 
 namespace LevelSketch
 {
+
+namespace Platform
+{
+class Window;
+}
+
 namespace Render
 {
 namespace Vulkan
 {
 
+class LogicalDevice;
+class PhysicalDevice;
+class Queue;
 class Surface;
 
-class Device
+class Device final
 {
 public:
     Device();
+    ~Device();
 
-    bool Initialize(VkInstance Instance, const Surface& Surface_, const Array<const char*>& Layers);
+    bool Initialize(VkInstance Instance, Surface const* Surface_, const Array<const char*>& Layers);
     void Shutdown();
     void WaitForIdle() const;
 
-    bool IsValid() const;
-
-    const LogicalDevice& GetLogicalDevice() const;
-    const PhysicalDevice& GetPhysicalDevice() const;
-    const Queue& GraphicsQueue() const;
-    const Queue& PresentQueue() const;
+    LogicalDevice const* GetLogicalDevice() const;
+    PhysicalDevice const* GetPhysicalDevice() const;
+    Queue const* GraphicsQueue() const;
+    Queue const* PresentQueue() const;
 
 private:
-    bool SelectBestPhysicalDevice(VkInstance Instance, const Surface& Surface_);
-
-    LogicalDevice m_LogicalDevice {};
-    PhysicalDevice m_PhysicalDevice {};
-    Queue m_GraphicsQueue {};
-    Queue m_PresentQueue {};
+    UniquePtr<LogicalDevice> m_LogicalDevice { nullptr };
+    UniquePtr<PhysicalDevice> m_PhysicalDevice { nullptr };
+    UniquePtr<Queue> m_GraphicsQueue { nullptr };
+    UniquePtr<Queue> m_PresentQueue { nullptr };
 };
 
 }

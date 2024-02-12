@@ -24,8 +24,11 @@ SOFTWARE.
 
 */
 
-#include "Queue.hpp"
-#include "LogicalDevice.hpp"
+#pragma once
+
+#include "../../Core/Containers/Array.hpp"
+
+#include <vulkan/vulkan.hpp>
 
 namespace LevelSketch
 {
@@ -34,20 +37,28 @@ namespace Render
 namespace Vulkan
 {
 
-Queue::Queue()
-{
-}
+class Device;
 
-bool Queue::Initialize(LogicalDevice const* Device, u32 QueueFamilyIndex)
+class DescriptorPool final
 {
-    vkGetDeviceQueue(Device->Get(), QueueFamilyIndex, 0, &m_Queue);
-    return true;
-}
+public:
+    DescriptorPool();
 
-VkQueue Queue::Get() const
-{
-    return m_Queue;
-}
+    bool Initialize(Device const* Device_, u32 Count);
+    void Shutdown(Device const* Device_);
+
+    VkDescriptorPool Get() const;
+    VkDescriptorSetLayout GetLayout() const;
+    VkDescriptorSet GetSet(u64 Index) const;
+
+private:
+    bool CreateDescriptorSetLayout(Device const* Device_, const Array<VkDescriptorSetLayoutBinding>& Bindings);
+    bool CreateDescriptorSets(Device const* Device_, u32 Count);
+
+    VkDescriptorSetLayout m_DescriptorSetLayout { VK_NULL_HANDLE };
+    VkDescriptorPool m_DescriptorPool { VK_NULL_HANDLE };
+    Array<VkDescriptorSet> m_DescriptorSets {};
+};
 
 }
 }

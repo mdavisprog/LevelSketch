@@ -25,6 +25,7 @@ SOFTWARE.
 */
 
 #include "UniformBuffer.hpp"
+#include "Buffer.hpp"
 #include "Device.hpp"
 
 namespace LevelSketch
@@ -38,9 +39,14 @@ UniformBuffer::UniformBuffer()
 {
 }
 
-bool UniformBuffer::Initialize(const Device& Device_)
+UniformBuffer::~UniformBuffer()
 {
-    if (!m_Buffer.Initialize(Device_,
+}
+
+bool UniformBuffer::Initialize(Device const* Device_)
+{
+    m_Buffer = UniquePtr<Buffer>::New();
+    if (!m_Buffer->Initialize(Device_,
             sizeof(Uniforms),
             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
@@ -48,7 +54,7 @@ bool UniformBuffer::Initialize(const Device& Device_)
         return false;
     }
 
-    if (!m_Buffer.Map(Device_, sizeof(Uniforms)))
+    if (!m_Buffer->Map(Device_, sizeof(Uniforms)))
     {
         return false;
     }
@@ -58,9 +64,9 @@ bool UniformBuffer::Initialize(const Device& Device_)
     return true;
 }
 
-void UniformBuffer::Shutdown(const Device& Device_)
+void UniformBuffer::Shutdown(Device const* Device_)
 {
-    m_Buffer.Shutdown(Device_);
+    m_Buffer->Shutdown(Device_);
 }
 
 UniformBuffer::Uniforms& UniformBuffer::GetUniforms()
@@ -68,15 +74,14 @@ UniformBuffer::Uniforms& UniformBuffer::GetUniforms()
     return m_Uniforms;
 }
 
-const UniformBuffer& UniformBuffer::UpdateBuffer() const
+void UniformBuffer::UpdateBuffer() const
 {
-    m_Buffer.MapData(&m_Uniforms, sizeof(Uniforms));
-    return *this;
+    m_Buffer->MapData(&m_Uniforms, sizeof(Uniforms));
 }
 
-VkBuffer UniformBuffer::Handle() const
+Buffer const* UniformBuffer::Get() const
 {
-    return m_Buffer.Handle();
+    return m_Buffer.Get();
 }
 
 }

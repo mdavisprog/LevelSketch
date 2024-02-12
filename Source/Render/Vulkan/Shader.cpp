@@ -30,8 +30,7 @@ SOFTWARE.
 #include "../../Platform/FileSystem.hpp"
 #include "Device.hpp"
 #include "Errors.hpp"
-
-#include <fstream>
+#include "LogicalDevice.hpp"
 
 namespace LevelSketch
 {
@@ -44,17 +43,7 @@ Shader::Shader()
 {
 }
 
-VkShaderModule Shader::Handle() const
-{
-    return m_Handle;
-}
-
-bool Shader::IsValid() const
-{
-    return m_Handle != VK_NULL_HANDLE;
-}
-
-bool Shader::Load(const Device& Device_, const char* Path)
+bool Shader::Load(Device const* Device_, const char* Path)
 {
     Array<u8> Data { Platform::FileSystem::ReadBinaryContents(Path) };
 
@@ -69,7 +58,7 @@ bool Shader::Load(const Device& Device_, const char* Path)
     CreateInfo.codeSize = Data.Size();
     CreateInfo.pCode = reinterpret_cast<u32*>(Data.Data());
 
-    VkResult Result { vkCreateShaderModule(Device_.GetLogicalDevice().Handle(), &CreateInfo, nullptr, &m_Handle) };
+    VkResult Result { vkCreateShaderModule(Device_->GetLogicalDevice()->Get(), &CreateInfo, nullptr, &m_Module) };
 
     if (Result != VK_SUCCESS)
     {
@@ -80,35 +69,18 @@ bool Shader::Load(const Device& Device_, const char* Path)
     return true;
 }
 
-void Shader::Shutdown(const Device& Device_)
+void Shader::Shutdown(Device const* Device_)
 {
-    if (m_Handle != VK_NULL_HANDLE)
+    if (m_Module != VK_NULL_HANDLE)
     {
-        vkDestroyShaderModule(Device_.GetLogicalDevice().Handle(), m_Handle, nullptr);
-        m_Handle = VK_NULL_HANDLE;
+        vkDestroyShaderModule(Device_->GetLogicalDevice()->Get(), m_Module, nullptr);
+        m_Module = VK_NULL_HANDLE;
     }
 }
 
-Shader& Shader::PushBinding(const VkVertexInputBindingDescription& Binding)
+VkShaderModule Shader::Get() const
 {
-    m_Bindings.Push(Binding);
-    return *this;
-}
-
-Shader& Shader::PushAttribute(const VkVertexInputAttributeDescription& Attribute)
-{
-    m_Attributes.Push(Attribute);
-    return *this;
-}
-
-const Array<VkVertexInputBindingDescription>& Shader::Bindings() const
-{
-    return m_Bindings;
-}
-
-const Array<VkVertexInputAttributeDescription>& Shader::Attributes() const
-{
-    return m_Attributes;
+    return m_Module;
 }
 
 }

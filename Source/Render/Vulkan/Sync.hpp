@@ -27,7 +27,8 @@ SOFTWARE.
 #pragma once
 
 #include "../../Core/Types.hpp"
-#include "vulkan/vulkan.hpp"
+
+#include <vulkan/vulkan.hpp>
 
 namespace LevelSketch
 {
@@ -39,24 +40,24 @@ namespace Vulkan
 class Device;
 class SwapChain;
 
-class Sync
+class Sync final
 {
 public:
     Sync();
 
-    bool Initialize(const Device& Device_);
-    void Shutdown(const Device& Device_);
+    bool Initialize(Device const* Device_);
+    void Shutdown(Device const* Device_);
 
-    u32 FrameIndex(const Device& Device_, const SwapChain& SwapChain_) const;
-    void WaitForFence(const Device& Device_) const;
+    u32 FrameIndex(Device const* Device_, SwapChain const* SwapChain_) const;
+    void WaitForFence(Device const* Device_) const;
 
     VkSemaphore ImageReady() const;
     VkSemaphore RenderFinished() const;
     VkFence Fence() const;
 
 private:
-    VkSemaphore CreateSemaphore(const Device& Device_);
-    void DestroySemaphore(const Device& Device_, VkSemaphore& Semaphore);
+    VkSemaphore CreateSemaphore(Device const* Device_);
+    void DestroySemaphore(Device const* Device_, VkSemaphore& Semaphore);
 
     VkSemaphore m_ImageReady { VK_NULL_HANDLE };
     VkSemaphore m_RenderFinished { VK_NULL_HANDLE };
