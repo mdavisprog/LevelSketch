@@ -61,13 +61,13 @@ static MTLVertexFormat ToFormat(VertexFormat Format)
     return MTLVertexFormatInvalid;
 }
 
-static MTLCullMode ToCullMode(CullMode Mode)
+static MTLCullMode ToCullMode(CullModeType Mode)
 {
     switch (Mode)
     {
-    case CullMode::Back: return MTLCullModeBack;
-    case CullMode::Front: return MTLCullModeFront;
-    case CullMode::None:
+    case CullModeType::Back: return MTLCullModeBack;
+    case CullModeType::Front: return MTLCullModeFront;
+    case CullModeType::None:
     default: break;
     }
 

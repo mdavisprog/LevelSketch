@@ -63,7 +63,7 @@ bool VertexBuffer::Initialize(Device const* Device_, const VertexBufferDescripti
         return false;
     }
 
-    m_IndexType = Description.IndexFormat == IndexFormat::U16 ? MTLIndexTypeUInt16 : MTLIndexTypeUInt32;
+    m_IndexType = Description.IndexFormat == IndexFormatType::U16 ? MTLIndexTypeUInt16 : MTLIndexTypeUInt32;
     m_Stride = Description.Stride;
     m_ID = ++s_ID;
 
