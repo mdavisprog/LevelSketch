@@ -54,11 +54,48 @@ namespace Main
 
 static u32 g_TestPipeline { 0 };
 static u32 g_TestBuffer { 0 };
+static u32 g_DefaultTexture { 0 };
 
 static Engine::Camera g_Camera { { 0.0f, 0.0f, -20.0f } };
 static bool g_RotateCamera { false };
 static Vector2i g_LastMousePos {};
 static Vector2i g_LockedMousePos {};
+
+static Array<u8> GenerateTexture(u32 Width, u32 Height)
+{
+    const u32 RowPitch { Width * 4 };
+    const u32 CellPitch { RowPitch >> 3 };
+    const u32 CellHeight { Width >> 3 };
+
+    Array<u8> Result;
+    Result.Resize(RowPitch * Height);
+
+    u8* Data = Result.Data();
+    for (u32 I = 0; I < Result.Size(); I += 4)
+    {
+        const u32 X { I % RowPitch };
+        const u32 Y { I / RowPitch };
+        const u32 U { X / CellPitch };
+        const u32 V { Y / CellHeight };
+
+        if (U % 2 == V % 2)
+        {
+            Data[I] = 0x00;
+            Data[I + 1] = 0x00;
+            Data[I + 2] = 0x00;
+            Data[I + 3] = 0xFF;
+        }
+        else
+        {
+            Data[I] = 0xFF;
+            Data[I + 1] = 0xFF;
+            Data[I + 2] = 0xFF;
+            Data[I + 3] = 0xFF;
+        }
+    }
+
+    return Result;
+}
 
 static void UpdateCamera(f32 DeltaTime)
 {
@@ -175,6 +212,7 @@ static bool OnPlatformFrame(const Platform::TimingData& TimingData)
     if (Renderer->BeginRender(Editor, { 0.0f, 0.2f, 0.4f, 1.0f }))
     {
         Renderer->BindGraphicsPipeline(g_TestPipeline);
+        Renderer->BindTexture(g_DefaultTexture);
         Renderer->BindVertexBuffer(g_TestBuffer);
         Renderer->DrawIndexed(3, 1, 0, 0, 0);
         GUI::GUI::Instance().Render(Editor);
@@ -236,6 +274,11 @@ static bool InitializeResources()
     {
         return false;
     }
+
+    const u32 Width { 256 };
+    const u32 Height { 256 };
+    const Array<u8> Data { GenerateTexture(Width, Height) };
+    g_DefaultTexture = Renderer->LoadTexture(Data.Data(), Width, Height, 4);
 
     if (!GUI::GUI::Instance().InitializeResources())
     {

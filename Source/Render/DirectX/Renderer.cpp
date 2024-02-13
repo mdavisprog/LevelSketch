@@ -68,42 +68,6 @@ String Renderer::ShadersDirectory()
 namespace DirectX
 {
 
-static Array<u8> GenerateTexture(u32 Width, u32 Height)
-{
-    const u32 RowPitch { Width * 4 };
-    const u32 CellPitch { RowPitch >> 3 };
-    const u32 CellHeight { Width >> 3 };
-
-    Array<u8> Result;
-    Result.Resize(RowPitch * Height);
-
-    u8* Data = Result.Data();
-    for (u32 I = 0; I < Result.Size(); I += 4)
-    {
-        const u32 X { I % RowPitch };
-        const u32 Y { I / RowPitch };
-        const u32 U { X / CellPitch };
-        const u32 V { Y / CellHeight };
-
-        if (U % 2 == V % 2)
-        {
-            Data[I] = 0x00;
-            Data[I + 1] = 0x00;
-            Data[I + 2] = 0x00;
-            Data[I + 3] = 0xFF;
-        }
-        else
-        {
-            Data[I] = 0xFF;
-            Data[I + 1] = 0xFF;
-            Data[I + 2] = 0xFF;
-            Data[I + 3] = 0xFF;
-        }
-    }
-
-    return Result;
-}
-
 static Matrix4f Orthographic(Platform::Window* Window)
 {
     const Rectf Bounds { 0.0f, 0.0f, static_cast<f32>(Window->Size().X), static_cast<f32>(Window->Size().Y) };
@@ -230,10 +194,6 @@ bool Renderer::BeginRender(Platform::Window* Window, const Colorf& ClearColor)
 
     ID3D12DescriptorHeap* Heaps[] = { m_Device->SRVHeap()->Get() };
     CommandList->SetDescriptorHeaps(_countof(Heaps), Heaps);
-    // TODO: Apply an offset to select a specific resource.
-    D3D12_GPU_DESCRIPTOR_HANDLE GPUDesc { m_Device->SRVHeap()->GPUOffset(0) };
-    GPUDesc.ptr += GetTextureOffset(m_DefaultTexture);
-    CommandList->SetGraphicsRootDescriptorTable(0, GPUDesc);
 
     const Core::Math::Vector2i Size { Window->Size() };
     D3D12_VIEWPORT View { 0.0f, 0.0f, (FLOAT)Size.X, (FLOAT)Size.Y, 0.0f, 1.0f };
@@ -259,7 +219,7 @@ bool Renderer::BeginRender(Platform::Window* Window, const Colorf& ClearColor)
     CommandList->ClearRenderTargetView(RTVCPUDesc, Color, 0, nullptr);
     CommandList->ClearDepthStencilView(DSVCPUDesc, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-    GPUDesc = m_Device->SRVHeap()->GPUOffset(m_ConstantBufferIndex);
+    D3D12_GPU_DESCRIPTOR_HANDLE GPUDesc = m_Device->SRVHeap()->GPUOffset(m_ConstantBufferIndex);
     CommandList->SetGraphicsRootDescriptorTable(1, GPUDesc);
 
     m_ConstantBufferData.Perspective = Core::Math::PerspectiveMatrixLH(45.0f, Window->AspectRatio(), 0.1f, 100.0f);
@@ -490,19 +450,8 @@ bool Renderer::LoadAssets()
         }
     }
 
-    // Upload Vertex/Index buffers. The Load texture function will reset the command list.
-    // Want to avoid resetting the command list while there are queued commands.
+    // TODO: No longer needed once constant buffers are created outside of initialization.
     ExecuteCommands();
-    WaitForPreviousFrame();
-
-    // Texture
-    {
-        const u32 Width { 256 };
-        const u32 Height { 256 };
-        const Array<u8> Data { GenerateTexture(Width, Height) };
-        m_DefaultTexture = LoadTexture(Data.Data(), Width, Height, 4);
-    }
-
     WaitForPreviousFrame();
 
     return true;

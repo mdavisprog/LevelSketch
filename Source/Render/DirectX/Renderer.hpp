@@ -112,8 +112,6 @@ private:
 
     Array<Texture> m_Textures {};
 
-    u32 m_DefaultTexture { 0 };
-
     Microsoft::WRL::ComPtr<ID3D12Resource> m_ConstantBuffer;
     u8* m_ConstantBufferAddress { nullptr };
     ConstantBufferData m_ConstantBufferData {};
