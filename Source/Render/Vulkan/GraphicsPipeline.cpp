@@ -110,7 +110,7 @@ bool GraphicsPipeline::Initialize(Device const* Device_,
         Attribute.binding = 0;
         Attribute.location = I;
         Attribute.format = ToFormat(VertexDesc.Format);
-        Attribute.offset = 0;
+        Attribute.offset = Offset;
         Attributes.Push(Attribute);
 
         Offset += VertexFormatSize(VertexDesc.Format);

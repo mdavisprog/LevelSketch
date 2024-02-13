@@ -37,13 +37,13 @@ layout(set = 0, binding = 0) uniform UniformObject
 {
     mat4 Model;
     mat4 View;
-    mat4 Projection;
+    mat4 Perspective;
     mat4 Orthographic;
 } Uniforms;
 
 void main()
 {
-    gl_Position = Uniforms.Projection * Uniforms.View * Uniforms.Model * vec4(Position, 1.0, 1.0);
+    gl_Position = Uniforms.Orthographic * Uniforms.View * Uniforms.Model * vec4(Position, 1.0, 1.0);
     OutColor = Color;
     OutUVs = UVs;
 }
