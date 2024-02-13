@@ -31,7 +31,8 @@ struct RasterizerData
     float4 Color;
 };
 
-fragment float4 Main(RasterizerData Data [[stage_in]])
+fragment float4 Main(RasterizerData Data [[stage_in]], metal::texture2d<float> Texture [[texture(0)]])
 {
-    return Data.Color;
+    constexpr metal::sampler Sampler (metal::mag_filter::linear, metal::mag_filter::linear);
+    return Texture.sample(Sampler, Data.UV) * Data.Color;
 }
