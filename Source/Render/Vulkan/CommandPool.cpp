@@ -110,6 +110,29 @@ void CommandPool::Shutdown(Device const* Device_)
     }
 }
 
+UniquePtr<CommandBuffer> CommandPool::AllocateBuffer(Device const* Device_) const
+{
+    VkCommandBufferAllocateInfo AllocInfo {};
+    AllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    AllocInfo.commandPool = m_CommandPool;
+    AllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    AllocInfo.commandBufferCount = 1;
+
+    VkCommandBuffer Buffer { VK_NULL_HANDLE };
+
+    VkResult Result { vkAllocateCommandBuffers(Device_->GetLogicalDevice()->Get(), &AllocInfo, &Buffer) };
+
+    if (Result != VK_SUCCESS)
+    {
+        Core::Console::Error("Failed to allocate command buffer. Error: %s", Errors::ToString(Result));
+        return nullptr;
+    }
+
+    UniquePtr<CommandBuffer> ResultBuffer { UniquePtr<CommandBuffer>::New() };
+    ResultBuffer->Initialize(Buffer);
+    return ResultBuffer;
+}
+
 VkCommandPool CommandPool::Get() const
 {
     return m_CommandPool;

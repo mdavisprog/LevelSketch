@@ -26,6 +26,8 @@ SOFTWARE.
 
 #include "Buffer.hpp"
 #include "../../Core/Console.hpp"
+#include "../../Core/Memory/UniquePtr.hpp"
+#include "CommandBuffer.hpp"
 #include "CommandPool.hpp"
 #include "Device.hpp"
 #include "Errors.hpp"
@@ -165,9 +167,6 @@ void Buffer::Unmap(Device const* Device_)
 
 bool Buffer::Upload(Device const* Device_, CommandPool const* Pool, const void* Data, u64 Size) const
 {
-    // TODO: Would be nice to create a scoped class to handle automatic
-    // shutdown for failure cases. Currently shutting down manually.
-
     Buffer Staging {};
 
     if (!Staging.Initialize(Device_,
@@ -189,82 +188,15 @@ bool Buffer::Upload(Device const* Device_, CommandPool const* Pool, const void* 
     Staging.MapData(Data, Size);
     Staging.Unmap(Device_);
 
-    VkCommandBufferAllocateInfo AllocInfo {};
-    AllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    AllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    AllocInfo.commandPool = Pool->Get();
-    AllocInfo.commandBufferCount = 1;
+    UniquePtr<CommandBuffer> Commands { Pool->AllocateBuffer(Device_) };
+    Commands->BeginSingle();
+    Commands->CopyBuffer(&Staging, this, Size);
+    Commands->End();
+    Commands->SubmitWait(Device_);
+    Commands->Shutdown(Device_, Pool);
 
-    VkCommandBuffer CommandBuffer { VK_NULL_HANDLE };
+    Staging.Shutdown(Device_);
 
-    VkResult Result { vkAllocateCommandBuffers(Device_->GetLogicalDevice()->Get(), &AllocInfo, &CommandBuffer) };
-
-    if (Result != VK_SUCCESS)
-    {
-        Staging.Shutdown(Device_);
-        Core::Console::Error("Failed to allocate staging command buffer. Error: %s", Errors::ToString(Result));
-        return false;
-    }
-
-    auto CleanupFn = [&]() -> void
-    {
-        vkFreeCommandBuffers(Device_->GetLogicalDevice()->Get(), Pool->Get(), 1, &CommandBuffer);
-        Staging.Shutdown(Device_);
-    };
-
-    VkCommandBufferBeginInfo BeginInfo {};
-    BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    BeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-    Result = vkBeginCommandBuffer(CommandBuffer, &BeginInfo);
-
-    if (Result != VK_SUCCESS)
-    {
-        CleanupFn();
-        Core::Console::Error("Failed to begin staging command buffer. Error: %s", Errors::ToString(Result));
-        return false;
-    }
-
-    VkBufferCopy Region {};
-    Region.srcOffset = 0;
-    Region.dstOffset = 0;
-    Region.size = Size;
-
-    vkCmdCopyBuffer(CommandBuffer, Staging.Get(), m_Handle, 1, &Region);
-
-    Result = vkEndCommandBuffer(CommandBuffer);
-
-    if (Result != VK_SUCCESS)
-    {
-        CleanupFn();
-        Core::Console::Error("Failed to end staging command buffer. Error: %s", Errors::ToString(Result));
-        return false;
-    }
-
-    VkSubmitInfo SubmitInfo {};
-    SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    SubmitInfo.commandBufferCount = 1;
-    SubmitInfo.pCommandBuffers = &CommandBuffer;
-
-    Result = vkQueueSubmit(Device_->GraphicsQueue()->Get(), 1, &SubmitInfo, VK_NULL_HANDLE);
-
-    if (Result != VK_SUCCESS)
-    {
-        CleanupFn();
-        Core::Console::Error("Failed to submit copy command to queue. Error: %s", Errors::ToString(Result));
-        return false;
-    }
-
-    Result = vkQueueWaitIdle(Device_->GraphicsQueue()->Get());
-
-    if (Result != VK_SUCCESS)
-    {
-        CleanupFn();
-        Core::Console::Error("Failed to wait on copy command. Error: %s", Errors::ToString(Result));
-        return false;
-    }
-
-    CleanupFn();
     return true;
 }
 

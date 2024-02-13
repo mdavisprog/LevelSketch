@@ -65,6 +65,23 @@ void CommandBuffer::Shutdown(Device const* Device_, CommandPool const* Pool)
     }
 }
 
+bool CommandBuffer::BeginSingle() const
+{
+    VkCommandBufferBeginInfo BeginInfo {};
+    BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    BeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+    VkResult Result { vkBeginCommandBuffer(m_CommandBuffer, &BeginInfo) };
+
+    if (Result != VK_SUCCESS)
+    {
+        Core::Console::Error("Failed to begin single command buffer. Error: %s", Errors::ToString(Result));
+        return false;
+    }
+
+    return true;
+}
+
 bool CommandBuffer::BeginRecord(SwapChain const* SwapChain_, const Colorf& ClearColor) const
 {
     VkCommandBufferBeginInfo BeginInfo {};
@@ -102,15 +119,25 @@ bool CommandBuffer::BeginRecord(SwapChain const* SwapChain_, const Colorf& Clear
     return true;
 }
 
-bool CommandBuffer::EndRecord() const
+bool CommandBuffer::End() const
 {
-    vkCmdEndRenderPass(m_CommandBuffer);
-
     VkResult Result = vkEndCommandBuffer(m_CommandBuffer);
 
     if (Result != VK_SUCCESS)
     {
         Core::Console::Error("Failed to end command buffer. Error: %s", Errors::ToString(Result));
+        return false;
+    }
+
+    return true;
+}
+
+bool CommandBuffer::EndRecord() const
+{
+    vkCmdEndRenderPass(m_CommandBuffer);
+
+    if (!End())
+    {
         return false;
     }
 
@@ -143,6 +170,32 @@ bool CommandBuffer::Submit(Device const* Device_, Sync const* Sync_) const
     if (Result != VK_SUCCESS)
     {
         Core::Console::Error("Failed to submit graphics queue. Error: %s", Errors::ToString(Result));
+        return false;
+    }
+
+    return true;
+}
+
+bool CommandBuffer::SubmitWait(Device const* Device_) const
+{
+    VkSubmitInfo SubmitInfo {};
+    SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    SubmitInfo.commandBufferCount = 1;
+    SubmitInfo.pCommandBuffers = &m_CommandBuffer;
+
+    VkResult Result { vkQueueSubmit(Device_->GraphicsQueue()->Get(), 1, &SubmitInfo, VK_NULL_HANDLE) };
+
+    if (Result != VK_SUCCESS)
+    {
+        Core::Console::Error("Failed to submit command buffer to queue. Error: %s", Errors::ToString(Result));
+        return false;
+    }
+
+    Result = vkQueueWaitIdle(Device_->GraphicsQueue()->Get());
+
+    if (Result != VK_SUCCESS)
+    {
+        Core::Console::Error("Failed to wait on command buffer. Error: %s", Errors::ToString(Result));
         return false;
     }
 
@@ -220,6 +273,18 @@ const CommandBuffer& CommandBuffer::SetScissor(const Recti& Rect) const
     Scissor.offset = { Rect.X, Rect.Y };
     Scissor.extent = { static_cast<u32>(Rect.W), static_cast<u32>(Rect.H) };
     vkCmdSetScissor(m_CommandBuffer, 0, 1, &Scissor);
+
+    return *this;
+}
+
+const CommandBuffer& CommandBuffer::CopyBuffer(Buffer const* From, Buffer const* To, u64 Size) const
+{
+    VkBufferCopy Region {};
+    Region.srcOffset = 0;
+    Region.dstOffset = 0;
+    Region.size = Size;
+
+    vkCmdCopyBuffer(m_CommandBuffer, From->Get(), To->Get(), 1, &Region);
 
     return *this;
 }

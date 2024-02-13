@@ -41,6 +41,7 @@ struct ViewportRect;
 namespace Vulkan
 {
 
+class Buffer;
 class CommandPool;
 class Device;
 class GraphicsPipeline;
@@ -56,10 +57,14 @@ public:
     void Initialize(VkCommandBuffer Handle);
     void Shutdown(Device const* Device_, CommandPool const* Pool);
 
+    bool BeginSingle() const;
     bool BeginRecord(SwapChain const* SwapChain_, const Colorf& ClearColor) const;
+    bool End() const;
     bool EndRecord() const;
     void Reset() const;
     bool Submit(Device const* Device_, Sync const* Sync_) const;
+    bool SubmitWait(Device const* Device_) const;
+
     const CommandBuffer& BindPipeline(GraphicsPipeline const* Pipeline) const;
     const CommandBuffer& BindBuffer(VertexBuffer const* VertexBuffer_) const;
     const CommandBuffer& BindDescriptorSet(GraphicsPipeline const* Pipeline, VkDescriptorSet Set) const;
@@ -71,6 +76,7 @@ public:
         u32 FirstInstance) const;
     const CommandBuffer& SetViewport(const ViewportRect& Rect) const;
     const CommandBuffer& SetScissor(const Recti& Rect) const;
+    const CommandBuffer& CopyBuffer(Buffer const* From, Buffer const* To, u64 Size) const;
 
 private:
     VkCommandBuffer m_CommandBuffer { VK_NULL_HANDLE };

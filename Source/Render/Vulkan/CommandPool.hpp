@@ -51,6 +51,8 @@ public:
     bool InitializeBuffers(Device const* Device_, u64 Count);
     void Shutdown(Device const* Device_);
 
+    UniquePtr<CommandBuffer> AllocateBuffer(Device const* Device_) const;
+
     VkCommandPool Get() const;
     CommandBuffer const* Buffer(u64 Index) const;
 
