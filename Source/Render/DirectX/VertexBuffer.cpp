@@ -100,7 +100,7 @@ bool VertexBuffer::Initialize(Device const* Device_, const VertexBufferDescripti
 
     m_IndexBufferView.BufferLocation = m_IndexBuffer->GetGPUVirtualAddress();
     m_IndexBufferView.Format =
-        Description.IndexFormat == IndexFormat::U16 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
+        Description.IndexFormat == IndexFormatType::U16 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
 
     m_ID = ++s_ID;
     return true;

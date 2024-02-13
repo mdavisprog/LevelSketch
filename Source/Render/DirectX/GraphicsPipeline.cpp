@@ -49,12 +49,12 @@ GraphicsPipeline::GraphicsPipeline()
 {
 }
 
-static D3D12_CULL_MODE ToCullMode(CullMode Mode)
+static D3D12_CULL_MODE ToCullMode(CullModeType Mode)
 {
     switch (Mode)
     {
-    case CullMode::Back: return D3D12_CULL_MODE_BACK;
-    case CullMode::Front: return D3D12_CULL_MODE_FRONT;
+    case CullModeType::Back: return D3D12_CULL_MODE_BACK;
+    case CullModeType::Front: return D3D12_CULL_MODE_FRONT;
     default: break;
     }
 
