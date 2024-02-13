@@ -85,25 +85,6 @@ void Sync::Shutdown(Device const* Device_)
     }
 }
 
-u32 Sync::FrameIndex(Device const* Device_, SwapChain const* SwapChain_) const
-{
-    u32 Index { UINT32_MAX };
-
-    VkResult Result { vkAcquireNextImageKHR(Device_->GetLogicalDevice()->Get(),
-        SwapChain_->Get(),
-        UINT64_MAX,
-        m_ImageReady,
-        VK_NULL_HANDLE,
-        &Index) };
-
-    if (Result != VK_SUCCESS)
-    {
-        Core::Console::Error("Failed to acquire next image. Error: %s", Errors::ToString(Result));
-    }
-
-    return Index;
-}
-
 void Sync::WaitForFence(Device const* Device_) const
 {
     if (m_Fence == VK_NULL_HANDLE)

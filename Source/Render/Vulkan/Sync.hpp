@@ -48,7 +48,6 @@ public:
     bool Initialize(Device const* Device_);
     void Shutdown(Device const* Device_);
 
-    u32 FrameIndex(Device const* Device_, SwapChain const* SwapChain_) const;
     void WaitForFence(Device const* Device_) const;
 
     VkSemaphore ImageReady() const;

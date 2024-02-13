@@ -200,7 +200,29 @@ void SwapChain::Shutdown(Device const* Device_)
     }
 }
 
-bool SwapChain::Present(Device const* Device_, Sync const* Sync_, u32 FrameIndex) const
+bool SwapChain::NextFrame(Device const* Device_, Sync const* Sync_)
+{
+    u32 Index { UINT32_MAX };
+
+    VkResult Result { vkAcquireNextImageKHR(Device_->GetLogicalDevice()->Get(),
+        m_SwapChain,
+        UINT64_MAX,
+        Sync_->ImageReady(),
+        VK_NULL_HANDLE,
+        &Index) };
+
+    if (Result != VK_SUCCESS)
+    {
+        Core::Console::Error("Failed to acquire next image. Error: %s", Errors::ToString(Result));
+        return false;
+    }
+
+    m_Index = Index;
+
+    return true;
+}
+
+bool SwapChain::Present(Device const* Device_, Sync const* Sync_) const
 {
     const VkSemaphore SignalSemaphores[] { Sync_->RenderFinished() };
     const VkSwapchainKHR SwapChains[] { m_SwapChain };
@@ -211,7 +233,7 @@ bool SwapChain::Present(Device const* Device_, Sync const* Sync_, u32 FrameIndex
     PresentInfo.pWaitSemaphores = SignalSemaphores;
     PresentInfo.swapchainCount = 1;
     PresentInfo.pSwapchains = SwapChains;
-    PresentInfo.pImageIndices = &FrameIndex;
+    PresentInfo.pImageIndices = &m_Index;
     PresentInfo.pResults = nullptr;
 
     VkResult Result { vkQueuePresentKHR(Device_->PresentQueue()->Get(), &PresentInfo) };
@@ -245,14 +267,9 @@ VkExtent2D SwapChain::Extents() const
     return m_Extents;
 }
 
-VkFramebuffer SwapChain::Framebuffer(u32 Index) const
+VkFramebuffer SwapChain::Framebuffer() const
 {
-    if (Index >= m_Framebuffers.Size())
-    {
-        return VK_NULL_HANDLE;
-    }
-
-    return m_Framebuffers[Index];
+    return m_Framebuffers[m_Index];
 }
 
 bool SwapChain::InitializeImageViews(Device const* Device_)

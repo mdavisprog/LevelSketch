@@ -76,9 +76,24 @@ void Viewport::Shutdown(VkInstance Instance, Device const* Device_)
     m_SwapChain->Shutdown(Device_);
 }
 
+Platform::Window* Viewport::Window() const
+{
+    return m_Window;
+}
+
 Surface const* Viewport::GetSurface() const
 {
     return m_Surface.Get();
+}
+
+SwapChain* Viewport::GetSwapChain()
+{
+    return m_SwapChain.Get();
+}
+
+SwapChain const* Viewport::GetSwapChain() const
+{
+    return m_SwapChain.Get();
 }
 
 }

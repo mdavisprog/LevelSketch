@@ -49,13 +49,14 @@ public:
     bool Initialize(Device const* Device_, Surface const* Surface_);
     void Shutdown(Device const* Device_);
 
-    bool Present(Device const* Device_, Sync const* Sync_, u32 FrameIndex) const;
+    bool NextFrame(Device const* Device_, Sync const* Sync_);
+    bool Present(Device const* Device_, Sync const* Sync_) const;
 
     VkSwapchainKHR Get() const;
     VkRenderPass RenderPass() const;
     VkFormat Format() const;
     VkExtent2D Extents() const;
-    VkFramebuffer Framebuffer(u32 Index) const;
+    VkFramebuffer Framebuffer() const;
 
 private:
     bool InitializeImageViews(Device const* Device_);
@@ -69,6 +70,7 @@ private:
     Array<VkImageView> m_ImageViews {};
     Array<VkFramebuffer> m_Framebuffers {};
     VkRenderPass m_RenderPass { VK_NULL_HANDLE };
+    u32 m_Index { 0 };
 };
 
 }

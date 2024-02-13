@@ -56,10 +56,11 @@ public:
     void Initialize(VkCommandBuffer Handle);
     void Shutdown(Device const* Device_, CommandPool const* Pool);
 
-    bool BeginRecord(GraphicsPipeline const* Pipeline, SwapChain const* SwapChain_, u32 FrameIndex) const;
+    bool BeginRecord(SwapChain const* SwapChain_, const Colorf& ClearColor) const;
     bool EndRecord() const;
     void Reset() const;
     bool Submit(Device const* Device_, Sync const* Sync_) const;
+    const CommandBuffer& BindPipeline(GraphicsPipeline const* Pipeline) const;
     const CommandBuffer& BindBuffer(VertexBuffer const* VertexBuffer_) const;
     const CommandBuffer& BindDescriptorSet(GraphicsPipeline const* Pipeline, VkDescriptorSet Set) const;
     const CommandBuffer& DrawVertices(u32 VertexCount, u32 InstanceCount, u32 FirstVertex, u32 FirstInstance) const;

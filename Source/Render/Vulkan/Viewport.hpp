@@ -57,7 +57,11 @@ public:
     bool InitializeSwapChain(Device const* Device_);
     void Shutdown(VkInstance Instance, Device const* Device_);
 
+    Platform::Window* Window() const;
     Surface const* GetSurface() const;
+
+    SwapChain* GetSwapChain();
+    SwapChain const* GetSwapChain() const;
 
 private:
     Platform::Window* m_Window { nullptr };

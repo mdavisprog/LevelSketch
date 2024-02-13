@@ -26,12 +26,15 @@ SOFTWARE.
 
 #include "Renderer.hpp"
 #include "../../Core/Console.hpp"
+#include "../../Core/Math/Matrix.hpp"
+#include "../../Core/Math/Rect.hpp"
 #include "../../Core/Math/Vertex.hpp"
 #include "../../Core/Version.hpp"
 #include "../../Platform/FileSystem.hpp"
 #include "../../Platform/Window.hpp"
 #include "../VertexBufferDescription.hpp"
 #include "../VertexDataDescription.hpp"
+#include "../ViewportRect.hpp"
 #include "Buffer.hpp"
 #include "CommandBuffer.hpp"
 #include "CommandPool.hpp"
@@ -40,6 +43,7 @@ SOFTWARE.
 #include "Errors.hpp"
 #include "GraphicsPipeline.hpp"
 #include "Loader.hpp"
+#include "SwapChain.hpp"
 #include "Sync.hpp"
 #include "UniformBuffer.hpp"
 #include "VertexBuffer.hpp"
@@ -255,11 +259,7 @@ void Renderer::Shutdown()
 #if defined(DEBUG)
     DebugUtils::Instance().Shutdown(m_Instance);
 #endif
-    /*
-        m_RenderBuffer.Shutdown(m_Device);
 
-        m_Pipeline.Shutdown(m_Device);
-    */
     if (m_Instance != nullptr)
     {
         vkDestroyInstance(m_Instance, nullptr);
@@ -268,36 +268,7 @@ void Renderer::Shutdown()
 
     Loader::Instance().Shutdown();
 }
-/*
-void Renderer::Render(Platform::Window*)
-{
-    UniformBuffer& Uniforms { m_Uniforms[m_FrameIndex] };
-    Uniforms.UpdateBuffer();
 
-    // TODO: Bind uniform buffers
-    for each uniform buffer
-        Pipeline::BindUniformBuffer
-
-    const Sync& CurrentSync { m_Syncs[m_FrameIndex] };
-
-    CurrentSync.WaitForFence(m_Device);
-    const u32 SwapChainFrameIndex { CurrentSync.FrameIndex(m_Device, m_SwapChain) };
-
-    const CommandBuffer& CmdBuffer { m_CommandPool.Buffer(m_FrameIndex) };
-
-    CmdBuffer.Reset();
-    CmdBuffer.BeginRecord(m_Pipeline, m_SwapChain, SwapChainFrameIndex);
-    CmdBuffer.BindBuffers(m_RenderBuffer);
-    CmdBuffer.BindDescriptorSet(m_Pipeline, m_FrameIndex);
-    CmdBuffer.DrawVerticesIndexed(6, 1, 0, 0, 0);
-    CmdBuffer.EndRecord();
-    CmdBuffer.Submit(m_Device, CurrentSync);
-
-    m_SwapChain.Present(m_Device, CurrentSync, SwapChainFrameIndex);
-
-    m_FrameIndex = (m_FrameIndex + 1) % FRAMES_IN_FLIGHT;
-}
-*/
 u32 Renderer::LoadTexture(const void*, u32, u32, u8)
 {
     return 1;
@@ -308,13 +279,52 @@ bool Renderer::BindTexture(u32)
     return false;
 }
 
-bool Renderer::BeginRender(Platform::Window*, const Colorf&)
+bool Renderer::BeginRender(Platform::Window* Window, const Colorf& ClearColor)
 {
-    return false;
+    m_Syncs[m_FrameIndex]->WaitForFence(m_Device.Get());
+
+    Viewport* Viewport_ { GetViewport(Window) };
+
+    if (Viewport_ == nullptr)
+    {
+        Core::Console::Error("Failed to find associated viewport for given window.");
+        return false;
+    }
+
+    Viewport_->GetSwapChain()->NextFrame(m_Device.Get(), m_Syncs[m_FrameIndex].Get());
+
+    CommandBuffer const* Commands { m_CommandPool->Buffer(m_FrameIndex) };
+    Commands->Reset();
+    Commands->BeginRecord(Viewport_->GetSwapChain(), ClearColor);
+
+    const VkExtent2D Extents { Viewport_->GetSwapChain()->Extents() };
+    const ViewportRect Rect { { 0.0f, 0.0f, static_cast<f32>(Extents.width), static_cast<f32>(Extents.height) },
+        0.0f,
+        1.0f };
+    SetViewportRect(Rect);
+
+    const Recti Scissor { 0, 0, static_cast<i32>(Extents.width), static_cast<i32>(Extents.height) };
+    SetScissor(Scissor);
+
+    UniformBuffer* Uniforms { m_Uniforms[m_FrameIndex].Get() };
+    Uniforms->GetUniforms().Perspective = Core::Math::PerspectiveMatrixLH(45.0f, Window->AspectRatio(), 0.1f, 100.0f);
+    Uniforms->GetUniforms().Orthographic = Core::Math::OrthographicMatrixLH(Rect.Bounds, -1.0f, 1.0f);
+    Uniforms->UpdateBuffer();
+
+    return true;
 }
 
-void Renderer::EndRender(Platform::Window*)
+void Renderer::EndRender(Platform::Window* Window)
 {
+    CommandBuffer const* Commands { m_CommandPool->Buffer(m_FrameIndex) };
+
+    Commands->EndRecord();
+    Commands->Submit(m_Device.Get(), m_Syncs[m_FrameIndex].Get());
+
+    Viewport* Viewport_ { GetViewport(Window) };
+    Viewport_->GetSwapChain()->Present(m_Device.Get(), m_Syncs[m_FrameIndex].Get());
+
+    m_FrameIndex = (m_FrameIndex + 1) % FRAMES_IN_FLIGHT;
 }
 
 void Renderer::SetViewportRect(const ViewportRect& Rect)
@@ -418,6 +428,11 @@ bool Renderer::BindVertexBuffer(u32 ID)
     return false;
 }
 
+void Renderer::UpdateViewMatrix(const Matrix4f& View)
+{
+    m_Uniforms[m_FrameIndex]->GetUniforms().View = View;
+}
+
 bool Renderer::GetRequiredExtensionProperties(const Array<VkExtensionProperties>& Properties,
     Array<const char*>& Ptrs) const
 {
@@ -498,6 +513,19 @@ GraphicsPipeline const* Renderer::GetGraphicsPipeline(u32 ID) const
         if (Pipeline->ID() == ID)
         {
             return Pipeline.Get();
+        }
+    }
+
+    return nullptr;
+}
+
+Viewport* Renderer::GetViewport(Platform::Window* Window) const
+{
+    for (const UniquePtr<Viewport>& Viewport_ : m_Viewports)
+    {
+        if (Viewport_->Window() == Window)
+        {
+            return Viewport_.Get();
         }
     }
 

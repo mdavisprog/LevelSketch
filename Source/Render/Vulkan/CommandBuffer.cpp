@@ -26,6 +26,7 @@ SOFTWARE.
 
 #include "CommandBuffer.hpp"
 #include "../../Core/Console.hpp"
+#include "../../Core/Math/Color.hpp"
 #include "../../Core/Math/Rect.hpp"
 #include "../ViewportRect.hpp"
 #include "Buffer.hpp"
@@ -64,7 +65,7 @@ void CommandBuffer::Shutdown(Device const* Device_, CommandPool const* Pool)
     }
 }
 
-bool CommandBuffer::BeginRecord(GraphicsPipeline const* Pipeline, SwapChain const* SwapChain_, u32 FrameIndex) const
+bool CommandBuffer::BeginRecord(SwapChain const* SwapChain_, const Colorf& ClearColor) const
 {
     VkCommandBufferBeginInfo BeginInfo {};
     BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -79,19 +80,24 @@ bool CommandBuffer::BeginRecord(GraphicsPipeline const* Pipeline, SwapChain cons
         return false;
     }
 
-    const VkClearValue ClearValue { { { 0.0f, 0.0f, 1.0f, 1.0f } } };
+    VkClearValue ClearValue {};
+    ClearValue.color.float32[0] = ClearColor.R;
+    ClearValue.color.float32[1] = ClearColor.G;
+    ClearValue.color.float32[2] = ClearColor.B;
+    ClearValue.color.float32[3] = ClearColor.A;
+
+    const VkExtent2D Extents { SwapChain_->Extents() };
 
     VkRenderPassBeginInfo RenderPassInfo {};
     RenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     RenderPassInfo.renderPass = SwapChain_->RenderPass();
-    RenderPassInfo.framebuffer = SwapChain_->Framebuffer(FrameIndex);
+    RenderPassInfo.framebuffer = SwapChain_->Framebuffer();
     RenderPassInfo.renderArea.offset = { 0, 0 };
-    RenderPassInfo.renderArea.extent = SwapChain_->Extents();
+    RenderPassInfo.renderArea.extent = Extents;
     RenderPassInfo.clearValueCount = 1;
     RenderPassInfo.pClearValues = &ClearValue;
 
     vkCmdBeginRenderPass(m_CommandBuffer, &RenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-    vkCmdBindPipeline(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Pipeline->Get());
 
     return true;
 }
@@ -141,6 +147,13 @@ bool CommandBuffer::Submit(Device const* Device_, Sync const* Sync_) const
     }
 
     return true;
+}
+
+const CommandBuffer& CommandBuffer::BindPipeline(GraphicsPipeline const* Pipeline) const
+{
+    vkCmdBindPipeline(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Pipeline->Get());
+
+    return *this;
 }
 
 const CommandBuffer& CommandBuffer::BindBuffer(VertexBuffer const* VertexBuffer_) const

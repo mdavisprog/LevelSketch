@@ -81,11 +81,14 @@ public:
     virtual bool UploadVertexData(u32 ID, const VertexDataDescription& Description) override;
     virtual bool BindVertexBuffer(u32 ID) override;
 
+    virtual void UpdateViewMatrix(const Matrix4f& View) override;
+
 private:
     bool GetRequiredExtensionProperties(const Array<VkExtensionProperties>& Properties, Array<const char*>& Ptrs) const;
     bool GetExistingLayers(const Array<const char*> Layers, Array<const char*>& Ptrs) const;
     VertexBuffer const* GetVertexBuffer(u32 ID) const;
     GraphicsPipeline const* GetGraphicsPipeline(u32 ID) const;
+    Viewport* GetViewport(Platform::Window* Window) const;
 
     VkInstance m_Instance { nullptr };
     UniquePtr<Device> m_Device { nullptr };
