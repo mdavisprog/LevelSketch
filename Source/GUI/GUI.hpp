@@ -57,6 +57,7 @@ public:
     static GUI& Instance();
 
     bool Initialize(i32 Argc, const char** Argv);
+    bool InitializeResources();
     void Shutdown();
     bool IsRunning() const;
     void RunFrame();

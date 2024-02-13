@@ -394,6 +394,8 @@ add_custom_command(
 
 if(WITH_VULKAN)
     set(SHADER_FILES
+        ${CMAKE_CURRENT_LIST_DIR}/../Content/Shaders/GLSL/GUIPS.frag
+        ${CMAKE_CURRENT_LIST_DIR}/../Content/Shaders/GLSL/GUIVS.vert
         ${CMAKE_CURRENT_LIST_DIR}/../Content/Shaders/GLSL/TestPS.frag
         ${CMAKE_CURRENT_LIST_DIR}/../Content/Shaders/GLSL/TestVS.vert
     )

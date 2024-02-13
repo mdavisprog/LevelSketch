@@ -186,21 +186,9 @@ static bool OnPlatformFrame(const Platform::TimingData& TimingData)
     return true;
 }
 
-static bool InitializeRendering()
+static bool InitializeResources()
 {
     const UniquePtr<Render::Renderer>& Renderer { Render::Renderer::Instance() };
-
-    if (!Renderer->Initialize())
-    {
-        return false;
-    }
-
-    const Render::Renderer::DriverSummary& Summary { Renderer->Summary() };
-    Core::Console::WriteLine("Rendering Driver Summary");
-    Core::Console::WriteLine("Vendor: %s", Summary.Vendor.Data());
-    Core::Console::WriteLine("Renderer: %s", Summary.Renderer.Data());
-    Core::Console::WriteLine("Version: %s", Summary.Version.Data());
-    Core::Console::WriteLine("Shading Language Version: %s", Summary.ShadingLanguageVersion.Data());
 
     Render::GraphicsPipelineDescription TestDesc {};
     TestDesc.Name = "Test";
@@ -249,6 +237,11 @@ static bool InitializeRendering()
         return false;
     }
 
+    if (!GUI::GUI::Instance().InitializeResources())
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -278,20 +271,33 @@ i32 Main(i32 Argc, const char** Argv)
         return -1;
     }
 
-    if (!InitializeRendering())
+    if (!Render::Renderer::Instance()->Initialize())
     {
         return -1;
     }
 
+    const Render::Renderer::DriverSummary& Summary { Render::Renderer::Instance()->Summary() };
+    Core::Console::WriteLine("Rendering Driver Summary");
+    Core::Console::WriteLine("Vendor: %s", Summary.Vendor.Data());
+    Core::Console::WriteLine("Renderer: %s", Summary.Renderer.Data());
+    Core::Console::WriteLine("Version: %s", Summary.Version.Data());
+    Core::Console::WriteLine("Shading Language Version: %s", Summary.ShadingLanguageVersion.Data());
+
     if (!GUI::GUI::Instance().Initialize(Argc, Argv))
     {
-        return false;
+        return -1;
     }
 
     if (!Engine::Engine::Instance().Initialize())
     {
         Core::Console::Error("Failed to initialize engine!");
-        return 0;
+        return -1;
+    }
+
+    if (!InitializeResources())
+    {
+        Core::Console::Error("Failed to initialize rendering resources.");
+        return -1;
     }
 
     int Return = Platform->SetOnFrame(OnPlatformFrame).Run();

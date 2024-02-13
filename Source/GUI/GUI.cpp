@@ -98,42 +98,6 @@ GUI& GUI::Instance()
 
 bool GUI::Initialize(i32 Argc, const char** Argv)
 {
-    const UniquePtr<Render::Renderer>& Renderer { Render::Renderer::Instance() };
-
-    Render::GraphicsPipelineDescription GUIDesc {};
-    GUIDesc.Name = "GUI";
-    GUIDesc.CullMode = Render::CullModeType::None;
-    GUIDesc.UseDepthStencilBuffer = false;
-    GUIDesc.UseAlphaBlending = true;
-    GUIDesc.VertexShader.Name = "GUIVS";
-    GUIDesc.VertexShader.Path = "GUIVS";
-    GUIDesc.VertexShader.Function = "Main";
-    GUIDesc.VertexShader.VertexDescriptions.Push({ "POSITION", Render::VertexFormat::Float2 });
-    GUIDesc.VertexShader.VertexDescriptions.Push({ "TEXCOORD", Render::VertexFormat::Float2 });
-    GUIDesc.VertexShader.VertexDescriptions.Push({ "COLOR", Render::VertexFormat::Byte4 });
-    GUIDesc.FragmentShader.Name = "GUIFS";
-    GUIDesc.FragmentShader.Path = "GUIPS";
-    GUIDesc.FragmentShader.Function = "Main";
-    m_GUIPipeline = Renderer->CreateGraphicsPipeline(GUIDesc);
-    if (m_GUIPipeline == 0)
-    {
-        return false;
-    }
-
-    Render::VertexBufferDescription GUIBufferDesc {};
-    GUIBufferDesc.VertexBufferSize = 100000;
-    GUIBufferDesc.IndexBufferSize = 100000;
-    GUIBufferDesc.Stride = sizeof(OctaneGUI::Vertex);
-    GUIBufferDesc.IndexFormat = Render::IndexFormatType::U32;
-    m_GUIBuffer = Renderer->CreateVertexBuffer(GUIBufferDesc);
-    if (m_GUIBuffer == 0)
-    {
-        return false;
-    }
-
-    const u8 WhiteTexture[4] { 0xFF, 0xFF, 0xFF, 0xFF };
-    m_WhiteTexture = Renderer->LoadTexture(WhiteTexture, 1, 1, 4);
-
     const char* Stream = R"({
         "Theme": {
             "FontPath": "Content/Fonts/Roboto-Regular.ttf",
@@ -180,6 +144,47 @@ bool GUI::Initialize(i32 Argc, const char** Argv)
         Core::Console::Error("Failed initialize GUI.");
         return false;
     }
+
+    return true;
+}
+
+bool GUI::InitializeResources()
+{
+    const UniquePtr<Render::Renderer>& Renderer { Render::Renderer::Instance() };
+
+    Render::GraphicsPipelineDescription GUIDesc {};
+    GUIDesc.Name = "GUI";
+    GUIDesc.CullMode = Render::CullModeType::None;
+    GUIDesc.UseDepthStencilBuffer = false;
+    GUIDesc.UseAlphaBlending = true;
+    GUIDesc.VertexShader.Name = "GUIVS";
+    GUIDesc.VertexShader.Path = "GUIVS";
+    GUIDesc.VertexShader.Function = "Main";
+    GUIDesc.VertexShader.VertexDescriptions.Push({ "POSITION", Render::VertexFormat::Float2 });
+    GUIDesc.VertexShader.VertexDescriptions.Push({ "TEXCOORD", Render::VertexFormat::Float2 });
+    GUIDesc.VertexShader.VertexDescriptions.Push({ "COLOR", Render::VertexFormat::Byte4 });
+    GUIDesc.FragmentShader.Name = "GUIFS";
+    GUIDesc.FragmentShader.Path = "GUIPS";
+    GUIDesc.FragmentShader.Function = "Main";
+    m_GUIPipeline = Renderer->CreateGraphicsPipeline(GUIDesc);
+    if (m_GUIPipeline == 0)
+    {
+        return false;
+    }
+
+    Render::VertexBufferDescription GUIBufferDesc {};
+    GUIBufferDesc.VertexBufferSize = 100000;
+    GUIBufferDesc.IndexBufferSize = 100000;
+    GUIBufferDesc.Stride = sizeof(OctaneGUI::Vertex);
+    GUIBufferDesc.IndexFormat = Render::IndexFormatType::U32;
+    m_GUIBuffer = Renderer->CreateVertexBuffer(GUIBufferDesc);
+    if (m_GUIBuffer == 0)
+    {
+        return false;
+    }
+
+    const u8 WhiteTexture[4] { 0xFF, 0xFF, 0xFF, 0xFF };
+    m_WhiteTexture = Renderer->LoadTexture(WhiteTexture, 1, 1, 4);
 
     return true;
 }
