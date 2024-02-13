@@ -38,6 +38,7 @@ SOFTWARE.
 #include "DescriptorPool.hpp"
 #include "Device.hpp"
 #include "Errors.hpp"
+#include "GraphicsPipeline.hpp"
 #include "Loader.hpp"
 #include "Sync.hpp"
 #include "UniformBuffer.hpp"
@@ -55,7 +56,7 @@ namespace Render
 
 String Renderer::ShadersDirectory()
 {
-    return Platform::FileSystem::CombinePaths(Platform::FileSystem::ContentDirectory(), "GLSL");
+    return Platform::FileSystem::CombinePaths(Platform::FileSystem::ShadersDirectory(), "GLSL");
 }
 
 namespace Vulkan
@@ -217,6 +218,12 @@ void Renderer::Shutdown()
 {
     m_Device->WaitForIdle();
 
+    for (const UniquePtr<GraphicsPipeline>& Pipeline : m_GraphicsPipelines)
+    {
+        Pipeline->Shutdown(m_Device.Get());
+    }
+    m_GraphicsPipelines.Clear();
+
     for (const UniquePtr<VertexBuffer>& Buffer : m_VertexBuffers)
     {
         Buffer->Shutdown(m_Device.Get());
@@ -322,18 +329,43 @@ void Renderer::SetScissor(const Recti& Rect)
     Commands->SetScissor(Rect);
 }
 
-u32 Renderer::CreateGraphicsPipeline(const GraphicsPipelineDescription&)
+u32 Renderer::CreateGraphicsPipeline(const GraphicsPipelineDescription& Description)
 {
-    return 0;
+    UniquePtr<GraphicsPipeline> Pipeline { UniquePtr<GraphicsPipeline>::New() };
+
+    if (!Pipeline->Initialize(m_Device.Get(), m_DescriptorPool.Get(), m_Viewports[0]->GetSwapChain(), Description))
+    {
+        return 0;
+    }
+
+    const u32 Result { Pipeline->ID() };
+    m_GraphicsPipelines.Push(std::move(Pipeline));
+    return Result;
 }
 
-bool Renderer::BindGraphicsPipeline(u32)
+bool Renderer::BindGraphicsPipeline(u32 ID)
 {
+    GraphicsPipeline const* Pipeline { GetGraphicsPipeline(ID) };
+
+    if (Pipeline == nullptr)
+    {
+        Core::Console::Warning("Failed to bind graphics pipeline with id '%d'.", ID);
+        return false;
+    }
+
+    Pipeline->BindUniformBuffer(m_Device.Get(), m_Uniforms[m_FrameIndex].Get(), m_DescriptorPool->GetSet(m_FrameIndex));
+
+    CommandBuffer const* Commands { m_CommandPool->Buffer(m_FrameIndex) };
+    Commands->BindPipeline(Pipeline);
+    Commands->BindDescriptorSet(Pipeline, m_DescriptorPool->GetSet(m_FrameIndex));
+
     return false;
 }
 
-void Renderer::DrawIndexed(u32, u32, u32, u32, u32)
+void Renderer::DrawIndexed(u32 IndexCount, u32 InstanceCount, u32 StartIndex, u32 BaseVertex, u32 StartInstance)
 {
+    CommandBuffer const* Commands { m_CommandPool->Buffer(m_FrameIndex) };
+    Commands->DrawVerticesIndexed(IndexCount, InstanceCount, StartIndex, BaseVertex, StartInstance);
 }
 
 u32 Renderer::CreateVertexBuffer(const VertexBufferDescription& Description)
@@ -453,6 +485,19 @@ VertexBuffer const* Renderer::GetVertexBuffer(u32 ID) const
         if (Buffer->ID() == ID)
         {
             return Buffer.Get();
+        }
+    }
+
+    return nullptr;
+}
+
+GraphicsPipeline const* Renderer::GetGraphicsPipeline(u32 ID) const
+{
+    for (const UniquePtr<GraphicsPipeline>& Pipeline : m_GraphicsPipelines)
+    {
+        if (Pipeline->ID() == ID)
+        {
+            return Pipeline.Get();
         }
     }
 

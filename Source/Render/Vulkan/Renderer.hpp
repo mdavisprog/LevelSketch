@@ -44,6 +44,7 @@ namespace Vulkan
 class CommandPool;
 class DescriptorPool;
 class Device;
+class GraphicsPipeline;
 class Sync;
 class UniformBuffer;
 class VertexBuffer;
@@ -84,6 +85,7 @@ private:
     bool GetRequiredExtensionProperties(const Array<VkExtensionProperties>& Properties, Array<const char*>& Ptrs) const;
     bool GetExistingLayers(const Array<const char*> Layers, Array<const char*>& Ptrs) const;
     VertexBuffer const* GetVertexBuffer(u32 ID) const;
+    GraphicsPipeline const* GetGraphicsPipeline(u32 ID) const;
 
     VkInstance m_Instance { nullptr };
     UniquePtr<Device> m_Device { nullptr };
@@ -93,6 +95,7 @@ private:
     Array<UniquePtr<Sync>> m_Syncs {};
     Array<UniquePtr<UniformBuffer>> m_Uniforms {};
     Array<UniquePtr<VertexBuffer>> m_VertexBuffers {};
+    Array<UniquePtr<GraphicsPipeline>> m_GraphicsPipelines {};
     u64 m_FrameIndex { 0 };
 };
 

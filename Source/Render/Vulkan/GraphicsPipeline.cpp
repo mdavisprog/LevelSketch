@@ -76,6 +76,8 @@ VkCullModeFlagBits ToCullMode(CullModeType Type)
     return VK_CULL_MODE_NONE;
 }
 
+u32 GraphicsPipeline::s_ID { 0 };
+
 GraphicsPipeline::GraphicsPipeline()
 {
 }
@@ -138,13 +140,13 @@ bool GraphicsPipeline::Initialize(Device const* Device_,
     VertexInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     VertexInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
     VertexInfo.module = VertexShader.Get();
-    VertexInfo.pName = VertexShaderDesc.Name.Data();
+    VertexInfo.pName = "main";
 
     VkPipelineShaderStageCreateInfo FragmentInfo {};
     FragmentInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     FragmentInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
     FragmentInfo.module = FragmentShader.Get();
-    FragmentInfo.pName = FragmentShaderDesc.Name.Data();
+    FragmentInfo.pName = "main";
 
     VkPipelineShaderStageCreateInfo Stages[] { VertexInfo, FragmentInfo };
     const VkDynamicState DynamicStates[] { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
@@ -247,6 +249,8 @@ bool GraphicsPipeline::Initialize(Device const* Device_,
         return false;
     }
 
+    m_ID = ++s_ID;
+
     CleanupShaders();
     return true;
 }
@@ -297,6 +301,11 @@ VkPipeline GraphicsPipeline::Get() const
 VkPipelineLayout GraphicsPipeline::GetLayout() const
 {
     return m_PipelineLayout;
+}
+
+u32 GraphicsPipeline::ID() const
+{
+    return m_ID;
 }
 
 bool GraphicsPipeline::CreatePipelineLayout(Device const* Device_, DescriptorPool const* Pool)
