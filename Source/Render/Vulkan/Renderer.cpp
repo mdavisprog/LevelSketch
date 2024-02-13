@@ -308,6 +308,7 @@ bool Renderer::BeginRender(Platform::Window* Window, const Colorf& ClearColor)
 
     UniformBuffer* Uniforms { m_Uniforms[m_FrameIndex].Get() };
     Uniforms->GetUniforms().Perspective = Core::Math::PerspectiveMatrixLH(45.0f, Window->AspectRatio(), 0.1f, 100.0f);
+    Uniforms->GetUniforms().Perspective[5] *= -1.0f;
     Uniforms->GetUniforms().Orthographic = Core::Math::OrthographicMatrixLH(Rect.Bounds, -1.0f, 1.0f);
     Uniforms->UpdateBuffer();
 
