@@ -40,6 +40,31 @@ namespace Render
 namespace Vulkan
 {
 
+VkImageView Texture::CreateView(Device const* Device_, VkImage Image, VkFormat Format)
+{
+    VkImageViewCreateInfo ImageViewInfo {};
+    ImageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    ImageViewInfo.image = Image;
+    ImageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    ImageViewInfo.format = Format;
+    ImageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    ImageViewInfo.subresourceRange.baseMipLevel = 0;
+    ImageViewInfo.subresourceRange.levelCount = 1;
+    ImageViewInfo.subresourceRange.baseArrayLayer = 0;
+    ImageViewInfo.subresourceRange.layerCount = 1;
+
+    VkImageView ViewResult { VK_NULL_HANDLE };
+    VkResult Result = vkCreateImageView(Device_->GetLogicalDevice()->Get(), &ImageViewInfo, nullptr, &ViewResult);
+
+    if (Result != VK_SUCCESS)
+    {
+        Core::Console::Error("Failed to create image view. Error: %s", Errors::ToString(Result));
+        return VK_NULL_HANDLE;
+    }
+
+    return ViewResult;
+}
+
 u32 Texture::s_ID { 0 };
 
 Texture::Texture()
@@ -140,6 +165,8 @@ bool Texture::Initialize(Device const* Device_,
 
     Staging.Shutdown(Device_);
 
+    m_ImageView = CreateView(Device_, m_Image, VK_FORMAT_R8G8B8A8_SRGB);
+
     m_ID = ++s_ID;
 
     return true;
@@ -151,6 +178,12 @@ void Texture::Shutdown(Device const* Device_)
     {
         vkFreeMemory(Device_->GetLogicalDevice()->Get(), m_Memory, nullptr);
         m_Memory = VK_NULL_HANDLE;
+    }
+
+    if (m_ImageView != VK_NULL_HANDLE)
+    {
+        vkDestroyImageView(Device_->GetLogicalDevice()->Get(), m_ImageView, nullptr);
+        m_ImageView = VK_NULL_HANDLE;
     }
 
     if (m_Image != VK_NULL_HANDLE)

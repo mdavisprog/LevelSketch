@@ -46,6 +46,8 @@ private:
     static u32 s_ID;
 
 public:
+    static VkImageView CreateView(Device const* Device_, VkImage Image, VkFormat Format);
+
     Texture();
 
     bool Initialize(Device const* Device_,
@@ -63,6 +65,7 @@ private:
     void Transition(Device const* Device_, CommandPool const* Pool, VkImageLayout From, VkImageLayout) const;
 
     VkImage m_Image { VK_NULL_HANDLE };
+    VkImageView m_ImageView { VK_NULL_HANDLE };
     VkDeviceMemory m_Memory { VK_NULL_HANDLE };
     u32 m_ID { 0 };
 };
