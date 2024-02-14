@@ -328,6 +328,8 @@ bool Renderer::BeginRender(Platform::Window* Window, const Colorf& ClearColor)
     Uniforms->GetUniforms().Orthographic = Core::Math::OrthographicMatrixLH(Rect.Bounds, -1.0f, 1.0f);
     Uniforms->UpdateBuffer();
 
+    m_DescriptorPool->UpdateUniform(m_Device.Get(), Uniforms, m_FrameIndex);
+
     return true;
 }
 
@@ -379,8 +381,6 @@ bool Renderer::BindGraphicsPipeline(u32 ID)
         Core::Console::Warning("Failed to bind graphics pipeline with id '%d'.", ID);
         return false;
     }
-
-    Pipeline->BindUniformBuffer(m_Device.Get(), m_Uniforms[m_FrameIndex].Get(), m_DescriptorPool->GetSet(m_FrameIndex));
 
     CommandBuffer const* Commands { m_CommandPool->Buffer(m_FrameIndex) };
     Commands->BindPipeline(Pipeline);

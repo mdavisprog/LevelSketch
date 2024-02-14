@@ -60,8 +60,6 @@ public:
         const GraphicsPipelineDescription& Description);
     void Shutdown(Device const* Device_);
 
-    void BindUniformBuffer(Device const* Device_, UniformBuffer const* UniformBuffer_, VkDescriptorSet Set) const;
-
     VkPipeline Get() const;
     VkPipelineLayout GetLayout() const;
     u32 ID() const;

@@ -84,6 +84,11 @@ Buffer const* UniformBuffer::Get() const
     return m_Buffer.Get();
 }
 
+u64 UniformBuffer::Size() const
+{
+    return sizeof(Uniforms);
+}
+
 }
 }
 }

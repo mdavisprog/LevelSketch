@@ -270,29 +270,6 @@ void GraphicsPipeline::Shutdown(Device const* Device_)
     }
 }
 
-void GraphicsPipeline::BindUniformBuffer(Device const* Device_,
-    UniformBuffer const* UniformBuffer_,
-    VkDescriptorSet Set) const
-{
-    VkDescriptorBufferInfo BufferInfo {};
-    BufferInfo.buffer = UniformBuffer_->Get()->Get();
-    BufferInfo.offset = 0;
-    BufferInfo.range = sizeof(UniformBuffer::Uniforms);
-
-    VkWriteDescriptorSet WriteDescriptorSet {};
-    WriteDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    WriteDescriptorSet.dstSet = Set;
-    WriteDescriptorSet.dstBinding = 0;
-    WriteDescriptorSet.dstArrayElement = 0;
-    WriteDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    WriteDescriptorSet.descriptorCount = 1;
-    WriteDescriptorSet.pBufferInfo = &BufferInfo;
-    WriteDescriptorSet.pImageInfo = nullptr;
-    WriteDescriptorSet.pTexelBufferView = nullptr;
-
-    vkUpdateDescriptorSets(Device_->GetLogicalDevice()->Get(), 1, &WriteDescriptorSet, 0, nullptr);
-}
-
 VkPipeline GraphicsPipeline::Get() const
 {
     return m_Pipeline;

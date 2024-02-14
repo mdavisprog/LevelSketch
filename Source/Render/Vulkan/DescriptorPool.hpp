@@ -38,6 +38,9 @@ namespace Vulkan
 {
 
 class Device;
+class UniformBuffer;
+
+// TODO: Support batched writing of descriptor sets.
 
 class DescriptorPool final
 {
@@ -46,6 +49,8 @@ public:
 
     bool Initialize(Device const* Device_, u32 Count);
     void Shutdown(Device const* Device_);
+
+    void UpdateUniform(Device const* Device_, UniformBuffer const* Buffer, u64 Index);
 
     VkDescriptorPool Get() const;
     VkDescriptorSetLayout GetLayout() const;

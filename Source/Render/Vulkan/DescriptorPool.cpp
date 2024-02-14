@@ -26,10 +26,11 @@ SOFTWARE.
 
 #include "DescriptorPool.hpp"
 #include "../../Core/Console.hpp"
-#include "../../Core/Containers/Array.hpp"
+#include "Buffer.hpp"
 #include "Device.hpp"
 #include "Errors.hpp"
 #include "LogicalDevice.hpp"
+#include "UniformBuffer.hpp"
 
 namespace LevelSketch
 {
@@ -102,6 +103,27 @@ void DescriptorPool::Shutdown(Device const* Device_)
         vkDestroyDescriptorPool(Device_->GetLogicalDevice()->Get(), m_DescriptorPool, nullptr);
         m_DescriptorPool = VK_NULL_HANDLE;
     }
+}
+
+void DescriptorPool::UpdateUniform(Device const* Device_, UniformBuffer const* Buffer, u64 Index)
+{
+    VkDescriptorBufferInfo BufferInfo {};
+    BufferInfo.buffer = Buffer->Get()->Get();
+    BufferInfo.offset = 0;
+    BufferInfo.range = Buffer->Size();
+
+    VkWriteDescriptorSet WriteDescriptorSet {};
+    WriteDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    WriteDescriptorSet.dstSet = m_DescriptorSets[Index];
+    WriteDescriptorSet.dstBinding = 0;
+    WriteDescriptorSet.dstArrayElement = 0;
+    WriteDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    WriteDescriptorSet.descriptorCount = 1;
+    WriteDescriptorSet.pBufferInfo = &BufferInfo;
+    WriteDescriptorSet.pImageInfo = nullptr;
+    WriteDescriptorSet.pTexelBufferView = nullptr;
+
+    vkUpdateDescriptorSets(Device_->GetLogicalDevice()->Get(), 1, &WriteDescriptorSet, 0, nullptr);
 }
 
 VkDescriptorPool DescriptorPool::Get() const

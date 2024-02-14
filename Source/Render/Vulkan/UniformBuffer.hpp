@@ -60,6 +60,7 @@ public:
     void UpdateBuffer() const;
 
     Buffer const* Get() const;
+    u64 Size() const;
 
 private:
     UniquePtr<Buffer> m_Buffer {};
