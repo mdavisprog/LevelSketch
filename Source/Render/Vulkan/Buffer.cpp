@@ -42,6 +42,24 @@ namespace Render
 namespace Vulkan
 {
 
+u32 Buffer::FindMemoryType(Device const* Device_, u32 Filter, VkMemoryPropertyFlags Properties)
+{
+    VkPhysicalDeviceMemoryProperties MemoryProps {};
+    vkGetPhysicalDeviceMemoryProperties(Device_->GetPhysicalDevice()->Get(), &MemoryProps);
+
+    u32 Result { UINT32_MAX };
+    for (u32 I = 0; I < MemoryProps.memoryTypeCount; I++)
+    {
+        if ((Filter & (1 << I)) && (MemoryProps.memoryTypes[I].propertyFlags & Properties) == Properties)
+        {
+            Result = I;
+            break;
+        }
+    }
+
+    return Result;
+}
+
 Buffer::Buffer()
 {
 }
@@ -68,16 +86,7 @@ bool Buffer::Initialize(Device const* Device_, u64 Size, VkBufferUsageFlags Usag
     VkPhysicalDeviceMemoryProperties MemoryProps {};
     vkGetPhysicalDeviceMemoryProperties(Device_->GetPhysicalDevice()->Get(), &MemoryProps);
 
-    u32 MemoryType { UINT32_MAX };
-    for (u32 I = 0; I < MemoryProps.memoryTypeCount; I++)
-    {
-        if ((MemoryReqs.memoryTypeBits & (1 << I)) &&
-            (MemoryProps.memoryTypes[I].propertyFlags & MemProperties) == MemProperties)
-        {
-            MemoryType = I;
-            break;
-        }
-    }
+    const u32 MemoryType { FindMemoryType(Device_, MemoryReqs.memoryTypeBits, MemProperties) };
 
     if (MemoryType == UINT32_MAX)
     {

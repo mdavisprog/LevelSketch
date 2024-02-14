@@ -43,6 +43,8 @@ class Device;
 class Buffer final
 {
 public:
+    static u32 FindMemoryType(Device const* Device_, u32 Filter, VkMemoryPropertyFlags Properties);
+
     Buffer();
 
     bool Initialize(Device const* Device_, u64 Size, VkBufferUsageFlags Usage, VkMemoryPropertyFlags MemProperties);
