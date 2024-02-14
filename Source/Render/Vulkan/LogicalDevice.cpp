@@ -67,6 +67,7 @@ bool LogicalDevice::Initialize(PhysicalDevice const* PhysicalDevice_, const Arra
     }
 
     VkPhysicalDeviceFeatures Features {};
+    Features.samplerAnisotropy = VK_TRUE;
 
     VkDeviceCreateInfo DeviceInfo {};
     DeviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;

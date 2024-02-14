@@ -60,6 +60,7 @@ public:
         u32 VendorID { 0 };
         u32 DeviceID { 0 };
         String Name {};
+        f32 MaxSamplerAnisotropy { 0.0f };
     };
 
     static const Array<const char*> s_RequiredExtensions;

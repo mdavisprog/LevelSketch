@@ -52,6 +52,7 @@ static PhysicalDevice::Info GatherInfo(VkPhysicalDevice Device)
     Result.VendorID = Properties.vendorID;
     Result.DeviceID = Properties.deviceID;
     Result.Name = Properties.deviceName;
+    Result.MaxSamplerAnisotropy = Properties.limits.maxSamplerAnisotropy;
 
     return Result;
 }
@@ -241,6 +242,14 @@ UniquePtr<PhysicalDevice> PhysicalDevice::BestDevice(VkInstance Instance, Surfac
         }
 
         if (Pending.Details.Formats.IsEmpty() || Pending.Details.PresentModes.IsEmpty())
+        {
+            continue;
+        }
+
+        VkPhysicalDeviceFeatures Features {};
+        vkGetPhysicalDeviceFeatures(Pending.Device, &Features);
+
+        if (Features.samplerAnisotropy == VK_FALSE)
         {
             continue;
         }
