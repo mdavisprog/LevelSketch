@@ -46,6 +46,7 @@ class DescriptorPool;
 class Device;
 class GraphicsPipeline;
 class Sync;
+class Texture;
 class UniformBuffer;
 class VertexBuffer;
 class Viewport;
@@ -88,6 +89,7 @@ private:
     bool GetExistingLayers(const Array<const char*> Layers, Array<const char*>& Ptrs) const;
     VertexBuffer const* GetVertexBuffer(u32 ID) const;
     GraphicsPipeline const* GetGraphicsPipeline(u32 ID) const;
+    Texture const* GetTexture(u32 ID) const;
     Viewport* GetViewport(Platform::Window* Window) const;
 
     VkInstance m_Instance { nullptr };
@@ -99,6 +101,7 @@ private:
     Array<UniquePtr<UniformBuffer>> m_Uniforms {};
     Array<UniquePtr<VertexBuffer>> m_VertexBuffers {};
     Array<UniquePtr<GraphicsPipeline>> m_GraphicsPipelines {};
+    Array<UniquePtr<Texture>> m_Textures {};
     u64 m_FrameIndex { 0 };
 };
 

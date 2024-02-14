@@ -152,13 +152,14 @@ else()
             Render/Vulkan/Loader.cpp
             Render/Vulkan/LogicalDevice.cpp
             Render/Vulkan/PhysicalDevice.cpp
+            Render/Vulkan/Queue.cpp
             Render/Vulkan/Renderer.cpp
             Render/Vulkan/Shader.cpp
             Render/Vulkan/Surface.cpp
             Render/Vulkan/SurfaceX11.cpp
             Render/Vulkan/SwapChain.cpp
             Render/Vulkan/Sync.cpp
-            Render/Vulkan/Queue.cpp
+            Render/Vulkan/Texture.cpp
             Render/Vulkan/UniformBuffer.cpp
             Render/Vulkan/VertexBuffer.cpp
             Render/Vulkan/Viewport.cpp

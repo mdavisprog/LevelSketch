@@ -47,6 +47,7 @@ class Device;
 class GraphicsPipeline;
 class SwapChain;
 class Sync;
+class Texture;
 class VertexBuffer;
 
 class CommandBuffer final
@@ -77,6 +78,11 @@ public:
     const CommandBuffer& SetViewport(const ViewportRect& Rect) const;
     const CommandBuffer& SetScissor(const Recti& Rect) const;
     const CommandBuffer& CopyBuffer(Buffer const* From, Buffer const* To, u64 Size) const;
+    const CommandBuffer& CopyBufferToTexture(Buffer const* From, Texture const* To, u32 Width, u32 Height) const;
+    const CommandBuffer& TextureBarrier(Texture const* Texture_,
+        VkFormat Format,
+        VkImageLayout From,
+        VkImageLayout To) const;
 
 private:
     VkCommandBuffer m_CommandBuffer { VK_NULL_HANDLE };

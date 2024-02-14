@@ -38,6 +38,7 @@ SOFTWARE.
 #include "Queue.hpp"
 #include "SwapChain.hpp"
 #include "Sync.hpp"
+#include "Texture.hpp"
 #include "VertexBuffer.hpp"
 
 namespace LevelSketch
@@ -285,6 +286,77 @@ const CommandBuffer& CommandBuffer::CopyBuffer(Buffer const* From, Buffer const*
     Region.size = Size;
 
     vkCmdCopyBuffer(m_CommandBuffer, From->Get(), To->Get(), 1, &Region);
+
+    return *this;
+}
+
+const CommandBuffer& CommandBuffer::CopyBufferToTexture(Buffer const* From,
+    Texture const* To,
+    u32 Width,
+    u32 Height) const
+{
+    VkBufferImageCopy Region {};
+    Region.bufferOffset = 0;
+    Region.bufferRowLength = 0;
+    Region.bufferImageHeight = 0;
+    Region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    Region.imageSubresource.mipLevel = 0;
+    Region.imageSubresource.baseArrayLayer = 0;
+    Region.imageSubresource.layerCount = 1;
+    Region.imageOffset = { 0, 0, 0 };
+    Region.imageExtent = { Width, Height, 1 };
+
+    vkCmdCopyBufferToImage(m_CommandBuffer, From->Get(), To->Get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &Region);
+
+    return *this;
+}
+
+const CommandBuffer& CommandBuffer::TextureBarrier(Texture const* Texture_,
+    VkFormat,
+    VkImageLayout From,
+    VkImageLayout To) const
+{
+    VkImageMemoryBarrier Barrier {};
+    Barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    Barrier.oldLayout = From;
+    Barrier.newLayout = To;
+    Barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    Barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    Barrier.image = Texture_->Get();
+    Barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    Barrier.subresourceRange.baseMipLevel = 0;
+    Barrier.subresourceRange.levelCount = 1;
+    Barrier.subresourceRange.baseArrayLayer = 0;
+    Barrier.subresourceRange.layerCount = 1;
+    Barrier.srcAccessMask = 0;
+    Barrier.dstAccessMask = 0;
+
+    VkPipelineStageFlags SourceStage {};
+    VkPipelineStageFlags DestStage {};
+
+    if (From == VK_IMAGE_LAYOUT_UNDEFINED && To == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+    {
+        Barrier.srcAccessMask = 0;
+        Barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+        SourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        DestStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    }
+    else if (From == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && To == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+    {
+        Barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        Barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+        SourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        DestStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    }
+    else
+    {
+        Core::Console::Error("Unsupported texture barrier '%d' => '%d'", From, To);
+        return *this;
+    }
+
+    vkCmdPipelineBarrier(m_CommandBuffer, SourceStage, DestStage, 0, 0, nullptr, 0, nullptr, 1, &Barrier);
 
     return *this;
 }

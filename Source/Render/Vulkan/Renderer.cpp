@@ -45,6 +45,7 @@ SOFTWARE.
 #include "Loader.hpp"
 #include "SwapChain.hpp"
 #include "Sync.hpp"
+#include "Texture.hpp"
 #include "UniformBuffer.hpp"
 #include "VertexBuffer.hpp"
 #include "Viewport.hpp"
@@ -222,6 +223,12 @@ void Renderer::Shutdown()
 {
     m_Device->WaitForIdle();
 
+    for (const UniquePtr<Texture>& Texture_ : m_Textures)
+    {
+        Texture_->Shutdown(m_Device.Get());
+    }
+    m_Textures.Clear();
+
     for (const UniquePtr<GraphicsPipeline>& Pipeline : m_GraphicsPipelines)
     {
         Pipeline->Shutdown(m_Device.Get());
@@ -269,9 +276,18 @@ void Renderer::Shutdown()
     Loader::Instance().Shutdown();
 }
 
-u32 Renderer::LoadTexture(const void*, u32, u32, u8)
+u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel)
 {
-    return 1;
+    UniquePtr<Texture> Texture_ { UniquePtr<Texture>::New() };
+
+    if (!Texture_->Initialize(m_Device.Get(), m_CommandPool.Get(), Data, Width, Height, BytesPerPixel))
+    {
+        return 0;
+    }
+
+    const u32 Result { Texture_->ID() };
+    m_Textures.Push(std::move(Texture_));
+    return Result;
 }
 
 bool Renderer::BindTexture(u32)
@@ -514,6 +530,19 @@ GraphicsPipeline const* Renderer::GetGraphicsPipeline(u32 ID) const
         if (Pipeline->ID() == ID)
         {
             return Pipeline.Get();
+        }
+    }
+
+    return nullptr;
+}
+
+Texture const* Renderer::GetTexture(u32 ID) const
+{
+    for (const UniquePtr<Texture>& Texture_ : m_Textures)
+    {
+        if (Texture_->ID() == ID)
+        {
+            return Texture_.Get();
         }
     }
 
