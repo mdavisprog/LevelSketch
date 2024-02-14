@@ -30,6 +30,8 @@ SOFTWARE.
 #include "Device.hpp"
 #include "Errors.hpp"
 #include "LogicalDevice.hpp"
+#include "Sampler.hpp"
+#include "Texture.hpp"
 #include "UniformBuffer.hpp"
 
 namespace LevelSketch
@@ -43,33 +45,45 @@ DescriptorPool::DescriptorPool()
 {
 }
 
+DescriptorPool::~DescriptorPool()
+{
+}
+
 bool DescriptorPool::Initialize(Device const* Device_, u32 Count)
 {
     // TODO: Specify layout binding in the GraphicsPipelineDescription struct.
-    // Force a single uniform buffer binding for now.
-    Array<VkDescriptorSetLayoutBinding> LayoutBindings {};
-
+    // Force a single uniform buffer binding and single sampler binding for now.
     VkDescriptorSetLayoutBinding UniformBinding {};
     UniformBinding.binding = 0;
     UniformBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     UniformBinding.descriptorCount = 1;
     UniformBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     UniformBinding.pImmutableSamplers = nullptr;
-    LayoutBindings.Push(UniformBinding);
+
+    VkDescriptorSetLayoutBinding SamplerBinding {};
+    SamplerBinding.binding = 1;
+    SamplerBinding.descriptorCount = 1;
+    SamplerBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    SamplerBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    SamplerBinding.pImmutableSamplers = nullptr;
+
+    Array<VkDescriptorSetLayoutBinding> LayoutBindings { UniformBinding, SamplerBinding };
 
     if (!CreateDescriptorSetLayout(Device_, LayoutBindings))
     {
         return false;
     }
 
-    VkDescriptorPoolSize PoolSize {};
-    PoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    PoolSize.descriptorCount = Count;
+    VkDescriptorPoolSize PoolSize[2] {};
+    PoolSize[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    PoolSize[0].descriptorCount = Count;
+    PoolSize[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    PoolSize[1].descriptorCount = Count;
 
     VkDescriptorPoolCreateInfo CreateInfo {};
     CreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    CreateInfo.poolSizeCount = 1;
-    CreateInfo.pPoolSizes = &PoolSize;
+    CreateInfo.poolSizeCount = ARRAY_COUNT(PoolSize);
+    CreateInfo.pPoolSizes = PoolSize;
     CreateInfo.maxSets = Count;
 
     VkResult Result {
@@ -87,11 +101,20 @@ bool DescriptorPool::Initialize(Device const* Device_, u32 Count)
         return false;
     }
 
+    m_Sampler = UniquePtr<Sampler>::New();
+
+    if (!m_Sampler->Initialize(Device_))
+    {
+        return false;
+    }
+
     return true;
 }
 
 void DescriptorPool::Shutdown(Device const* Device_)
 {
+    m_Sampler->Shutdown(Device_);
+
     if (m_DescriptorSetLayout != VK_NULL_HANDLE)
     {
         vkDestroyDescriptorSetLayout(Device_->GetLogicalDevice()->Get(), m_DescriptorSetLayout, nullptr);
@@ -121,6 +144,27 @@ void DescriptorPool::UpdateUniform(Device const* Device_, UniformBuffer const* B
     WriteDescriptorSet.descriptorCount = 1;
     WriteDescriptorSet.pBufferInfo = &BufferInfo;
     WriteDescriptorSet.pImageInfo = nullptr;
+    WriteDescriptorSet.pTexelBufferView = nullptr;
+
+    vkUpdateDescriptorSets(Device_->GetLogicalDevice()->Get(), 1, &WriteDescriptorSet, 0, nullptr);
+}
+
+void DescriptorPool::UpdateSampler(Device const* Device_, Texture const* Texture_, u64 Index)
+{
+    VkDescriptorImageInfo ImageInfo {};
+    ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    ImageInfo.imageView = Texture_->View();
+    ImageInfo.sampler = m_Sampler->Get();
+
+    VkWriteDescriptorSet WriteDescriptorSet {};
+    WriteDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    WriteDescriptorSet.dstSet = m_DescriptorSets[Index];
+    WriteDescriptorSet.dstBinding = 1;
+    WriteDescriptorSet.dstArrayElement = 0;
+    WriteDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    WriteDescriptorSet.descriptorCount = 1;
+    WriteDescriptorSet.pBufferInfo = nullptr;
+    WriteDescriptorSet.pImageInfo = &ImageInfo;
     WriteDescriptorSet.pTexelBufferView = nullptr;
 
     vkUpdateDescriptorSets(Device_->GetLogicalDevice()->Get(), 1, &WriteDescriptorSet, 0, nullptr);

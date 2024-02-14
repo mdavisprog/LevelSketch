@@ -282,6 +282,7 @@ u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPi
 
     if (!Texture_->Initialize(m_Device.Get(), m_CommandPool.Get(), Data, Width, Height, BytesPerPixel))
     {
+        Texture_->Shutdown(m_Device.Get());
         return 0;
     }
 
@@ -290,9 +291,19 @@ u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPi
     return Result;
 }
 
-bool Renderer::BindTexture(u32)
+bool Renderer::BindTexture(u32 ID)
 {
-    return false;
+    Texture const* Texture_ { GetTexture(ID) };
+
+    if (Texture_ == nullptr)
+    {
+        Core::Console::Warning("Failed to find texture with ID '%d'.", ID);
+        return false;
+    }
+
+    m_DescriptorPool->UpdateSampler(m_Device.Get(), Texture_, m_FrameIndex);
+
+    return true;
 }
 
 bool Renderer::BeginRender(Platform::Window* Window, const Colorf& ClearColor)

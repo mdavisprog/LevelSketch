@@ -154,6 +154,7 @@ else()
             Render/Vulkan/PhysicalDevice.cpp
             Render/Vulkan/Queue.cpp
             Render/Vulkan/Renderer.cpp
+            Render/Vulkan/Sampler.cpp
             Render/Vulkan/Shader.cpp
             Render/Vulkan/Surface.cpp
             Render/Vulkan/SurfaceX11.cpp

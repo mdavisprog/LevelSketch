@@ -26,8 +26,6 @@ SOFTWARE.
 
 #pragma once
 
-#include "../../Core/Types.hpp"
-
 #include <vulkan/vulkan.hpp>
 
 namespace LevelSketch
@@ -37,38 +35,20 @@ namespace Render
 namespace Vulkan
 {
 
-class CommandPool;
 class Device;
 
-class Texture final
+class Sampler final
 {
-private:
-    static u32 s_ID;
-
 public:
-    static VkImageView CreateView(Device const* Device_, VkImage Image, VkFormat Format);
+    Sampler();
 
-    Texture();
-
-    bool Initialize(Device const* Device_,
-        CommandPool const* Pool,
-        const void* Data,
-        u32 Width,
-        u32 Height,
-        u8 BytesPerPixel);
+    bool Initialize(Device const* Device_);
     void Shutdown(Device const* Device_);
 
-    VkImage Get() const;
-    VkImageView View() const;
-    u32 ID() const;
+    VkSampler Get() const;
 
 private:
-    void Transition(Device const* Device_, CommandPool const* Pool, VkImageLayout From, VkImageLayout) const;
-
-    VkImage m_Image { VK_NULL_HANDLE };
-    VkImageView m_ImageView { VK_NULL_HANDLE };
-    VkDeviceMemory m_Memory { VK_NULL_HANDLE };
-    u32 m_ID { 0 };
+    VkSampler m_Sampler { VK_NULL_HANDLE };
 };
 
 }

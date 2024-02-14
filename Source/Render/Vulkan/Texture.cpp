@@ -198,6 +198,11 @@ VkImage Texture::Get() const
     return m_Image;
 }
 
+VkImageView Texture::View() const
+{
+    return m_ImageView;
+}
+
 u32 Texture::ID() const
 {
     return m_ID;
