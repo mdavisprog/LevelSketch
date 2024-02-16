@@ -43,7 +43,8 @@ layout(set = 0, binding = 0) uniform UniformObject
 
 void main()
 {
-    gl_Position = Uniforms.Orthographic * Uniforms.View * Uniforms.Model * vec4(Position, 1.0, 1.0);
+    gl_Position = Uniforms.Orthographic * vec4(Position, 0.0, 1.0);
+    gl_Position.y = -gl_Position.y;
     OutColor = Color;
     OutUVs = UVs;
 }
