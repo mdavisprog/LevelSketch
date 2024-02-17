@@ -37,6 +37,7 @@ SOFTWARE.
 #include "Renderer.hpp"
 #include "Shader.hpp"
 #include "SwapChain.hpp"
+#include "TexturePool.hpp"
 #include "UniformBuffer.hpp"
 
 namespace LevelSketch
@@ -84,10 +85,11 @@ GraphicsPipeline::GraphicsPipeline()
 
 bool GraphicsPipeline::Initialize(Device const* Device_,
     DescriptorPool const* Pool,
+    TexturePool const* TexturePool_,
     SwapChain const* SwapChain_,
     const GraphicsPipelineDescription& Description)
 {
-    if (!CreatePipelineLayout(Device_, Pool))
+    if (!CreatePipelineLayout(Device_, Pool, TexturePool_))
     {
         return false;
     }
@@ -285,13 +287,15 @@ u32 GraphicsPipeline::ID() const
     return m_ID;
 }
 
-bool GraphicsPipeline::CreatePipelineLayout(Device const* Device_, DescriptorPool const* Pool)
+bool GraphicsPipeline::CreatePipelineLayout(Device const* Device_,
+    DescriptorPool const* Pool,
+    TexturePool const* TexturePool_)
 {
-    const VkDescriptorSetLayout Layouts { Pool->GetLayout() };
+    const VkDescriptorSetLayout Layouts[] { Pool->GetLayout(), TexturePool_->Layout() };
     VkPipelineLayoutCreateInfo CreateInfo {};
     CreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    CreateInfo.setLayoutCount = 1;
-    CreateInfo.pSetLayouts = &Layouts;
+    CreateInfo.setLayoutCount = 2;
+    CreateInfo.pSetLayouts = Layouts;
     CreateInfo.pushConstantRangeCount = 0;
     CreateInfo.pPushConstantRanges = nullptr;
 

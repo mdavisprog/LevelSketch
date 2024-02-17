@@ -221,14 +221,16 @@ const CommandBuffer& CommandBuffer::BindBuffer(VertexBuffer const* VertexBuffer_
     return *this;
 }
 
-const CommandBuffer& CommandBuffer::BindDescriptorSet(GraphicsPipeline const* Pipeline, VkDescriptorSet Set) const
+const CommandBuffer& CommandBuffer::BindDescriptorSets(GraphicsPipeline const* Pipeline,
+    u32 NumSets,
+    const VkDescriptorSet* Sets) const
 {
     vkCmdBindDescriptorSets(m_CommandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         Pipeline->GetLayout(),
         0,
-        1,
-        &Set,
+        NumSets,
+        Sets,
         0,
         nullptr);
 

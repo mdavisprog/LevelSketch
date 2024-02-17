@@ -68,7 +68,9 @@ public:
 
     const CommandBuffer& BindPipeline(GraphicsPipeline const* Pipeline) const;
     const CommandBuffer& BindBuffer(VertexBuffer const* VertexBuffer_) const;
-    const CommandBuffer& BindDescriptorSet(GraphicsPipeline const* Pipeline, VkDescriptorSet Set) const;
+    const CommandBuffer& BindDescriptorSets(GraphicsPipeline const* Pipeline,
+        u32 NumSets,
+        const VkDescriptorSet* Sets) const;
     const CommandBuffer& DrawVertices(u32 VertexCount, u32 InstanceCount, u32 FirstVertex, u32 FirstInstance) const;
     const CommandBuffer& DrawVerticesIndexed(u32 IndexCount,
         u32 InstanceCount,

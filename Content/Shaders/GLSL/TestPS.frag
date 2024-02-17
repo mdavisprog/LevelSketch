@@ -30,7 +30,7 @@ layout(location = 0) out vec4 OutColor;
 layout(location = 0) in vec4 Color;
 layout(location = 1) in vec2 UVs;
 
-layout(binding = 1) uniform sampler2D Sampler;
+layout(set = 1, binding = 0) uniform sampler2D Sampler;
 
 void main()
 {

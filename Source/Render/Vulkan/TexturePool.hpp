@@ -26,8 +26,9 @@ SOFTWARE.
 
 #pragma once
 
-#include "../../Core/Containers/Forwards.hpp"
-#include "../../Core/Types.hpp"
+#include "../../Core/Containers/Array.hpp"
+#include "../../Core/Containers/HashMap.hpp"
+#include "../../Core/Memory/UniquePtr.hpp"
 
 #include <vulkan/vulkan.hpp>
 
@@ -35,43 +36,39 @@ namespace LevelSketch
 {
 namespace Render
 {
-
-struct GraphicsPipelineDescription;
-
 namespace Vulkan
 {
 
-class DescriptorPool;
+class CommandPool;
 class Device;
-class SwapChain;
-class TexturePool;
-class UniformBuffer;
+class Sampler;
+class Texture;
 
-class GraphicsPipeline final
+class TexturePool final
 {
-private:
-    static u32 s_ID;
-
 public:
-    GraphicsPipeline();
+    TexturePool();
+    ~TexturePool();
 
-    bool Initialize(Device const* Device_,
-        DescriptorPool const* Pool,
-        TexturePool const* TexturePool_,
-        SwapChain const* SwapChain_,
-        const GraphicsPipelineDescription& Description);
+    bool Initialize(Device const* Device_, u32 Count);
     void Shutdown(Device const* Device_);
 
-    VkPipeline Get() const;
-    VkPipelineLayout GetLayout() const;
-    u32 ID() const;
+    Texture const* AllocateTexture(Device const* Device_,
+        CommandPool const* CommandPool_,
+        const void* Data,
+        u32 Width,
+        u32 Height,
+        u8 BytesPerPixel);
+
+    VkDescriptorSetLayout Layout() const;
+    VkDescriptorSet Set(u32 ID);
 
 private:
-    bool CreatePipelineLayout(Device const* Device_, DescriptorPool const* Pool, TexturePool const* TexturePool_);
-
-    VkPipelineLayout m_PipelineLayout { VK_NULL_HANDLE };
-    VkPipeline m_Pipeline { VK_NULL_HANDLE };
-    u32 m_ID { 0 };
+    VkDescriptorPool m_Pool { VK_NULL_HANDLE };
+    VkDescriptorSetLayout m_Layout { VK_NULL_HANDLE };
+    HashMap<u32, VkDescriptorSet> m_Sets {};
+    Array<UniquePtr<Texture>> m_Textures {};
+    UniquePtr<Sampler> m_Sampler { nullptr };
 };
 
 }

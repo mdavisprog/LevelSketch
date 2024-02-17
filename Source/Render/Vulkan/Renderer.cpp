@@ -46,6 +46,7 @@ SOFTWARE.
 #include "SwapChain.hpp"
 #include "Sync.hpp"
 #include "Texture.hpp"
+#include "TexturePool.hpp"
 #include "UniformBuffer.hpp"
 #include "VertexBuffer.hpp"
 #include "Viewport.hpp"
@@ -211,6 +212,12 @@ bool Renderer::Initialize(Platform::Window* Window)
             m_Uniforms.Push(std::move(Uniform));
         }
 
+        m_TexturePool = UniquePtr<TexturePool>::New();
+        if (!m_TexturePool->Initialize(m_Device.Get(), 100))
+        {
+            return false;
+        }
+
         Core::Console::WriteLine("Initialized Vulkan");
     }
 
@@ -222,12 +229,6 @@ bool Renderer::Initialize(Platform::Window* Window)
 void Renderer::Shutdown()
 {
     m_Device->WaitForIdle();
-
-    for (const UniquePtr<Texture>& Texture_ : m_Textures)
-    {
-        Texture_->Shutdown(m_Device.Get());
-    }
-    m_Textures.Clear();
 
     for (const UniquePtr<GraphicsPipeline>& Pipeline : m_GraphicsPipelines)
     {
@@ -252,6 +253,7 @@ void Renderer::Shutdown()
     }
     m_Syncs.Clear();
 
+    m_TexturePool->Shutdown(m_Device.Get());
     m_DescriptorPool->Shutdown(m_Device.Get());
     m_CommandPool->Shutdown(m_Device.Get());
 
@@ -278,31 +280,23 @@ void Renderer::Shutdown()
 
 u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel)
 {
-    UniquePtr<Texture> Texture_ { UniquePtr<Texture>::New() };
+    Texture const* Result {
+        m_TexturePool->AllocateTexture(m_Device.Get(), m_CommandPool.Get(), Data, Width, Height, BytesPerPixel)
+    };
 
-    if (!Texture_->Initialize(m_Device.Get(), m_CommandPool.Get(), Data, Width, Height, BytesPerPixel))
+    if (Result == nullptr)
     {
-        Texture_->Shutdown(m_Device.Get());
         return 0;
     }
 
-    const u32 Result { Texture_->ID() };
-    m_Textures.Push(std::move(Texture_));
-    return Result;
+    return Result->ID();
 }
 
 bool Renderer::BindTexture(u32 ID)
 {
-    Texture const* Texture_ { GetTexture(ID) };
-
-    if (Texture_ == nullptr)
-    {
-        Core::Console::Warning("Failed to find texture with ID '%d'.", ID);
-        return false;
-    }
-
-    m_DescriptorPool->UpdateSampler(m_Device.Get(), Texture_, m_FrameIndex);
-
+    const VkDescriptorSet Sets[] { m_DescriptorPool->GetSet(m_FrameIndex), m_TexturePool->Set(ID) };
+    CommandBuffer const* Commands { m_CommandPool->Buffer(m_FrameIndex) };
+    Commands->BindDescriptorSets(m_BoundPipeline, 2, Sets);
     return true;
 }
 
@@ -373,7 +367,11 @@ u32 Renderer::CreateGraphicsPipeline(const GraphicsPipelineDescription& Descript
 {
     UniquePtr<GraphicsPipeline> Pipeline { UniquePtr<GraphicsPipeline>::New() };
 
-    if (!Pipeline->Initialize(m_Device.Get(), m_DescriptorPool.Get(), m_Viewports[0]->GetSwapChain(), Description))
+    if (!Pipeline->Initialize(m_Device.Get(),
+            m_DescriptorPool.Get(),
+            m_TexturePool.Get(),
+            m_Viewports[0]->GetSwapChain(),
+            Description))
     {
         return 0;
     }
@@ -395,7 +393,8 @@ bool Renderer::BindGraphicsPipeline(u32 ID)
 
     CommandBuffer const* Commands { m_CommandPool->Buffer(m_FrameIndex) };
     Commands->BindPipeline(Pipeline);
-    Commands->BindDescriptorSet(Pipeline, m_DescriptorPool->GetSet(m_FrameIndex));
+
+    m_BoundPipeline = const_cast<GraphicsPipeline*>(Pipeline);
 
     return false;
 }
@@ -541,19 +540,6 @@ GraphicsPipeline const* Renderer::GetGraphicsPipeline(u32 ID) const
         if (Pipeline->ID() == ID)
         {
             return Pipeline.Get();
-        }
-    }
-
-    return nullptr;
-}
-
-Texture const* Renderer::GetTexture(u32 ID) const
-{
-    for (const UniquePtr<Texture>& Texture_ : m_Textures)
-    {
-        if (Texture_->ID() == ID)
-        {
-            return Texture_.Get();
         }
     }
 

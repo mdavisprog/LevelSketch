@@ -161,6 +161,7 @@ else()
             Render/Vulkan/SwapChain.cpp
             Render/Vulkan/Sync.cpp
             Render/Vulkan/Texture.cpp
+            Render/Vulkan/TexturePool.cpp
             Render/Vulkan/UniformBuffer.cpp
             Render/Vulkan/VertexBuffer.cpp
             Render/Vulkan/Viewport.cpp
