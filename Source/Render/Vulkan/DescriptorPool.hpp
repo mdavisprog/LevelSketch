@@ -27,7 +27,6 @@ SOFTWARE.
 #pragma once
 
 #include "../../Core/Containers/Array.hpp"
-#include "../../Core/Memory/UniquePtr.hpp"
 
 #include <vulkan/vulkan.hpp>
 
@@ -39,7 +38,6 @@ namespace Vulkan
 {
 
 class Device;
-class Sampler;
 class UniformBuffer;
 class Texture;
 
@@ -49,13 +47,11 @@ class DescriptorPool final
 {
 public:
     DescriptorPool();
-    ~DescriptorPool();
 
     bool Initialize(Device const* Device_, u32 Count);
     void Shutdown(Device const* Device_);
 
     void UpdateUniform(Device const* Device_, UniformBuffer const* Buffer, u64 Index);
-    void UpdateSampler(Device const* Device_, Texture const* Texture_, u64 Index);
 
     VkDescriptorPool Get() const;
     VkDescriptorSetLayout GetLayout() const;
@@ -68,7 +64,6 @@ private:
     VkDescriptorSetLayout m_DescriptorSetLayout { VK_NULL_HANDLE };
     VkDescriptorPool m_DescriptorPool { VK_NULL_HANDLE };
     Array<VkDescriptorSet> m_DescriptorSets {};
-    UniquePtr<Sampler> m_Sampler { nullptr };
 };
 
 }
