@@ -78,11 +78,6 @@ String Renderer::ShaderPath(const char* FileName)
     return Platform::FileSystem::CombinePaths(ShadersDirectory(), FileName);
 }
 
-u32 Renderer::LoadTexture(const void*, u32, u32, u8)
-{
-    return 0;
-}
-
 void Renderer::UpdateViewMatrix(const Matrix4f&)
 {
 }

@@ -278,11 +278,9 @@ void Renderer::Shutdown()
     Loader::Instance().Shutdown();
 }
 
-u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel)
+u32 Renderer::CreateTexture(const TextureDescription& Description)
 {
-    Texture const* Result {
-        m_TexturePool->AllocateTexture(m_Device.Get(), m_CommandPool.Get(), Data, Width, Height, BytesPerPixel)
-    };
+    Texture const* Result { m_TexturePool->AllocateTexture(m_Device.Get(), m_CommandPool.Get(), Description) };
 
     if (Result == nullptr)
     {

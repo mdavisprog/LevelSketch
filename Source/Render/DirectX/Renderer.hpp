@@ -73,7 +73,7 @@ public:
     virtual bool Initialize(Platform::Window* Window) override;
     virtual void Shutdown() override;
 
-    virtual u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel = 4) override;
+    virtual u32 CreateTexture(const TextureDescription& Description) override;
     virtual bool BindTexture(u32 ID) override;
 
     virtual bool BeginRender(Platform::Window* Window, const Colorf& ClearColor) override;

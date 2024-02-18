@@ -31,6 +31,7 @@ SOFTWARE.
 #include "../../Platform/FileSystem.hpp"
 #include "../../Platform/Mac/WindowBridge.hpp"
 #include "../../Platform/Window.hpp"
+#include "../TextureDescription.hpp"
 #include "../ViewportRect.hpp"
 #include "CommandBuffer.hpp"
 #include "CommandEncoder.hpp"
@@ -104,16 +105,16 @@ void Renderer::Shutdown()
     m_Textures.Clear();
 }
 
-u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8)
+u32 Renderer::CreateTexture(const TextureDescription& Description)
 {
     UniquePtr<Texture> Texture_ { UniquePtr<Texture>::New() };
 
-    if (!Texture_->Initialize(m_Device.Get(), Width, Height))
+    if (!Texture_->Initialize(m_Device.Get(), Description.Width, Description.Height))
     {
         return 0;
     }
 
-    if (!Texture_->Upload(Data))
+    if (!Texture_->Upload(Description.Data, Description.Width * BytesPerPixel(Description.Format)))
     {
         return 0;
     }

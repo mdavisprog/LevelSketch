@@ -39,6 +39,7 @@ SOFTWARE.
 #include "../Platform/Window.hpp"
 #include "../Render/GraphicsPipelineDescription.hpp"
 #include "../Render/Renderer.hpp"
+#include "../Render/TextureDescription.hpp"
 #include "../Render/VertexBufferDescription.hpp"
 #include "../Render/VertexDataDescription.hpp"
 #include <cstdio>
@@ -278,7 +279,8 @@ static bool InitializeResources()
     const u32 Width { 256 };
     const u32 Height { 256 };
     const Array<u8> Data { GenerateTexture(Width, Height) };
-    g_DefaultTexture = Renderer->LoadTexture(Data.Data(), Width, Height, 4);
+    g_DefaultTexture =
+        Renderer->CreateTexture({ const_cast<u8*>(Data.Data()), Width, Height, Render::TextureFormat::RGBAByte });
 
     if (!GUI::GUI::Instance().InitializeResources())
     {

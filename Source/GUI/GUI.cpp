@@ -33,6 +33,7 @@ SOFTWARE.
 #include "../Platform/Window.hpp"
 #include "../Render/GraphicsPipelineDescription.hpp"
 #include "../Render/Renderer.hpp"
+#include "../Render/TextureDescription.hpp"
 #include "../Render/VertexBufferDescription.hpp"
 #include "../Render/VertexDataDescription.hpp"
 
@@ -128,7 +129,8 @@ bool GUI::Initialize(i32 Argc, const char** Argv)
         .SetOnLoadTexture(
             [](const std::vector<u8>& Data, u32 Width, u32 Height) -> u32
             {
-                return Render::Renderer::Instance()->LoadTexture(Data.data(), Width, Height);
+                return Render::Renderer::Instance()->CreateTexture(
+                    { const_cast<u8*>(Data.data()), Width, Height, Render::TextureFormat::RGBAByte });
             })
         .SetOnPaint(
             [this](OctaneGUI::Window*, const OctaneGUI::VertexBuffer& Buffer) -> void
@@ -183,8 +185,8 @@ bool GUI::InitializeResources()
         return false;
     }
 
-    const u8 WhiteTexture[4] { 0xFF, 0xFF, 0xFF, 0xFF };
-    m_WhiteTexture = Renderer->LoadTexture(WhiteTexture, 1, 1, 4);
+    u8 WhiteTexture[4] { 0xFF, 0xFF, 0xFF, 0xFF };
+    m_WhiteTexture = Renderer->CreateTexture({ WhiteTexture, 1, 1, Render::TextureFormat::RGBAByte });
 
     return true;
 }

@@ -48,7 +48,7 @@ public:
     Texture();
 
     bool Initialize(Device const* Device_, u32 Width, u32 Height);
-    bool Upload(const void* Data);
+    bool Upload(const void* Data, u64 BytesPerRow);
 
     u32 ID() const;
     id<MTLTexture> Data() const;

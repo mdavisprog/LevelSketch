@@ -26,51 +26,40 @@ SOFTWARE.
 
 #pragma once
 
-#include "../../Core/Containers/Array.hpp"
-#include "../../Core/Containers/HashMap.hpp"
-#include "../../Core/Memory/UniquePtr.hpp"
-
-#include <vulkan/vulkan.hpp>
+#include "../Core/Types.hpp"
 
 namespace LevelSketch
 {
 namespace Render
 {
 
-struct TextureDescription;
-
-namespace Vulkan
+enum class TextureFormat
 {
-
-class CommandPool;
-class Device;
-class Sampler;
-class Texture;
-
-class TexturePool final
-{
-public:
-    TexturePool();
-    ~TexturePool();
-
-    bool Initialize(Device const* Device_, u32 Count);
-    void Shutdown(Device const* Device_);
-
-    Texture const* AllocateTexture(Device const* Device_,
-        CommandPool const* CommandPool_,
-        const TextureDescription& Description);
-
-    VkDescriptorSetLayout Layout() const;
-    VkDescriptorSet Set(u32 ID);
-
-private:
-    VkDescriptorPool m_Pool { VK_NULL_HANDLE };
-    VkDescriptorSetLayout m_Layout { VK_NULL_HANDLE };
-    HashMap<u32, VkDescriptorSet> m_Sets {};
-    Array<UniquePtr<Texture>> m_Textures {};
-    UniquePtr<Sampler> m_Sampler { nullptr };
+    None,
+    RGBAFloat,
+    RGBAByte,
 };
 
+struct TextureDescription
+{
+    void* Data { nullptr };
+    u32 Width { 0 };
+    u32 Height { 0 };
+    TextureFormat Format { TextureFormat::None };
+};
+
+static inline u64 BytesPerPixel(TextureFormat Format)
+{
+    switch (Format)
+    {
+    case TextureFormat::RGBAFloat: return 32;
+    case TextureFormat::RGBAByte: return 4;
+    case TextureFormat::None:
+    default: break;
+    }
+
+    return 0;
 }
+
 }
 }

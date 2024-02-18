@@ -43,6 +43,7 @@ namespace Render
 {
 
 struct GraphicsPipelineDescription;
+struct TextureDescription;
 struct VertexBufferDescription;
 struct VertexDataDescription;
 struct ViewportRect;
@@ -71,7 +72,7 @@ public:
     virtual bool Initialize(Platform::Window* Window) = 0;
     virtual void Shutdown() = 0;
 
-    virtual u32 LoadTexture(const void* Data, u32 Width, u32 Height, u8 BytesPerPixel = 4);
+    virtual u32 CreateTexture(const TextureDescription& Description) = 0;
     virtual bool BindTexture(u32 ID) = 0;
 
     virtual bool BeginRender(Platform::Window* Window, const Colorf& ClearColor) = 0;

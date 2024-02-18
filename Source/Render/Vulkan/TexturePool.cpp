@@ -115,14 +115,11 @@ void TexturePool::Shutdown(Device const* Device_)
 
 Texture const* TexturePool::AllocateTexture(Device const* Device_,
     CommandPool const* CommandPool_,
-    const void* Data,
-    u32 Width,
-    u32 Height,
-    u8 BytesPerPixel)
+    const TextureDescription& Description)
 {
     UniquePtr<Texture> Texture_ { UniquePtr<Texture>::New() };
 
-    if (!Texture_->Initialize(Device_, CommandPool_, Data, Width, Height, BytesPerPixel))
+    if (!Texture_->Initialize(Device_, CommandPool_, Description))
     {
         Texture_->Shutdown(Device_);
         return nullptr;

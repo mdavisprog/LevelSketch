@@ -34,6 +34,9 @@ namespace LevelSketch
 {
 namespace Render
 {
+
+struct TextureDescription;
+
 namespace Vulkan
 {
 
@@ -50,12 +53,7 @@ public:
 
     Texture();
 
-    bool Initialize(Device const* Device_,
-        CommandPool const* Pool,
-        const void* Data,
-        u32 Width,
-        u32 Height,
-        u8 BytesPerPixel);
+    bool Initialize(Device const* Device_, CommandPool const* Pool, const TextureDescription& Description);
     void Shutdown(Device const* Device_);
 
     VkImage Get() const;

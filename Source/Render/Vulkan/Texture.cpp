@@ -26,6 +26,7 @@ SOFTWARE.
 
 #include "Texture.hpp"
 #include "../../Core/Console.hpp"
+#include "../TextureDescription.hpp"
 #include "Buffer.hpp"
 #include "CommandBuffer.hpp"
 #include "CommandPool.hpp"
@@ -39,6 +40,19 @@ namespace Render
 {
 namespace Vulkan
 {
+
+static VkFormat ToFormat(TextureFormat Format)
+{
+    switch (Format)
+    {
+    case TextureFormat::RGBAByte: return VK_FORMAT_R8G8B8A8_SRGB;
+    case TextureFormat::RGBAFloat: return VK_FORMAT_R32G32B32A32_SFLOAT;
+    case TextureFormat::None:
+    default: break;
+    }
+
+    return VK_FORMAT_UNDEFINED;
+}
 
 VkImageView Texture::CreateView(Device const* Device_, VkImage Image, VkFormat Format)
 {
@@ -71,22 +85,17 @@ Texture::Texture()
 {
 }
 
-bool Texture::Initialize(Device const* Device_,
-    CommandPool const* Pool,
-    const void* Data,
-    u32 Width,
-    u32 Height,
-    u8 BytesPerPixel)
+bool Texture::Initialize(Device const* Device_, CommandPool const* Pool, const TextureDescription& Description)
 {
     VkImageCreateInfo CreateInfo {};
     CreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     CreateInfo.imageType = VK_IMAGE_TYPE_2D;
-    CreateInfo.extent.width = Width;
-    CreateInfo.extent.height = Height;
+    CreateInfo.extent.width = Description.Width;
+    CreateInfo.extent.height = Description.Height;
     CreateInfo.extent.depth = 1;
     CreateInfo.mipLevels = 1;
     CreateInfo.arrayLayers = 1;
-    CreateInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+    CreateInfo.format = ToFormat(Description.Format);
     CreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
     CreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     CreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
@@ -136,7 +145,7 @@ bool Texture::Initialize(Device const* Device_,
         return false;
     }
 
-    const u64 Size { Width * Height * BytesPerPixel };
+    const u64 Size { Description.Width * Description.Height * BytesPerPixel(Description.Format) };
 
     Buffer Staging {};
     if (!Staging.Initialize(Device_,
@@ -149,14 +158,14 @@ bool Texture::Initialize(Device const* Device_,
     }
 
     Staging.Map(Device_, Size);
-    Staging.MapData(Data, Size);
+    Staging.MapData(Description.Data, Size);
     Staging.Unmap(Device_);
 
     Transition(Device_, Pool, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     {
         UniquePtr<CommandBuffer> Commands { Pool->AllocateBuffer(Device_) };
         Commands->BeginSingle();
-        Commands->CopyBufferToTexture(&Staging, this, Width, Height);
+        Commands->CopyBufferToTexture(&Staging, this, Description.Width, Description.Height);
         Commands->End();
         Commands->SubmitWait(Device_);
         Commands->Shutdown(Device_, Pool);
@@ -165,7 +174,7 @@ bool Texture::Initialize(Device const* Device_,
 
     Staging.Shutdown(Device_);
 
-    m_ImageView = CreateView(Device_, m_Image, VK_FORMAT_R8G8B8A8_SRGB);
+    m_ImageView = CreateView(Device_, m_Image, CreateInfo.format);
 
     m_ID = ++s_ID;
 

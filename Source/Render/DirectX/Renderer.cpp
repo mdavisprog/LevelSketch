@@ -35,6 +35,7 @@ SOFTWARE.
 #include "../../Core/Math/Vertex.hpp"
 #include "../../Platform/FileSystem.hpp"
 #include "../../Platform/Window.hpp"
+#include "../TextureDescription.hpp"
 #include "../VertexBufferDescription.hpp"
 #include "../VertexDataDescription.hpp"
 #include "../ViewportRect.hpp"
@@ -128,7 +129,7 @@ void Renderer::Shutdown()
 {
 }
 
-u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8)
+u32 Renderer::CreateTexture(const TextureDescription& Description)
 {
     if (!ResetCommands())
     {
@@ -137,7 +138,7 @@ u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8)
     }
 
     Texture Tex;
-    if (!Tex.Create(m_Device->Get(), Width, Height))
+    if (!Tex.Create(m_Device->Get(), Description.Width, Description.Height))
     {
         return 0;
     }
@@ -146,7 +147,7 @@ u32 Renderer::LoadTexture(const void* Data, u32 Width, u32 Height, u8)
     if (!Tex.Upload(m_Device->GetCommandList()->Get(),
             m_Device->SRVHeap()->Get(),
             m_Textures.Size() * m_Device->SRVHeap()->DescriptorSize(),
-            Data,
+            Description.Data,
             UploadResource))
     {
         return 0;

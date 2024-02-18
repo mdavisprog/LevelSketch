@@ -67,10 +67,10 @@ bool Texture::Initialize(Device const* Device_, u32 Width, u32 Height)
     return true;
 }
 
-bool Texture::Upload(const void* Data)
+bool Texture::Upload(const void* Data, u64 BytesPerRow)
 {
     MTLRegion Region = MTLRegionMake2D(0, 0, m_Texture.width, m_Texture.height);
-    [m_Texture replaceRegion:Region mipmapLevel:0 withBytes:Data bytesPerRow:m_Texture.width * 4];
+    [m_Texture replaceRegion:Region mipmapLevel:0 withBytes:Data bytesPerRow:BytesPerRow];
 
     return true;
 }
