@@ -50,6 +50,52 @@ static Mouse::Button::Type ToButton(u8 Button)
     return Mouse::Button::None;
 }
 
+static Keyboard::Key ToKey(SDL_Scancode Code)
+{
+    switch (Code)
+    {
+    case SDL_SCANCODE_A: return Keyboard::Key::A;
+    case SDL_SCANCODE_B: return Keyboard::Key::B;
+    case SDL_SCANCODE_C: return Keyboard::Key::C;
+    case SDL_SCANCODE_D: return Keyboard::Key::D;
+    case SDL_SCANCODE_E: return Keyboard::Key::E;
+    case SDL_SCANCODE_F: return Keyboard::Key::F;
+    case SDL_SCANCODE_G: return Keyboard::Key::G;
+    case SDL_SCANCODE_H: return Keyboard::Key::H;
+    case SDL_SCANCODE_I: return Keyboard::Key::I;
+    case SDL_SCANCODE_J: return Keyboard::Key::J;
+    case SDL_SCANCODE_K: return Keyboard::Key::K;
+    case SDL_SCANCODE_L: return Keyboard::Key::L;
+    case SDL_SCANCODE_M: return Keyboard::Key::M;
+    case SDL_SCANCODE_N: return Keyboard::Key::N;
+    case SDL_SCANCODE_O: return Keyboard::Key::O;
+    case SDL_SCANCODE_P: return Keyboard::Key::P;
+    case SDL_SCANCODE_Q: return Keyboard::Key::Q;
+    case SDL_SCANCODE_R: return Keyboard::Key::R;
+    case SDL_SCANCODE_S: return Keyboard::Key::S;
+    case SDL_SCANCODE_T: return Keyboard::Key::T;
+    case SDL_SCANCODE_U: return Keyboard::Key::U;
+    case SDL_SCANCODE_V: return Keyboard::Key::V;
+    case SDL_SCANCODE_W: return Keyboard::Key::W;
+    case SDL_SCANCODE_X: return Keyboard::Key::X;
+    case SDL_SCANCODE_Y: return Keyboard::Key::Y;
+    case SDL_SCANCODE_Z: return Keyboard::Key::Z;
+    case SDL_SCANCODE_1: return Keyboard::Key::One;
+    case SDL_SCANCODE_2: return Keyboard::Key::Two;
+    case SDL_SCANCODE_3: return Keyboard::Key::Three;
+    case SDL_SCANCODE_4: return Keyboard::Key::Four;
+    case SDL_SCANCODE_5: return Keyboard::Key::Five;
+    case SDL_SCANCODE_6: return Keyboard::Key::Six;
+    case SDL_SCANCODE_7: return Keyboard::Key::Seven;
+    case SDL_SCANCODE_8: return Keyboard::Key::Eight;
+    case SDL_SCANCODE_9: return Keyboard::Key::Nine;
+    case SDL_SCANCODE_0: return Keyboard::Key::Zero;
+    default: break;
+    }
+
+    return Keyboard::Key::None;
+}
+
 Window::Window()
     : LevelSketch::Platform::Window()
 {
@@ -168,6 +214,15 @@ void Window::ProcessEvents()
             const Vector2i Position { Event.button.x, Event.button.y };
             Event::OnMouseButton MouseButton { ToButton(Event.button.button), Pressed, Position };
             EventQueue::Instance().Push(MouseButton, this);
+        }
+        break;
+
+        case SDL_KEYDOWN:
+        case SDL_KEYUP:
+        {
+            const bool Pressed { Event.type == SDL_KEYDOWN };
+            Event::OnKey Key { ToKey(Event.key.keysym.scancode), Pressed };
+            EventQueue::Instance().Push(Key, this);
         }
         break;
 
