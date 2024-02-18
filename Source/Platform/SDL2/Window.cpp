@@ -27,6 +27,7 @@ SOFTWARE.
 #include "Window.hpp"
 #include "../../Core/Console.hpp"
 #include "../../Core/Math/Vector2.hpp"
+#include "../EventQueue.hpp"
 #include "SDL2/SDL.h"
 
 namespace LevelSketch
@@ -139,6 +140,13 @@ void Window::ProcessEvents()
         switch (Event.type)
         {
         case SDL_WINDOWEVENT: ProcessEvent(Event.window); break;
+
+        case SDL_MOUSEMOTION:
+        {
+            Event::OnMouseMove MouseMove { { Event.motion.x, Event.motion.y } };
+            EventQueue::Instance().Push(MouseMove, this);
+        }
+        break;
 
         default: break;
         }
