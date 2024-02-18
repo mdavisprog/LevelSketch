@@ -37,6 +37,19 @@ namespace Platform
 namespace SDL2
 {
 
+static Mouse::Button::Type ToButton(u8 Button)
+{
+    switch (Button)
+    {
+    case SDL_BUTTON_LEFT: return Mouse::Button::Left;
+    case SDL_BUTTON_RIGHT: return Mouse::Button::Right;
+    case SDL_BUTTON_MIDDLE: return Mouse::Button::Middle;
+    default: break;
+    }
+
+    return Mouse::Button::None;
+}
+
 Window::Window()
     : LevelSketch::Platform::Window()
 {
@@ -145,6 +158,16 @@ void Window::ProcessEvents()
         {
             Event::OnMouseMove MouseMove { { Event.motion.x, Event.motion.y } };
             EventQueue::Instance().Push(MouseMove, this);
+        }
+        break;
+
+        case SDL_MOUSEBUTTONDOWN:
+        case SDL_MOUSEBUTTONUP:
+        {
+            const bool Pressed { Event.type == SDL_MOUSEBUTTONDOWN };
+            const Vector2i Position { Event.button.x, Event.button.y };
+            Event::OnMouseButton MouseButton { ToButton(Event.button.button), Pressed, Position };
+            EventQueue::Instance().Push(MouseButton, this);
         }
         break;
 
