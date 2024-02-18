@@ -200,13 +200,26 @@ bool GraphicsPipeline::Initialize(Device const* Device_,
     VkPipelineColorBlendAttachmentState ColorAttachment {};
     ColorAttachment.colorWriteMask =
         VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    ColorAttachment.blendEnable = VK_FALSE;
-    ColorAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-    ColorAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-    ColorAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-    ColorAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-    ColorAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-    ColorAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+    if (Description.UseAlphaBlending)
+    {
+        ColorAttachment.blendEnable = VK_TRUE;
+        ColorAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+        ColorAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        ColorAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+        ColorAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+        ColorAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+        ColorAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+    }
+    else
+    {
+        ColorAttachment.blendEnable = VK_FALSE;
+        ColorAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+        ColorAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+        ColorAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+        ColorAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+        ColorAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+        ColorAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+    }
 
     VkPipelineColorBlendStateCreateInfo BlendInfo {};
     BlendInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
