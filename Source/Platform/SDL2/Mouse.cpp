@@ -25,6 +25,9 @@ SOFTWARE.
 */
 
 #include "../Mouse.hpp"
+#include "../../Core/Math/Vector2.hpp"
+#include "../Window.hpp"
+#include "SDL2/SDL.h"
 
 namespace LevelSketch
 {
@@ -33,23 +36,28 @@ namespace Platform
 
 void Mouse::Show()
 {
+    SDL_ShowCursor(SDL_ENABLE);
 }
 
 void Mouse::Hide()
 {
+    SDL_ShowCursor(SDL_DISABLE);
 }
 
 bool Mouse::IsVisible()
 {
-    return true;
+    return SDL_ShowCursor(SDL_QUERY) == SDL_ENABLE;
 }
 
-void Mouse::SetPosition(const Vector2i&)
+void Mouse::SetPosition(const Vector2i& Position)
 {
+    SDL_WarpMouseGlobal(Position.X, Position.Y);
 }
 
-void Mouse::SetPosition(Window*, const Vector2i&)
+void Mouse::SetPosition(Window* Target, const Vector2i& Position)
 {
+    SDL_Window* Handle { reinterpret_cast<SDL_Window*>(Target->Handle()) };
+    SDL_WarpMouseInWindow(Handle, Position.X, Position.Y);
 }
 
 }
