@@ -30,22 +30,6 @@ SOFTWARE.
 #include "../Platform/Platform.hpp"
 #include "../Platform/Window.hpp"
 
-#if defined(RENDER_DIRECTX)
-#include "DirectX/Renderer.hpp"
-#elif defined(RENDER_METAL)
-#include "Metal/Renderer.hpp"
-#elif defined(RENDER_VULKAN)
-#include "Vulkan/Renderer.hpp"
-#elif defined(RENDER_OPENGL)
-#if defined(PLATFORM_SDL2)
-#include "OpenGL/SDL2Renderer.hpp"
-#else
-#include "OpenGL/Renderer.hpp"
-#endif
-#else
-#error "Renderer is not supported!"
-#endif
-
 namespace LevelSketch
 {
 namespace Render
@@ -53,23 +37,7 @@ namespace Render
 
 const UniquePtr<Renderer>& Renderer::Instance()
 {
-    static UniquePtr<Renderer> Instance
-    {
-#if defined(RENDER_DIRECTX)
-        UniquePtr<DirectX::Renderer>::New()
-#elif defined(RENDER_METAL)
-        UniquePtr<Metal::Renderer>::New()
-#elif defined(RENDER_VULKAN)
-        UniquePtr<Vulkan::Renderer>::New()
-#elif defined(RENDER_OPENGL)
-#if defined(PLATFORM_SDL2)
-        UniquePtr<OpenGL::SDL2Renderer>::New()
-#else
-        UniquePtr<OpenGL::Renderer>::New()
-#endif
-#endif
-    };
-
+    static UniquePtr<Renderer> Instance { CreateInstance() };
     return Instance;
 }
 

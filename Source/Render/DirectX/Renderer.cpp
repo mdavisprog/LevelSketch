@@ -61,6 +61,11 @@ namespace LevelSketch
 namespace Render
 {
 
+UniquePtr<Renderer> Renderer::CreateInstance()
+{
+    return UniquePtr<DirectX::Renderer>::New();
+}
+
 String Renderer::ShadersDirectory()
 {
     return Platform::FileSystem::CombinePaths(Platform::FileSystem::ShadersDirectory(), "HLSL");

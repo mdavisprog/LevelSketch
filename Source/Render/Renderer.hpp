@@ -50,6 +50,10 @@ struct ViewportRect;
 
 class Renderer
 {
+private:
+    // Must be implemented by API.
+    static UniquePtr<Renderer> CreateInstance();
+
 public:
     struct DriverSummary
     {
