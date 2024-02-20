@@ -159,7 +159,7 @@ Texture const* TexturePool::AllocateTexture(Device const* Device_,
     WriteDescriptorSet.pTexelBufferView = nullptr;
 
     vkUpdateDescriptorSets(Device_->GetLogicalDevice()->Get(), 1, &WriteDescriptorSet, 0, nullptr);
-    m_Sets[Texture_->ID()] = DescriptorSet;
+    m_Sets[Texture_->Handle().ID()] = DescriptorSet;
 
     m_Textures.Push(std::move(Texture_));
     return m_Textures.Back().Get();
@@ -170,9 +170,9 @@ VkDescriptorSetLayout TexturePool::Layout() const
     return m_Layout;
 }
 
-VkDescriptorSet TexturePool::Set(u32 ID)
+VkDescriptorSet TexturePool::Set(const TextureHandle& Handle)
 {
-    return m_Sets[ID];
+    return m_Sets[Handle.ID()];
 }
 
 }

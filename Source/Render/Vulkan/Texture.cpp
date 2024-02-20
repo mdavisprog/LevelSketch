@@ -79,8 +79,6 @@ VkImageView Texture::CreateView(Device const* Device_, VkImage Image, VkFormat F
     return ViewResult;
 }
 
-u32 Texture::s_ID { 0 };
-
 Texture::Texture()
 {
 }
@@ -176,7 +174,7 @@ bool Texture::Initialize(Device const* Device_, CommandPool const* Pool, const T
 
     m_ImageView = CreateView(Device_, m_Image, CreateInfo.format);
 
-    m_ID = ++s_ID;
+    m_Handle = TextureHandle::Acquire();
 
     return true;
 }
@@ -212,9 +210,9 @@ VkImageView Texture::View() const
     return m_ImageView;
 }
 
-u32 Texture::ID() const
+TextureHandle Texture::Handle() const
 {
-    return m_ID;
+    return m_Handle;
 }
 
 void Texture::Transition(Device const* Device_, CommandPool const* Pool, VkImageLayout From, VkImageLayout To) const

@@ -26,36 +26,80 @@ SOFTWARE.
 
 #pragma once
 
-#include "../../Core/Types.hpp"
-#include "../Handle.hpp"
+#include "../Core/Types.hpp"
 
-@protocol MTLTexture;
+#include <type_traits>
 
 namespace LevelSketch
 {
 namespace Render
 {
-namespace Metal
-{
 
-class Device;
-
-class Texture
+template<typename T>
+struct Handle
 {
+private:
+    static u32 s_ID;
+
 public:
-    Texture();
+    static T Acquire()
+    {
+        static_assert(std::is_base_of_v<Handle, T>, "Type T must be derived from Handle.");
+        T Result;
+        Result.m_ID = ++s_ID;
+        return Result;
+    }
 
-    bool Initialize(Device const* Device_, u32 Width, u32 Height);
-    bool Upload(const void* Data, u64 BytesPerRow);
+    static T ToHandle(u32 ID)
+    {
+        static_assert(std::is_base_of_v<Handle, T>, "Type T must be derived from Handle.");
+        T Result;
+        Result.m_ID = ID;
+        return Result;
+    }
 
-    TextureHandle Handle() const;
-    id<MTLTexture> Data() const;
+    Handle()
+    {
+    }
+
+    bool operator==(const Handle<T>& Other) const
+    {
+        return m_ID == Other.m_ID;
+    }
+
+    bool operator!=(const Handle<T>& Other) const
+    {
+        return m_ID != Other.m_ID;
+    }
+
+    u32 ID() const
+    {
+        return m_ID;
+    }
+
+    bool IsValid() const
+    {
+        return m_ID != 0;
+    }
 
 private:
-    id<MTLTexture> m_Texture { nullptr };
-    TextureHandle m_Handle {};
+    u32 m_ID { 0 };
 };
 
-}
+template<typename T>
+u32 Handle<T>::s_ID { 0 };
+
+struct GraphicsPipelineHandle : public Handle<GraphicsPipelineHandle>
+{
+};
+
+struct TextureHandle : public Handle<TextureHandle>
+{
+};
+
+struct VertexBufferHandle : public Handle<VertexBufferHandle>
+{
+};
+
 }
 }

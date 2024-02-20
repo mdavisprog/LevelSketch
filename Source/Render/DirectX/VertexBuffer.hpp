@@ -27,6 +27,7 @@ SOFTWARE.
 #pragma once
 
 #include "../../Core/Types.hpp"
+#include "../Handle.hpp"
 
 #include <d3d12.h>
 #include <wrl/client.h>
@@ -45,9 +46,6 @@ class Device;
 
 class VertexBuffer
 {
-private:
-    static u32 s_ID;
-
 public:
     VertexBuffer();
 
@@ -57,10 +55,11 @@ public:
     bool UploadIndexData(const void* Source, u64 Size);
     void BindViews(ID3D12GraphicsCommandList* CommandList) const;
 
-    u32 ID() const;
+    VertexBufferHandle Handle() const;
 
 private:
     u32 m_ID { 0 };
+    VertexBufferHandle m_Handle {};
 
     Microsoft::WRL::ComPtr<ID3D12Resource> m_VertexBuffer {};
     Microsoft::WRL::ComPtr<ID3D12Resource> m_IndexBuffer {};

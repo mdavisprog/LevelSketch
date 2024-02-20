@@ -27,6 +27,7 @@ SOFTWARE.
 #pragma once
 
 #include "../../Core/Types.hpp"
+#include "../Handle.hpp"
 
 #import <Metal/Metal.h>
 
@@ -45,9 +46,6 @@ class Device;
 
 class VertexBuffer
 {
-private:
-    static u32 s_ID;
-
 public:
     VertexBuffer();
 
@@ -60,14 +58,14 @@ public:
     MTLIndexType IndexType() const;
     u64 IndexTypeSize() const;
     u64 Stride() const;
-    u32 ID() const;
+    VertexBufferHandle Handle() const;
 
 private:
     id<MTLBuffer> m_VertexBuffer { nullptr };
     id<MTLBuffer> m_IndexBuffer { nullptr };
     MTLIndexType m_IndexType { MTLIndexTypeUInt32 };
     u64 m_Stride { 0 };
-    u32 m_ID { 0 };
+    VertexBufferHandle m_Handle {};
 };
 
 }

@@ -283,21 +283,21 @@ void Renderer::Shutdown()
     Loader::Instance().Shutdown();
 }
 
-u32 Renderer::CreateTexture(const TextureDescription& Description)
+TextureHandle Renderer::CreateTexture(const TextureDescription& Description)
 {
     Texture const* Result { m_TexturePool->AllocateTexture(m_Device.Get(), m_CommandPool.Get(), Description) };
 
     if (Result == nullptr)
     {
-        return 0;
+        return TextureHandle();
     }
 
-    return Result->ID();
+    return Result->Handle();
 }
 
-bool Renderer::BindTexture(u32 ID)
+bool Renderer::BindTexture(const TextureHandle& Handle)
 {
-    const VkDescriptorSet Sets[] { m_DescriptorPool->GetSet(m_FrameIndex), m_TexturePool->Set(ID) };
+    const VkDescriptorSet Sets[] { m_DescriptorPool->GetSet(m_FrameIndex), m_TexturePool->Set(Handle) };
     CommandBuffer const* Commands { m_CommandPool->Buffer(m_FrameIndex) };
     Commands->BindDescriptorSets(m_BoundPipeline, 2, Sets);
     return true;
@@ -366,7 +366,7 @@ void Renderer::SetScissor(const Recti& Rect)
     Commands->SetScissor(Rect);
 }
 
-u32 Renderer::CreateGraphicsPipeline(const GraphicsPipelineDescription& Description)
+GraphicsPipelineHandle Renderer::CreateGraphicsPipeline(const GraphicsPipelineDescription& Description)
 {
     UniquePtr<GraphicsPipeline> Pipeline { UniquePtr<GraphicsPipeline>::New() };
 
@@ -376,21 +376,21 @@ u32 Renderer::CreateGraphicsPipeline(const GraphicsPipelineDescription& Descript
             m_Viewports[0]->GetSwapChain(),
             Description))
     {
-        return 0;
+        return GraphicsPipelineHandle();
     }
 
-    const u32 Result { Pipeline->ID() };
+    const GraphicsPipelineHandle Result { Pipeline->Handle() };
     m_GraphicsPipelines.Push(std::move(Pipeline));
     return Result;
 }
 
-bool Renderer::BindGraphicsPipeline(u32 ID)
+bool Renderer::BindGraphicsPipeline(const GraphicsPipelineHandle& Handle)
 {
-    GraphicsPipeline const* Pipeline { GetGraphicsPipeline(ID) };
+    GraphicsPipeline const* Pipeline { GetGraphicsPipeline(Handle) };
 
     if (Pipeline == nullptr)
     {
-        Core::Console::Warning("Failed to bind graphics pipeline with id '%d'.", ID);
+        Core::Console::Warning("Failed to bind graphics pipeline with handle '%d'.", Handle.ID());
         return false;
     }
 
@@ -408,23 +408,23 @@ void Renderer::DrawIndexed(u32 IndexCount, u32 InstanceCount, u32 StartIndex, u3
     Commands->DrawVerticesIndexed(IndexCount, InstanceCount, StartIndex, BaseVertex, StartInstance);
 }
 
-u32 Renderer::CreateVertexBuffer(const VertexBufferDescription& Description)
+VertexBufferHandle Renderer::CreateVertexBuffer(const VertexBufferDescription& Description)
 {
     UniquePtr<VertexBuffer> Buffer { UniquePtr<VertexBuffer>::New() };
 
     if (!Buffer->Initialize(m_Device.Get(), Description))
     {
-        return 0;
+        return VertexBufferHandle();
     }
 
-    const u32 Result { Buffer->ID() };
+    const VertexBufferHandle Result { Buffer->Handle() };
     m_VertexBuffers.Push(std::move(Buffer));
     return Result;
 }
 
-bool Renderer::UploadVertexData(u32 ID, const VertexDataDescription& Description)
+bool Renderer::UploadVertexData(const VertexBufferHandle& Handle, const VertexDataDescription& Description)
 {
-    VertexBuffer const* Buffer { GetVertexBuffer(ID) };
+    VertexBuffer const* Buffer { GetVertexBuffer(Handle) };
 
     if (Buffer == nullptr)
     {
@@ -450,9 +450,9 @@ bool Renderer::UploadVertexData(u32 ID, const VertexDataDescription& Description
     return true;
 }
 
-bool Renderer::BindVertexBuffer(u32 ID)
+bool Renderer::BindVertexBuffer(const VertexBufferHandle& Handle)
 {
-    VertexBuffer const* Buffer { GetVertexBuffer(ID) };
+    VertexBuffer const* Buffer { GetVertexBuffer(Handle) };
     CommandBuffer const* Commands { m_CommandPool->Buffer(m_FrameIndex) };
     Commands->BindBuffer(Buffer);
     return false;
@@ -523,11 +523,11 @@ bool Renderer::GetExistingLayers(const Array<const char*> Layers, Array<const ch
     return !Ptrs.IsEmpty();
 }
 
-VertexBuffer const* Renderer::GetVertexBuffer(u32 ID) const
+VertexBuffer const* Renderer::GetVertexBuffer(const VertexBufferHandle& Handle) const
 {
     for (const UniquePtr<VertexBuffer>& Buffer : m_VertexBuffers)
     {
-        if (Buffer->ID() == ID)
+        if (Buffer->Handle() == Handle)
         {
             return Buffer.Get();
         }
@@ -536,11 +536,11 @@ VertexBuffer const* Renderer::GetVertexBuffer(u32 ID) const
     return nullptr;
 }
 
-GraphicsPipeline const* Renderer::GetGraphicsPipeline(u32 ID) const
+GraphicsPipeline const* Renderer::GetGraphicsPipeline(const GraphicsPipelineHandle& Handle) const
 {
     for (const UniquePtr<GraphicsPipeline>& Pipeline : m_GraphicsPipelines)
     {
-        if (Pipeline->ID() == ID)
+        if (Pipeline->Handle() == Handle)
         {
             return Pipeline.Get();
         }

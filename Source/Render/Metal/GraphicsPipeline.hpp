@@ -27,6 +27,7 @@ SOFTWARE.
 #pragma once
 
 #include "../../Core/Types.hpp"
+#include "../Handle.hpp"
 
 #import <Metal/Metal.h>
 
@@ -44,22 +45,19 @@ class Device;
 
 class GraphicsPipeline
 {
-private:
-    static u32 s_ID;
-
 public:
     GraphicsPipeline();
 
     bool Initialize(Device const* Device_, const GraphicsPipelineDescription& Description);
     id<MTLRenderPipelineState> Get() const;
     id<MTLDepthStencilState> DepthStencil() const;
-    u32 ID() const;
+    GraphicsPipelineHandle Handle() const;
     MTLCullMode CullMode() const;
 
 private:
     id<MTLRenderPipelineState> m_State { nullptr };
     id<MTLDepthStencilState> m_DepthStencil { nullptr };
-    u32 m_ID { 0 };
+    GraphicsPipelineHandle m_Handle {};
     MTLCullMode m_CullMode { MTLCullModeNone };
 };
 

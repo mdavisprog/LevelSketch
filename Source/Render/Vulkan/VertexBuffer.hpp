@@ -28,6 +28,7 @@ SOFTWARE.
 
 #include "../../Core/Memory/UniquePtr.hpp"
 #include "../../Core/Types.hpp"
+#include "../Handle.hpp"
 
 #include <vulkan/vulkan.hpp>
 
@@ -46,9 +47,6 @@ class Device;
 
 class VertexBuffer final
 {
-private:
-    static u32 s_ID;
-
 public:
     VertexBuffer();
 
@@ -59,7 +57,7 @@ public:
     Buffer const* GetIndexBuffer() const;
 
     VkIndexType IndexType() const;
-    u32 ID() const;
+    VertexBufferHandle Handle() const;
 
 private:
     bool InitializeBuffer(const UniquePtr<Buffer>& Buffer_,
@@ -70,7 +68,7 @@ private:
     UniquePtr<Buffer> m_VertexBuffer { nullptr };
     UniquePtr<Buffer> m_IndexBuffer { nullptr };
     VkIndexType m_IndexType { VK_INDEX_TYPE_UINT32 };
-    u32 m_ID { 0 };
+    VertexBufferHandle m_Handle {};
 };
 
 }

@@ -77,8 +77,6 @@ VkCullModeFlagBits ToCullMode(CullModeType Type)
     return VK_CULL_MODE_NONE;
 }
 
-u32 GraphicsPipeline::s_ID { 0 };
-
 GraphicsPipeline::GraphicsPipeline()
 {
 }
@@ -264,7 +262,7 @@ bool GraphicsPipeline::Initialize(Device const* Device_,
         return false;
     }
 
-    m_ID = ++s_ID;
+    m_Handle = GraphicsPipelineHandle::Acquire();
 
     CleanupShaders();
     return true;
@@ -295,9 +293,9 @@ VkPipelineLayout GraphicsPipeline::GetLayout() const
     return m_PipelineLayout;
 }
 
-u32 GraphicsPipeline::ID() const
+GraphicsPipelineHandle GraphicsPipeline::Handle() const
 {
-    return m_ID;
+    return m_Handle;
 }
 
 bool GraphicsPipeline::CreatePipelineLayout(Device const* Device_,

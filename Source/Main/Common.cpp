@@ -38,6 +38,7 @@ SOFTWARE.
 #include "../Platform/Platform.hpp"
 #include "../Platform/Window.hpp"
 #include "../Render/GraphicsPipelineDescription.hpp"
+#include "../Render/Handle.hpp"
 #include "../Render/Renderer.hpp"
 #include "../Render/TextureDescription.hpp"
 #include "../Render/VertexBufferDescription.hpp"
@@ -53,9 +54,9 @@ namespace LevelSketch
 namespace Main
 {
 
-static u32 g_TestPipeline { 0 };
-static u32 g_TestBuffer { 0 };
-static u32 g_DefaultTexture { 0 };
+static Render::GraphicsPipelineHandle g_TestPipeline {};
+static Render::VertexBufferHandle g_TestBuffer {};
+static Render::TextureHandle g_DefaultTexture {};
 
 static Engine::Camera g_Camera { { 0.0f, 0.0f, -20.0f } };
 static bool g_RotateCamera { false };
@@ -243,7 +244,7 @@ static bool InitializeResources()
     TestDesc.FragmentShader.Path = "TestPS";
     TestDesc.FragmentShader.Function = "Main";
     g_TestPipeline = Renderer->CreateGraphicsPipeline(TestDesc);
-    if (g_TestPipeline == 0)
+    if (!g_TestPipeline.IsValid())
     {
         return false;
     }
@@ -254,7 +255,7 @@ static bool InitializeResources()
     TestBufferDesc.Stride = sizeof(Vertex3);
     TestBufferDesc.IndexFormat = Render::IndexFormatType::U32;
     g_TestBuffer = Renderer->CreateVertexBuffer(TestBufferDesc);
-    if (g_TestBuffer == 0)
+    if (!g_TestBuffer.IsValid())
     {
         return false;
     }

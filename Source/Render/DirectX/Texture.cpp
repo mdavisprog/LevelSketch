@@ -36,8 +36,6 @@ namespace Render
 namespace DirectX
 {
 
-u32 Texture::s_ID { 0 };
-
 Texture::Texture()
 {
 }
@@ -164,7 +162,7 @@ bool Texture::Upload(ID3D12GraphicsCommandList* CommandList,
 
     Device->Release();
 
-    m_ID = ++s_ID;
+    m_Handle = TextureHandle::Acquire();
     m_Offset = Offset;
 
     return true;
@@ -175,9 +173,9 @@ bool Texture::Initialized() const
     return m_Texture != nullptr;
 }
 
-u32 Texture::ID() const
+TextureHandle Texture::Handle() const
 {
-    return m_ID;
+    return m_Handle;
 }
 
 u64 Texture::Offset() const

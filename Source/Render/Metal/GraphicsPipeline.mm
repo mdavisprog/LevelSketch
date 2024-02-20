@@ -74,8 +74,6 @@ static MTLCullMode ToCullMode(CullModeType Mode)
     return MTLCullModeNone;
 }
 
-u32 GraphicsPipeline::s_ID { 0 };
-
 GraphicsPipeline::GraphicsPipeline()
 {
 }
@@ -178,7 +176,7 @@ bool GraphicsPipeline::Initialize(Device const* Device_, const GraphicsPipelineD
         }
     }
 
-    m_ID = ++s_ID;
+    m_Handle = GraphicsPipelineHandle::Acquire();
     m_CullMode = ToCullMode(Description.CullMode);
 
     return true;
@@ -194,9 +192,9 @@ id<MTLDepthStencilState> GraphicsPipeline::DepthStencil() const
     return m_DepthStencil;
 }
 
-u32 GraphicsPipeline::ID() const
+GraphicsPipelineHandle GraphicsPipeline::Handle() const
 {
-    return m_ID;
+    return m_Handle;
 }
 
 MTLCullMode GraphicsPipeline::CullMode() const

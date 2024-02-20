@@ -37,8 +37,6 @@ namespace Render
 namespace Vulkan
 {
 
-u32 VertexBuffer::s_ID { 0 };
-
 VertexBuffer::VertexBuffer()
 {
 }
@@ -60,7 +58,7 @@ bool VertexBuffer::Initialize(Device const* Device_, const VertexBufferDescripti
     }
 
     m_IndexType = Description.IndexFormat == IndexFormatType::U16 ? VK_INDEX_TYPE_UINT16 : VK_INDEX_TYPE_UINT32;
-    m_ID = ++s_ID;
+    m_Handle = VertexBufferHandle::Acquire();
 
     return true;
 }
@@ -89,9 +87,9 @@ VkIndexType VertexBuffer::IndexType() const
     return m_IndexType;
 }
 
-u32 VertexBuffer::ID() const
+VertexBufferHandle VertexBuffer::Handle() const
 {
-    return m_ID;
+    return m_Handle;
 }
 
 bool VertexBuffer::InitializeBuffer(const UniquePtr<Buffer>& Buffer_,

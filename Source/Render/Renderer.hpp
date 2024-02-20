@@ -43,8 +43,11 @@ namespace Render
 {
 
 struct GraphicsPipelineDescription;
+struct GraphicsPipelineHandle;
 struct TextureDescription;
+struct TextureHandle;
 struct VertexBufferDescription;
+struct VertexBufferHandle;
 struct VertexDataDescription;
 struct ViewportRect;
 
@@ -76,22 +79,22 @@ public:
     virtual bool Initialize(Platform::Window* Window) = 0;
     virtual void Shutdown() = 0;
 
-    virtual u32 CreateTexture(const TextureDescription& Description) = 0;
-    virtual bool BindTexture(u32 ID) = 0;
+    virtual TextureHandle CreateTexture(const TextureDescription& Description) = 0;
+    virtual bool BindTexture(const TextureHandle& Handle) = 0;
 
     virtual bool BeginRender(Platform::Window* Window, const Colorf& ClearColor) = 0;
     virtual void EndRender(Platform::Window* Window) = 0;
     virtual void SetViewportRect(const ViewportRect& Rect) = 0;
     virtual void SetScissor(const Recti& Rect) = 0;
 
-    virtual u32 CreateGraphicsPipeline(const GraphicsPipelineDescription& Description) = 0;
-    virtual bool BindGraphicsPipeline(u32 ID) = 0;
+    virtual GraphicsPipelineHandle CreateGraphicsPipeline(const GraphicsPipelineDescription& Description) = 0;
+    virtual bool BindGraphicsPipeline(const GraphicsPipelineHandle& Handle) = 0;
 
     virtual void DrawIndexed(u32 IndexCount, u32 InstanceCount, u32 StartIndex, u32 BaseVertex, u32 StartInstance) = 0;
 
-    virtual u32 CreateVertexBuffer(const VertexBufferDescription& Description) = 0;
-    virtual bool UploadVertexData(u32 ID, const VertexDataDescription& Description) = 0;
-    virtual bool BindVertexBuffer(u32 ID) = 0;
+    virtual VertexBufferHandle CreateVertexBuffer(const VertexBufferDescription& Description) = 0;
+    virtual bool UploadVertexData(const VertexBufferHandle& Handle, const VertexDataDescription& Description) = 0;
+    virtual bool BindVertexBuffer(const VertexBufferHandle& Handle) = 0;
 
     // Temporary
     virtual void UpdateViewMatrix(const Matrix4f& View);

@@ -30,6 +30,7 @@ SOFTWARE.
 #include "../Core/Memory/UniquePtr.hpp"
 #include "../External/OctaneGUI/VertexBuffer.h"
 #include "../Platform/Event.hpp"
+#include "../Render/Handle.hpp"
 
 namespace OctaneGUI
 {
@@ -82,9 +83,9 @@ private:
     HashMap<OctaneGUI::Window*, Platform::Window*> m_Windows {};
     Array<Platform::Event> m_Events {};
     Buffer m_LastBuffer {};
-    u32 m_GUIPipeline { 0 };
-    u32 m_GUIBuffer { 0 };
-    u32 m_WhiteTexture { 0 };
+    Render::GraphicsPipelineHandle m_GUIPipeline {};
+    Render::VertexBufferHandle m_GUIBuffer {};
+    u32 m_WhiteTexture {};
 };
 
 }

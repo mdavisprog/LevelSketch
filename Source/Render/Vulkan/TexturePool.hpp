@@ -38,6 +38,7 @@ namespace Render
 {
 
 struct TextureDescription;
+struct TextureHandle;
 
 namespace Vulkan
 {
@@ -61,7 +62,7 @@ public:
         const TextureDescription& Description);
 
     VkDescriptorSetLayout Layout() const;
-    VkDescriptorSet Set(u32 ID);
+    VkDescriptorSet Set(const TextureHandle& Handle);
 
 private:
     VkDescriptorPool m_Pool { VK_NULL_HANDLE };

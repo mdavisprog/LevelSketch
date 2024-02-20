@@ -134,18 +134,18 @@ void Renderer::Shutdown()
 {
 }
 
-u32 Renderer::CreateTexture(const TextureDescription& Description)
+TextureHandle Renderer::CreateTexture(const TextureDescription& Description)
 {
     if (!ResetCommands())
     {
         Core::Console::Warning("Failed to load texture! Command list could not be reset.");
-        return 0;
+        return TextureHandle();
     }
 
     Texture Tex;
     if (!Tex.Create(m_Device->Get(), Description.Width, Description.Height))
     {
-        return 0;
+        return TextureHandle();
     }
 
     Microsoft::WRL::ComPtr<ID3D12Resource> UploadResource;
@@ -155,7 +155,7 @@ u32 Renderer::CreateTexture(const TextureDescription& Description)
             Description.Data,
             UploadResource))
     {
-        return 0;
+        return TextureHandle();
     }
 
     ExecuteCommands();
@@ -163,19 +163,13 @@ u32 Renderer::CreateTexture(const TextureDescription& Description)
 
     m_Textures.Push(Tex);
 
-    return Tex.ID();
+    return Tex.Handle();
 }
 
-bool Renderer::BindTexture(u32 ID)
+bool Renderer::BindTexture(const TextureHandle& Handle)
 {
-    if (ID == 0)
-    {
-        Core::Console::Warning("Invalid texture given to BindTexture.");
-        return false;
-    }
-
     D3D12_GPU_DESCRIPTOR_HANDLE GPUDesc { m_Device->SRVHeap()->GPUOffset(0) };
-    GPUDesc.ptr += GetTextureOffset(ID);
+    GPUDesc.ptr += GetTextureOffset(Handle);
     m_Device->GetCommandList()->Get()->SetGraphicsRootDescriptorTable(0, GPUDesc);
 
     return true;
@@ -285,29 +279,23 @@ void Renderer::SetScissor(const Recti& Rect)
     m_Device->GetCommandList()->Get()->RSSetScissorRects(1, &Scissor);
 }
 
-u32 Renderer::CreateGraphicsPipeline(const GraphicsPipelineDescription& Description)
+GraphicsPipelineHandle Renderer::CreateGraphicsPipeline(const GraphicsPipelineDescription& Description)
 {
     UniquePtr<GraphicsPipeline> Pipeline { UniquePtr<GraphicsPipeline>::New() };
 
     if (!Pipeline->Initialize(m_Device.Get(), Description))
     {
-        return 0;
+        return GraphicsPipelineHandle();
     }
 
-    const u32 Result { Pipeline->ID() };
+    const GraphicsPipelineHandle Result { Pipeline->Handle() };
     m_GraphicsPipelines.Push(std::move(Pipeline));
     return Result;
 }
 
-bool Renderer::BindGraphicsPipeline(u32 ID)
+bool Renderer::BindGraphicsPipeline(const GraphicsPipelineHandle& Handle)
 {
-    if (ID == 0)
-    {
-        Core::Console::Warning("Invalid graphic pipeline ID given to BindGraphicsPipeline.");
-        return false;
-    }
-
-    GraphicsPipeline* Pipeline { GetGraphicsPipeline(ID) };
+    GraphicsPipeline* Pipeline { GetGraphicsPipeline(Handle) };
 
     if (Pipeline == nullptr)
     {
@@ -328,34 +316,28 @@ void Renderer::DrawIndexed(u32 IndexCount, u32 InstanceCount, u32 StartIndex, u3
         StartInstance);
 }
 
-u32 Renderer::CreateVertexBuffer(const VertexBufferDescription& Description)
+VertexBufferHandle Renderer::CreateVertexBuffer(const VertexBufferDescription& Description)
 {
     UniquePtr<VertexBuffer> Buffer { UniquePtr<VertexBuffer>::New() };
 
     if (!Buffer->Initialize(m_Device.Get(), Description))
     {
-        return 0;
+        return VertexBufferHandle();
     }
 
-    const u32 Result { Buffer->ID() };
+    const VertexBufferHandle Result { Buffer->Handle() };
     m_VertexBuffers.Push(std::move(Buffer));
     return Result;
 }
 
-bool Renderer::UploadVertexData(u32 ID, const VertexDataDescription& Description)
+bool Renderer::UploadVertexData(const VertexBufferHandle& Handle, const VertexDataDescription& Description)
 {
     if (!ResetCommands())
     {
         return false;
     }
 
-    if (ID == 0)
-    {
-        Core::Console::Warning("Invalid vertex buffer ID '%d' given to UploadVertexData.", ID);
-        return false;
-    }
-
-    VertexBuffer* Buffer { GetVertexBuffer(ID) };
+    VertexBuffer* Buffer { GetVertexBuffer(Handle) };
 
     if (Buffer == nullptr)
     {
@@ -382,15 +364,9 @@ bool Renderer::UploadVertexData(u32 ID, const VertexDataDescription& Description
     return true;
 }
 
-bool Renderer::BindVertexBuffer(u32 ID)
+bool Renderer::BindVertexBuffer(const VertexBufferHandle& Handle)
 {
-    if (ID == 0)
-    {
-        Core::Console::Warning("Invalid vertex buffer ID '%d' given to BindVertexBuffer.", ID);
-        return false;
-    }
-
-    VertexBuffer* Buffer { GetVertexBuffer(ID) };
+    VertexBuffer* Buffer { GetVertexBuffer(Handle) };
 
     if (Buffer == nullptr)
     {
@@ -513,11 +489,11 @@ bool Renderer::ResetCommands()
     return true;
 }
 
-u64 Renderer::GetTextureOffset(u32 ID) const
+u64 Renderer::GetTextureOffset(const TextureHandle& Handle) const
 {
     for (const Texture& Tex : m_Textures)
     {
-        if (Tex.ID() == ID)
+        if (Tex.Handle() == Handle)
         {
             return Tex.Offset();
         }
@@ -539,13 +515,13 @@ Viewport* Renderer::GetViewportFor(Platform::Window* Window) const
     return nullptr;
 }
 
-VertexBuffer* Renderer::GetVertexBuffer(u32 ID) const
+VertexBuffer* Renderer::GetVertexBuffer(const VertexBufferHandle& Handle) const
 {
     VertexBuffer* Result { nullptr };
 
     for (const UniquePtr<VertexBuffer>& Buffer : m_VertexBuffers)
     {
-        if (Buffer->ID() == ID)
+        if (Buffer->Handle() == Handle)
         {
             Result = Buffer.Get();
             break;
@@ -554,19 +530,19 @@ VertexBuffer* Renderer::GetVertexBuffer(u32 ID) const
 
     if (Result == nullptr)
     {
-        Core::Console::Warning("Failed to find vertex buffer with ID '%d'.", ID);
+        Core::Console::Warning("Failed to find vertex buffer with handle '%d'.", Handle.ID());
     }
 
     return Result;
 }
 
-GraphicsPipeline* Renderer::GetGraphicsPipeline(u32 ID) const
+GraphicsPipeline* Renderer::GetGraphicsPipeline(const GraphicsPipelineHandle& Handle) const
 {
     GraphicsPipeline* Result { nullptr };
 
     for (const UniquePtr<GraphicsPipeline>& Pipeline : m_GraphicsPipelines)
     {
-        if (Pipeline->ID() == ID)
+        if (Pipeline->Handle() == Handle)
         {
             Result = Pipeline.Get();
             break;
@@ -575,7 +551,7 @@ GraphicsPipeline* Renderer::GetGraphicsPipeline(u32 ID) const
 
     if (Result == nullptr)
     {
-        Core::Console::Warning("Failed to find graphics pipeline with ID '%d'.", ID);
+        Core::Console::Warning("Failed to find graphics pipeline with handle '%d'.", Handle.ID());
     }
 
     return Result;

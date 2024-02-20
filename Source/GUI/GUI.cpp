@@ -32,6 +32,7 @@ SOFTWARE.
 #include "../Platform/Platform.hpp"
 #include "../Platform/Window.hpp"
 #include "../Render/GraphicsPipelineDescription.hpp"
+#include "../Render/Handle.hpp"
 #include "../Render/Renderer.hpp"
 #include "../Render/TextureDescription.hpp"
 #include "../Render/VertexBufferDescription.hpp"
@@ -129,8 +130,9 @@ bool GUI::Initialize(i32 Argc, const char** Argv)
         .SetOnLoadTexture(
             [](const std::vector<u8>& Data, u32 Width, u32 Height) -> u32
             {
-                return Render::Renderer::Instance()->CreateTexture(
-                    { const_cast<u8*>(Data.data()), Width, Height, Render::TextureFormat::RGBAByte });
+                return Render::Renderer::Instance()
+                    ->CreateTexture({ const_cast<u8*>(Data.data()), Width, Height, Render::TextureFormat::RGBAByte })
+                    .ID();
             })
         .SetOnPaint(
             [this](OctaneGUI::Window*, const OctaneGUI::VertexBuffer& Buffer) -> void
@@ -169,7 +171,7 @@ bool GUI::InitializeResources()
     GUIDesc.FragmentShader.Path = "GUIPS";
     GUIDesc.FragmentShader.Function = "Main";
     m_GUIPipeline = Renderer->CreateGraphicsPipeline(GUIDesc);
-    if (m_GUIPipeline == 0)
+    if (!m_GUIPipeline.IsValid())
     {
         return false;
     }
@@ -180,13 +182,13 @@ bool GUI::InitializeResources()
     GUIBufferDesc.Stride = sizeof(OctaneGUI::Vertex);
     GUIBufferDesc.IndexFormat = Render::IndexFormatType::U32;
     m_GUIBuffer = Renderer->CreateVertexBuffer(GUIBufferDesc);
-    if (m_GUIBuffer == 0)
+    if (!m_GUIBuffer.IsValid())
     {
         return false;
     }
 
     u8 WhiteTexture[4] { 0xFF, 0xFF, 0xFF, 0xFF };
-    m_WhiteTexture = Renderer->CreateTexture({ WhiteTexture, 1, 1, Render::TextureFormat::RGBAByte });
+    m_WhiteTexture = Renderer->CreateTexture({ WhiteTexture, 1, 1, Render::TextureFormat::RGBAByte }).ID();
 
     return true;
 }
@@ -264,7 +266,7 @@ void GUI::Render(Platform::Window* Window)
             Clip.H = static_cast<i32>(Command.Clip().Height() * Scale.Y);
         };
 
-        Renderer->BindTexture(Texture);
+        Renderer->BindTexture(Render::TextureHandle::ToHandle(Texture));
         Renderer->SetScissor(Clip);
         Renderer->DrawIndexed(Command.IndexCount(), 1, Command.IndexOffset(), Command.VertexOffset(), 0);
     }

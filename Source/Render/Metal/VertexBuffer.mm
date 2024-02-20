@@ -37,8 +37,6 @@ namespace Render
 namespace Metal
 {
 
-u32 VertexBuffer::s_ID { 0 };
-
 VertexBuffer::VertexBuffer()
 {
 }
@@ -65,7 +63,7 @@ bool VertexBuffer::Initialize(Device const* Device_, const VertexBufferDescripti
 
     m_IndexType = Description.IndexFormat == IndexFormatType::U16 ? MTLIndexTypeUInt16 : MTLIndexTypeUInt32;
     m_Stride = Description.Stride;
-    m_ID = ++s_ID;
+    m_Handle = VertexBufferHandle::Acquire();
 
     return true;
 }
@@ -102,9 +100,9 @@ u64 VertexBuffer::Stride() const
     return m_Stride;
 }
 
-u32 VertexBuffer::ID() const
+VertexBufferHandle VertexBuffer::Handle() const
 {
-    return m_ID;
+    return m_Handle;
 }
 
 }

@@ -27,6 +27,7 @@ SOFTWARE.
 #pragma once
 
 #include "../../Core/Types.hpp"
+#include "../Handle.hpp"
 
 #include <d3d12.h>
 #include <wrl/client.h>
@@ -45,19 +46,16 @@ class Device;
 
 class GraphicsPipeline
 {
-private:
-    static u32 s_ID;
-
 public:
     GraphicsPipeline();
 
     bool Initialize(Device const* Device_, const GraphicsPipelineDescription& Description);
 
-    u32 ID() const;
+    GraphicsPipelineHandle Handle() const;
     ID3D12PipelineState* Get() const;
 
 private:
-    u32 m_ID { 0 };
+    GraphicsPipelineHandle m_Handle {};
     Microsoft::WRL::ComPtr<ID3D12PipelineState> m_State { nullptr };
 };
 

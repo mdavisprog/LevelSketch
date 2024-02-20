@@ -28,6 +28,7 @@ SOFTWARE.
 
 #include "../../Core/Containers/Forwards.hpp"
 #include "../../Core/Types.hpp"
+#include "../Handle.hpp"
 
 #include <vulkan/vulkan.hpp>
 
@@ -49,9 +50,6 @@ class UniformBuffer;
 
 class GraphicsPipeline final
 {
-private:
-    static u32 s_ID;
-
 public:
     GraphicsPipeline();
 
@@ -64,14 +62,14 @@ public:
 
     VkPipeline Get() const;
     VkPipelineLayout GetLayout() const;
-    u32 ID() const;
+    GraphicsPipelineHandle Handle() const;
 
 private:
     bool CreatePipelineLayout(Device const* Device_, DescriptorPool const* Pool, TexturePool const* TexturePool_);
 
     VkPipelineLayout m_PipelineLayout { VK_NULL_HANDLE };
     VkPipeline m_Pipeline { VK_NULL_HANDLE };
-    u32 m_ID { 0 };
+    GraphicsPipelineHandle m_Handle {};
 };
 
 }

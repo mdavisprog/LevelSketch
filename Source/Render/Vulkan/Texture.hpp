@@ -27,6 +27,7 @@ SOFTWARE.
 #pragma once
 
 #include "../../Core/Types.hpp"
+#include "../Handle.hpp"
 
 #include <vulkan/vulkan.hpp>
 
@@ -45,9 +46,6 @@ class Device;
 
 class Texture final
 {
-private:
-    static u32 s_ID;
-
 public:
     static VkImageView CreateView(Device const* Device_, VkImage Image, VkFormat Format);
 
@@ -58,7 +56,7 @@ public:
 
     VkImage Get() const;
     VkImageView View() const;
-    u32 ID() const;
+    TextureHandle Handle() const;
 
 private:
     void Transition(Device const* Device_, CommandPool const* Pool, VkImageLayout From, VkImageLayout) const;
@@ -66,7 +64,7 @@ private:
     VkImage m_Image { VK_NULL_HANDLE };
     VkImageView m_ImageView { VK_NULL_HANDLE };
     VkDeviceMemory m_Memory { VK_NULL_HANDLE };
-    u32 m_ID { 0 };
+    TextureHandle m_Handle {};
 };
 
 }

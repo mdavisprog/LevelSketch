@@ -73,16 +73,16 @@ public:
     virtual bool Initialize(Platform::Window* Window) override;
     virtual void Shutdown() override;
 
-    virtual u32 CreateTexture(const TextureDescription& Description) override;
-    virtual bool BindTexture(u32 ID) override;
+    virtual TextureHandle CreateTexture(const TextureDescription& Description) override;
+    virtual bool BindTexture(const TextureHandle& Handle) override;
 
     virtual bool BeginRender(Platform::Window* Window, const Colorf& ClearColor) override;
     virtual void EndRender(Platform::Window* Window) override;
     virtual void SetViewportRect(const ViewportRect& Rect) override;
     virtual void SetScissor(const Recti& Rect) override;
 
-    virtual u32 CreateGraphicsPipeline(const GraphicsPipelineDescription& Description) override;
-    virtual bool BindGraphicsPipeline(u32 ID) override;
+    virtual GraphicsPipelineHandle CreateGraphicsPipeline(const GraphicsPipelineDescription& Description) override;
+    virtual bool BindGraphicsPipeline(const GraphicsPipelineHandle& Handle) override;
 
     virtual void DrawIndexed(u32 IndexCount,
         u32 InstanceCount,
@@ -90,9 +90,9 @@ public:
         u32 BaseVertex,
         u32 StartInstance) override;
 
-    virtual u32 CreateVertexBuffer(const VertexBufferDescription& Description) override;
-    virtual bool UploadVertexData(u32 ID, const VertexDataDescription& Description) override;
-    virtual bool BindVertexBuffer(u32 ID) override;
+    virtual VertexBufferHandle CreateVertexBuffer(const VertexBufferDescription& Description) override;
+    virtual bool UploadVertexData(const VertexBufferHandle& Handle, const VertexDataDescription& Description) override;
+    virtual bool BindVertexBuffer(const VertexBufferHandle& Handle) override;
 
     virtual void UpdateViewMatrix(const Matrix4f& View) override;
 
@@ -101,10 +101,10 @@ private:
     void WaitForPreviousFrame();
     bool ExecuteCommands();
     bool ResetCommands();
-    u64 GetTextureOffset(u32 ID) const;
+    u64 GetTextureOffset(const TextureHandle& Handle) const;
     Viewport* GetViewportFor(Platform::Window* Window) const;
-    VertexBuffer* GetVertexBuffer(u32 ID) const;
-    GraphicsPipeline* GetGraphicsPipeline(u32 ID) const;
+    VertexBuffer* GetVertexBuffer(const VertexBufferHandle& Handle) const;
+    GraphicsPipeline* GetGraphicsPipeline(const GraphicsPipelineHandle& Handle) const;
 
     Microsoft::WRL::ComPtr<ID3D12Fence> m_Fence;
     UINT64 m_FenceValue { 0 };

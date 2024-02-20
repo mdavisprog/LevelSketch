@@ -38,8 +38,6 @@ namespace Render
 namespace DirectX
 {
 
-u32 VertexBuffer::s_ID { 0 };
-
 VertexBuffer::VertexBuffer()
 {
 }
@@ -102,7 +100,7 @@ bool VertexBuffer::Initialize(Device const* Device_, const VertexBufferDescripti
     m_IndexBufferView.Format =
         Description.IndexFormat == IndexFormatType::U16 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
 
-    m_ID = ++s_ID;
+    m_Handle = VertexBufferHandle::Acquire();
     return true;
 }
 
@@ -153,9 +151,9 @@ void VertexBuffer::BindViews(ID3D12GraphicsCommandList* CommandList) const
     CommandList->IASetIndexBuffer(&m_IndexBufferView);
 }
 
-u32 VertexBuffer::ID() const
+VertexBufferHandle VertexBuffer::Handle() const
 {
-    return m_ID;
+    return m_Handle;
 }
 
 }
