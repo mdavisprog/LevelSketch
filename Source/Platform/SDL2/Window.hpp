@@ -44,7 +44,7 @@ public:
     Window();
 
     virtual void* Handle() const override;
-    virtual bool Create(const char* Title, int X, int Y, int Width, int Height) override;
+    virtual bool Create(const WindowDescription& Description) override;
     virtual void Close() override;
     virtual void Show() override;
     virtual void Focus() override;

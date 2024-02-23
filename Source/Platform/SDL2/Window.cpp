@@ -28,6 +28,7 @@ SOFTWARE.
 #include "../../Core/Console.hpp"
 #include "../../Core/Math/Vector2.hpp"
 #include "../EventQueue.hpp"
+#include "../WindowDescription.hpp"
 #include "SDL2/SDL.h"
 
 namespace LevelSketch
@@ -106,7 +107,7 @@ void* Window::Handle() const
     return reinterpret_cast<void*>(m_Handle);
 }
 
-bool Window::Create(const char* Title, int X, int Y, int Width, int Height)
+bool Window::Create(const WindowDescription& Description)
 {
     if (IsOpen())
     {
@@ -121,7 +122,12 @@ bool Window::Create(const char* Title, int X, int Y, int Width, int Height)
     Flags |= SDL_WINDOW_VULKAN;
 #endif
 
-    m_Handle = SDL_CreateWindow(Title, X, Y, Width, Height, Flags);
+    m_Handle = SDL_CreateWindow(Description.Title.Data(),
+        Description.Position.X,
+        Description.Position.Y,
+        Description.Size.X,
+        Description.Size.Y,
+        Flags);
 
     if (m_Handle == nullptr)
     {
