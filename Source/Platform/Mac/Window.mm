@@ -27,6 +27,7 @@ SOFTWARE.
 #include "Window.hpp"
 #include "../../Core/Assert.hpp"
 #include "../../Core/Math/Vector2.hpp"
+#include "../WindowDescription.hpp"
 #include "Platform.hpp"
 #include "WindowBridge.hpp"
 
@@ -50,7 +51,7 @@ void* Window::Handle() const
     return m_Bridge;
 }
 
-bool Window::Create(const char* Title, int X, int Y, int Width, int Height)
+bool Window::Create(const WindowDescription& Description)
 {
     if (m_Bridge != nullptr)
     {
@@ -61,14 +62,23 @@ bool Window::Create(const char* Title, int X, int Y, int Width, int Height)
     {
         WindowBridge* Bridge = [WindowBridge alloc];
 
-        const NSWindowStyleMask StyleMask { NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |
-                                            NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable };
-        Bridge.Window = [[NSWindow alloc] initWithContentRect:NSMakeRect(X, Y, Width, Height)
+        NSWindowStyleMask StyleMask { NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |
+                                      NSWindowStyleMaskResizable };
+
+        if (Description.CanMinimize)
+        {
+            StyleMask |= NSWindowStyleMaskMiniaturizable;
+        }
+
+        const NSRect Rect {
+            NSMakeRect(Description.Position.X, Description.Position.Y, Description.Size.X, Description.Size.Y)
+        };
+        Bridge.Window = [[NSWindow alloc] initWithContentRect:Rect
                                                     styleMask:StyleMask
                                                       backing:NSBackingStoreBuffered
                                                         defer:NO];
 
-        [Bridge.Window setTitle:[NSString stringWithUTF8String:Title]];
+        [Bridge.Window setTitle:[NSString stringWithUTF8String:Description.Title.Data()]];
         [Bridge.Window setAcceptsMouseMovedEvents:YES];
         [Bridge.Window setReleasedWhenClosed:NO];
 

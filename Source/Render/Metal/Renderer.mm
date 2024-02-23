@@ -97,9 +97,11 @@ bool Renderer::Initialize(Platform::Window* Window)
     @autoreleasepool
     {
         WindowBridge* Bridge = [WindowBridge Retrieve:Window->Handle()];
+        const CGSize Size { Bridge.Window.frame.size };
         NSViewController* Root = [[ViewController alloc] initWithNibName:nil bundle:nil];
         Bridge.Window.contentViewController = Root;
         [Bridge OnViewCreated:Bridge.Window.contentView Window:Window];
+        [Bridge.Window setContentSize:Size];
     }
 
     return true;
