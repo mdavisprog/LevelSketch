@@ -81,35 +81,14 @@ static VkPresentModeKHR BestPresentMode(const Array<VkPresentModeKHR>& Modes)
     return VK_PRESENT_MODE_FIFO_KHR;
 }
 
-static VkExtent2D BestExtents(const VkSurfaceCapabilitiesKHR& Capabilities, const VkExtent2D& DefaultExtents)
-{
-    VkExtent2D Result {};
-
-    if (Capabilities.currentExtent.width != 0xFFFFFFFF)
-    {
-        Result = Capabilities.currentExtent;
-    }
-    else
-    {
-        Result.width =
-            Clamp<i32>(DefaultExtents.width, Capabilities.minImageExtent.width, Capabilities.maxImageExtent.width);
-        Result.height =
-            Clamp<i32>(DefaultExtents.height, Capabilities.minImageExtent.height, Capabilities.maxImageExtent.height);
-    }
-
-    return Result;
-}
-
 bool SwapChain::Initialize(Device const* Device_, Surface const* Surface_)
 {
     PhysicalDevice const* PhysicalDevice_ { Device_->GetPhysicalDevice() };
     const PhysicalDevice::SupportDetails& SupportDetails { PhysicalDevice_->GetSupportDetails() };
-    const VkExtent2D DefaultExtents { static_cast<u32>(Surface_->Resolution().X),
-        static_cast<u32>(Surface_->Resolution().Y) };
+    const VkExtent2D Extents { static_cast<u32>(Surface_->Resolution().X), static_cast<u32>(Surface_->Resolution().Y) };
 
     const VkSurfaceFormatKHR Format { BestFormat(SupportDetails.Formats) };
     const VkPresentModeKHR PresentMode { BestPresentMode(SupportDetails.PresentModes) };
-    const VkExtent2D Extents { BestExtents(SupportDetails.SurfaceCapabilities, DefaultExtents) };
     const u32 ImageCount { Min<u32>(SupportDetails.SurfaceCapabilities.minImageCount + 1,
         SupportDetails.SurfaceCapabilities.maxImageCount > 0 ? SupportDetails.SurfaceCapabilities.maxImageCount
                                                              : 0xFFFFFFFF) };
