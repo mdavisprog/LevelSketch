@@ -62,15 +62,16 @@ using DisplayLink = LevelSketch::Platform::Mac::DisplayLink;
     {
         [super viewDidMoveToWindow];
 
-        // TODO: Check if callback has already been setup by the main display.
+        if (!DisplayLink::DisplayLink::Instance().Initialized())
+        {
+            DisplayLink::DisplayLink::Instance().Initialize();
 
-        DisplayLink::DisplayLink::Instance().Initialize();
-
-        NSNotificationCenter* NotificationCenter = [NSNotificationCenter defaultCenter];
-        [NotificationCenter addObserver:self
-                               selector:@selector(windowWillClose:)
-                                   name:NSWindowWillCloseNotification
-                                 object:self.window];
+            NSNotificationCenter* NotificationCenter = [NSNotificationCenter defaultCenter];
+            [NotificationCenter addObserver:self
+                                   selector:@selector(windowWillClose:)
+                                       name:NSWindowWillCloseNotification
+                                     object:self.window];
+        }
     }
 }
 

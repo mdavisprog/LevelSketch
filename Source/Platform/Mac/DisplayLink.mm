@@ -100,6 +100,11 @@ void DisplayLink::Shutdown()
     dispatch_source_cancel(m_DisplaySource);
 }
 
+bool DisplayLink::Initialized() const
+{
+    return m_DisplayLink != nullptr;
+}
+
 DisplayLink::DisplayLink()
 {
 }

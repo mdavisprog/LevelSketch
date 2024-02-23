@@ -44,11 +44,12 @@ public:
 
     bool Initialize();
     void Shutdown();
+    bool Initialized() const;
 
 private:
     DisplayLink();
 
-    CVDisplayLinkRef m_DisplayLink {};
+    CVDisplayLinkRef m_DisplayLink { nullptr };
     dispatch_source_t m_DisplaySource {};
 };
 
