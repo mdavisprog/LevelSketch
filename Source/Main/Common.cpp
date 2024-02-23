@@ -217,11 +217,22 @@ static bool OnPlatformFrame(const Platform::TimingData& TimingData)
         Renderer->BindTexture(g_DefaultTexture);
         Renderer->BindVertexBuffer(g_TestBuffer);
         Renderer->DrawIndexed(3, 1, 0, 0, 0);
-        GUI::GUI::Instance().Render(Editor);
         Renderer->EndRender(Editor);
     }
 
-    // TODO: Render GUI on other windows. For now, GUI is rendered as part of the editor window.
+    if (Windows.Size() > 1)
+    {
+        for (u64 I = 1; I < Windows.Size(); I++)
+        {
+            Platform::Window* Window { Windows[I].Get() };
+
+            if (Renderer->BeginRender(Window, { 0.0f, 0.0f, 0.0f, 1.0f }))
+            {
+                GUI::GUI::Instance().Render(Window);
+                Renderer->EndRender(Window);
+            }
+        }
+    }
 
     return true;
 }

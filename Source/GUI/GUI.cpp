@@ -107,10 +107,14 @@ bool GUI::Initialize(i32 Argc, const char** Argv)
         },
         "Windows": {
             "Main": {"Title": "Level Sketch", "Width": 1280, "Height": 720,
-                "MenuBar": {"Items": [
-                    {"Text": "File"}
-                ]},
+                "MenuBar": {"Items": []},
                 "Body": {"Controls": []}
+            },
+            "Palette": {"Title": "Palette", "Width": 200, "Height": 500, "CanMinimize": "False",
+                "MenuBar": {},
+                "Body": {"Controls": [
+                    {"Type": "Panel", "Expand": "Both"}
+                ]}
             }
         }
     })";
@@ -147,6 +151,8 @@ bool GUI::Initialize(i32 Argc, const char** Argv)
         Core::Console::Error("Failed initialize GUI.");
         return false;
     }
+
+    m_Application->DisplayWindow("Palette");
 
     return true;
 }
