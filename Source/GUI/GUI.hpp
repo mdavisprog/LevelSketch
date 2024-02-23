@@ -67,10 +67,12 @@ public:
     GUI& PushEvent(const Platform::Event& Event);
 
 private:
-    struct Buffer
+    struct DrawCommands
     {
-        OctaneGUI::VertexBuffer Data {};
-        bool Uploaded { false };
+        Platform::Window* Target { nullptr };
+        OctaneGUI::VertexBuffer Buffer {};
+        u64 VertexOffset { 0 };
+        u64 IndexOffset { 0 };
     };
 
     GUI();
@@ -78,14 +80,20 @@ private:
     void OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Action);
     OctaneGUI::Event OnEvent(OctaneGUI::Window* Window);
     Platform::Event PopEvent(Platform::Window* Window);
+    void OnPaint(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer);
+    void RebuildBuffer();
 
     UniquePtr<OctaneGUI::Application> m_Application { nullptr };
     HashMap<OctaneGUI::Window*, Platform::Window*> m_Windows {};
     Array<Platform::Event> m_Events {};
-    Buffer m_LastBuffer {};
     Render::GraphicsPipelineHandle m_GUIPipeline {};
     Render::VertexBufferHandle m_GUIBuffer {};
     u32 m_WhiteTexture {};
+
+    Array<OctaneGUI::Vertex> m_Vertices {};
+    Array<u32> m_Indices {};
+    Array<DrawCommands> m_DrawCommands {};
+    bool m_Uploaded { false };
 };
 
 }

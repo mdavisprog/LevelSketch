@@ -135,10 +135,9 @@ bool GUI::Initialize(i32 Argc, const char** Argv)
                     .ID();
             })
         .SetOnPaint(
-            [this](OctaneGUI::Window*, const OctaneGUI::VertexBuffer& Buffer) -> void
+            [this](OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer) -> void
             {
-                m_LastBuffer.Data = Buffer;
-                m_LastBuffer.Uploaded = false;
+                OnPaint(Window, Buffer);
             })
         .SetCommandLine(Argc, const_cast<char**>(Argv));
 
@@ -219,26 +218,26 @@ void GUI::RunFrame()
 {
     m_Application->RunFrame();
 
-    if (!m_LastBuffer.Uploaded)
+    if (!m_Uploaded)
     {
         Render::VertexDataDescription Data {};
-        Data.VertexData = const_cast<OctaneGUI::Vertex*>(m_LastBuffer.Data.GetVertices().data());
-        Data.VertexDataSize = static_cast<u64>(m_LastBuffer.Data.GetVertexCount()) * sizeof(OctaneGUI::Vertex);
-        Data.IndexData = const_cast<u32*>(m_LastBuffer.Data.GetIndices().data());
-        Data.IndexDataSize = static_cast<u64>(m_LastBuffer.Data.GetIndexCount()) * sizeof(u32);
+        Data.VertexData = m_Vertices.Data();
+        Data.VertexDataSize = m_Vertices.Size() * sizeof(OctaneGUI::Vertex);
+        Data.IndexData = m_Indices.Data();
+        Data.IndexDataSize = m_Indices.Size() * sizeof(u32);
 
         if (!Render::Renderer::Instance()->UploadVertexData(m_GUIBuffer, Data))
         {
             return;
         }
 
-        m_LastBuffer.Uploaded = true;
+        m_Uploaded = true;
     }
 }
 
 void GUI::Render(Platform::Window* Window)
 {
-    if (!m_LastBuffer.Uploaded)
+    if (!m_Uploaded)
     {
         return;
     }
@@ -248,27 +247,40 @@ void GUI::Render(Platform::Window* Window)
     Renderer->BindGraphicsPipeline(m_GUIPipeline);
     Renderer->BindVertexBuffer(m_GUIBuffer);
 
-    for (const OctaneGUI::DrawCommand& Command : m_LastBuffer.Data.Commands())
+    for (const DrawCommands& Commands : m_DrawCommands)
     {
-        u32 Texture { m_WhiteTexture };
-        if (Command.TextureID() != 0)
+        if (Commands.Target == Window)
         {
-            Texture = Command.TextureID();
+            for (const OctaneGUI::DrawCommand& Command : Commands.Buffer.Commands())
+            {
+                u32 Texture { m_WhiteTexture };
+                if (Command.TextureID() != 0)
+                {
+                    Texture = Command.TextureID();
+                }
+
+                const Vector2 Scale { Window->ContentScale() };
+                Recti Clip { 0,
+                    0,
+                    Window->Size().X * static_cast<i32>(Scale.X),
+                    Window->Size().Y * static_cast<i32>(Scale.Y) };
+                if (!Command.Clip().IsZero())
+                {
+                    Clip.X = static_cast<i32>(Command.Clip().Min.X * Scale.X);
+                    Clip.Y = static_cast<i32>(Command.Clip().Min.Y * Scale.Y);
+                    Clip.W = static_cast<i32>(Command.Clip().Width() * Scale.X);
+                    Clip.H = static_cast<i32>(Command.Clip().Height() * Scale.Y);
+                };
+
+                Renderer->BindTexture(Render::TextureHandle::ToHandle(Texture));
+                Renderer->SetScissor(Clip);
+                Renderer->DrawIndexed(Command.IndexCount(),
+                    1,
+                    Command.IndexOffset() + static_cast<u32>(Commands.IndexOffset),
+                    Command.VertexOffset() + static_cast<u32>(Commands.VertexOffset),
+                    0);
+            }
         }
-
-        const Vector2 Scale { Window->ContentScale() };
-        Recti Clip { 0, 0, Window->Size().X * static_cast<i32>(Scale.X), Window->Size().Y * static_cast<i32>(Scale.Y) };
-        if (!Command.Clip().IsZero())
-        {
-            Clip.X = static_cast<i32>(Command.Clip().Min.X * Scale.X);
-            Clip.Y = static_cast<i32>(Command.Clip().Min.Y * Scale.Y);
-            Clip.W = static_cast<i32>(Command.Clip().Width() * Scale.X);
-            Clip.H = static_cast<i32>(Command.Clip().Height() * Scale.Y);
-        };
-
-        Renderer->BindTexture(Render::TextureHandle::ToHandle(Texture));
-        Renderer->SetScissor(Clip);
-        Renderer->DrawIndexed(Command.IndexCount(), 1, Command.IndexOffset(), Command.VertexOffset(), 0);
     }
 }
 
@@ -401,6 +413,61 @@ Platform::Event GUI::PopEvent(Platform::Window* Window)
     }
 
     return Platform::Event();
+}
+
+void GUI::OnPaint(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer)
+{
+    Platform::Window* Target { m_Windows[Window] };
+
+    bool Found { false };
+    for (DrawCommands& Commands : m_DrawCommands)
+    {
+        if (Commands.Target == Target)
+        {
+            Commands.Buffer = Buffer;
+            Found = true;
+            break;
+        }
+    }
+
+    if (!Found)
+    {
+        DrawCommands Commands {};
+        Commands.Target = Target;
+        Commands.Buffer = Buffer;
+        m_DrawCommands.Push(std::move(Commands));
+    }
+
+    RebuildBuffer();
+}
+
+void GUI::RebuildBuffer()
+{
+    m_Vertices.Clear();
+    m_Indices.Clear();
+    m_Uploaded = false;
+
+    u64 VertexOffset { 0 };
+    u64 IndexOffset { 0 };
+
+    for (DrawCommands& Commands : m_DrawCommands)
+    {
+        VertexOffset = m_Vertices.Size();
+        IndexOffset = m_Indices.Size();
+
+        Commands.VertexOffset = VertexOffset;
+        Commands.IndexOffset = IndexOffset;
+
+        m_Vertices.AddZeroed(Commands.Buffer.GetVertexCount());
+        std::memcpy(&m_Vertices[VertexOffset],
+            Commands.Buffer.GetVertices().data(),
+            Commands.Buffer.GetVertexCount() * sizeof(OctaneGUI::Vertex));
+
+        m_Indices.AddZeroed(Commands.Buffer.GetIndexCount());
+        std::memcpy(&m_Indices[IndexOffset],
+            Commands.Buffer.GetIndices().data(),
+            Commands.Buffer.GetIndexCount() * sizeof(u32));
+    }
 }
 
 }
