@@ -39,6 +39,7 @@ struct WindowDescription
     String Title {};
     Vector2i Position {};
     Vector2i Size {};
+    bool CanMinimize { true };
 };
 
 }

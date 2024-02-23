@@ -61,10 +61,17 @@ bool Window::Create(const WindowDescription& Description)
     wTitle.resize(Length);
     MultiByteToWideChar(CP_ACP, 0, Description.Title.Data(), TitleLength, wTitle.data(), Length);
 
+    DWORD Style { WS_OVERLAPPEDWINDOW };
+
+    if (!Description.CanMinimize)
+    {
+        Style &= ~WS_MINIMIZEBOX;
+    }
+
     m_Handle = CreateWindowExW(0,
         WND_CLASS_NAME,
         wTitle.data(),
-        WS_OVERLAPPEDWINDOW,
+        Style,
         Description.Position.X,
         Description.Position.Y,
         Description.Size.X,

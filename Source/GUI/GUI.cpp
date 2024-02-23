@@ -111,7 +111,7 @@ bool GUI::Initialize(i32 Argc, const char** Argv)
                 "MenuBar": {"Items": []},
                 "Body": {"Controls": []}
             },
-            "Palette": {"Title": "Palette", "Width": 200, "Height": 500, "CanMinimize": "False",
+            "Palette": {"Title": "Palette", "Width": 300, "Height": 500, "CanMinimize": false,
                 "MenuBar": {},
                 "Body": {"Controls": [
                     {"Type": "Panel", "Expand": "Both"}
@@ -315,6 +315,7 @@ void GUI::OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Acti
             Description.Position.Y = static_cast<i32>(Window->GetPosition().Y);
             Description.Size.X = static_cast<i32>(Window->GetSize().X);
             Description.Size.Y = static_cast<i32>(Window->GetSize().Y);
+            Description.CanMinimize = Window->CanMinimize();
 
             Platform::Window* Win = Platform::Platform::Instance()->NewWindow(Description);
 
