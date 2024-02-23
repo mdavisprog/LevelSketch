@@ -234,6 +234,12 @@ public:
         return *this;
     }
 
+    Array& AddZeroed(u64 Count = 1)
+    {
+        Resize(m_Size + Count);
+        return *this;
+    }
+
     Array& Reserve(u64 Capacity)
     {
         if (Capacity == 0)
