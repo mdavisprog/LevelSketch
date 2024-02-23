@@ -110,7 +110,7 @@ Platform& Platform::SetOnFrame(OnFrameSignature&& Fn)
     return *this;
 }
 
-Window* Platform::NewWindow(const char* Title, i32 X, i32 Y, i32 Width, i32 Height)
+Window* Platform::NewWindow(const WindowDescription& Description)
 {
     UniquePtr<Window> Result { InternalNewWindow() };
 
@@ -119,7 +119,7 @@ Window* Platform::NewWindow(const char* Title, i32 X, i32 Y, i32 Width, i32 Heig
         return nullptr;
     }
 
-    if (!Result->Create(Title, X, Y, Width, Height))
+    if (!Result->Create(Description))
     {
         return nullptr;
     }

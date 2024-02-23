@@ -34,6 +34,8 @@ namespace LevelSketch
 namespace Platform
 {
 
+struct WindowDescription;
+
 class Window;
 
 struct TimingData
@@ -69,7 +71,7 @@ public:
 
     Platform& SetOnFrame(OnFrameSignature&& Fn);
 
-    Window* NewWindow(const char* Title, i32 X, i32 Y, i32 Width, i32 Height);
+    Window* NewWindow(const WindowDescription& Description);
     Platform& CloseWindow(Window* Window);
     const Array<UniquePtr<Window>>& Windows() const;
     u64 WindowCount() const;

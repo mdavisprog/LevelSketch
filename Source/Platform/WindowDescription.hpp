@@ -26,37 +26,20 @@ SOFTWARE.
 
 #pragma once
 
-#include "../Window.hpp"
-#include "Common.hpp"
+#include "../Core/Containers/String.hpp"
+#include "../Core/Math/Vector2.hpp"
 
 namespace LevelSketch
 {
 namespace Platform
 {
-namespace Windows
+
+struct WindowDescription
 {
-
-class Window final : public LevelSketch::Platform::Window
-{
-public:
-    Window();
-
-    virtual void* Handle() const override;
-    virtual bool Create(const WindowDescription& Description) override;
-    virtual void Close() override;
-    virtual void Show() override;
-    virtual void Focus() override;
-    virtual void SetPosition(int X, int Y) override;
-    virtual Core::Math::Vector2i Position() const override;
-    virtual Core::Math::Vector2i Size() const override;
-    virtual void ProcessEvents() override;
-
-    virtual bool IsOpen() const override;
-
-private:
-    HWND m_Handle { nullptr };
+    String Title {};
+    Vector2i Position {};
+    Vector2i Size {};
 };
 
-}
 }
 }

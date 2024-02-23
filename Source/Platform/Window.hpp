@@ -35,6 +35,8 @@ namespace LevelSketch
 namespace Platform
 {
 
+struct WindowDescription;
+
 class Window
 {
 public:
@@ -43,7 +45,7 @@ public:
     }
 
     virtual void* Handle() const = 0;
-    virtual bool Create(const char* Title, i32 X, i32 Y, i32 Width, i32 Height) = 0;
+    virtual bool Create(const WindowDescription& Description) = 0;
     virtual void Close() = 0;
     virtual void Show() = 0;
     virtual void Focus() = 0;

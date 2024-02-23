@@ -26,6 +26,7 @@ SOFTWARE.
 
 #include "Window.hpp"
 #include "../../Core/Math/Vector2.hpp"
+#include "../WindowDescription.hpp"
 #include "Platform.hpp"
 
 #include <string>
@@ -47,27 +48,27 @@ void* Window::Handle() const
     return reinterpret_cast<void*>(m_Handle);
 }
 
-bool Window::Create(const char* Title, int X, int Y, int Width, int Height)
+bool Window::Create(const WindowDescription& Description)
 {
     if (m_Handle != nullptr)
     {
         return true;
     }
 
-    const int TitleLength { (int)strlen(Title) };
-    int Length { MultiByteToWideChar(CP_ACP, 0, Title, TitleLength, nullptr, 0) };
+    const i32 TitleLength { static_cast<i32>(Description.Title.Length()) };
+    const i32 Length { MultiByteToWideChar(CP_ACP, 0, Description.Title.Data(), TitleLength, nullptr, 0) };
     std::wstring wTitle;
     wTitle.resize(Length);
-    MultiByteToWideChar(CP_ACP, 0, Title, TitleLength, wTitle.data(), Length);
+    MultiByteToWideChar(CP_ACP, 0, Description.Title.Data(), TitleLength, wTitle.data(), Length);
 
     m_Handle = CreateWindowExW(0,
         WND_CLASS_NAME,
         wTitle.data(),
         WS_OVERLAPPEDWINDOW,
-        X,
-        Y,
-        Width,
-        Height,
+        Description.Position.X,
+        Description.Position.Y,
+        Description.Size.X,
+        Description.Size.Y,
         nullptr,
         nullptr,
         nullptr,

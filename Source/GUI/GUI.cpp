@@ -31,6 +31,7 @@ SOFTWARE.
 #include "../External/OctaneGUI/OctaneGUI.h"
 #include "../Platform/Platform.hpp"
 #include "../Platform/Window.hpp"
+#include "../Platform/WindowDescription.hpp"
 #include "../Render/GraphicsPipelineDescription.hpp"
 #include "../Render/Handle.hpp"
 #include "../Render/Renderer.hpp"
@@ -308,12 +309,14 @@ void GUI::OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Acti
     {
         if (!m_Windows.Contains(Window))
         {
-            Platform::Window* Win =
-                Platform::Platform::Instance()->NewWindow(OctaneGUI::String::ToMultiByte(Window->GetTitle()).c_str(),
-                    (int)Window->GetPosition().X,
-                    (int)Window->GetPosition().Y,
-                    (int)Window->GetSize().X,
-                    (int)Window->GetSize().Y);
+            Platform::WindowDescription Description {};
+            Description.Title = OctaneGUI::String::ToMultiByte(Window->GetTitle()).c_str();
+            Description.Position.X = static_cast<i32>(Window->GetPosition().X);
+            Description.Position.Y = static_cast<i32>(Window->GetPosition().Y);
+            Description.Size.X = static_cast<i32>(Window->GetSize().X);
+            Description.Size.Y = static_cast<i32>(Window->GetSize().Y);
+
+            Platform::Window* Win = Platform::Platform::Instance()->NewWindow(Description);
 
             if (Win != nullptr)
             {
