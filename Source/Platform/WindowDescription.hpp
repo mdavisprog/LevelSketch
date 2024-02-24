@@ -40,6 +40,7 @@ struct WindowDescription
     Vector2i Position {};
     Vector2i Size {};
     bool CanMinimize { true };
+    bool Maximized { false };
 };
 
 }

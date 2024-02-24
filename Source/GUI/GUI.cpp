@@ -316,6 +316,7 @@ void GUI::OnWindowAction(OctaneGUI::Window* Window, OctaneGUI::WindowAction Acti
             Description.Size.X = static_cast<i32>(Window->GetSize().X);
             Description.Size.Y = static_cast<i32>(Window->GetSize().Y);
             Description.CanMinimize = Window->CanMinimize();
+            Description.Maximized = Window->IsMaximized();
 
             Platform::Window* Win = Platform::Platform::Instance()->NewWindow(Description);
 

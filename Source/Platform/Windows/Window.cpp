@@ -68,6 +68,11 @@ bool Window::Create(const WindowDescription& Description)
         Style &= ~WS_MINIMIZEBOX;
     }
 
+    if (Description.Maximized)
+    {
+        Style |= WS_MAXIMIZE;
+    }
+
     m_Handle = CreateWindowExW(0,
         WND_CLASS_NAME,
         wTitle.data(),
