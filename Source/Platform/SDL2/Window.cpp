@@ -116,6 +116,11 @@ bool Window::Create(const WindowDescription& Description)
 
     u32 Flags = SDL_WINDOW_ALLOW_HIGHDPI;
 
+    if (Description.Maximized)
+    {
+        Flags |= SDL_WINDOW_MAXIMIZED | SDL_WINDOW_RESIZABLE;
+    }
+
 #if defined(RENDER_OPENGL)
     Flags |= SDL_WINDOW_OPENGL;
 #elif defined(RENDER_VULKAN)
