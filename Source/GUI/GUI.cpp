@@ -107,11 +107,11 @@ bool GUI::Initialize(i32 Argc, const char** Argv)
             "FontSize": 16
         },
         "Windows": {
-            "Main": {"Title": "Level Sketch", "Width": 1280, "Height": 720,
+            "Main": {"Title": "Level Sketch", "X": 350, "Width": 960, "Height": 540,
                 "MenuBar": {"Items": []},
                 "Body": {"Controls": []}
             },
-            "Palette": {"Title": "Palette", "Width": 300, "Height": 500, "CanMinimize": false,
+            "Palette": {"Title": "Palette", "X": 50, "Width": 300, "Height": 500, "CanMinimize": false,
                 "MenuBar": {},
                 "Body": {"Controls": [
                     {"Type": "Panel", "Expand": "Both"}
