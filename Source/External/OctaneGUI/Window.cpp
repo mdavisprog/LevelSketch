@@ -2,7 +2,7 @@
 
 MIT License
 
-Copyright (c) 2022-2023 Mitchell Davis <mdavisprog@gmail.com>
+Copyright (c) 2022-2024 Mitchell Davis <mdavisprog@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -803,6 +803,7 @@ void Window::LoadRoot(const Json& Root)
     SetResizable(Root["Resizable"].Boolean(IsResizable()));
     SetCanMinimize(Root["CanMinimize"].Boolean(CanMinimize()));
     SetCustomTitleBar(Root["CustomTitleBar"].Boolean(CustomTitleBar()));
+    SetMaximized(Root["Maximized"].Boolean(IsMaximized()));
 
     if (Root["Modal"].Boolean(Modal()))
     {
