@@ -26,10 +26,15 @@ SOFTWARE.
 
 #pragma once
 
+#include "../Core/Memory/UniquePtr.hpp"
+#include "../Core/Types.hpp"
+
 namespace LevelSketch
 {
 namespace Engine
 {
+
+class Camera;
 
 class Engine
 {
@@ -39,8 +44,14 @@ public:
     bool Initialize();
     void Shutdown();
 
+    void Update(f32 DeltaTime);
+
+    Camera* GetCamera() const;
+
 private:
     Engine();
+
+    UniquePtr<Camera> m_Camera { nullptr };
 };
 
 }

@@ -25,6 +25,8 @@ SOFTWARE.
 */
 
 #include "Engine.hpp"
+#include "../Render/Renderer.hpp"
+#include "Camera.hpp"
 #include "Class.hpp"
 
 namespace LevelSketch
@@ -41,11 +43,26 @@ Engine& Engine::Instance()
 bool Engine::Initialize()
 {
     REGISTER_CLASS(Class);
+
+    m_Camera = UniquePtr<Camera>::New();
+    m_Camera->SetPosition({ 0.0f, 0.0f, -20.0f });
+
     return true;
 }
 
 void Engine::Shutdown()
 {
+}
+
+void Engine::Update(float DeltaTime)
+{
+    m_Camera->Update(DeltaTime);
+    Render::Renderer::Instance()->UpdateViewMatrix(m_Camera->ToViewMatrix());
+}
+
+Camera* Engine::GetCamera() const
+{
+    return m_Camera.Get();
 }
 
 Engine::Engine()

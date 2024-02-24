@@ -58,7 +58,6 @@ static Render::GraphicsPipelineHandle g_TestPipeline {};
 static Render::VertexBufferHandle g_TestBuffer {};
 static Render::TextureHandle g_DefaultTexture {};
 
-static Engine::Camera g_Camera { { 0.0f, 0.0f, -20.0f } };
 static bool g_RotateCamera { false };
 static Vector2i g_LastMousePos {};
 static Vector2i g_LockedMousePos {};
@@ -99,12 +98,6 @@ static Array<u8> GenerateTexture(u32 Width, u32 Height)
     return Result;
 }
 
-static void UpdateCamera(f32 DeltaTime)
-{
-    g_Camera.Update(DeltaTime);
-    Render::Renderer::Instance()->UpdateViewMatrix(g_Camera.ToViewMatrix());
-}
-
 static void HandleKeyEvent(const Platform::Event::OnKey& OnKey)
 {
     u8 Flags { Engine::Camera::Movement::None };
@@ -119,11 +112,11 @@ static void HandleKeyEvent(const Platform::Event::OnKey& OnKey)
 
     if (OnKey.Pressed)
     {
-        g_Camera.SetMovement(Flags);
+        Engine::Engine::Instance().GetCamera()->SetMovement(Flags);
     }
     else
     {
-        g_Camera.ClearMovement(Flags);
+        Engine::Engine::Instance().GetCamera()->ClearMovement(Flags);
     }
 }
 
@@ -166,7 +159,10 @@ static void HandleEvent(const Platform::Event& Event)
 
         if (g_RotateCamera)
         {
-            g_Camera.Yaw(static_cast<f32>(MouseDelta.X)).Pitch(static_cast<f32>(-MouseDelta.Y));
+            Engine::Engine::Instance()
+                .GetCamera()
+                ->Yaw(static_cast<f32>(MouseDelta.X))
+                .Pitch(static_cast<f32>(-MouseDelta.Y));
             Platform::Mouse::SetPosition(Event.GetWindow(), g_LockedMousePos);
             MousePos = g_LockedMousePos;
         }
@@ -195,7 +191,7 @@ static bool OnPlatformFrame(const Platform::TimingData& TimingData)
         HandleEvent(Event);
     }
 
-    UpdateCamera(TimingData.DeltaSeconds);
+    Engine::Engine::Instance().Update(TimingData.DeltaSeconds);
 
     GUI.RunFrame();
 
