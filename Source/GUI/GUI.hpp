@@ -63,6 +63,7 @@ public:
     bool IsRunning() const;
     void RunFrame();
     void Render(Platform::Window* Window);
+    bool ShouldRepaint() const;
 
     GUI& PushEvent(const Platform::Event& Event);
 
@@ -94,6 +95,7 @@ private:
     Array<u32> m_Indices {};
     Array<DrawCommands> m_DrawCommands {};
     bool m_Uploaded { false };
+    bool m_Repaint { false };
 };
 
 }

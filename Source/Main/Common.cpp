@@ -221,7 +221,7 @@ static bool OnPlatformFrame(const Platform::TimingData& TimingData)
         Renderer->EndRender(Editor);
     }
 
-    if (Windows.Size() > 1)
+    if (Windows.Size() > 1 && GUI::GUI::Instance().ShouldRepaint())
     {
         for (u64 I = 1; I < Windows.Size(); I++)
         {

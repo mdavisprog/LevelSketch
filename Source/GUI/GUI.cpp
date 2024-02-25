@@ -260,6 +260,11 @@ void GUI::RunFrame()
 
 void GUI::Render(Platform::Window* Window)
 {
+    if (!m_Repaint)
+    {
+        return;
+    }
+
     if (!m_Uploaded)
     {
         return;
@@ -305,6 +310,13 @@ void GUI::Render(Platform::Window* Window)
             }
         }
     }
+
+    m_Repaint = false;
+}
+
+bool GUI::ShouldRepaint() const
+{
+    return m_Repaint;
 }
 
 GUI& GUI::PushEvent(const Platform::Event& Event)
@@ -444,6 +456,8 @@ Platform::Event GUI::PopEvent(Platform::Window* Window)
 
 void GUI::OnPaint(OctaneGUI::Window* Window, const OctaneGUI::VertexBuffer& Buffer)
 {
+    m_Repaint = true;
+
     Platform::Window* Target { m_Windows[Window] };
 
     bool Found { false };
