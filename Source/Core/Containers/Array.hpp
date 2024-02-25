@@ -264,7 +264,7 @@ public:
         {
             if constexpr (std::is_nothrow_move_constructible_v<T> || !std::is_copy_constructible_v<T>)
             {
-                m_Data[I] = std::move(Temp[I]);
+                new (std::addressof(m_Data[I])) T(std::move(Temp[I]));
             }
             else
             {
