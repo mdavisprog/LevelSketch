@@ -209,31 +209,63 @@ void Window::ProcessEvents()
     {
         switch (Event.type)
         {
-        case SDL_WINDOWEVENT: ProcessEvent(Event.window); break;
+        case SDL_WINDOWEVENT:
+        {
+            if (SDL_GetWindowID(m_Handle) == Event.window.windowID)
+            {
+                ProcessEvent(Event.window);
+            }
+            else
+            {
+                SDL_PushEvent(&Event);
+            }
+        }
+        break;
 
         case SDL_MOUSEMOTION:
         {
-            Event::OnMouseMove MouseMove { { Event.motion.x, Event.motion.y } };
-            EventQueue::Instance().Push(MouseMove, this);
+            if (SDL_GetWindowID(m_Handle) == Event.motion.windowID)
+            {
+                Event::OnMouseMove MouseMove { { Event.motion.x, Event.motion.y } };
+                EventQueue::Instance().Push(MouseMove, this);
+            }
+            else
+            {
+                SDL_PushEvent(&Event);
+            }
         }
         break;
 
         case SDL_MOUSEBUTTONDOWN:
         case SDL_MOUSEBUTTONUP:
         {
-            const bool Pressed { Event.type == SDL_MOUSEBUTTONDOWN };
-            const Vector2i Position { Event.button.x, Event.button.y };
-            Event::OnMouseButton MouseButton { ToButton(Event.button.button), Pressed, Position };
-            EventQueue::Instance().Push(MouseButton, this);
+            if (SDL_GetWindowID(m_Handle) == Event.button.windowID)
+            {
+                const bool Pressed { Event.type == SDL_MOUSEBUTTONDOWN };
+                const Vector2i Position { Event.button.x, Event.button.y };
+                Event::OnMouseButton MouseButton { ToButton(Event.button.button), Pressed, Position };
+                EventQueue::Instance().Push(MouseButton, this);
+            }
+            else
+            {
+                SDL_PushEvent(&Event);
+            }
         }
         break;
 
         case SDL_KEYDOWN:
         case SDL_KEYUP:
         {
-            const bool Pressed { Event.type == SDL_KEYDOWN };
-            Event::OnKey Key { ToKey(Event.key.keysym.scancode), Pressed };
-            EventQueue::Instance().Push(Key, this);
+            if (SDL_GetWindowID(m_Handle) == Event.key.windowID)
+            {
+                const bool Pressed { Event.type == SDL_KEYDOWN };
+                Event::OnKey Key { ToKey(Event.key.keysym.scancode), Pressed };
+                EventQueue::Instance().Push(Key, this);
+            }
+            else
+            {
+                SDL_PushEvent(&Event);
+            }
         }
         break;
 
