@@ -81,6 +81,12 @@ Camera& Camera::Yaw(f32 Delta)
     return *this;
 }
 
+Camera& Camera::SetRotation(const Rotation& Rotation_)
+{
+    m_Rotation = Rotation_;
+    return *this;
+}
+
 Matrix4f Camera::ToViewMatrix() const
 {
     return Matrix4f::LookAtLH(m_Position, m_Position + m_Rotation.ToMatrix() * Vector3::Forward, Vector3::Up);

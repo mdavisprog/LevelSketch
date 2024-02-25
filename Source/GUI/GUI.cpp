@@ -28,6 +28,8 @@ SOFTWARE.
 #include "../Core/Console.hpp"
 #include "../Core/Math/Rect.hpp"
 #include "../Core/Math/Vector2.hpp"
+#include "../Engine/Camera.hpp"
+#include "../Engine/Engine.hpp"
 #include "../External/OctaneGUI/OctaneGUI.h"
 #include "../Platform/Platform.hpp"
 #include "../Platform/Window.hpp"
@@ -114,7 +116,12 @@ bool GUI::Initialize(i32 Argc, const char** Argv)
             "Palette": {"Title": "Palette", "X": 50, "Width": 300, "Height": 500, "CanMinimize": false,
                 "MenuBar": {},
                 "Body": {"Controls": [
-                    {"Type": "Panel", "Expand": "Both"}
+                    {"Type": "Panel", "Expand": "Both"},
+                    {"Type": "MarginContainer", "Margins": [4, 4, 4, 4], "Controls": [
+                        {"Type": "VerticalContainer", "Controls": [
+                            {"Type": "TextButton", "ID": "ResetCamera", "Text": {"Text": "Reset Camera"}}
+                        ]}
+                    ]}
                 ]}
             }
         }
@@ -146,12 +153,21 @@ bool GUI::Initialize(i32 Argc, const char** Argv)
             })
         .SetCommandLine(Argc, const_cast<char**>(Argv));
 
-    std::unordered_map<std::string, OctaneGUI::ControlList> List;
-    if (!m_Application->Initialize(Stream, List))
+    std::unordered_map<std::string, OctaneGUI::ControlList> WindowControls;
+    if (!m_Application->Initialize(Stream, WindowControls))
     {
         Core::Console::Error("Failed initialize GUI.");
         return false;
     }
+
+    // Bind events to controls
+    const OctaneGUI::ControlList& PaletteControls { WindowControls["Palette"] };
+    PaletteControls.To<OctaneGUI::Button>("ResetCamera")
+        ->SetOnPressed(
+            [](OctaneGUI::Button&) -> void
+            {
+                Engine::Engine::Instance().GetCamera()->SetPosition({ 0.0f, 0.0f, -20.0f }).SetRotation({ 0, 0, 0 });
+            });
 
     m_Application->DisplayWindow("Palette");
 

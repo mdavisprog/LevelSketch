@@ -61,6 +61,7 @@ public:
 
     Camera& Pitch(f32 Delta);
     Camera& Yaw(f32 Delta);
+    Camera& SetRotation(const Rotation& Rotation_);
 
     Matrix4f ToViewMatrix() const;
 
