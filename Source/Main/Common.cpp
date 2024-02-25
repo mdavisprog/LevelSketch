@@ -98,6 +98,11 @@ static Array<u8> GenerateTexture(u32 Width, u32 Height)
     return Result;
 }
 
+static bool IsEditorWindow(Platform::Window* Window)
+{
+    return Platform::Platform::Instance()->Windows()[0] == Window;
+}
+
 static void HandleKeyEvent(const Platform::Event::OnKey& OnKey)
 {
     u8 Flags { Engine::Camera::Movement::None };
@@ -132,7 +137,7 @@ static void HandleEvent(const Platform::Event& Event)
 
     case Platform::Event::Type::MouseButton:
     {
-        if (Event.GetData().MouseButton.Button == Platform::Mouse::Button::Left)
+        if (Event.GetData().MouseButton.Button == Platform::Mouse::Button::Left && IsEditorWindow(Event.GetWindow()))
         {
             g_RotateCamera = Event.GetData().MouseButton.Pressed;
 
