@@ -17,8 +17,7 @@ option(SHIPPING "Enables the SHIPPING configuration." OFF)
 option(WITH_TESTS "Compiles the testing framework when ON." OFF)
 
 if(NOT WIN32 AND NOT APPLE)
-    option(WITH_VULKAN "Uses the Vulkan renderer. Only available on Linux." ON)
-    option(WITH_OPENGL "Uses the OpenGL renderer. Only available on Linux." OFF)
+    set(WITH_VULKAN ON)
 endif()
 
 if(SHIPPING)
@@ -127,10 +126,6 @@ elseif(APPLE)
         Render/Metal/ViewController.mm
     )
 else()
-    if(WITH_VULKAN AND WITH_OPENGL)
-        message(FATAL_ERROR "Cannot use both Vulkan and OpenGL!")
-    endif()
-
     set(SOURCE
         ${SOURCE}
         Platform/SDL2/FileSystem.cpp
@@ -139,47 +134,36 @@ else()
         Platform/SDL2/Window.cpp
     )
 
-    if(WITH_VULKAN)
-        message("Using Vulkan Renderer")
-        set(SOURCE
-            ${SOURCE}
-            Render/Vulkan/Buffer.cpp
-            Render/Vulkan/CommandBuffer.cpp
-            Render/Vulkan/CommandPool.cpp
-            Render/Vulkan/DescriptorPool.cpp
-            Render/Vulkan/Device.cpp
-            Render/Vulkan/GraphicsPipeline.cpp
-            Render/Vulkan/Loader.cpp
-            Render/Vulkan/LogicalDevice.cpp
-            Render/Vulkan/PhysicalDevice.cpp
-            Render/Vulkan/Queue.cpp
-            Render/Vulkan/Renderer.cpp
-            Render/Vulkan/Sampler.cpp
-            Render/Vulkan/Shader.cpp
-            Render/Vulkan/Surface.cpp
-            Render/Vulkan/SurfaceX11.cpp
-            Render/Vulkan/SwapChain.cpp
-            Render/Vulkan/Sync.cpp
-            Render/Vulkan/Texture.cpp
-            Render/Vulkan/TexturePool.cpp
-            Render/Vulkan/UniformBuffer.cpp
-            Render/Vulkan/VertexBuffer.cpp
-            Render/Vulkan/Viewport.cpp
-        )
+    set(SOURCE
+        ${SOURCE}
+        Render/Vulkan/Buffer.cpp
+        Render/Vulkan/CommandBuffer.cpp
+        Render/Vulkan/CommandPool.cpp
+        Render/Vulkan/DescriptorPool.cpp
+        Render/Vulkan/Device.cpp
+        Render/Vulkan/GraphicsPipeline.cpp
+        Render/Vulkan/Loader.cpp
+        Render/Vulkan/LogicalDevice.cpp
+        Render/Vulkan/PhysicalDevice.cpp
+        Render/Vulkan/Queue.cpp
+        Render/Vulkan/Renderer.cpp
+        Render/Vulkan/Sampler.cpp
+        Render/Vulkan/Shader.cpp
+        Render/Vulkan/Surface.cpp
+        Render/Vulkan/SurfaceX11.cpp
+        Render/Vulkan/SwapChain.cpp
+        Render/Vulkan/Sync.cpp
+        Render/Vulkan/Texture.cpp
+        Render/Vulkan/TexturePool.cpp
+        Render/Vulkan/UniformBuffer.cpp
+        Render/Vulkan/VertexBuffer.cpp
+        Render/Vulkan/Viewport.cpp
+    )
 
-        if(BUILD_TYPE_DEBUG)
-            set(SOURCE
-                ${SOURCE}
-                Render/Vulkan/DebugUtils.cpp
-            )
-        endif()
-    elseif(WITH_OPENGL)
-        message("Using OpenGL Renderer")
+    if(BUILD_TYPE_DEBUG)
         set(SOURCE
             ${SOURCE}
-            Render/OpenGL/Extensions.cpp
-            Render/OpenGL/Renderer.cpp
-            Render/OpenGL/SDL2Renderer.cpp
+            Render/Vulkan/DebugUtils.cpp
         )
     endif()
 endif()
@@ -285,30 +269,22 @@ else()
         PRIVATE ${SDL2_INCLUDE_DIRS}
     )
 
-    if(WITH_VULKAN)
-        if(VULKAN_SDK)
-            set(VULKAN_INCLUDE ${VULKAN_SDK}/include)
-            set(VULKAN_LIBRARIES ${VULKAN_SDK}/lib/libvulkan.so.1)
-        else()
-            message(FATAL_ERROR "VULKAN_SDK is not defined! Please define this as an environment variable within the build system.")
-        endif()
-
-        target_include_directories(
-            ${TARGET}
-            PRIVATE ${VULKAN_INCLUDE}
-        )
-
-        set(LIBS
-            ${LIBS}
-            ${VULKAN_LIBRARIES}
-        )
-    elseif(WITH_OPENGL)
-        find_package(OpenGL REQUIRED)
-        set(LIBS
-            ${LIBS}
-            ${OPENGL_LIBRARIES}
-        )
+    if(VULKAN_SDK)
+        set(VULKAN_INCLUDE ${VULKAN_SDK}/include)
+        set(VULKAN_LIBRARIES ${VULKAN_SDK}/lib/libvulkan.so.1)
+    else()
+        message(FATAL_ERROR "VULKAN_SDK is not defined! Please define this as an environment variable within the build system.")
     endif()
+
+    target_include_directories(
+        ${TARGET}
+        PRIVATE ${VULKAN_INCLUDE}
+    )
+
+    set(LIBS
+        ${LIBS}
+        ${VULKAN_LIBRARIES}
+    )
 endif()
 
 target_link_libraries(
@@ -347,17 +323,10 @@ else()
         PLATFORM_SDL2
     )
 
-    if(WITH_VULKAN)
-        set(DEFINES
-            ${DEFINES}
-            RENDER_VULKAN
-        )
-    elseif(WITH_OPENGL)
-        set(DEFINES
-            ${DEFINES}
-            RENDER_OPENGL
-        )
-    endif()
+    set(DEFINES
+        ${DEFINES}
+        RENDER_VULKAN
+    )
 endif()
 
 if(WITH_TESTS)

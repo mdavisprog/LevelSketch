@@ -114,18 +114,12 @@ bool Window::Create(const WindowDescription& Description)
         return true;
     }
 
-    u32 Flags = SDL_WINDOW_ALLOW_HIGHDPI;
+    u32 Flags = SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_VULKAN;
 
     if (Description.Maximized)
     {
         Flags |= SDL_WINDOW_MAXIMIZED | SDL_WINDOW_RESIZABLE;
     }
-
-#if defined(RENDER_OPENGL)
-    Flags |= SDL_WINDOW_OPENGL;
-#elif defined(RENDER_VULKAN)
-    Flags |= SDL_WINDOW_VULKAN;
-#endif
 
     m_Handle = SDL_CreateWindow(Description.Title.Data(),
         Description.Position.X,
