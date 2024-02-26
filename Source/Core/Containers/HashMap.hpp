@@ -29,6 +29,7 @@ SOFTWARE.
 #include "../Assert.hpp"
 #include "../Traits.hpp"
 #include "Array.hpp"
+#include "HashMapConstants.hpp"
 #include "Pair.hpp"
 
 namespace LevelSketch
@@ -42,34 +43,6 @@ namespace Containers
 // Unordered Map
 // A cache-concious container.
 //
-
-class HashMapConstants
-{
-public:
-    static constexpr u64 BucketSize()
-    {
-        return 8;
-    }
-    static constexpr f64 GrowPercent()
-    {
-        return 0.8;
-    }
-    static constexpr f64 GrowFactor()
-    {
-        return 0.9;
-    }
-
-    static u64 Grow(u64 Size)
-    {
-        return Size + static_cast<u64>(static_cast<f64>(Size) * GrowPercent());
-    }
-
-    static bool ShouldGrow(u64 Size, u64 Capacity)
-    {
-        const f64 Percent { static_cast<f64>(Size + 1) / static_cast<f64>(Capacity) };
-        return Percent >= GrowFactor();
-    }
-};
 
 template<typename K, typename V, typename KTraits = Traits::Base<K>, typename Constants = HashMapConstants>
 class HashMap
