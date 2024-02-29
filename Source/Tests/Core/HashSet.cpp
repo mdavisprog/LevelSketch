@@ -24,8 +24,6 @@ SOFTWARE.
 
 */
 
-#pragma once
-
 #include "../../Core/Containers/HashSet.hpp"
 #include "../TestSuite.hpp"
 #include "../Utility.hpp"
