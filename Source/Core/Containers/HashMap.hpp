@@ -188,7 +188,7 @@ private:
         }
 
         m_Size++;
-        Bucket.Push({ MakePair(Key, V(0)), true });
+        Bucket.Push({ MakePair(Key, V()), true });
         return &Bucket.Back();
     }
 
