@@ -58,12 +58,6 @@ public:
     using ValueType = Entry;
     using BucketType = Array<ValueType>;
 
-    HashMap(HashMap&&) = default;
-    HashMap& operator=(HashMap&&) = default;
-
-    HashMap(const HashMap&) = delete;
-    HashMap& operator=(const HashMap&) = delete;
-
     HashMap()
     {
         m_Buckets.Resize(Constants::BucketSize());
