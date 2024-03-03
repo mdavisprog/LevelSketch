@@ -191,6 +191,7 @@ if(WITH_TESTS)
         Tests/Core/RedBlackTree.cpp
         Tests/Core/Shareable.cpp
         Tests/Core/SharedPtr.cpp
+        Tests/Core/Sort.cpp
         Tests/Core/String.cpp
         Tests/Core/UniquePtr.cpp
         Tests/Core/WeakPtr.cpp

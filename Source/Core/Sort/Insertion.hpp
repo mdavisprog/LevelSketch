@@ -26,34 +26,39 @@ SOFTWARE.
 
 #pragma once
 
-#include "../../Core/Memory/UniquePtr.hpp"
+#include "../Containers/Array.hpp"
 
 namespace LevelSketch
 {
-
-namespace Tests
-{
-
-class TestSuite;
-
 namespace Core
 {
+namespace Sort
+{
 
-UniquePtr<TestSuite> ArrayTests();
-UniquePtr<TestSuite> CommandLineTests();
-UniquePtr<TestSuite> HashMapTests();
-UniquePtr<TestSuite> HashSetTests();
-UniquePtr<TestSuite> ListTests();
-UniquePtr<TestSuite> MathTests();
-UniquePtr<TestSuite> RedBlackTreeTests();
-UniquePtr<TestSuite> MapTests();
-UniquePtr<TestSuite> OptionalTests();
-UniquePtr<TestSuite> ShareableTests();
-UniquePtr<TestSuite> SharedPtrTests();
-UniquePtr<TestSuite> SortTests();
-UniquePtr<TestSuite> StringTests();
-UniquePtr<TestSuite> UniquePtrTests();
-UniquePtr<TestSuite> WeakPtrTests();
+template<typename T>
+void Insertion(Array<T>& Value, u64 Start, u64 End)
+{
+    for (u64 I = Start + 1; I <= End; I++)
+    {
+        for (u64 J = I; J > 0; J--)
+        {
+            const bool ShouldSwap { Value[J] < Value[J - 1] };
+
+            if (ShouldSwap)
+            {
+                T Temp { Value[J] };
+                Value[J] = Value[J - 1];
+                Value[J - 1] = Temp;
+            }
+        }
+    }
+}
+
+template<typename T>
+void Insertion(Array<T>& Value)
+{
+    Insertion(Value, 0, Value.Size() - 1);
+}
 
 }
 }

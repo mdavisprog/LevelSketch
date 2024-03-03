@@ -24,36 +24,33 @@ SOFTWARE.
 
 */
 
-#pragma once
-
-#include "../../Core/Memory/UniquePtr.hpp"
+#include "../../Core/Sort/Insertion.hpp"
+#include "../TestSuite.hpp"
+#include "../Utility.hpp"
+#include "Core.hpp"
 
 namespace LevelSketch
 {
-
 namespace Tests
 {
-
-class TestSuite;
-
 namespace Core
 {
 
-UniquePtr<TestSuite> ArrayTests();
-UniquePtr<TestSuite> CommandLineTests();
-UniquePtr<TestSuite> HashMapTests();
-UniquePtr<TestSuite> HashSetTests();
-UniquePtr<TestSuite> ListTests();
-UniquePtr<TestSuite> MathTests();
-UniquePtr<TestSuite> RedBlackTreeTests();
-UniquePtr<TestSuite> MapTests();
-UniquePtr<TestSuite> OptionalTests();
-UniquePtr<TestSuite> ShareableTests();
-UniquePtr<TestSuite> SharedPtrTests();
-UniquePtr<TestSuite> SortTests();
-UniquePtr<TestSuite> StringTests();
-UniquePtr<TestSuite> UniquePtrTests();
-UniquePtr<TestSuite> WeakPtrTests();
+namespace Sort = LevelSketch::Core::Sort;
+
+static bool Insertion()
+{
+    Array<i32> Value { -3, 2, -1, 3, 1, -2, 0 };
+    VERIFY(Value == (Array<i32> { -3, 2, -1, 3, 1, -2, 0 }));
+    Sort::Insertion(Value);
+    VERIFY(Value == (Array<i32> { -3, -2, -1, 0, 1, 2, 3 }));
+    return true;
+}
+
+UniquePtr<TestSuite> SortTests()
+{
+    return TestSuite::New("Sort", { TEST_CASE(Insertion) });
+}
 
 }
 }

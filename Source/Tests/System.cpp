@@ -93,6 +93,7 @@ System::System()
         .Push(Core::ShareableTests())
         .Push(Core::SharedPtrTests())
         .Push(Core::StringTests())
+        .Push(Core::SortTests())
         .Push(Core::UniquePtrTests())
         .Push(Core::WeakPtrTests())
 
