@@ -297,6 +297,16 @@ public:
         return *this;
     }
 
+    Array& PushUnique(const T& Value)
+    {
+        if (!Contains(Value))
+        {
+            Push(Value);
+        }
+
+        return *this;
+    }
+
     Array& Pop()
     {
         if (m_Size == 0)

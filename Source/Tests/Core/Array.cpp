@@ -372,6 +372,16 @@ static bool Append()
     return true;
 }
 
+static bool PushUnique()
+{
+    Array<i32> Value;
+    Value.PushUnique(1);
+    VERIFY(Value.Size() == 1);
+    Value.PushUnique(1);
+    VERIFY(Value.Size() == 1);
+    return true;
+}
+
 UniquePtr<TestSuite> ArrayTests()
 {
     return TestSuite::New("Array",
@@ -395,7 +405,8 @@ UniquePtr<TestSuite> ArrayTests()
             TEST_CASE(ResizeUniquePtrs),
             TEST_CASE(ReserveUniquePtrs),
             TEST_CASE(Add),
-            TEST_CASE(Append) });
+            TEST_CASE(Append),
+            TEST_CASE(PushUnique) });
 }
 
 }
