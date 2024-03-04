@@ -105,6 +105,21 @@ public:
         m_Size = 0;
     }
 
+    Array<T> Keys() const
+    {
+        Array<T> Result {};
+
+        for (const BucketType& Bucket : m_Buckets)
+        {
+            for (const T& Key : Bucket)
+            {
+                Result.Push(Key);
+            }
+        }
+
+        return Result;
+    }
+
 private:
     bool TryInsert(const T& Key)
     {
