@@ -90,6 +90,13 @@ public:
         return Result->Contents.Second;
     }
 
+    const V& At(const K& Key) const
+    {
+        ValueType const* Result { Get(Key) };
+        LS_ASSERT(Result != nullptr);
+        return Result->Contents.Second;
+    }
+
     bool Remove(const K& Key)
     {
         for (BucketType& Bucket : m_Buckets)
@@ -186,7 +193,23 @@ private:
         return &Bucket.Back();
     }
 
-    u64 Hash(const K& Key)
+    ValueType const* Get(const K& Key) const
+    {
+        const u64 Index { Hash(Key) };
+        const BucketType& Bucket { m_Buckets[Index] };
+
+        for (const ValueType& Value : Bucket)
+        {
+            if (Value.Contents.First == Key)
+            {
+                return &Value;
+            }
+        }
+
+        return nullptr;
+    }
+
+    u64 Hash(const K& Key) const
     {
         return KTraits::Hash(Key) % m_Buckets.Size();
     }
