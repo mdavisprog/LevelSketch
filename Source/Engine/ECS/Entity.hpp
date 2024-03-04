@@ -26,21 +26,67 @@ SOFTWARE.
 
 #pragma once
 
-#include "../../Core/Memory/UniquePtr.hpp"
+#include "Archetype.hpp"
 
 namespace LevelSketch
 {
-namespace Tests
-{
-
-class TestSuite;
-
 namespace Engine
 {
+namespace ECS
+{
 
-UniquePtr<TestSuite> ClassTests();
-UniquePtr<TestSuite> ECSTests();
-UniquePtr<TestSuite> TypeDatabaseTests();
+//
+// EntityID
+//
+// A 64-bit integer where the low integer represents the unique ID and the high bits
+// are reserveed for other information which will be defined later.
+//
+
+class EntityID
+{
+private:
+    static u32 s_ID;
+
+public:
+    static EntityID Generate();
+    static void Reset();
+
+    bool operator==(const EntityID& Other) const;
+    bool operator!=(const EntityID& Other) const;
+
+    u32 ID() const;
+
+private:
+    u64 m_ID { 0 };
+};
+
+//
+// EntityIDTraits
+//
+// Traits defined for hashing into a HashMap/HashSet.
+//
+
+struct EntityIDTraits : public Core::Traits::Base<EntityID>
+{
+    static u64 Hash(const EntityID& Value)
+    {
+        return Core::Traits::Base<u32>::Hash(Value.ID());
+    }
+};
+
+//
+// Entity
+//
+// A record that stores the EntityID, the archetype it is created from and the
+// the row within the components array of the archetype.
+//
+
+struct Entity
+{
+    EntityID ID {};
+    ArchetypeID Type {};
+    u64 Row { 0 };
+};
 
 }
 }

@@ -98,6 +98,7 @@ System::System()
         .Push(Core::WeakPtrTests())
 
         .Push(Engine::ClassTests())
+        .Push(Engine::ECSTests())
         .Push(Engine::TypeDatabaseTests())
 
         .Push(Platform::FileSystemTests());

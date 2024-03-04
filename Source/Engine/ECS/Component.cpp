@@ -24,23 +24,21 @@ SOFTWARE.
 
 */
 
-#pragma once
-
-#include "../../Core/Memory/UniquePtr.hpp"
+#include "Component.hpp"
 
 namespace LevelSketch
 {
-namespace Tests
-{
-
-class TestSuite;
-
 namespace Engine
 {
+namespace ECS
+{
 
-UniquePtr<TestSuite> ClassTests();
-UniquePtr<TestSuite> ECSTests();
-UniquePtr<TestSuite> TypeDatabaseTests();
+ComponentID ComponentIDGenerator::s_Generator { 0 };
+
+void ComponentIDGenerator::Reset()
+{
+    s_Generator = 0;
+}
 
 }
 }

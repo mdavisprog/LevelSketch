@@ -24,23 +24,43 @@ SOFTWARE.
 
 */
 
-#pragma once
-
-#include "../../Core/Memory/UniquePtr.hpp"
+#include "Entity.hpp"
 
 namespace LevelSketch
 {
-namespace Tests
-{
-
-class TestSuite;
-
 namespace Engine
 {
+namespace ECS
+{
 
-UniquePtr<TestSuite> ClassTests();
-UniquePtr<TestSuite> ECSTests();
-UniquePtr<TestSuite> TypeDatabaseTests();
+u32 EntityID::s_ID { 0 };
+
+EntityID EntityID::Generate()
+{
+    EntityID Result {};
+    Result.m_ID = (Result.m_ID & 0xFFFFFFFF00000000) | s_ID++;
+    return Result;
+}
+
+void EntityID::Reset()
+{
+    s_ID = 0;
+}
+
+bool EntityID::operator==(const EntityID& Other) const
+{
+    return m_ID == Other.m_ID;
+}
+
+bool EntityID::operator!=(const EntityID& Other) const
+{
+    return m_ID != Other.m_ID;
+}
+
+u32 EntityID::ID() const
+{
+    return static_cast<u32>(m_ID & 0xFFFFFFFFFFFFFFFF);
+}
 
 }
 }

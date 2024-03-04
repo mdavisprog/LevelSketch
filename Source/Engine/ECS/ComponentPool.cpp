@@ -24,23 +24,55 @@ SOFTWARE.
 
 */
 
-#pragma once
-
-#include "../../Core/Memory/UniquePtr.hpp"
+#include "ComponentPool.hpp"
 
 namespace LevelSketch
 {
-namespace Tests
-{
-
-class TestSuite;
-
 namespace Engine
 {
+namespace ECS
+{
 
-UniquePtr<TestSuite> ClassTests();
-UniquePtr<TestSuite> ECSTests();
-UniquePtr<TestSuite> TypeDatabaseTests();
+ComponentPool::ComponentPool()
+{
+}
+
+ComponentPool& ComponentPool::SetElementSize(u64 ElementSize)
+{
+    m_ElementSize = ElementSize;
+    return *this;
+}
+
+ComponentPool& ComponentPool::AddElement()
+{
+    m_Pool.Resize(m_ElementSize);
+    return *this;
+}
+
+u8* ComponentPool::GetElement(u64 Index)
+{
+    return &m_Pool[Index * m_ElementSize];
+}
+
+u8 const* ComponentPool::GetElement(u64 Index) const
+{
+    return &m_Pool[Index * m_ElementSize];
+}
+
+u64 ComponentPool::Size() const
+{
+    return m_Pool.Size() / m_ElementSize;
+}
+
+ComponentPool::ConstIterator ComponentPool::Begin() const
+{
+    return ConstIterator(*this, 0);
+}
+
+ComponentPool::ConstIterator ComponentPool::End() const
+{
+    return ConstIterator(*this, Size());
+}
 
 }
 }

@@ -12,6 +12,8 @@ clang-format -i \
 ../Source/Core/Memory/*.hpp \
 ../Source/Engine/*.cpp \
 ../Source/Engine/*.hpp \
+../Source/Engine/ECS/*.cpp \
+../Source/Engine/ECS/*.hpp \
 ../Source/GUI/*.cpp \
 ../Source/GUI/*.hpp \
 ../Source/Main/*.cpp \

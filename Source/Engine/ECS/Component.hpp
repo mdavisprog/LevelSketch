@@ -26,21 +26,65 @@ SOFTWARE.
 
 #pragma once
 
-#include "../../Core/Memory/UniquePtr.hpp"
+#include "../../Core/Types.hpp"
 
 namespace LevelSketch
 {
-namespace Tests
-{
-
-class TestSuite;
-
 namespace Engine
 {
+namespace ECS
+{
 
-UniquePtr<TestSuite> ClassTests();
-UniquePtr<TestSuite> ECSTests();
-UniquePtr<TestSuite> TypeDatabaseTests();
+using ComponentID = u32;
+
+static constexpr ComponentID InvalidComponentID { static_cast<ComponentID>(-1) };
+
+template<typename T>
+class Component;
+
+class ComponentIDGenerator
+{
+private:
+    static ComponentID s_Generator;
+
+public:
+    static void Reset();
+
+private:
+    friend Component;
+
+    template<typename T>
+    static ComponentID Generate()
+    {
+        return s_Generator++;
+    }
+};
+
+template<typename T>
+class Component
+{
+public:
+    static ComponentID ID()
+    {
+        return s_ID;
+    }
+
+    static ComponentID Register()
+    {
+        if (s_ID == InvalidComponentID)
+        {
+            s_ID = ComponentIDGenerator::Generate<T>();
+        }
+
+        return s_ID;
+    }
+
+private:
+    static ComponentID s_ID;
+};
+
+template<typename T>
+ComponentID Component<T>::s_ID { InvalidComponentID };
 
 }
 }

@@ -40,6 +40,11 @@ set(SOURCE
     Engine/Type.cpp
     Engine/TypeDatabase.cpp
 
+    Engine/ECS/Component.cpp
+    Engine/ECS/ComponentPool.cpp
+    Engine/ECS/Entity.cpp
+    Engine/ECS/World.cpp
+
     GUI/GUI.cpp
 
     Platform/Debugger.cpp
@@ -197,6 +202,7 @@ if(WITH_TESTS)
         Tests/Core/WeakPtr.cpp
 
         Tests/Engine/Class.cpp
+        Tests/Engine/ECS.cpp
         Tests/Engine/TypeDatabase.cpp
 
         Tests/Platform/FileSystem.cpp
