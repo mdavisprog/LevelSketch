@@ -64,7 +64,9 @@ public:
         ArchetypeKey Key {};
         (GetArchetypeKey<Components>(Key), ...);
         Core::Sort::Insertion(Key);
-        return NewEntity(Key);
+        EntityID Result { NewEntity(Key) };
+        (InitializeDefaults<Components>(Result), ...);
+        return Result;
     }
 
     template<typename T>
@@ -114,6 +116,13 @@ private:
         const ComponentID ID { Component<T>::Register() };
         m_ComponentSizes[ID] = sizeof(T);
         Key.PushUnique(ID);
+    }
+
+    template<typename T>
+    void InitializeDefaults(const EntityID& Entity_)
+    {
+        T& Data { GetComponent<T>(Entity_) };
+        Data = T();
     }
 
     Archetype& GetOrAddArchetype(const ArchetypeKey& Key);

@@ -38,9 +38,9 @@ namespace Components
 
 struct Transform
 {
-    Vector3 Position;
-    Rotation Rotate;
-    Vector3 Scale;
+    Vector3 Position {};
+    Rotation Rotate {};
+    Vector3 Scale { 1.0f, 1.0f, 1.0f };
 };
 
 }

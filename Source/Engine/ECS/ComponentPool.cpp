@@ -45,7 +45,7 @@ ComponentPool& ComponentPool::SetElementSize(u64 ElementSize)
 
 ComponentPool& ComponentPool::AddElement()
 {
-    m_Pool.Resize(m_ElementSize);
+    m_Pool.AddZeroed(m_ElementSize);
     return *this;
 }
 

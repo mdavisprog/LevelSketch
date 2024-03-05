@@ -155,6 +155,27 @@ static bool System()
     return Result;
 }
 
+static bool DefaultComponentValues()
+{
+    struct A
+    {
+        i32 Value { 10 };
+    };
+
+    struct B
+    {
+        float Value { 1.5f };
+    };
+
+    ECS::World World {};
+    ECS::EntityID Entity { World.NewEntity<A, B>() };
+
+    VERIFY(World.GetComponent<A>(Entity).Value == 10);
+    VERIFY(World.GetComponent<B>(Entity).Value == 1.5f);
+
+    return true;
+}
+
 UniquePtr<TestSuite> ECSTests()
 {
     return TestSuite::New("ECS",
@@ -162,7 +183,8 @@ UniquePtr<TestSuite> ECSTests()
             TEST_CASE(CreateEntity),
             TEST_CASE(ModifyComponent),
             TEST_CASE(GetArchetypesWithComponents),
-            TEST_CASE(System) });
+            TEST_CASE(System),
+            TEST_CASE(DefaultComponentValues) });
 }
 
 }
