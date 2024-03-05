@@ -26,43 +26,23 @@ SOFTWARE.
 
 #pragma once
 
-#include "../Core/Memory/UniquePtr.hpp"
-#include "../Core/Types.hpp"
+#include "../../Core/Math/Rotation.hpp"
+#include "../../Core/Math/Vector3.hpp"
 
 namespace LevelSketch
 {
 namespace Engine
 {
-
-class Camera;
-
-namespace ECS
+namespace Components
 {
 
-class World;
-
-}
-
-class Engine
+struct Transform
 {
-public:
-    static Engine& Instance();
-
-    bool Initialize();
-    void Shutdown();
-
-    void Update(f32 DeltaTime);
-    void Render();
-
-    Camera* GetCamera() const;
-    ECS::World* World() const;
-
-private:
-    Engine();
-
-    UniquePtr<Camera> m_Camera { nullptr };
-    UniquePtr<ECS::World> m_World { nullptr };
+    Vector3 Position;
+    Rotation Rotate;
+    Vector3 Scale;
 };
 
+}
 }
 }

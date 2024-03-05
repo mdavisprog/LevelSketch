@@ -28,6 +28,9 @@ SOFTWARE.
 #include "../Render/Renderer.hpp"
 #include "Camera.hpp"
 #include "Class.hpp"
+#include "Components/Mesh.hpp"
+#include "Components/Transform.hpp"
+#include "ECS/World.hpp"
 
 namespace LevelSketch
 {
@@ -47,6 +50,8 @@ bool Engine::Initialize()
     m_Camera = UniquePtr<Camera>::New();
     m_Camera->SetPosition({ 0.0f, 0.0f, -20.0f });
 
+    m_World = UniquePtr<ECS::World>::New();
+
     return true;
 }
 
@@ -56,13 +61,37 @@ void Engine::Shutdown()
 
 void Engine::Update(float DeltaTime)
 {
+    m_World->Update(DeltaTime);
     m_Camera->Update(DeltaTime);
     Render::Renderer::Instance()->UpdateViewMatrix(m_Camera->ToViewMatrix());
+}
+
+void Engine::Render()
+{
+    const Array<ECS::ArchetypeID> Archetypes { m_World->GetArchetypes<Components::Transform, Components::Mesh>() };
+
+    for (const ECS::ArchetypeID& ID : Archetypes)
+    {
+        const ECS::ComponentPool& MeshPool { m_World->GetComponents<Components::Mesh>(ID) };
+
+        for (u64 I = 0; I < MeshPool.Size(); I++)
+        {
+            const Components::Mesh& Mesh { MeshPool.Get<Components::Mesh>(I) };
+
+            Render::Renderer::Instance()->BindVertexBuffer(Mesh.VertexBuffer);
+            Render::Renderer::Instance()->DrawIndexed(Mesh.Indices, 1, 0, 0, 0);
+        }
+    }
 }
 
 Camera* Engine::GetCamera() const
 {
     return m_Camera.Get();
+}
+
+ECS::World* Engine::World() const
+{
+    return m_World.Get();
 }
 
 Engine::Engine()
