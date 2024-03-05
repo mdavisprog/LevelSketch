@@ -30,6 +30,9 @@ SOFTWARE.
 #include "../Core/Defines.hpp"
 #include "../Core/Math/Vertex.hpp"
 #include "../Engine/Camera.hpp"
+#include "../Engine/Components/Mesh.hpp"
+#include "../Engine/Components/Transform.hpp"
+#include "../Engine/ECS/World.hpp"
 #include "../Engine/Engine.hpp"
 #include "../GUI/GUI.hpp"
 #include "../Platform/Debugger.hpp"
@@ -55,7 +58,6 @@ namespace Main
 {
 
 static Render::GraphicsPipelineHandle g_TestPipeline {};
-static Render::VertexBufferHandle g_TestBuffer {};
 static Render::TextureHandle g_DefaultTexture {};
 
 static bool g_RotateCamera { false };
@@ -216,8 +218,7 @@ static bool OnPlatformFrame(const Platform::TimingData& TimingData)
     {
         Renderer->BindGraphicsPipeline(g_TestPipeline);
         Renderer->BindTexture(g_DefaultTexture);
-        Renderer->BindVertexBuffer(g_TestBuffer);
-        Renderer->DrawIndexed(3, 1, 0, 0, 0);
+        Engine::Engine::Instance().Render();
         Renderer->EndRender(Editor);
     }
 
@@ -261,17 +262,6 @@ static bool InitializeResources()
         return false;
     }
 
-    Render::VertexBufferDescription TestBufferDesc {};
-    TestBufferDesc.VertexBufferSize = 1000;
-    TestBufferDesc.IndexBufferSize = 1000;
-    TestBufferDesc.Stride = sizeof(Vertex3);
-    TestBufferDesc.IndexFormat = Render::IndexFormatType::U32;
-    g_TestBuffer = Renderer->CreateVertexBuffer(TestBufferDesc);
-    if (!g_TestBuffer.IsValid())
-    {
-        return false;
-    }
-
     const float Offset { 1.0f };
     Vertex3 Vertices[3];
     Vertices[0] = { { 0.0f, Offset, 5.0f }, { 0.5f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } };
@@ -279,12 +269,31 @@ static bool InitializeResources()
     Vertices[2] = { { Offset, -Offset, 5.0f }, { 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } };
     u32 IndexBufferData[] = { 0, 1, 2 };
 
-    Render::VertexDataDescription TestDataDesc {};
-    TestDataDesc.VertexData = Vertices;
-    TestDataDesc.VertexDataSize = sizeof(Vertices);
-    TestDataDesc.IndexData = IndexBufferData;
-    TestDataDesc.IndexDataSize = sizeof(IndexBufferData);
-    if (!Renderer->UploadVertexData(g_TestBuffer, TestDataDesc))
+    Engine::ECS::EntityID Entity {
+        Engine::Engine::Instance().World()->NewEntity<Engine::Components::Transform, Engine::Components::Mesh>()
+    };
+    Engine::Components::Mesh& Mesh { Engine::Engine::Instance().World()->GetComponent<Engine::Components::Mesh>(
+        Entity) };
+
+    Render::VertexBufferDescription MeshBufferDesc {};
+    MeshBufferDesc.VertexBufferSize = sizeof(Vertices);
+    MeshBufferDesc.Stride = sizeof(Vertex3);
+    MeshBufferDesc.IndexBufferSize = sizeof(IndexBufferData);
+    MeshBufferDesc.IndexFormat = Render::IndexFormatType::U32;
+
+    Mesh.Indices = ARRAY_COUNT(IndexBufferData);
+    Mesh.VertexBuffer = Renderer->CreateVertexBuffer(MeshBufferDesc);
+    if (!Mesh.VertexBuffer.IsValid())
+    {
+        return false;
+    }
+
+    Render::VertexDataDescription MeshDataDesc {};
+    MeshDataDesc.VertexData = Vertices;
+    MeshDataDesc.VertexDataSize = sizeof(Vertices);
+    MeshDataDesc.IndexData = IndexBufferData;
+    MeshDataDesc.IndexDataSize = sizeof(IndexBufferData);
+    if (!Renderer->UploadVertexData(Mesh.VertexBuffer, MeshDataDesc))
     {
         return false;
     }
