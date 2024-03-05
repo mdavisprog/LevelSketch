@@ -46,6 +46,16 @@ private:
     static ArchetypeID s_ArchetypeID;
 
 public:
+    struct SystemData
+    {
+        World& TheWorld;
+        f32 DeltaTime { 0.0f };
+        Array<ArchetypeID> Types {};
+        void* UserData { nullptr };
+    };
+
+    typedef void (*OnSystemFn)(SystemData&);
+
     World();
 
     template<typename... Components>
@@ -77,10 +87,27 @@ public:
         return GetComponents(Type, Component<T>::ID());
     }
 
+    template<typename... Components>
+    World& RegisterSystem(OnSystemFn&& Fn, void* UserData = nullptr)
+    {
+        ArchetypeKey Key {};
+        (GetArchetypeKey<Components>(Key), ...);
+        m_Systems.Push({ Key, std::move(Fn), UserData });
+        return *this;
+    }
+
     u64 NumArchetypes() const;
     u64 NumEntities() const;
+    World& Update(f32 DeltaTime);
 
 private:
+    struct System
+    {
+        ArchetypeKey Components {};
+        OnSystemFn Callback { nullptr };
+        void* UserData { nullptr };
+    };
+
     template<typename T>
     void GetArchetypeKey(ArchetypeKey& Key)
     {
@@ -101,6 +128,7 @@ private:
     HashMap<ArchetypeID, ArchetypeKey> m_ArchetypeKeys {};
     HashMap<ComponentID, u64> m_ComponentSizes {};
     HashMap<ComponentID, ArchetypeRecord> m_ComponentRecords {};
+    Array<System> m_Systems {};
 };
 
 }

@@ -84,6 +84,18 @@ public:
 
     ComponentPool();
 
+    template<typename T>
+    T& Get(u64 Index)
+    {
+        return *reinterpret_cast<T*>(GetElement(Index));
+    }
+
+    template<typename T>
+    const T& Get(u64 Index) const
+    {
+        return *reinterpret_cast<T const*>(GetElement(Index));
+    }
+
     ComponentPool& SetElementSize(u64 ElementSize);
     ComponentPool& AddElement();
     u8* GetElement(u64 Index);

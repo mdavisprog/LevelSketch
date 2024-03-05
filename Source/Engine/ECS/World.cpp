@@ -64,6 +64,17 @@ u64 World::NumEntities() const
     return m_Entities.Size();
 }
 
+World& World::Update(f32 DeltaTime)
+{
+    for (const System& System_ : m_Systems)
+    {
+        SystemData Data { *this, DeltaTime, GetArchetypes(System_.Components), System_.UserData };
+        (System_.Callback)(Data);
+    }
+
+    return *this;
+}
+
 Archetype& World::GetOrAddArchetype(const ArchetypeKey& Key)
 {
     if (!m_Archetypes.Contains(Key))

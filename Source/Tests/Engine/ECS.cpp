@@ -127,13 +127,42 @@ static bool GetArchetypesWithComponents()
     return true;
 }
 
+static bool System()
+{
+    struct A
+    {
+        i32 Value;
+    };
+
+    bool Result { true };
+
+    ECS::World World {};
+    World.RegisterSystem<A>(
+        [](ECS::World::SystemData& Data) -> void
+        {
+            bool* Result = static_cast<bool*>(Data.UserData);
+            *Result &= Data.Types.Size() == 1;
+
+            const ECS::ComponentPool& Pool { Data.TheWorld.GetComponents<A>(Data.Types[0]) };
+            *Result &= Pool.Size() == 1;
+            *Result &= Pool.Get<A>(0).Value == 5;
+        },
+        &Result);
+
+    ECS::EntityID Entity { World.NewEntity<A>() };
+    World.GetComponent<A>(Entity).Value = 5;
+    World.Update(0.0f);
+    return Result;
+}
+
 UniquePtr<TestSuite> ECSTests()
 {
     return TestSuite::New("ECS",
         { TEST_CASE(EmptyWorld),
             TEST_CASE(CreateEntity),
             TEST_CASE(ModifyComponent),
-            TEST_CASE(GetArchetypesWithComponents) });
+            TEST_CASE(GetArchetypesWithComponents),
+            TEST_CASE(System) });
 }
 
 }
