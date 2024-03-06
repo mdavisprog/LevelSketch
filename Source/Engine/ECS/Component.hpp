@@ -39,9 +39,6 @@ using ComponentID = u32;
 
 static constexpr ComponentID InvalidComponentID { static_cast<ComponentID>(-1) };
 
-template<typename T>
-class Component;
-
 class ComponentIDGenerator
 {
 private:
@@ -51,7 +48,8 @@ public:
     static void Reset();
 
 private:
-    friend Component;
+    template<typename T>
+    friend class Component;
 
     template<typename T>
     static ComponentID Generate()
