@@ -28,16 +28,6 @@ SOFTWARE.
 #include "../Core/Memory/UniquePtr.hpp"
 #include "Window.hpp"
 
-#if defined(PLATFORM_WINDOWS)
-#include "Windows/Platform.hpp"
-#elif defined(PLATFORM_MAC)
-#include "Mac/Platform.hpp"
-#elif defined(PLATFORM_SDL2)
-#include "SDL2/Platform.hpp"
-#else
-#error "Platform is not supported!"
-#endif
-
 #include <utility>
 
 namespace LevelSketch
@@ -47,17 +37,7 @@ namespace Platform
 
 const UniquePtr<Platform>& Platform::Instance()
 {
-    static UniquePtr<Platform> Instance
-    {
-#if defined(PLATFORM_WINDOWS)
-        UniquePtr<Windows::Platform>::New()
-#elif defined(PLATFORM_MAC)
-        UniquePtr<Mac::Platform>::New()
-#elif defined(PLATFORM_SDL2)
-        UniquePtr<SDL2::Platform>::New()
-#endif
-    };
-
+    static UniquePtr<Platform> Instance { CreateInstance() };
     return Instance;
 }
 

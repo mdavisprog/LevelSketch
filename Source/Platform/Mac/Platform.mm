@@ -51,6 +51,12 @@ namespace LevelSketch
 {
 namespace Platform
 {
+
+UniquePtr<Platform> Platform::CreateInstance()
+{
+    return UniquePtr<Mac::Platform>::New();
+}
+
 namespace Mac
 {
 

@@ -47,6 +47,9 @@ public:
 
 class Platform
 {
+private:
+    static UniquePtr<Platform> CreateInstance();
+
 public:
     typedef bool (*OnFrameSignature)(const TimingData&);
 

@@ -38,6 +38,12 @@ namespace LevelSketch
 {
 namespace Platform
 {
+
+UniquePtr<Platform> Platform::CreateInstance()
+{
+    return UniquePtr<Windows::Platform>::New();
+}
+
 namespace Windows
 {
 

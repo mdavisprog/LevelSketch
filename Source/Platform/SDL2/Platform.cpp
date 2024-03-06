@@ -32,6 +32,12 @@ namespace LevelSketch
 {
 namespace Platform
 {
+
+UniquePtr<Platform> Platform::CreateInstance()
+{
+    return UniquePtr<SDL2::Platform>::New();
+}
+
 namespace SDL2
 {
 
