@@ -72,12 +72,17 @@ void Engine::Render()
 
     for (const ECS::ArchetypeID& ID : Archetypes)
     {
+        const ECS::ComponentPool& TransformPool { m_World->GetComponents<Components::Transform>(ID) };
         const ECS::ComponentPool& MeshPool { m_World->GetComponents<Components::Mesh>(ID) };
 
-        for (u64 I = 0; I < MeshPool.Size(); I++)
+        for (u64 I = 0; I < TransformPool.Size() && I < MeshPool.Size(); I++)
         {
+            const Components::Transform& Transform { TransformPool.Get<Components::Transform>(I) };
             const Components::Mesh& Mesh { MeshPool.Get<Components::Mesh>(I) };
 
+            const Matrix4f Model { Matrix4f::Scale(Transform.Scale) * Transform.Rotate.ToMatrix() *
+                                   Matrix4f::Translation(Transform.Position) };
+            Render::Renderer::Instance()->UpdateModelMatrix(Model);
             Render::Renderer::Instance()->BindVertexBuffer(Mesh.VertexBuffer);
             Render::Renderer::Instance()->DrawIndexed(Mesh.Indices, 1, 0, 0, 0);
         }
