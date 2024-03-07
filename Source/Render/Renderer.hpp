@@ -97,6 +97,7 @@ public:
     virtual bool BindVertexBuffer(const VertexBufferHandle& Handle) = 0;
 
     // Temporary
+    virtual void UpdateModelMatrix(const Matrix4f& Model);
     virtual void UpdateViewMatrix(const Matrix4f& View);
 
     const DriverSummary& Summary() const;

@@ -46,6 +46,10 @@ String Renderer::ShaderPath(const char* FileName)
     return Platform::FileSystem::CombinePaths(ShadersDirectory(), FileName);
 }
 
+void Renderer::UpdateModelMatrix(const Matrix4f&)
+{
+}
+
 void Renderer::UpdateViewMatrix(const Matrix4f&)
 {
 }
