@@ -348,6 +348,11 @@ bool Renderer::BindVertexBuffer(const VertexBufferHandle& Handle)
     return true;
 }
 
+void Renderer::UpdateModelMatrix(const Matrix4f& Model)
+{
+    m_Uniforms.Model = Model;
+}
+
 void Renderer::UpdateViewMatrix(const Matrix4f& View)
 {
     m_Uniforms.View = View;
