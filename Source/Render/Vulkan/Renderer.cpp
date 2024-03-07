@@ -458,6 +458,11 @@ bool Renderer::BindVertexBuffer(const VertexBufferHandle& Handle)
     return false;
 }
 
+void Renderer::UpdateModelMatrix(const Matrix4f& Model)
+{
+    m_Uniforms[m_FrameIndex]->GetUniforms().Model = Model;
+}
+
 void Renderer::UpdateViewMatrix(const Matrix4f& View)
 {
     m_Uniforms[m_FrameIndex]->GetUniforms().View = View;

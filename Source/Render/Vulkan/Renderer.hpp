@@ -83,6 +83,7 @@ public:
     virtual bool UploadVertexData(const VertexBufferHandle& Handle, const VertexDataDescription& Description) override;
     virtual bool BindVertexBuffer(const VertexBufferHandle& Handle) override;
 
+    virtual void UpdateModelMatrix(const Matrix4f& Model) override;
     virtual void UpdateViewMatrix(const Matrix4f& View) override;
 
 private:
