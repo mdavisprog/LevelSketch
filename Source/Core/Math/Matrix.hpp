@@ -54,10 +54,10 @@ public:
     {
         return
         {
-            1, 0, 0, Translate.X,
-            0, 1, 0, Translate.Y,
-            0, 0, 1, Translate.Z,
-            0, 0, 0, 1
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            Translate.X, Translate.Y, Translate.Z, 1
         };
     }
 
