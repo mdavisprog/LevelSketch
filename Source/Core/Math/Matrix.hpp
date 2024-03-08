@@ -280,6 +280,18 @@ static inline Vector3<T> operator*(const Matrix4<T>& A, const Vector3<T>& Vec)
     };
 }
 
+template<typename T>
+static inline Vector4<T> operator*(const Matrix4<T>& A, const Vector4<T>& Vec)
+{
+    return
+    {
+        A[0] * Vec.X + A[1] * Vec.Y + A[2] * Vec.Z + A[3] * Vec.W,
+        A[4] * Vec.X + A[5] * Vec.Y + A[6] * Vec.Z + A[7] * Vec.W,
+        A[8] * Vec.X + A[9] * Vec.Y + A[10] * Vec.Z + A[11] * Vec.W,
+        A[12] * Vec.X + A[13] * Vec.Y + A[14] * Vec.Z + A[15] * Vec.W
+    };
+}
+
 typedef Matrix4<f32> Matrix4f;
 
 // Uses clip space depth of [0, 1]. This seems to be the standard across DirectX, Metal, and Vulkan.

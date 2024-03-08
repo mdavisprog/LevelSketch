@@ -197,7 +197,7 @@ static bool Transpose()
 static bool Translation()
 {
     const Matrix4f A { Matrix4f::Translation({1.0f, 2.0f, 3.0f}) };
-    VERIFY(A * (Vector3{1.0f, 2.0f, 3.0f}) == (Vector3{2.0f, 4.0f, 6.0f}));
+    VERIFY(A * (Vector4{1.0f, 2.0f, 3.0f, 1.0f}) == (Vector4{1.0f, 2.0f, 3.0f, 15.0}));
     return true;
 }
 
