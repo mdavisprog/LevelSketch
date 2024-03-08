@@ -89,10 +89,26 @@ static bool SetExtension()
     return true;
 }
 
+static bool GetExtension()
+{
+    VERIFY(FileSystem::GetExtension("Hello.txt") == "txt");
+    VERIFY(FileSystem::GetExtension("Hello") == "");
+    VERIFY(FileSystem::GetExtension("Hello.") == "");
+    VERIFY(FileSystem::GetExtension("C:\\Hello.txt") == "txt");
+    VERIFY(FileSystem::GetExtension("/User/Hello.txt") == "txt");
+    VERIFY(FileSystem::GetExtension("Hello.txt\\World") == "");
+    VERIFY(FileSystem::GetExtension("/User/Hello.txt/World") == "");
+    return true;
+}
+
 UniquePtr<TestSuite> FileSystemTests()
 {
     return TestSuite::New("FileSystem",
-        { TEST_CASE(GetDirectory), TEST_CASE(GetFileName), TEST_CASE(GetBaseFileName), TEST_CASE(SetExtension) });
+        { TEST_CASE(GetDirectory),
+            TEST_CASE(GetFileName),
+            TEST_CASE(GetBaseFileName),
+            TEST_CASE(SetExtension),
+            TEST_CASE(GetExtension) });
 }
 
 }

@@ -135,6 +135,26 @@ String FileSystem::SetExtension(const String& Path, const String& Extension)
     return Result + "." + Extension;
 }
 
+String FileSystem::GetExtension(const String& Path)
+{
+    const u64 SeparatorPos { RFindSeparator(Path) };
+    const u64 Pos { Path.RFind('.') };
+
+    String Result {};
+
+    if (Pos != String::NPOS && Pos < Path.Length())
+    {
+        // If a path separator was found, make sure the '.' is the latest
+        // on the path.
+        if (SeparatorPos == String::NPOS || Pos > SeparatorPos)
+        {
+            Result = Path.Sub(Pos + 1, Path.Length() - (Pos + 1));
+        }
+    }
+
+    return Result;
+}
+
 String FileSystem::CombinePaths(const String& A, const String& B)
 {
     return A + PATH_SEPARATOR + B;
