@@ -317,6 +317,8 @@ static bool operator!=(const TString<T>& A, const T* B)
 typedef TString<char> String;
 typedef TString<wchar_t> WString;
 
+i32 ToInt(const String& Value);
+f32 ToFloat(const String& Value);
 String ToString(const WString& Value);
 WString ToWString(const String& Value);
 

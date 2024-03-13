@@ -69,6 +69,10 @@ static bool Conversions()
     Ascii = LevelSketch::Core::Containers::ToString(Wide);
     VERIFY(Ascii == "Hello");
     VERIFY(Ascii.Length() == 5);
+
+    VERIFY(LevelSketch::Core::Containers::ToInt("5") == 5);
+    VERIFY(LevelSketch::Core::Containers::ToFloat("3.14f") == 3.14f);
+
     return true;
 }
 

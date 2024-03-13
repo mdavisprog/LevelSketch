@@ -26,6 +26,7 @@ SOFTWARE.
 
 #include "String.hpp"
 
+#include <cstdlib>
 #include <cwchar>
 
 namespace LevelSketch
@@ -40,6 +41,26 @@ namespace Containers
 #pragma warning(push)
 #pragma warning(disable : 4996)
 #endif
+
+i32 ToInt(const String& Value)
+{
+    if (Value.IsEmpty())
+    {
+        return 0;
+    }
+
+    return std::atoi(Value.Data());
+}
+
+f32 ToFloat(const String& Value)
+{
+    if (Value.IsEmpty())
+    {
+        return 0.0f;
+    }
+
+    return static_cast<f32>(std::atof(Value.Data()));
+}
 
 String ToString(const WString& Value)
 {
