@@ -250,6 +250,28 @@ public:
         return *this;
     }
 
+    Array<TString<T>> Split(T Delimiter) const
+    {
+        Array<TString<T>> Result {};
+
+        u64 Start { 0 };
+        u64 Pos { Find(Delimiter, Start) };
+
+        while (Pos != NPOS)
+        {
+            Result.Push(std::move(Sub(Start, Pos - Start)));
+            Start = Pos + 1;
+            Pos = Find(Delimiter, Start);
+        }
+
+        if (Start < Length())
+        {
+            Result.Push(std::move(Sub(Start, Length() - Start)));
+        }
+
+        return Result;
+    }
+
 private:
     TString<T>& Copy(const T* Data)
     {

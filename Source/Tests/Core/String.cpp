@@ -147,6 +147,27 @@ static bool Append()
     return true;
 }
 
+static bool Split()
+{
+    const String A { "One Two Three" };
+    Array<String> Tokens { A.Split(' ') };
+    VERIFY(Tokens.Size() == 3);
+    VERIFY(Tokens[0] == "One");
+    VERIFY(Tokens[1] == "Two");
+    VERIFY(Tokens[2] == "Three");
+    const String B { "One//Three" };
+    Tokens = B.Split('/');
+    VERIFY(Tokens.Size() == 3);
+    VERIFY(Tokens[0] == "One");
+    VERIFY(Tokens[1] == "");
+    VERIFY(Tokens[2] == "Three");
+    const String C { "One" };
+    Tokens = C.Split('/');
+    VERIFY(Tokens.Size() == 1);
+    VERIFY(Tokens[0] == "One");
+    return true;
+}
+
 UniquePtr<TestSuite> StringTests()
 {
     return TestSuite::New("String",
@@ -159,7 +180,8 @@ UniquePtr<TestSuite> StringTests()
             TEST_CASE(RFind),
             TEST_CASE(Sub),
             TEST_CASE(Add),
-            TEST_CASE(Append) });
+            TEST_CASE(Append),
+            TEST_CASE(Split) });
 }
 
 }
