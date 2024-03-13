@@ -123,6 +123,14 @@ public:
         return Append(Other);
     }
 
+    TString<T>& operator+=(const T& Other)
+    {
+        m_Data.Pop(); // Remove terminator
+        m_Data.Push(Other);
+        m_Data.Push(0); // Add terminator
+        return *this;
+    }
+
     T* Data()
     {
         return m_Data.Data();

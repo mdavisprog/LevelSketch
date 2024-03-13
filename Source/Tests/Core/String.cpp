@@ -139,6 +139,11 @@ static bool Append()
     VERIFY(A == "HelloWorld");
     A += "Foo";
     VERIFY(A == "HelloWorldFoo");
+    String C {};
+    C += 'A';
+    VERIFY(C == "A");
+    C += 'B';
+    VERIFY(C == "AB");
     return true;
 }
 
