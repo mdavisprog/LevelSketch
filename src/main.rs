@@ -6,7 +6,23 @@ use bevy::{input::{keyboard::*, mouse::*}, prelude::*};
 //
 
 #[derive(Component)]
-struct CameraController;
+struct CameraController {
+    velocity: Vec3,
+    speed: f32,
+    max_speed: f32,
+    friction: f32,
+}
+
+impl Default for CameraController {
+    fn default() -> Self {
+        Self {
+            velocity: Vec3::new(0.0, 0.0, 0.0),
+            speed: 0.25,
+            max_speed: 20.0,
+            friction: 0.1,
+        }
+    }
+}
 
 //
 // Systems
@@ -20,7 +36,10 @@ fn setup(
     commands.spawn((
         Camera3d::default(),
         Transform::from_xyz(4.0, 7.0, -4.0).looking_at(Vec3::new(0.0, 0.0, 0.0), Vec3::Y),
-        CameraController
+        CameraController {
+            velocity: Vec3::ZERO,
+            ..default()
+        }
     ));
 
     commands.spawn((
@@ -47,9 +66,9 @@ fn update_camera(
     keys: Res<ButtonInput<KeyCode>>,
     mouse_buttons: Res<ButtonInput<MouseButton>>,
     mouse_move: Res<AccumulatedMouseMotion>,
-    mut camera: Query<&mut Transform, With<CameraController>>
+    mut camera: Query<(&mut Transform, &mut CameraController), With<CameraController>>
 ) {
-    let Ok(mut transform) = camera.get_single_mut() else {
+    let Ok((mut transform, mut camera_controller)) = camera.get_single_mut() else {
         println!("Failed to get camera's transform.");
         return;
     };
@@ -75,23 +94,26 @@ fn update_camera(
     let move_backward: bool = keys.pressed(KeyCode::KeyS);
     let move_left: bool = keys.pressed(KeyCode::KeyA);
     let move_right: bool = keys.pressed(KeyCode::KeyD);
-    let delta_seconds: f32 = time.delta_secs();
-    let mut translation: Vec3 = transform.translation;
-
-    const SPEED: f32 = 20.0;
-    if move_forward {
-        translation = translation + transform.forward() * SPEED * delta_seconds;
+    let direction: Vec3 = if move_forward {
+        transform.forward().as_vec3()
     } else if move_backward {
-        translation = translation + transform.back() * SPEED * delta_seconds;
-    }
-
-    if move_right {
-        translation = translation + transform.right() * SPEED * delta_seconds;
+        transform.back().as_vec3()
+    } else if move_right {
+        transform.right().as_vec3()
     } else if move_left {
-        translation = translation + transform.left() * SPEED * delta_seconds;
+        transform.left().as_vec3()
+    } else {
+        Vec3::ZERO
+    };
+
+    if direction != Vec3::ZERO {
+        let delta = direction * camera_controller.speed;
+        camera_controller.velocity = (camera_controller.velocity + delta).clamp_length(0.0, camera_controller.max_speed);
+    } else {
+        camera_controller.velocity = camera_controller.velocity * (1.0 - camera_controller.friction);
     }
 
-    transform.translation = translation;
+    transform.translation += camera_controller.velocity * time.delta_secs();
 }
 
 //
