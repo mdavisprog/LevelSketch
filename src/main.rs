@@ -147,6 +147,15 @@ fn update_camera(
     transform.translation += camera_controller.velocity * time.delta_secs();
 }
 
+fn check_exit(
+    mut events: EventWriter<AppExit>,
+    keys: Res<ButtonInput<KeyCode>>,
+) {
+    if keys.just_pressed(KeyCode::Escape) {
+        events.send(AppExit::Success);
+    }
+}
+
 //
 // Main
 //
@@ -155,6 +164,6 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
-        .add_systems(Update, update_camera)
+        .add_systems(Update, (update_camera, check_exit))
         .run();
 }
