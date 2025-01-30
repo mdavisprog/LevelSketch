@@ -1,5 +1,5 @@
 use std::f32::consts::*;
-use bevy::{input::{keyboard::*, mouse::*}, prelude::*};
+use bevy::{input::{keyboard::*, mouse::*}, prelude::*, window::*};
 
 //
 // Types
@@ -11,6 +11,9 @@ struct CameraController {
     speed: f32,
     max_speed: f32,
     friction: f32,
+    is_rotating: bool,
+    last_screen_position: Vec2,
+    set_last_screen_position: bool,
 }
 
 impl Default for CameraController {
@@ -20,6 +23,9 @@ impl Default for CameraController {
             speed: 0.25,
             max_speed: 20.0,
             friction: 0.1,
+            is_rotating: false,
+            last_screen_position: Vec2::new(0.0, 0.0),
+            set_last_screen_position: false,
         }
     }
 }
@@ -66,16 +72,41 @@ fn update_camera(
     keys: Res<ButtonInput<KeyCode>>,
     mouse_buttons: Res<ButtonInput<MouseButton>>,
     mouse_move: Res<AccumulatedMouseMotion>,
-    mut camera: Query<(&mut Transform, &mut CameraController), With<CameraController>>
+    mut camera: Query<(&mut Transform, &mut CameraController), With<CameraController>>,
+    mut window: Query<&mut Window>,
 ) {
     let Ok((mut transform, mut camera_controller)) = camera.get_single_mut() else {
         println!("Failed to get camera's transform.");
         return;
     };
 
-    let should_translate: bool = mouse_buttons.pressed(MouseButton::Left);
+    let Ok(mut window) = window.get_single_mut() else {
+        return;
+    };
+
+    if camera_controller.set_last_screen_position {
+        window.set_cursor_position(Some(camera_controller.last_screen_position));
+        window.cursor_options.visible = true;
+        camera_controller.set_last_screen_position = false;
+    }
+
+    if mouse_buttons.just_pressed(MouseButton::Left) {
+        camera_controller.is_rotating = true;
+        window.cursor_options.visible = false;
+        window.cursor_options.grab_mode = CursorGrabMode::Locked;
+
+        camera_controller.last_screen_position = match window.cursor_position() {
+            Some(position) => position,
+            None => Vec2::new(0.0, 0.0)
+        };
+    } else if mouse_buttons.just_released(MouseButton::Left) {
+        camera_controller.is_rotating = false;
+        camera_controller.set_last_screen_position = true;
+        window.cursor_options.grab_mode = CursorGrabMode::None;
+    }
+
     let delta_mouse: Vec2 = mouse_move.delta;
-    if should_translate && delta_mouse != Vec2::ZERO {
+    if camera_controller.is_rotating && delta_mouse != Vec2::ZERO {
         const SENSITIVITY: f32 = 0.005;
         
         let delta_yaw: f32 = -delta_mouse.x * SENSITIVITY;
