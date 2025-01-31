@@ -7,6 +7,28 @@ use std::f32::consts::*;
 use std::time::Duration;
 
 //
+// Main
+//
+
+fn main() {
+    App::new()
+        .insert_resource(WinitSettings {
+            focused_mode: UpdateMode::Continuous,
+            unfocused_mode: UpdateMode::reactive_low_power(Duration::from_secs(2))
+        })
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "Level Sketch".into(),
+                ..default()
+            }),
+            ..default()
+        }))
+        .add_systems(Startup, setup)
+        .add_systems(Update, (update_camera, check_exit))
+        .run();
+}
+
+//
 // Types
 //
 
@@ -159,26 +181,4 @@ fn check_exit(
     if keys.just_pressed(KeyCode::Escape) {
         events.send(AppExit::Success);
     }
-}
-
-//
-// Main
-//
-
-fn main() {
-    App::new()
-        .insert_resource(WinitSettings {
-            focused_mode: UpdateMode::Continuous,
-            unfocused_mode: UpdateMode::reactive_low_power(Duration::from_secs(2))
-        })
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                title: "Level Sketch".into(),
-                ..default()
-            }),
-            ..default()
-        }))
-        .add_systems(Startup, setup)
-        .add_systems(Update, (update_camera, check_exit))
-        .run();
 }
