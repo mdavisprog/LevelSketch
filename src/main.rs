@@ -1,5 +1,10 @@
+use bevy::input::keyboard::*;
+use bevy::input::mouse::*;
+use bevy::prelude::*;
+use bevy::window::*;
+use bevy::winit::*;
 use std::f32::consts::*;
-use bevy::{input::{keyboard::*, mouse::*}, prelude::*, window::*};
+use std::time::Duration;
 
 //
 // Types
@@ -162,6 +167,10 @@ fn check_exit(
 
 fn main() {
     App::new()
+        .insert_resource(WinitSettings {
+            focused_mode: UpdateMode::Continuous,
+            unfocused_mode: UpdateMode::reactive_low_power(Duration::from_secs(2))
+        })
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Level Sketch".into(),
