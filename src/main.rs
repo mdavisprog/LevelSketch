@@ -7,6 +7,12 @@ use std::f32::consts::*;
 use std::time::Duration;
 
 //
+// Includes
+//
+
+mod gui;
+
+//
 // Main
 //
 
@@ -16,13 +22,16 @@ fn main() {
             focused_mode: UpdateMode::Continuous,
             unfocused_mode: UpdateMode::reactive_low_power(Duration::from_secs(2))
         })
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                title: "Level Sketch".into(),
+        .add_plugins((
+            DefaultPlugins.set(WindowPlugin {
+                primary_window: Some(Window {
+                    title: "Level Sketch".into(),
+                    ..default()
+                }),
                 ..default()
             }),
-            ..default()
-        }))
+            gui::GUIPlugin,
+        ))
         .add_systems(Startup, setup)
         .add_systems(Update, (update_camera, check_exit))
         .run();
@@ -99,8 +108,10 @@ fn update_camera(
     keys: Res<ButtonInput<KeyCode>>,
     mouse_buttons: Res<ButtonInput<MouseButton>>,
     mouse_move: Res<AccumulatedMouseMotion>,
+    gui_state: Res<gui::State>,
     mut camera: Query<(&mut Transform, &mut CameraController), With<CameraController>>,
     mut window: Query<&mut Window>,
+    mut commands: Commands,
 ) {
     let Ok((mut transform, mut camera_controller)) = camera.get_single_mut() else {
         println!("Failed to get camera's transform.");
@@ -117,7 +128,7 @@ fn update_camera(
         camera_controller.set_last_screen_position = false;
     }
 
-    if mouse_buttons.just_pressed(MouseButton::Left) {
+    if mouse_buttons.just_pressed(MouseButton::Left) && !gui_state.is_interacting() {
         camera_controller.is_rotating = true;
         window.cursor_options.visible = false;
         window.cursor_options.grab_mode = CursorGrabMode::Locked;
@@ -126,7 +137,9 @@ fn update_camera(
             Some(position) => position,
             None => Vec2::new(0.0, 0.0)
         };
-    } else if mouse_buttons.just_released(MouseButton::Left) {
+
+        gui::close_menus(&mut commands);
+    } else if mouse_buttons.just_released(MouseButton::Left) && camera_controller.is_rotating {
         camera_controller.is_rotating = false;
         camera_controller.set_last_screen_position = true;
         window.cursor_options.grab_mode = CursorGrabMode::None;
