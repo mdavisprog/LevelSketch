@@ -21,8 +21,7 @@ impl Plugin for GUIPlugin {
         app
             .init_resource::<State>()
             .add_plugins(menu::Plugin)
-            .add_observer(on_menu_item)
-            .add_observer(on_menu_event);
+            .add_systems(Startup, setup);
     }
 }
 
@@ -45,41 +44,39 @@ impl State {
     }
 }
 
-#[derive(Component)]
-#[require(Node(root_node))]
-struct Root;
-
-fn root_node() -> Node {
-    Node {
-        width: Val::Percent(100.0),
-        height: Val::Percent(100.0),
-        justify_content: JustifyContent::Start,
-        flex_direction: FlexDirection::Row,
-        column_gap: Val::Px(12.0),
-        ..default()
-    }
-}
-
 //
 // Systems
 //
 
-fn on_menu_item(
-    trigger: Trigger<menu::MenuItemEvent>,
-    mut state: ResMut<State>,
+fn setup(
+    mut commands: Commands,
 ) {
-    let event = trigger.event();
-    state.is_interacting = match *event {
-        menu::MenuItemEvent::Leave => false,
-        _ => true,
-    }
+    commands.spawn((
+        Node {
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            ..default()
+        },
+        GlobalZIndex(-1),
+        PickingBehavior {
+            should_block_lower: false,
+            is_hoverable: true,
+        }
+    ))
+    .observe(on_root_over)
+    .observe(on_root_out);
 }
 
-fn on_menu_event(
-    trigger: Trigger<menu::MenuEvent>,
+fn on_root_over(
+    _: Trigger<Pointer<Over>>,
     mut state: ResMut<State>,
 ) {
-    if *trigger.event() == menu::MenuEvent::ClosedAll {
-        state.is_interacting = false;
-    }
+    state.is_interacting = false;
+}
+
+fn on_root_out(
+    _: Trigger<Pointer<Out>>,
+    mut state: ResMut<State>,
+) {
+    state.is_interacting = true;
 }
