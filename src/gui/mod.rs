@@ -21,7 +21,8 @@ impl Plugin for GUIPlugin {
         app
             .init_resource::<State>()
             .add_plugins(menu::Plugin)
-            .add_observer(on_menu_item);
+            .add_observer(on_menu_item)
+            .add_observer(on_menu_event);
     }
 }
 
@@ -71,5 +72,14 @@ fn on_menu_item(
     state.is_interacting = match *event {
         menu::MenuItemEvent::Leave => false,
         _ => true,
+    }
+}
+
+fn on_menu_event(
+    trigger: Trigger<menu::MenuEvent>,
+    mut state: ResMut<State>,
+) {
+    if *trigger.event() == menu::MenuEvent::ClosedAll {
+        state.is_interacting = false;
     }
 }

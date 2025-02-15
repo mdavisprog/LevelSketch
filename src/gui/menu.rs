@@ -11,6 +11,12 @@ pub enum MenuItemEvent {
     Pressed,
 }
 
+#[derive(Event, PartialEq, Eq)]
+pub enum MenuEvent {
+    CloseAll,
+    ClosedAll,
+}
+
 pub fn create_menu_bar(
     commands: &mut Commands,
     items: Vec<(&str, Observer)>,
@@ -240,11 +246,6 @@ impl Default for MenuItem {
     }
 }
 
-#[derive(Event)]
-enum MenuEvent {
-    CloseAll,
-}
-
 #[derive(Component)]
 #[require(
     Node(Menu::node),
@@ -300,16 +301,25 @@ impl Menu {
         query: &Query<Entity, With<Menu>>,
         commands: &mut Commands,
     ) {
+        let mut menus = Vec::<Entity>::new();
+
         for menu in query.iter() {
             commands.entity(menu).despawn_recursive();
+            menus.push(menu);
+        }
+
+        if !menus.is_empty() {
+            commands.trigger_targets(MenuEvent::ClosedAll, menus);
         }
     }
 
     fn observe_close_all(
-        _: Trigger<MenuEvent>,
+        trigger: Trigger<MenuEvent>,
         query: Query<Entity, With<Menu>>,
         mut commands: Commands,
     ) {
-        Self::close_all(&query, &mut commands);
+        if *trigger.event() == MenuEvent::CloseAll {
+            Self::close_all(&query, &mut commands);
+        }
     }
 }
