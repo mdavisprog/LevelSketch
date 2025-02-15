@@ -173,7 +173,7 @@ impl MenuItem {
         commands
             .observe(Self::on_enter)
             .observe(Self::on_leave)
-            .observe(Self::on_press);
+            .observe(Self::on_down);
     }
 
     fn on_enter(
@@ -217,8 +217,8 @@ impl MenuItem {
         commands.trigger_targets(MenuItemEvent::Leave, [trigger.entity()]);
     }
     
-    fn on_press(
-        trigger: Trigger<Pointer<Click>>,
+    fn on_down(
+        trigger: Trigger<Pointer<Down>>,
         query: Query<Entity, With<Menu>>,
         query_item: Query<&MenuBarItem>,
         mut commands: Commands,
