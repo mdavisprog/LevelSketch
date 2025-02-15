@@ -47,7 +47,6 @@ impl Controller {
         mut commands: Commands,
     ) {
         let Ok((mut transform, mut camera_controller)) = camera.get_single_mut() else {
-            println!("Failed to get camera's transform.");
             return;
         };
     
