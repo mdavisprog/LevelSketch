@@ -11,13 +11,15 @@ use std::time::Duration;
 //
 
 mod gui;
+mod menus;
 
 //
 // Main
 //
 
 fn main() {
-    App::new()
+    let mut app = App::new();
+    app
         .insert_resource(WinitSettings {
             focused_mode: UpdateMode::Continuous,
             unfocused_mode: UpdateMode::reactive_low_power(Duration::from_secs(2))
@@ -33,8 +35,11 @@ fn main() {
             gui::GUIPlugin,
         ))
         .add_systems(Startup, setup)
-        .add_systems(Update, (update_camera, check_exit))
-        .run();
+        .add_systems(Update, (update_camera, check_exit));
+
+    menus::init(&mut app);
+
+    app.run();
 }
 
 //

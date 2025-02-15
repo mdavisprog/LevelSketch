@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-mod menu;
+pub mod menu;
 
 //
 // Public API
@@ -20,9 +20,8 @@ impl Plugin for GUIPlugin {
     fn build(&self, app: &mut App) {
         app
             .init_resource::<State>()
-            .add_systems(Startup, setup)
             .add_plugins(menu::Plugin)
-            .add_observer(menus::on_menu_item);
+            .add_observer(on_menu_item);
     }
 }
 
@@ -64,86 +63,13 @@ fn root_node() -> Node {
 // Systems
 //
 
-fn setup(
-    mut commands: Commands
+fn on_menu_item(
+    trigger: Trigger<menu::MenuItemEvent>,
+    mut state: ResMut<State>,
 ) {
-    menu::create_menu_bar(&mut commands, vec![
-        ("File", Observer::new(menus::file::construct)),
-        ("Help", Observer::new(menus::help::construct)),
-    ]);
-}
-
-//
-// Menus
-//
-
-mod menus {
-    use super::*;
-
-    pub fn on_menu_item(
-        trigger: Trigger<menu::MenuItemEvent>,
-        mut state: ResMut<super::State>,
-    ) {
-        let event = trigger.event();
-        state.is_interacting = match *event {
-            menu::MenuItemEvent::Leave => false,
-            _ => true,
-        }
-    }
-
-    pub mod file {
-        use super::*;
-    
-        pub fn construct(
-            trigger: Trigger<menu::MenuItemEvent>,
-            mut commands: Commands,
-        ) {
-            if *trigger.event() != menu::MenuItemEvent::Pressed {
-                return;
-            }
-
-            menu::create_menu(
-                &mut commands,
-                vec![
-                    ("Quit", Observer::new(quit)),
-                ],
-                trigger.entity(),
-            );
-        }
-
-        fn quit(
-            trigger: Trigger<menu::MenuItemEvent>,
-            mut events: EventWriter<AppExit>,
-        ) {
-            if *trigger.event() == menu::MenuItemEvent::Pressed {
-                events.send(AppExit::Success);
-            }
-        }
-    }
-
-    pub mod help {
-        use super::*;
-
-        pub fn construct(
-            trigger: Trigger<menu::MenuItemEvent>,
-            mut commands: Commands,
-        ) {
-            if *trigger.event() != menu::MenuItemEvent::Pressed {
-                return;
-            }
-
-            menu::create_menu(
-                &mut commands,
-                vec![
-                    ("About", Observer::new(about)),
-                ],
-                trigger.entity(),
-            );
-        }
-
-        fn about(
-            _: Trigger<menu::MenuItemEvent>
-        ) {
-        }
+    let event = trigger.event();
+    state.is_interacting = match *event {
+        menu::MenuItemEvent::Leave => false,
+        _ => true,
     }
 }
