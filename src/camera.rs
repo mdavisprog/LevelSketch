@@ -29,11 +29,11 @@ pub struct Controller {
 }
 
 impl Controller {
-    pub const DEFAULT_POSITION: Vec3 = Vec3::new(4.0, 7.0, -4.0);
+    pub const DEFAULT_POSITION: Vec3 = Vec3::new(0.0, 4.0, -8.0);
 
     fn transform() -> Transform {
         Transform::from_translation(Self::DEFAULT_POSITION)
-            .looking_at(Vec3::ZERO, Vec3::Y)
+            .looking_at(Vec3::new(0.0, 0.0, 4.0), Vec3::Y)
     }
 
     fn update(
@@ -97,6 +97,8 @@ impl Controller {
         let move_backward: bool = keys.pressed(KeyCode::KeyS);
         let move_left: bool = keys.pressed(KeyCode::KeyA);
         let move_right: bool = keys.pressed(KeyCode::KeyD);
+        let move_up: bool = keys.pressed(KeyCode::KeyQ);
+        let move_down: bool = keys.pressed(KeyCode::KeyE);
         let direction: Vec3 = if move_forward {
             transform.forward().as_vec3()
         } else if move_backward {
@@ -105,6 +107,10 @@ impl Controller {
             transform.right().as_vec3()
         } else if move_left {
             transform.left().as_vec3()
+        } else if move_up {
+            transform.up().as_vec3()
+        } else if move_down {
+            transform.down().as_vec3()
         } else {
             Vec3::ZERO
         };
