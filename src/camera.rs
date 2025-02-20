@@ -59,8 +59,10 @@ impl Controller {
             window.cursor_options.visible = true;
             camera_controller.set_last_screen_position = false;
         }
+
+        let mouse_button = MouseButton::Right;
     
-        if mouse_buttons.just_pressed(MouseButton::Left) && !gui_state.is_interacting() {
+        if mouse_buttons.just_pressed(mouse_button) && !gui_state.is_interacting() {
             camera_controller.is_rotating = true;
             window.cursor_options.visible = false;
             window.cursor_options.grab_mode = CursorGrabMode::Locked;
@@ -71,7 +73,7 @@ impl Controller {
             };
     
             gui::close_menus(&mut commands);
-        } else if mouse_buttons.just_released(MouseButton::Left) && camera_controller.is_rotating {
+        } else if mouse_buttons.just_released(mouse_button) && camera_controller.is_rotating {
             camera_controller.is_rotating = false;
             camera_controller.set_last_screen_position = true;
             window.cursor_options.grab_mode = CursorGrabMode::None;
