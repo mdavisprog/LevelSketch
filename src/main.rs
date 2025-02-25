@@ -10,6 +10,7 @@ use std::time::Duration;
 mod camera;
 mod gui;
 mod menus;
+mod tools;
 
 //
 // Main
@@ -32,6 +33,7 @@ fn main() {
             }),
             camera::Plugin,
             gui::GUIPlugin,
+            tools::Plugin,
         ))
         .add_systems(Startup, setup)
         .add_systems(Update, check_exit);
