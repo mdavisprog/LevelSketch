@@ -29,11 +29,11 @@ pub struct Controller {
 }
 
 impl Controller {
-    pub const DEFAULT_POSITION: Vec3 = Vec3::new(0.0, 4.0, -8.0);
+    pub const DEFAULT_POSITION: Vec3 = Vec3::new(4.0, 4.0, 8.0);
 
     fn transform() -> Transform {
         Transform::from_translation(Self::DEFAULT_POSITION)
-            .looking_at(Vec3::new(0.0, 0.0, 4.0), Vec3::Y)
+            .looking_at(Vec3::new(0.0, 1.0, 0.0), Vec3::Y)
     }
 
     fn update(
