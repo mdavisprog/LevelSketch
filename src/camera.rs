@@ -96,8 +96,8 @@ impl Controller {
         let move_backward: bool = keys.pressed(KeyCode::KeyS);
         let move_left: bool = keys.pressed(KeyCode::KeyA);
         let move_right: bool = keys.pressed(KeyCode::KeyD);
-        let move_up: bool = keys.pressed(KeyCode::KeyQ);
-        let move_down: bool = keys.pressed(KeyCode::KeyE);
+        let move_up: bool = keys.pressed(KeyCode::KeyE);
+        let move_down: bool = keys.pressed(KeyCode::KeyQ);
         let direction: Vec3 = if move_forward {
             transform.forward().as_vec3()
         } else if move_backward {
@@ -113,15 +113,12 @@ impl Controller {
         } else {
             Vec3::ZERO
         };
-    
-        if direction != Vec3::ZERO {
-            let delta = direction * camera_controller.speed;
-            camera_controller.velocity = (camera_controller.velocity + delta).clamp_length(0.0, camera_controller.max_speed);
-        } else {
-            camera_controller.velocity = camera_controller.velocity * (1.0 - camera_controller.friction);
-        }
+
+        let delta = direction * camera_controller.speed * time.delta_secs();
+        camera_controller.velocity = (camera_controller.velocity + delta).clamp_length(0.0, camera_controller.max_speed);
     
         transform.translation += camera_controller.velocity * time.delta_secs();
+        camera_controller.velocity = camera_controller.velocity * (1.0 - camera_controller.friction);
     }
 }
 
@@ -129,7 +126,7 @@ impl Default for Controller {
     fn default() -> Self {
         Self {
             velocity: Vec3::ZERO,
-            speed: 0.25,
+            speed: 100.0,
             max_speed: 20.0,
             friction: 0.1,
             is_rotating: false,
