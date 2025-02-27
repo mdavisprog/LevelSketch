@@ -64,7 +64,8 @@ fn setup(
         }
     ))
     .observe(on_root_over)
-    .observe(on_root_out);
+    .observe(on_root_out)
+    .observe(on_root_down);
 }
 
 fn on_root_over(
@@ -79,4 +80,11 @@ fn on_root_out(
     mut state: ResMut<State>,
 ) {
     state.is_interacting = true;
+}
+
+fn on_root_down(
+    _: Trigger<Pointer<Down>>,
+    mut commands: Commands,
+) {
+    close_menus(&mut commands);
 }

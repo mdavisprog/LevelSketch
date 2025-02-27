@@ -44,7 +44,6 @@ impl Controller {
         gui_state: Res<gui::State>,
         mut camera: Query<(&mut Transform, &mut Controller)>,
         mut window: Query<&mut Window>,
-        mut commands: Commands,
     ) {
         let Ok((mut transform, mut camera_controller)) = camera.get_single_mut() else {
             return;
@@ -71,8 +70,6 @@ impl Controller {
                 Some(position) => position,
                 None => Vec2::new(0.0, 0.0)
             };
-    
-            gui::close_menus(&mut commands);
         } else if mouse_buttons.just_released(mouse_button) && camera_controller.is_rotating {
             camera_controller.is_rotating = false;
             camera_controller.set_last_screen_position = true;
