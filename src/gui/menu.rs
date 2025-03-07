@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use super::style;
 
 //
 // Public API
@@ -78,13 +79,6 @@ pub fn close_menus(commands: &mut Commands) {
 }
 
 //
-// Constants
-//
-
-const BACKGROUND_COLOR: Color = Color::srgb(0.25, 0.25, 0.25);
-const HIGHLIGHT_COLOR: Color = Color::srgb(0.35, 0.35, 0.35);
-
-//
 // Types
 //
 
@@ -105,7 +99,7 @@ struct State;
 #[derive(Component)]
 #[require(
     Node(MenuBar::node),
-    BackgroundColor(|| BACKGROUND_COLOR)
+    BackgroundColor(|| style::colors::BACKGROUND)
 )]
 struct MenuBar;
 
@@ -142,7 +136,7 @@ impl MenuItemLabel {
 #[derive(Component)]
 #[require(
     Node(MenuItem::node),
-    BackgroundColor(|| BACKGROUND_COLOR),
+    BackgroundColor(|| style::colors::BACKGROUND),
     BorderColor(|| Color::srgb(1.0, 0.0, 0.0)),
 )]
 struct MenuItem;
@@ -180,7 +174,7 @@ impl MenuItem {
             return;
         };
 
-        *background_color = HIGHLIGHT_COLOR.into();
+        *background_color = style::colors::HIGHLIGHT.into();
 
         let is_menu_opened = !query_menu.is_empty();
         let is_menu_bar = match is_menu_bar {
@@ -207,7 +201,7 @@ impl MenuItem {
             return;
         };
     
-        *background_color = BACKGROUND_COLOR.into();
+        *background_color = style::colors::BACKGROUND.into();
         commands.trigger_targets(MenuItemEvent::Leave, [trigger.entity()]);
     }
     
@@ -248,7 +242,7 @@ enum MenuEvent {
 #[derive(Component)]
 #[require(
     Node(Menu::node),
-    BackgroundColor(|| BACKGROUND_COLOR),
+    BackgroundColor(|| style::colors::BACKGROUND),
 )]
 struct Menu {
     menu_item: Entity,

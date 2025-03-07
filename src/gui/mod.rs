@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 pub mod menu;
+pub mod style;
 
 //
 // Public API
