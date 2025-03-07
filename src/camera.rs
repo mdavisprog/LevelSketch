@@ -26,6 +26,8 @@ pub struct Controller {
     pub is_rotating: bool,
     pub last_screen_position: Vec2,
     pub set_last_screen_position: bool,
+    rotation_state: RotationState,
+    rotation_speed: f32,
 }
 
 impl Controller {
@@ -52,44 +54,51 @@ impl Controller {
         let Ok(mut window) = window.get_single_mut() else {
             return;
         };
-    
-        if camera_controller.set_last_screen_position {
-            window.set_cursor_position(Some(camera_controller.last_screen_position));
-            window.cursor_options.visible = true;
-            camera_controller.set_last_screen_position = false;
-        }
 
         let mouse_button = MouseButton::Right;
-    
-        if mouse_buttons.just_pressed(mouse_button) && !gui_state.is_interacting() {
-            camera_controller.is_rotating = true;
-            window.cursor_options.visible = false;
-            window.cursor_options.grab_mode = CursorGrabMode::Locked;
-    
-            camera_controller.last_screen_position = match window.cursor_position() {
-                Some(position) => position,
-                None => Vec2::new(0.0, 0.0)
-            };
-        } else if mouse_buttons.just_released(mouse_button) && camera_controller.is_rotating {
-            camera_controller.is_rotating = false;
-            camera_controller.set_last_screen_position = true;
-            window.cursor_options.grab_mode = CursorGrabMode::None;
-        }
-    
-        let delta_mouse: Vec2 = mouse_move.delta;
-        if camera_controller.is_rotating && delta_mouse != Vec2::ZERO {
-            const SENSITIVITY: f32 = 0.005;
+        match camera_controller.rotation_state {
+            RotationState::None => {
+                if camera_controller.set_last_screen_position {
+                    window.set_cursor_position(Some(camera_controller.last_screen_position));
+                    window.cursor_options.visible = true;
+                    camera_controller.set_last_screen_position = false;
+                }
+
+                if mouse_buttons.just_pressed(mouse_button) && !gui_state.is_interacting() {
+                    camera_controller.rotation_state = RotationState::Begin;
+                }
+            },
+            RotationState::Begin => {
+                if mouse_buttons.just_released(mouse_button) {
+                    camera_controller.rotation_state = RotationState::None;
+                }
+
+                if mouse_move.delta != Vec2::ZERO {
+                    camera_controller.rotation_state = RotationState::Drag;
+
+                    window.cursor_options.visible = false;
+                    window.cursor_options.grab_mode = CursorGrabMode::Locked;
             
-            let delta_yaw: f32 = -delta_mouse.x * SENSITIVITY;
-            let delta_pitch: f32 = -delta_mouse.y * SENSITIVITY;
-        
-            let (mut yaw, mut pitch, roll) = transform.rotation.to_euler(EulerRot::YXZ);
-            yaw = yaw + delta_yaw;
-        
-            const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
-            pitch = (pitch + delta_pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
-        
-            transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
+                    camera_controller.last_screen_position = match window.cursor_position() {
+                        Some(position) => position,
+                        None => Vec2::ZERO,
+                    };
+
+                    camera_controller.update_rotation(&mut transform, mouse_move.delta, time.delta_secs());
+                }
+            }
+            RotationState::Drag => {
+                camera_controller.update_rotation(&mut transform, mouse_move.delta, time.delta_secs());
+
+                if mouse_buttons.just_released(mouse_button) {
+                    camera_controller.rotation_state = RotationState::End;
+                }
+            }
+            RotationState::End => {
+                camera_controller.set_last_screen_position = true;
+                camera_controller.rotation_state = RotationState::None;
+                window.cursor_options.grab_mode = CursorGrabMode::None;
+            }
         }
     
         let move_forward: bool = keys.pressed(KeyCode::KeyW);
@@ -120,6 +129,28 @@ impl Controller {
         transform.translation += camera_controller.velocity * time.delta_secs();
         camera_controller.velocity = camera_controller.velocity * (1.0 - camera_controller.friction);
     }
+
+    fn update_rotation(
+        &mut self,
+        transform: &mut Transform,
+        delta: Vec2,
+        delta_time: f32,
+    ) {
+        if self.is_rotating || delta == Vec2::ZERO {
+            return;
+        }
+   
+        let delta_yaw = -delta.x * self.rotation_speed * delta_time;
+        let delta_pitch = -delta.y * self.rotation_speed * delta_time;
+
+        let (mut yaw, mut pitch, roll) = transform.rotation.to_euler(EulerRot::YXZ);
+        yaw = yaw + delta_yaw;
+
+        const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
+        pitch = (pitch + delta_pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
+    
+        transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
+    }
 }
 
 impl Default for Controller {
@@ -132,6 +163,15 @@ impl Default for Controller {
             is_rotating: false,
             last_screen_position: Vec2::ZERO,
             set_last_screen_position: false,
+            rotation_state: RotationState::None,
+            rotation_speed: 0.25,
         }
     }
+}
+
+enum RotationState {
+    None,
+    Begin,
+    Drag,
+    End,
 }
