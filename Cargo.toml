@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.15.1"
+resvg = "0.45.0"
 
 [profile.dev]
 opt-level = 1

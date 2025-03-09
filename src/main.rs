@@ -10,6 +10,7 @@ use std::time::Duration;
 mod camera;
 mod gui;
 mod menus;
+mod svg;
 mod tools;
 
 //
@@ -31,6 +32,7 @@ fn main() {
                 }),
                 ..default()
             }),
+            svg::Plugin,
             camera::Plugin,
             gui::GUIPlugin,
             tools::Plugin,
