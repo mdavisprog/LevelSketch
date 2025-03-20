@@ -3,6 +3,7 @@ use bevy::ui::ContentSize;
 use crate::svg;
 use super::buttonex;
 use super::icons;
+use super::sizer;
 use super::style;
 
 pub mod events {
@@ -92,6 +93,8 @@ impl Panel {
                     }
                 })
                 .observe(Header::on_drag);
+
+            parent.spawn(sizer::Sizer::new(sizer::Anchors::all()));
         });
 
         result

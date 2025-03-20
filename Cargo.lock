@@ -2531,6 +2531,7 @@ name = "levelsketch"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bitflags 2.8.0",
  "resvg",
 ]
 

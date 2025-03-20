@@ -7,6 +7,8 @@ pub mod menu;
 pub mod panel;
 pub mod style;
 
+mod sizer;
+
 //
 // Public API
 //
@@ -28,7 +30,8 @@ impl Plugin for GUIPlugin {
             .init_resource::<buttonex::State>()
             .init_resource::<icons::Icons>()
             .add_plugins(menu::Plugin)
-            .add_systems(Startup, setup);
+            .add_systems(Startup, setup)
+            .add_observer(sizer::Sizer::on_added);
 
         panel::Panel::initialize(app);
     }

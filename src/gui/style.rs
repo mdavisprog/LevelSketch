@@ -18,4 +18,5 @@ pub mod properties {
 
     pub const PADDING: f32 = 4.0;
     pub const BUTTON_PADDING: UiRect = UiRect::px(12.0, 12.0, 4.0, 4.0);
+    pub const SIZER_SIZE: f32 = 5.0;
 }
