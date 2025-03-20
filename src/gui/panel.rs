@@ -47,6 +47,8 @@ impl Panel {
                 top: Val::Px(position.y),
                 width: Val::Px(100.0),
                 height: Val::Px(200.0),
+                min_width: Val::Px(20.0),
+                min_height: Val::Px(20.0),
                 padding: UiRect::all(Val::Px(style::properties::PADDING)),
                 ..default()
             },
