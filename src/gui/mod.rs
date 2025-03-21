@@ -4,7 +4,7 @@ use bevy::render::camera::NormalizedRenderTarget;
 pub mod buttonex;
 pub mod icons;
 pub mod menu;
-pub mod panel;
+pub mod panels;
 pub mod style;
 
 mod sizer;
@@ -29,11 +29,12 @@ impl Plugin for GUIPlugin {
             .init_resource::<State>()
             .init_resource::<buttonex::State>()
             .init_resource::<icons::Icons>()
-            .add_plugins(menu::Plugin)
+            .add_plugins((
+                menu::Plugin,
+                panels::Plugin,
+            ))
             .add_systems(Startup, setup)
             .add_observer(sizer::Sizer::on_added);
-
-        panel::Panel::initialize(app);
     }
 }
 
@@ -122,7 +123,7 @@ fn on_root_click(
     trigger: Trigger<Pointer<Click>>,
     state: Res<State>,
     windows: Query<&Window>,
-    mut events: EventWriter<panel::events::Open>,
+    mut events: EventWriter<panels::events::Open>,
 ) {
     if trigger.button != PointerButton::Secondary {
         return;
@@ -146,7 +147,7 @@ fn on_root_click(
             return;
         };
 
-        events.send(panel::events::Open {
+        events.send(panels::events::Open {
             position: cursor_position,
             title: format!("Panel"),
         });

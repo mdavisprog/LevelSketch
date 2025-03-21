@@ -1,20 +1,10 @@
 use bevy::prelude::*;
 use bevy::ui::ContentSize;
+use crate::gui::buttonex;
+use crate::gui::icons;
+use crate::gui::sizer;
+use crate::gui::style;
 use crate::svg;
-use super::buttonex;
-use super::icons;
-use super::sizer;
-use super::style;
-
-pub mod events {
-    use super::*;
-
-    #[derive(Event)]
-    pub struct Open {
-        pub position: Vec2,
-        pub title: String,
-    }
-}
 
 #[derive(Component)]
 #[require(
@@ -25,13 +15,7 @@ pub mod events {
 pub struct Panel;
 
 impl Panel {
-    pub fn initialize(app: &mut App) {
-        app
-            .add_event::<events::Open>()
-            .add_systems(Update, Self::on_open);
-    }
-
-    fn create(
+    pub(super) fn create(
         commands: &mut Commands,
         position: Vec2,
         title: &str,
@@ -115,25 +99,6 @@ impl Panel {
         }
 
         commands.entity(root).despawn_recursive();
-    }
-
-    fn on_open(
-        asset_server: Res<AssetServer>,
-        svgs: Res<Assets<svg::SvgAsset>>,
-        mut events: EventReader<events::Open>,
-        mut commands: Commands,
-        mut icons: ResMut<icons::Icons>,
-    ) {
-        for event in events.read() {
-            Self::create(
-                &mut commands,
-                event.position,
-                &event.title,
-                &asset_server,
-                &svgs,
-                &mut icons
-            );
-        }
     }
 }
 
