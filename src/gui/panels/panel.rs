@@ -5,6 +5,7 @@ use crate::gui::icons;
 use crate::gui::sizer;
 use crate::gui::style;
 use crate::svg;
+use super::events;
 
 #[derive(Component)]
 #[require(
@@ -17,8 +18,7 @@ pub struct Panel;
 impl Panel {
     pub(super) fn create(
         commands: &mut Commands,
-        position: Vec2,
-        title: &str,
+        options: &events::Open,
         asset_server: &Res<AssetServer>,
         svgs: &Res<Assets<svg::SvgAsset>>,
         icons: &mut ResMut<icons::Icons>,
@@ -27,10 +27,10 @@ impl Panel {
             Self,
             Node {
                 flex_direction: FlexDirection::Column,
-                left: Val::Px(position.x),
-                top: Val::Px(position.y),
-                width: Val::Px(100.0),
-                height: Val::Px(200.0),
+                left: Val::Px(options.position.x),
+                top: Val::Px(options.position.y),
+                width: Val::Px(options.size.x),
+                height: Val::Px(options.size.y),
                 min_width: Val::Px(20.0),
                 min_height: Val::Px(20.0),
                 padding: UiRect::all(Val::Px(style::properties::PADDING)),
@@ -53,7 +53,7 @@ impl Panel {
                 ))
                 .with_children(|parent| {
                     parent.spawn((
-                        Text::new(title),
+                        Text::new(&options.title),
                         TextFont {
                             font_size: 12.0,
                             ..default()

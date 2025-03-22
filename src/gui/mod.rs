@@ -150,6 +150,7 @@ fn on_root_click(
         events.send(panels::events::Open {
             position: cursor_position,
             title: format!("Panel"),
+            ..default()
         });
     }
 }
