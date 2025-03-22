@@ -67,6 +67,7 @@ fn setup(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     mut icons: ResMut<icons::Icons>,
+    mut events: EventWriter<panels::events::Open>,
 ) {
     commands.spawn((
         Node {
@@ -89,6 +90,13 @@ fn setup(
     buttonex::ButtonEx::initialize(&mut commands);
 
     icons.initialize(&asset_server);
+
+    events.send(panels::events::Open {
+        title: format!("Shapes"),
+        position: Vec2::new(50.0, 50.0),
+        size: Vec2::new(400.0, 200.0),
+        ..default()
+    });
 }
 
 fn on_root_over(
