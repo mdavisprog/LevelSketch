@@ -42,15 +42,11 @@ impl Panel {
 
         entity.with_children(|parent| {
             parent
-                .spawn((
+                .spawn(
                     Header {
                         panel: result,
                     },
-                    Node {
-                        width: Val::Percent(100.0),
-                        ..default()
-                    },
-                ))
+                )
                 .with_children(|parent| {
                     parent.spawn((
                         Text::new(&options.title),
@@ -103,7 +99,10 @@ impl Panel {
 }
 
 #[derive(Component)]
-#[require(Node, ContentSize)]
+#[require(
+    Node(Self::node),
+    ContentSize
+)]
 struct Header {
     panel: Entity,
 }
@@ -135,5 +134,12 @@ impl Header {
         let delta = trigger.delta;
         panel.left = Val::Px(left + delta.x);
         panel.top = Val::Px(top + delta.y);
+    }
+
+    fn node() -> Node {
+        Node {
+            width: Val::Percent(100.0),
+            ..default()
+        }
     }
 }
