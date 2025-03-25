@@ -49,18 +49,7 @@ impl Panel {
                 )
                 .with_children(|parent| {
                     parent.spawn((
-                        Text::new(&options.title),
-                        TextFont {
-                            font_size: 12.0,
-                            ..default()
-                        },
-                        TextLayout::new_with_justify(JustifyText::Center),
-                        Node {
-                            width: Val::Percent(100.0),
-                            align_self: AlignSelf::Center,
-                            ..default()
-                        },
-                        PickingBehavior::IGNORE,
+                        Title::new(&options.title),
                     ));
 
                     let node = Node {
@@ -139,6 +128,38 @@ impl Header {
     fn node() -> Node {
         Node {
             width: Val::Percent(100.0),
+            ..default()
+        }
+    }
+}
+
+#[derive(Component)]
+#[require(
+    Node(Self::node),
+    Text,
+    TextLayout(|| TextLayout::new_with_justify(JustifyText::Center)),
+    TextFont(Self::text_font),
+    PickingBehavior(|| PickingBehavior::IGNORE),
+)]
+struct Title;
+
+impl Title {
+    fn new(title: &str) -> impl Bundle {(
+        Self,
+        Text::new(title),
+    )}
+
+    fn node() -> Node {
+        Node {
+            width: Val::Percent(100.0),
+            align_self: AlignSelf::Center,
+            ..default()
+        }
+    }
+
+    fn text_font() -> TextFont {
+        TextFont {
+            font_size: 12.0,
             ..default()
         }
     }
