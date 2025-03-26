@@ -19,19 +19,15 @@ impl Default for Open {
 }
 
 pub(super) fn on_open(
-    asset_server: Res<AssetServer>,
-    svgs: Res<Assets<svg::SvgAsset>>,
+    resources: Res<Resources>,
     mut events: EventReader<Open>,
     mut commands: Commands,
-    mut icons: ResMut<icons::Icons>,
 ) {
     for event in events.read() {
         Panel::create(
             &mut commands,
             &event,
-            &asset_server,
-            &svgs,
-            &mut icons
+            &resources,
         );
     }
 }

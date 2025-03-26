@@ -1,11 +1,10 @@
 use bevy::prelude::*;
 use bevy::ui::ContentSize;
 use crate::gui::buttonex;
-use crate::gui::icons;
 use crate::gui::sizer;
 use crate::gui::style;
-use crate::svg;
 use super::events;
+use super::Resources;
 
 #[derive(Component)]
 #[require(
@@ -19,9 +18,7 @@ impl Panel {
     pub(super) fn create(
         commands: &mut Commands,
         options: &events::Open,
-        asset_server: &Res<AssetServer>,
-        svgs: &Res<Assets<svg::SvgAsset>>,
-        icons: &mut ResMut<icons::Icons>,
+        resources: &Res<Resources>,
     ) -> Entity {
         let mut entity = commands.spawn((
             Self,
@@ -57,7 +54,7 @@ impl Panel {
                         ..default()
                     };
 
-                    if let Ok(icon) = icons.get_size("icons/close.svg", Vec2::new(12.0, 12.0), &asset_server, &svgs) {
+                    if let Some(icon) = resources.get_icon("icons/close.svg") {
                         buttonex::ButtonEx::create_image(parent, icon, Self::on_close, node);
                     } else {
                         buttonex::ButtonEx::create_label(parent, "x", Self::on_close, node);
