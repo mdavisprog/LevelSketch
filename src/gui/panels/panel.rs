@@ -21,6 +21,10 @@ impl Default for PanelOptions {
     }
 }
 
+pub struct PanelResult {
+    pub panel: Entity,
+}
+
 #[derive(Component)]
 #[require(
     Node,
@@ -34,7 +38,7 @@ impl Panel {
         commands: &mut Commands,
         options: &PanelOptions,
         resources: &Res<Resources>,
-    ) -> Entity {
+    ) -> PanelResult {
         let mut entity = commands.spawn((
             Self,
             Node {
@@ -50,13 +54,15 @@ impl Panel {
             },
         ));
 
-        let result = entity.id();
+        let mut result = PanelResult {
+            panel: entity.id(),
+        };
 
         entity.with_children(|parent| {
             parent
                 .spawn(
                     Header {
-                        panel: result,
+                        panel: result.panel,
                     },
                 )
                 .with_children(|parent| {
