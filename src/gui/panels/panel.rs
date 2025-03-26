@@ -3,8 +3,23 @@ use bevy::ui::ContentSize;
 use crate::gui::buttonex;
 use crate::gui::sizer;
 use crate::gui::style;
-use super::events;
 use super::Resources;
+
+pub struct PanelOptions {
+    pub title: String,
+    pub position: Vec2,
+    pub size: Vec2,
+}
+
+impl Default for PanelOptions {
+    fn default() -> Self {
+        Self {
+            title: "Panel".into(),
+            position: Vec2::ZERO,
+            size: Vec2::new(100.0, 200.0),
+        }
+    }
+}
 
 #[derive(Component)]
 #[require(
@@ -15,9 +30,9 @@ use super::Resources;
 pub struct Panel;
 
 impl Panel {
-    pub(super) fn create(
+    pub fn create(
         commands: &mut Commands,
-        options: &events::Open,
+        options: &PanelOptions,
         resources: &Res<Resources>,
     ) -> Entity {
         let mut entity = commands.spawn((

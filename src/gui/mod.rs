@@ -65,9 +65,9 @@ impl State {
 
 fn setup(
     asset_server: Res<AssetServer>,
+    resources: Res<panels::Resources>,
     mut commands: Commands,
     mut icons: ResMut<icons::Icons>,
-    mut events: EventWriter<panels::events::Open>,
 ) {
     commands.spawn((
         Node {
@@ -91,12 +91,14 @@ fn setup(
 
     icons.initialize(&asset_server);
 
-    events.send(panels::events::Open {
+    let options = panels::PanelOptions {
         title: format!("Shapes"),
         position: Vec2::new(50.0, 50.0),
         size: Vec2::new(400.0, 200.0),
         ..default()
-    });
+    };
+
+    panels::Panel::create(&mut commands, &options, &resources);
 }
 
 fn on_root_over(
@@ -131,7 +133,8 @@ fn on_root_click(
     trigger: Trigger<Pointer<Click>>,
     state: Res<State>,
     windows: Query<&Window>,
-    mut events: EventWriter<panels::events::Open>,
+    resources: Res<panels::Resources>,
+    mut commands: Commands,
 ) {
     if trigger.button != PointerButton::Secondary {
         return;
@@ -155,11 +158,13 @@ fn on_root_click(
             return;
         };
 
-        events.send(panels::events::Open {
+        let options = panels::PanelOptions {
             position: cursor_position,
             title: format!("Panel"),
             ..default()
-        });
+        };
+
+        panels::Panel::create(&mut commands, &options, &resources);
     }
 }
 
