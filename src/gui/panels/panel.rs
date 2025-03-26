@@ -23,6 +23,7 @@ impl Default for PanelOptions {
 
 pub struct PanelResult {
     pub panel: Entity,
+    pub components: Entity,
 }
 
 #[derive(Component)]
@@ -38,6 +39,7 @@ impl Panel {
         commands: &mut Commands,
         options: &PanelOptions,
         resources: &Res<Resources>,
+        components: impl Bundle,
     ) -> PanelResult {
         let mut entity = commands.spawn((
             Self,
@@ -56,6 +58,7 @@ impl Panel {
 
         let mut result = PanelResult {
             panel: entity.id(),
+            components: Entity::PLACEHOLDER,
         };
 
         entity.with_children(|parent| {
@@ -83,6 +86,7 @@ impl Panel {
                 })
                 .observe(Header::on_drag);
 
+            result.components = parent.spawn(components).id();
             parent.spawn(sizer::Sizer::new(sizer::Anchors::all()));
         });
 

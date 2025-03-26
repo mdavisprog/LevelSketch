@@ -9,6 +9,7 @@ pub mod colors {
     use super::*;
 
     pub const BACKGROUND: Color = Color::srgb(0.10, 0.10, 0.10);
+    pub const NORMAL: Color = Color::srgb(0.25, 0.25, 0.25);
     pub const HIGHLIGHT: Color = Color::srgb(0.40, 0.40, 0.40);
     pub const PRESSED: Color = Color::srgb(0.25, 0.25, 0.25);
 }

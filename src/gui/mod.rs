@@ -95,14 +95,7 @@ fn on_icons_loaded(
     resources: Res<panels::Resources>,
     mut commands: Commands,
 ) {
-    let options = panels::PanelOptions {
-        title: format!("Shapes"),
-        position: Vec2::new(50.0, 50.0),
-        size: Vec2::new(400.0, 200.0),
-        ..default()
-    };
-
-    panels::Panel::create(&mut commands, &options, &resources);
+    panels::Shapes::create(&mut commands, &resources, Vec2::new(50.0, 50.0));
 }
 
 fn on_root_over(
@@ -162,13 +155,7 @@ fn on_root_click(
             return;
         };
 
-        let options = panels::PanelOptions {
-            position: cursor_position,
-            title: format!("Panel"),
-            ..default()
-        };
-
-        panels::Panel::create(&mut commands, &options, &resources);
+        panels::Shapes::create(&mut commands, &resources, cursor_position);
     }
 }
 
