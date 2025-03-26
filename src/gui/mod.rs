@@ -28,13 +28,14 @@ impl Plugin for GUIPlugin {
         app
             .init_resource::<State>()
             .init_resource::<buttonex::State>()
-            .init_resource::<icons::Icons>()
             .add_plugins((
                 menu::Plugin,
                 panels::Plugin,
             ))
             .add_systems(Startup, setup)
             .add_observer(sizer::Sizer::on_added);
+
+        icons::build(app);
     }
 }
 
@@ -64,8 +65,6 @@ impl State {
 //
 
 fn setup(
-    asset_server: Res<AssetServer>,
-    resources: Res<panels::Resources>,
     mut commands: Commands,
     mut icons: ResMut<icons::Icons>,
 ) {
@@ -89,8 +88,13 @@ fn setup(
 
     buttonex::ButtonEx::initialize(&mut commands);
 
-    icons.initialize(&asset_server);
+    icons.register_callback(commands.register_system(on_icons_loaded));
+}
 
+fn on_icons_loaded(
+    resources: Res<panels::Resources>,
+    mut commands: Commands,
+) {
     let options = panels::PanelOptions {
         title: format!("Shapes"),
         position: Vec2::new(50.0, 50.0),

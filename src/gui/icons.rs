@@ -1,12 +1,22 @@
-use bevy::asset::LoadedFolder;
+use bevy::asset::{LoadState, LoadedFolder};
+use bevy::ecs::system::SystemId;
 use bevy::prelude::*;
 use bevy::utils::HashMap;
 use crate::svg;
+
+pub fn build(app: &mut App) {
+    app
+        .init_state::<State>()
+        .init_resource::<Icons>()
+        .add_systems(Startup, Icons::setup)
+        .add_systems(Update, Icons::check_status.run_if(in_state(State::Loading)));
+}
 
 #[derive(Resource)]
 pub struct Icons {
     items: HashMap<String, Vec<Icon>>,
     handles: Option<Handle<LoadedFolder>>,
+    callbacks: Vec<SystemId>,
 }
 
 impl Default for Icons {
@@ -14,15 +24,12 @@ impl Default for Icons {
         Self {
             items: HashMap::new(),
             handles: None,
+            callbacks: Vec::new(),
         }
     }
 }
 
 impl Icons {
-    pub fn initialize(&mut self, asset_server: &Res<AssetServer>) {
-        self.handles = Some(asset_server.load_folder("icons"));
-    }
-
     // TODO: Remove once used.
     #[allow(unused)]
     pub fn get(
@@ -86,6 +93,10 @@ impl Icons {
         Ok(image_handle)
     }
 
+    pub fn register_callback(&mut self, callback: SystemId) {
+        self.callbacks.push(callback);
+    }
+
     fn get_handle(&self, name: &str, size: Option<Vec2>) -> Option<Handle<Image>> {
         if let Some(icons) = self.items.get(name) {
             if let Some(size) = size {
@@ -105,9 +116,51 @@ impl Icons {
             None
         }
     }
+
+    fn setup(asset_server: Res<AssetServer>, mut icons: ResMut<Self>) {
+        icons.handles = Some(asset_server.load_folder("icons"));
+    }
+
+    fn check_status(
+        asset_server: Res<AssetServer>,
+        icons: ResMut<Self>,
+        mut commands: Commands,
+        mut next_state: ResMut<NextState<State>>,
+    ) {
+        let Some(handle) = &icons.handles else {
+            panic!("Failed to begin loading folder!");
+        };
+
+        let Some(state) = asset_server.get_load_state(handle) else {
+            panic!("Failed to get loading state!");
+        };
+
+        match state {
+            LoadState::Loaded => {
+                next_state.set(State::Finished);
+
+                for callback in &icons.callbacks {
+                    commands.run_system(*callback);
+                }
+
+                println!("Finished loading icons!");
+            }
+            LoadState::Failed(error) => {
+                panic!("Failed to load icons folder!\nError: {error}");
+            }
+            _ => {}
+        }
+    }
 }
 
 struct Icon {
     image: Handle<Image>,
     size: Vec2,
+}
+
+#[derive(States, Clone, Copy, Default, Eq, PartialEq, Hash, Debug)]
+enum State {
+    #[default]
+    Loading,
+    Finished,
 }
