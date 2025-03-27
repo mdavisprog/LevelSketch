@@ -25,7 +25,13 @@ impl Shapes {
         commands
             .entity(result.components)
             .with_children(|parent| {
-                parent.spawn(Item);
+                parent
+                    .spawn(Item)
+                    .with_children(|parent| {
+                        parent.spawn(Inner);
+                    })
+                    .observe(Item::on_over)
+                    .observe(Item::on_out);
             });
     }
 
@@ -48,6 +54,48 @@ impl Shapes {
 struct Item;
 
 impl Item {
+    fn on_over(
+        trigger: Trigger<Pointer<Over>>,
+        mut items: Query<&mut BackgroundColor, With<Item>>,
+    ) {
+        let Ok(mut item_color) = items.get_mut(trigger.target) else {
+            return;
+        };
+
+        *item_color = style::colors::HIGHLIGHT.into();
+    }
+
+    fn on_out(
+        trigger: Trigger<Pointer<Out>>,
+        mut items: Query<&mut BackgroundColor, With<Item>>,
+    ) {
+        let Ok(mut item_color) = items.get_mut(trigger.target) else {
+            return;
+        };
+
+        *item_color = style::colors::NORMAL.into();
+    }
+
+    fn node() -> Node {
+        Node {
+            width: Val::Px(60.0),
+            height: Val::Px(60.0),
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
+            ..default()
+        }
+    }
+}
+
+#[derive(Component)]
+#[require(
+    Node(Self::node),
+    BackgroundColor(|| Color::srgb(0.3, 0.6, 0.3)),
+    PickingBehavior(|| PickingBehavior::IGNORE),
+)]
+struct Inner;
+
+impl Inner {
     fn node() -> Node {
         Node {
             width: Val::Px(40.0),
