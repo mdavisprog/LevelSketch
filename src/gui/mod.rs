@@ -2,12 +2,15 @@ use bevy::prelude::*;
 use bevy::render::camera::NormalizedRenderTarget;
 
 pub mod buttonex;
+pub mod droppable;
 pub mod icons;
 pub mod menu;
 pub mod panels;
 pub mod style;
 
 mod sizer;
+
+use droppable::*;
 
 //
 // Public API
@@ -35,6 +38,7 @@ impl Plugin for GUIPlugin {
             .add_systems(Startup, setup)
             .add_observer(sizer::Sizer::on_added);
 
+        droppable::build(app);
         icons::build(app);
     }
 }
@@ -84,7 +88,8 @@ fn setup(
     .observe(on_root_out)
     .observe(on_root_down)
     .observe(on_root_click)
-    .observe(on_root_drag_start);
+    .observe(on_root_drag_start)
+    .observe(on_root_drag_drop);
 
     buttonex::ButtonEx::initialize(&mut commands);
 
@@ -168,4 +173,18 @@ fn on_root_drag_start(
     }
 
     state.did_drag = true;
+}
+
+fn on_root_drag_drop(
+    trigger: Trigger<Pointer<DragDrop>>,
+    droppables: Query<&Droppable>,
+    mut commands: Commands,
+    mut drop_info: ResMut<DropInfo>,
+) {
+    let Ok(droppable) = droppables.get(trigger.dropped) else {
+        return;
+    };
+
+    drop_info.target = trigger.dropped;
+    droppable.invoke(&mut commands);
 }
