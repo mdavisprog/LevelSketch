@@ -26,12 +26,14 @@ impl Droppable {
 #[derive(Resource)]
 pub struct DropInfo {
     pub target: Entity,
+    pub screen_position: Vec2,
 }
 
 impl Default for DropInfo {
     fn default() -> Self {
         Self {
             target: Entity::PLACEHOLDER,
+            screen_position: Vec2::ZERO,
         }
     }
 }

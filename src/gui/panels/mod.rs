@@ -13,5 +13,6 @@ pub struct Plugin;
 impl bevy::prelude::Plugin for Plugin {
     fn build(&self, app: &mut App) {
         resources::initialize(app);
+        shapes::build(app);
     }
 }

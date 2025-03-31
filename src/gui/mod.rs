@@ -186,5 +186,6 @@ fn on_root_drag_drop(
     };
 
     drop_info.target = trigger.dropped;
+    drop_info.screen_position = trigger.pointer_location.position;
     droppable.invoke(&mut commands);
 }
