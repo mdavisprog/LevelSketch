@@ -23,10 +23,18 @@ impl Droppable {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum DropState {
+    Begin,
+    Drag,
+    End,
+}
+
 #[derive(Resource)]
 pub struct DropInfo {
-    pub target: Entity,
-    pub screen_position: Vec2,
+    target: Entity,
+    screen_position: Vec2,
+    state: DropState,
 }
 
 impl Default for DropInfo {
@@ -34,6 +42,64 @@ impl Default for DropInfo {
         Self {
             target: Entity::PLACEHOLDER,
             screen_position: Vec2::ZERO,
+            state: DropState::End,
         }
+    }
+}
+
+impl DropInfo {
+    pub fn begin(
+        &mut self,
+        droppable: &Droppable,
+        trigger: Trigger<Pointer<DragEnter>>,
+        commands: &mut Commands,
+    ) -> &mut Self {
+        if self.state != DropState::End {
+            return self;
+        }
+
+        self.state = DropState::Begin;
+        self.target = trigger.dragged;
+        self.screen_position = trigger.pointer_location.position;
+        droppable.invoke(commands);
+        self
+    }
+
+    pub fn drag(
+        &mut self,
+        droppable: &Droppable,
+        trigger: Trigger<Pointer<DragOver>>,
+        commands: &mut Commands,
+    ) -> &mut Self {
+        self.state = DropState::Drag;
+        self.target = trigger.dragged;
+        self.screen_position = trigger.pointer_location.position;
+        droppable.invoke(commands);
+        self
+    }
+
+    pub fn end(
+        &mut self,
+        droppable: &Droppable,
+        trigger: Trigger<Pointer<DragDrop>>,
+        commands: &mut Commands,
+    ) -> &mut Self {
+        self.state = DropState::End;
+        self.target = trigger.dropped;
+        self.screen_position = trigger.pointer_location.position;
+        droppable.invoke(commands);
+        self
+    }
+
+    pub fn target(&self) -> Entity {
+        self.target
+    }
+
+    pub fn screen_position(&self) -> Vec2 {
+        self.screen_position
+    }
+
+    pub fn state(&self) -> DropState {
+        self.state
     }
 }

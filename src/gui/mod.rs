@@ -89,6 +89,8 @@ fn setup(
     .observe(on_root_down)
     .observe(on_root_click)
     .observe(on_root_drag_start)
+    .observe(on_root_drag_enter)
+    .observe(on_root_drag_over)
     .observe(on_root_drag_drop);
 
     buttonex::ButtonEx::initialize(&mut commands);
@@ -175,6 +177,32 @@ fn on_root_drag_start(
     state.did_drag = true;
 }
 
+fn on_root_drag_enter(
+    trigger: Trigger<Pointer<DragEnter>>,
+    droppables: Query<&Droppable>,
+    mut commands: Commands,
+    mut drop_info: ResMut<DropInfo>,
+) {
+    let Ok(droppable) = droppables.get(trigger.dragged) else {
+        return;
+    };
+
+    drop_info.begin(droppable, trigger, &mut commands);
+}
+
+fn on_root_drag_over(
+    trigger: Trigger<Pointer<DragOver>>,
+    droppables: Query<&Droppable>,
+    mut commands: Commands,
+    mut drop_info: ResMut<DropInfo>,
+) {
+    let Ok(droppable) = droppables.get(trigger.dragged) else {
+        return;
+    };
+
+    drop_info.drag(droppable, trigger, &mut commands);
+}
+
 fn on_root_drag_drop(
     trigger: Trigger<Pointer<DragDrop>>,
     droppables: Query<&Droppable>,
@@ -185,7 +213,5 @@ fn on_root_drag_drop(
         return;
     };
 
-    drop_info.target = trigger.dropped;
-    drop_info.screen_position = trigger.pointer_location.position;
-    droppable.invoke(&mut commands);
+    drop_info.end(droppable, trigger, &mut commands);
 }

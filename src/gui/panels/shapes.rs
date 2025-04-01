@@ -2,7 +2,8 @@ use bevy::ecs::system::SystemId;
 use bevy::prelude::*;
 use crate::camera;
 use crate::gui::style;
-use crate::gui::droppable::{DropInfo, Droppable};
+use crate::gui::droppable::*;
+use crate::tools::selection;
 use super::*;
 
 pub(super) fn build(app: &mut App) {
@@ -62,54 +63,85 @@ impl Shapes {
         drop_info: Res<DropInfo>,
         items: Query<&Item>,
         handles: Res<Handles>,
-        camera: Query<(&Camera, &GlobalTransform), With<camera::Controller>>,
+        camera: Query<(&Camera, Entity), With<camera::Controller>>,
+        global_transforms: Query<&GlobalTransform>,
         mut commands: Commands,
+        mut selection: ResMut<selection::Selection>,
+        mut events: EventWriter<selection::Move>,
+        mut last_point: Local<Vec3>,
     ) {
-        let Ok(item) = items.get(drop_info.target) else {
+        let state = drop_info.state();
+
+        if state == DropState::End {
+            selection.world.clear();
+            return;
+        }
+
+        let Ok(item) = items.get(drop_info.target()) else {
             return;
         };
 
-        let Ok((camera, camera_transform)) = camera.get_single() else {
+        let Ok((camera, camera_entity)) = camera.get_single() else {
             return;
         };
 
-        let Ok(ray) = camera.viewport_to_world(camera_transform, drop_info.screen_position) else {
+        let Ok(camera_transform) = global_transforms.get(camera_entity) else {
             return;
         };
 
-        let origin = camera_transform.forward() * 10.0;
+        let Ok(ray) = camera.viewport_to_world(camera_transform, drop_info.screen_position()) else {
+            return;
+        };
+
+        let origin = camera_transform.translation() + camera_transform.forward() * 10.0;
         let Some(distance) = ray.intersect_plane(origin, InfinitePlane3d::new(Vec3::Y)) else {
             return;
         };
 
         let point = ray.get_point(distance);
 
-        let material = if let Some(value) = &handles.material {
-            value.clone()
-        } else {
-            return;
-        };
-
-        let mesh = match item.shape {
-            Shape::Cone => {
-                &handles.cone
+        match state {
+            DropState::Begin => {
+                let material = if let Some(value) = &handles.material {
+                    value.clone()
+                } else {
+                    return;
+                };
+        
+                let mesh = match item.shape {
+                    Shape::Cone => {
+                        &handles.cone
+                    },
+                    Shape::Cube => {
+                        &handles.cube
+                    },
+                };
+        
+                let mesh = if let Some(value) = mesh {
+                    value.clone()
+                } else {
+                    return;
+                };
+        
+                let entity = commands.spawn((
+                    Mesh3d(mesh),
+                    MeshMaterial3d(material),
+                    Transform::from_translation(point),
+                )).id();
+        
+                selection.world.push(entity);
             },
-            Shape::Cube => {
-                &handles.cube
+            DropState::Drag => {
+                let delta = point - *last_point;
+
+                events.send(selection::Move {
+                    delta,
+                });
             },
-        };
+            DropState::End => {},
+        }
 
-        let mesh = if let Some(value) = mesh {
-            value.clone()
-        } else {
-            return;
-        };
-
-        commands.spawn((
-            Mesh3d(mesh),
-            MeshMaterial3d(material),
-            Transform::from_translation(point),
-        ));
+        *last_point = point;
     }
 
     fn node() -> Node {

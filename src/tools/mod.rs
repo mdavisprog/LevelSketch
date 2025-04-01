@@ -5,7 +5,7 @@ use bevy::render::view::RenderLayers;
 use super::camera;
 
 mod constants;
-mod selection;
+pub mod selection;
 mod widgets;
 
 pub struct Plugin;
