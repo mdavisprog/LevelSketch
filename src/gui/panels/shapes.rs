@@ -68,12 +68,12 @@ impl Shapes {
         mut commands: Commands,
         mut selection: ResMut<selection::Selection>,
         mut events: EventWriter<selection::Move>,
-        mut last_point: Local<Vec3>,
+        mut shapes_state: Local<ShapesState>,
     ) {
         let state = drop_info.state();
 
         if state == DropState::End {
-            selection.world.clear();
+            selection.world = shapes_state.last_selection.clone();
             return;
         }
 
@@ -128,11 +128,13 @@ impl Shapes {
                     MeshMaterial3d(material),
                     Transform::from_translation(point),
                 )).id();
-        
+
+                shapes_state.last_selection = selection.world.clone();
+                selection.world.clear();
                 selection.world.push(entity);
             },
             DropState::Drag => {
-                let delta = point - *last_point;
+                let delta = point - shapes_state.last_point;
 
                 events.send(selection::Move {
                     delta,
@@ -141,7 +143,7 @@ impl Shapes {
             DropState::End => {},
         }
 
-        *last_point = point;
+        shapes_state.last_point = point;
     }
 
     fn node() -> Node {
@@ -238,5 +240,19 @@ impl Handles {
         handles.cone = Some(meshes.add(Cone::new(1.0, 1.0)));
         handles.cube = Some(meshes.add(Cuboid::new(1.0, 1.0, 1.0)));
         handles.material = Some(materials.add(Color::srgb(0.5, 0.5, 0.5)));
+    }
+}
+
+struct ShapesState {
+    last_point: Vec3,
+    last_selection: Vec<Entity>,
+}
+
+impl Default for ShapesState {
+    fn default() -> Self {
+        Self {
+            last_point: Vec3::ZERO,
+            last_selection: Vec::new(),
+        }
     }
 }
