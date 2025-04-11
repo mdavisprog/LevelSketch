@@ -8,9 +8,6 @@ pub use axis::Axis;
 pub use axis::Direction;
 pub use translation::Translation;
 
-const X_AXIS_COLOR: Color = Color::srgba(0.30196, 0.87843, 0.23922, 1.0);
-const Y_AXIS_COLOR: Color = Color::srgba(0.25098, 0.33726, 0.90196, 1.0);
-const Z_AXIS_COLOR: Color = Color::srgba(0.92157, 0.25098, 0.20392, 1.0);
 const AXIS_OFFSET: f32 = 1.0;
 const MIN_SIZE: f32 = 0.5;
 const MAX_SIZE: f32 = 20.0;

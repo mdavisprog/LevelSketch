@@ -38,9 +38,9 @@ impl Translation {
             parent.spawn((
                 layer.clone(),
                 Mesh3d(cylinder_mesh.clone()),
-                MeshMaterial3d(materials.add(Self::standard_material(X_AXIS_COLOR))),
+                MeshMaterial3d(materials.add(Self::standard_material(constants::X_AXIS_COLOR))),
                 axis::Axis {
-                    color: X_AXIS_COLOR,
+                    color: constants::X_AXIS_COLOR,
                     direction: axis::Direction::X,
                 },
                 Transform::from_rotation(
@@ -52,7 +52,7 @@ impl Translation {
                 parent.spawn((
                     layer.clone(),
                     Mesh3d(cone_mesh.clone()),
-                    MeshMaterial3d(materials.add(Self::standard_material(X_AXIS_COLOR))),
+                    MeshMaterial3d(materials.add(Self::standard_material(constants::X_AXIS_COLOR))),
                     Transform::from_rotation(
                         Quat::from_rotation_z(180_f32.to_radians()))
                         .with_translation(Vec3::new(0.0, -cylinder_height - cone_height * 0.5, 0.0)
@@ -64,9 +64,9 @@ impl Translation {
             parent.spawn((
                 layer.clone(),
                 Mesh3d(cylinder_mesh.clone()),
-                MeshMaterial3d(materials.add(Self::standard_material(Y_AXIS_COLOR))),
+                MeshMaterial3d(materials.add(Self::standard_material(constants::Y_AXIS_COLOR))),
                 axis::Axis {
-                    color: Y_AXIS_COLOR,
+                    color: constants::Y_AXIS_COLOR,
                     direction: axis::Direction::Y,
                 },
                 Transform::from_xyz(0.0, AXIS_OFFSET, 0.0),
@@ -75,7 +75,7 @@ impl Translation {
                 parent.spawn((
                     layer.clone(),
                     Mesh3d(cone_mesh.clone()),
-                    MeshMaterial3d(materials.add(Self::standard_material(Y_AXIS_COLOR))),
+                    MeshMaterial3d(materials.add(Self::standard_material(constants::Y_AXIS_COLOR))),
                     Transform::from_translation(Vec3::new(0.0, cylinder_height + cone_height * 0.5, 0.0)),
                 ));
             });
@@ -84,9 +84,9 @@ impl Translation {
             parent.spawn((
                 layer.clone(),
                 Mesh3d(cylinder_mesh.clone()),
-                MeshMaterial3d(materials.add(Self::standard_material(Z_AXIS_COLOR))),
+                MeshMaterial3d(materials.add(Self::standard_material(constants::Z_AXIS_COLOR))),
                 axis::Axis {
-                    color: Z_AXIS_COLOR,
+                    color: constants::Z_AXIS_COLOR,
                     direction: axis::Direction::Z,
                 },
                 Transform::from_rotation(
@@ -98,7 +98,7 @@ impl Translation {
                 parent.spawn((
                     layer.clone(),
                     Mesh3d(cone_mesh.clone()),
-                    MeshMaterial3d(materials.add(Self::standard_material(Z_AXIS_COLOR))),
+                    MeshMaterial3d(materials.add(Self::standard_material(constants::Z_AXIS_COLOR))),
                     Transform::from_xyz(0.0, cylinder_height + cone_height * 0.5, 0.0),
                 ));
             });
@@ -107,9 +107,9 @@ impl Translation {
             parent.spawn((
                 layer.clone(),
                 Mesh3d(plane_mesh.clone()),
-                MeshMaterial3d(materials.add(Self::standard_material_no_cull(Y_AXIS_COLOR))),
+                MeshMaterial3d(materials.add(Self::standard_material_no_cull(constants::Y_AXIS_COLOR))),
                 axis::Axis {
-                    color: Y_AXIS_COLOR,
+                    color: constants::Y_AXIS_COLOR,
                     direction: axis::Direction::XY,
                 },
                 Transform::from_xyz(
@@ -123,9 +123,9 @@ impl Translation {
             parent.spawn((
                 layer.clone(),
                 Mesh3d(plane_mesh.clone()),
-                MeshMaterial3d(materials.add(Self::standard_material_no_cull(X_AXIS_COLOR))),
+                MeshMaterial3d(materials.add(Self::standard_material_no_cull(constants::X_AXIS_COLOR))),
                 axis::Axis {
-                    color: X_AXIS_COLOR,
+                    color: constants::X_AXIS_COLOR,
                     direction: axis::Direction::XZ,
                 },
                 Transform::from_xyz(plane_offset, cylinder_base * -0.5, plane_offset),
@@ -136,9 +136,9 @@ impl Translation {
             parent.spawn((
                 layer.clone(),
                 Mesh3d(plane_mesh.clone()),
-                MeshMaterial3d(materials.add(Self::standard_material_no_cull(Z_AXIS_COLOR))),
+                MeshMaterial3d(materials.add(Self::standard_material_no_cull(constants::Z_AXIS_COLOR))),
                 axis::Axis {
-                    color: Z_AXIS_COLOR,
+                    color: constants::Z_AXIS_COLOR,
                     direction: axis::Direction::YZ,
                 },
                 Transform::from_xyz(
