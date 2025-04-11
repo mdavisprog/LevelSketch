@@ -106,16 +106,15 @@ pub fn init(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) {
-    let mut translation = Entity::PLACEHOLDER;
+    let translation = Translation::new(commands, meshes, materials);
     let mut root = commands.spawn_empty();
-    root.with_children(|parent| {
-        translation = Translation::new(parent, meshes, materials);
-    });
+    let root_id = root.id();
 
     root.insert(Widget {
-        root: root.id(),
-        translation
-    });
+        root: root_id,
+        translation,
+    })
+    .add_child(translation);
 }
 
 pub fn handle_hover(

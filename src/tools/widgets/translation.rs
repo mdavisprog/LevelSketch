@@ -9,7 +9,7 @@ pub struct Translation;
 
 impl Translation {
     pub fn new(
-        commands: &mut ChildBuilder,
+        commands: &mut Commands,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
     ) -> Entity {
