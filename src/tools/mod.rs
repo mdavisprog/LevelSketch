@@ -175,6 +175,12 @@ fn on_over(
         return;
     }
 
+    if let Some(hovered) = state.hovered {
+        if hovered == trigger.target {
+            return;
+        }
+    }
+
     state.hovered = Some(trigger.target);
 
     if let Ok(widget) = widget.get_single() {
@@ -197,6 +203,16 @@ fn on_out(
 ) {
     if !meshes.contains(trigger.target) || state.is_dragging {
         return;
+    }
+
+    if state.hovered.is_none() {
+        return;
+    }
+
+    if let Some(hovered) = state.hovered {
+        if hovered != trigger.target {
+            return;
+        }
     }
 
     state.hovered = None;
@@ -296,7 +312,7 @@ fn on_drag_start(
         trigger.pointer_location.position,
         transform.translation,
         axis_direction.normal()) - transform.translation;
-    
+
     events.send(widgets::Hover {
         target: trigger.target,
         hovered: true
