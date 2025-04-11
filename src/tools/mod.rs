@@ -13,18 +13,15 @@ pub struct Plugin;
 impl bevy::prelude::Plugin for Plugin {
     fn build(&self, app: &mut App) {
         app
-            .init_resource::<selection::Selection>()
             .init_resource::<State>()
             .insert_resource(widgets::Settings::new(true))
             .add_event::<widgets::Hover>()
             .add_event::<widgets::Move>()
             .add_event::<widgets::Scale>()
-            .add_event::<selection::Move>()
             .add_plugins(MeshPickingPlugin)
             .add_systems(Startup, setup)
             .add_systems(Update, (
                 sync_camera,
-                selection::handle_move,
                 widgets::handle_hover,
                 widgets::handle_move,
                 widgets::handle_scale,
@@ -35,6 +32,8 @@ impl bevy::prelude::Plugin for Plugin {
             .add_observer(on_drag_start)
             .add_observer(on_drag_end)
             .add_observer(on_drag);
+
+        selection::build(app);
     }
 }
 
