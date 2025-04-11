@@ -67,7 +67,7 @@ impl Shapes {
         global_transforms: Query<&GlobalTransform>,
         mut commands: Commands,
         mut selection: ResMut<selection::Selection>,
-        mut events: EventWriter<selection::Move>,
+        mut selection_actions: EventWriter<selection::Action>,
         mut shapes_state: Local<ShapesState>,
     ) {
         let state = drop_info.state();
@@ -135,10 +135,7 @@ impl Shapes {
             },
             DropState::Drag => {
                 let delta = point - shapes_state.last_point;
-
-                events.send(selection::Move {
-                    delta,
-                });
+                selection_actions.send(selection::Action::Move(delta));
             },
             DropState::End => {},
         }

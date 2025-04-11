@@ -3,8 +3,8 @@ use bevy::prelude::*;
 pub(super) fn build(app: &mut App) {
     app
         .init_resource::<Selection>()
-        .add_event::<Move>()
-        .add_systems(Update, handle_move);
+        .add_event::<Action>()
+        .add_systems(Update, handle_actions);
 }
 
 #[derive(Resource)]
@@ -21,22 +21,26 @@ impl Default for Selection {
 }
 
 #[derive(Event)]
-pub struct Move {
-    pub delta: Vec3,
+pub enum Action {
+    Move(Vec3),
 }
 
-fn handle_move(
+fn handle_actions(
     selection: Res<Selection>,
     mut meshes: Query<&mut Transform, With<Mesh3d>>,
-    mut events: EventReader<Move>,
+    mut events: EventReader<Action>,
 ) {
     for event in events.read() {
         for item in &selection.world {
             let Ok(mut mesh) = meshes.get_mut(*item) else {
                 continue;
             };
-    
-            mesh.translation += event.delta;
+
+            match event {
+                Action::Move(delta) => {
+                    mesh.translation += delta;
+                },
+            }
         }
     }
 }

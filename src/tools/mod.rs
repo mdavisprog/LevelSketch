@@ -351,7 +351,7 @@ fn on_drag(
     widget: Query<(&Transform, &widgets::Widget)>,
     children: Query<&Children>,
     mut guard: Local<FrameGuard>,
-    mut move_selection: EventWriter<selection::Move>,
+    mut selection_actions: EventWriter<selection::Action>,
     mut move_widgets: EventWriter<widgets::Move>,
 ) {
     if trigger.button != PointerButton::Primary {
@@ -393,6 +393,6 @@ fn on_drag(
         }
     };
 
-    move_selection.send(selection::Move { delta });
+    selection_actions.send(selection::Action::Move(delta));
     move_widgets.send(widgets::Move { delta });
 }
