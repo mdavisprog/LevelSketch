@@ -19,14 +19,12 @@ const MAX_SIZE: f32 = 20.0;
 )]
 pub struct Widget {
     root: Entity,
-    translation: Entity,
 }
 
 impl Default for Widget {
     fn default() -> Self {
         Self {
             root: Entity::PLACEHOLDER,
-            translation: Entity::PLACEHOLDER,
         }
     }
 }
@@ -37,11 +35,7 @@ impl Widget {
             return true;
         }
 
-        if self.translation == entity {
-            return true;
-        }
-
-        if Self::is_descedent(entity, self.translation, children) {
+        if Self::is_descedent(entity, self.root, children) {
             return true;
         }
 
@@ -50,7 +44,7 @@ impl Widget {
 
     pub fn get_axis_direction(&self, entity: Entity, children: &Query<&Children>, axes: &Query<&Axis>) -> Option<axis::Direction> {
         let mut direction = axis::Direction::X;
-        for child in children.iter_descendants_depth_first(self.translation) {
+        for child in children.iter_descendants_depth_first(self.root) {
             if let Ok(axis) = axes.get(child) {
                 direction = axis.direction;
             }
@@ -112,7 +106,6 @@ pub fn init(
 
     root.insert(Widget {
         root: root_id,
-        translation,
     })
     .add_child(translation);
 }
@@ -121,32 +114,29 @@ pub fn handle_hover(
     axes: Query<&widgets::Axis>,
     meshes: Query<&MeshMaterial3d<StandardMaterial>>,
     children: Query<&Children>,
-    widget: Query<&widgets::Widget>,
+    parent: Query<&Parent>,
     mut events: EventReader<Hover>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let Ok(widget) = widget.get_single() else {
-        events.clear();
-        return;
-    };
-
     for event in events.read() {
         let (entities, color) = {
             let mut entities = Vec::<Entity>::new();
             let mut color = constants::HOVER_COLOR;
 
-            for child in children.children(widget.translation) {
-                if *child == event.target || Widget::is_descedent(event.target, *child, &children) {
-                    if let Ok(axis) = axes.get(*child) {
-                        color = axis.color;
+            entities.push(event.target);
 
-                        entities.clear();
-                        entities.push(*child);
-                        for axis_child in children.iter_descendants(*child) {
-                            entities.push(axis_child);
-                        }
-                        break;
-                    }
+            for descendant in children.iter_descendants_depth_first(event.target) {
+                entities.push(descendant);
+            }
+
+            for ancestor in parent.iter_ancestors(event.target) {
+                entities.push(ancestor);
+            }
+
+            for entity in &entities {
+                if let Ok(axis) = axes.get(*entity) {
+                    color = axis.color;
+                    break;
                 }
             }
 
