@@ -94,6 +94,9 @@ pub struct Move {
 #[derive(Event)]
 pub struct Scale;
 
+#[derive(Component)]
+struct WidgetColor(Color);
+
 pub fn init(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
@@ -110,7 +113,7 @@ pub fn init(
 }
 
 pub fn handle_hover(
-    axes: Query<&widgets::Axis>,
+    colors: Query<&WidgetColor>,
     meshes: Query<&MeshMaterial3d<StandardMaterial>>,
     children: Query<&Children>,
     parent: Query<&Parent>,
@@ -133,8 +136,8 @@ pub fn handle_hover(
             }
 
             for entity in &entities {
-                if let Ok(axis) = axes.get(*entity) {
-                    color = axis.color;
+                if let Ok(widget_color) = colors.get(*entity) {
+                    color = widget_color.0;
                     break;
                 }
             }

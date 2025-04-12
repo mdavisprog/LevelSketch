@@ -51,6 +51,5 @@ impl Direction {
 
 #[derive(Component)]
 pub struct Axis {
-    pub color: Color,
     pub direction: Direction,
 }

@@ -39,8 +39,8 @@ impl TransformWidget {
                 layer.clone(),
                 Mesh3d(cylinder_mesh.clone()),
                 MeshMaterial3d(materials.add(Self::standard_material(constants::X_AXIS_COLOR))),
+                WidgetColor(constants::X_AXIS_COLOR),
                 axis::Axis {
-                    color: constants::X_AXIS_COLOR,
                     direction: axis::Direction::X,
                 },
                 Transform::from_rotation(
@@ -65,8 +65,8 @@ impl TransformWidget {
                 layer.clone(),
                 Mesh3d(cylinder_mesh.clone()),
                 MeshMaterial3d(materials.add(Self::standard_material(constants::Y_AXIS_COLOR))),
+                WidgetColor(constants::Y_AXIS_COLOR),
                 axis::Axis {
-                    color: constants::Y_AXIS_COLOR,
                     direction: axis::Direction::Y,
                 },
                 Transform::from_xyz(0.0, AXIS_OFFSET, 0.0),
@@ -85,8 +85,8 @@ impl TransformWidget {
                 layer.clone(),
                 Mesh3d(cylinder_mesh.clone()),
                 MeshMaterial3d(materials.add(Self::standard_material(constants::Z_AXIS_COLOR))),
+                WidgetColor(constants::Z_AXIS_COLOR),
                 axis::Axis {
-                    color: constants::Z_AXIS_COLOR,
                     direction: axis::Direction::Z,
                 },
                 Transform::from_rotation(
@@ -108,8 +108,8 @@ impl TransformWidget {
                 layer.clone(),
                 Mesh3d(plane_mesh.clone()),
                 MeshMaterial3d(materials.add(Self::standard_material_no_cull(constants::Y_AXIS_COLOR))),
+                WidgetColor(constants::Y_AXIS_COLOR),
                 axis::Axis {
-                    color: constants::Y_AXIS_COLOR,
                     direction: axis::Direction::XY,
                 },
                 Transform::from_xyz(
@@ -124,8 +124,8 @@ impl TransformWidget {
                 layer.clone(),
                 Mesh3d(plane_mesh.clone()),
                 MeshMaterial3d(materials.add(Self::standard_material_no_cull(constants::X_AXIS_COLOR))),
+                WidgetColor(constants::X_AXIS_COLOR),
                 axis::Axis {
-                    color: constants::X_AXIS_COLOR,
                     direction: axis::Direction::XZ,
                 },
                 Transform::from_xyz(plane_offset, cylinder_base * -0.5, plane_offset),
@@ -137,8 +137,8 @@ impl TransformWidget {
                 layer.clone(),
                 Mesh3d(plane_mesh.clone()),
                 MeshMaterial3d(materials.add(Self::standard_material_no_cull(constants::Z_AXIS_COLOR))),
+                WidgetColor(constants::Z_AXIS_COLOR),
                 axis::Axis {
-                    color: constants::Z_AXIS_COLOR,
                     direction: axis::Direction::YZ,
                 },
                 Transform::from_xyz(
