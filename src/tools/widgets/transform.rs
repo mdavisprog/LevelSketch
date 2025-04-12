@@ -5,9 +5,9 @@ use super::*;
 
 #[derive(Component)]
 #[require(Transform, Visibility)]
-pub struct Translation;
+pub(super) struct TransformWidget;
 
-impl Translation {
+impl TransformWidget {
     pub fn new(
         commands: &mut Commands,
         meshes: &mut ResMut<Assets<Mesh>>,

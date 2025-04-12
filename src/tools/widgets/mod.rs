@@ -2,11 +2,10 @@ use bevy::prelude::*;
 use super::*;
 
 mod axis;
-mod translation;
+mod transform;
 
 pub use axis::Axis;
 pub use axis::Direction;
-pub use translation::Translation;
 
 const AXIS_OFFSET: f32 = 1.0;
 const MIN_SIZE: f32 = 0.5;
@@ -100,14 +99,14 @@ pub fn init(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) {
-    let translation = Translation::new(commands, meshes, materials);
+    let transform = transform::TransformWidget::new(commands, meshes, materials);
     let mut root = commands.spawn_empty();
     let root_id = root.id();
 
     root.insert(Widget {
         root: root_id,
     })
-    .add_child(translation);
+    .add_child(transform);
 }
 
 pub fn handle_hover(
