@@ -1,7 +1,7 @@
 use bevy::core::FrameCount;
 use bevy::picking::focus::HoverMap;
 use bevy::prelude::*;
-use bevy::render::view::RenderLayers;
+use bevy::render::{view::RenderLayers, camera::NormalizedRenderTarget};
 use super::camera;
 
 mod constants;
@@ -14,18 +14,9 @@ impl bevy::prelude::Plugin for Plugin {
     fn build(&self, app: &mut App) {
         app
             .init_resource::<State>()
-            .insert_resource(widgets::Settings::new(true))
-            .add_event::<widgets::Hover>()
-            .add_event::<widgets::Move>()
-            .add_event::<widgets::Scale>()
             .add_plugins(MeshPickingPlugin)
             .add_systems(Startup, setup)
-            .add_systems(Update, (
-                sync_camera,
-                widgets::handle_hover,
-                widgets::handle_move,
-                widgets::handle_scale,
-            ))
+            .add_systems(Update, sync_camera)
             .add_observer(on_over)
             .add_observer(on_out)
             .add_observer(on_pick)
@@ -34,6 +25,7 @@ impl bevy::prelude::Plugin for Plugin {
             .add_observer(on_drag);
 
         selection::build(app);
+        widgets::build(app);
     }
 }
 
@@ -122,8 +114,6 @@ fn is_rotating(camera: &Query<&camera::Controller>) -> bool {
 
 fn setup(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     commands.spawn((
         ToolsCamera,
@@ -137,8 +127,6 @@ fn setup(
             .looking_at(Vec3::ZERO, Vec3::Y),
         RenderLayers::layer(constants::RENDER_LAYER),
     ));
-
-    widgets::init(&mut commands, &mut meshes, &mut materials);
 }
 
 fn sync_camera(
@@ -360,55 +348,36 @@ fn on_drag_end(
 
 fn on_drag(
     trigger: Trigger<Pointer<Drag>>,
-    axes: Query<&widgets::Axis>,
-    camera: Query<(&Camera, &GlobalTransform), With<ToolsCamera>>,
     frame: Res<FrameCount>,
-    state: ResMut<State>,
-    widget: Query<(&Transform, &widgets::Widget)>,
+    widget: Query<&widgets::Widget>,
     children: Query<&Children>,
     mut guard: Local<FrameGuard>,
-    mut selection_actions: EventWriter<selection::Action>,
-    mut move_widgets: EventWriter<widgets::Move>,
+    mut drag_widgets: EventWriter<widgets::Drag>,
 ) {
     if trigger.button != PointerButton::Primary {
         return;
     }
 
-    let Ok((transform, widget)) = widget.get_single() else {
+    let Ok(widget) = widget.get_single() else {
         return;
     };
 
-    let Some(axis_direction) = widget.get_axis_direction(trigger.target, &children, &axes) else {
+    if !widget.contains(trigger.target, &children) {
         return;
-    };
-
-    let Ok((camera, camera_transform)) = camera.get_single() else {
-        return;
-    };
+    }
 
     let Ok(_) = ScopedFrameGuard::try_new(&mut guard, frame.0) else {
         return;
     };
 
-    let direction = axis_direction.direction(transform);
-    let position = cast_ray(camera, camera_transform, trigger.pointer_location.position, transform.translation, axis_direction.normal()) - state.drag_offset;
-
-    // To move respective to a 2-dimensional plane, just set the translation to the position.
-    // This will be useful when these interactable widgets for plane movement are implemented.
-    let delta = match axis_direction {
-        widgets::Direction::X |
-        widgets::Direction::Y |
-        widgets::Direction::Z => {
-            let v = position - transform.translation;
-            v.dot(direction) / direction.dot(direction) * direction
-        },
-        widgets::Direction::XY |
-        widgets::Direction::XZ |
-        widgets::Direction::YZ => {
-            position - transform.translation
-        }
+    let window = match trigger.pointer_location.target {
+        NormalizedRenderTarget::Window(value) => value.entity(),
+        _ => Entity::PLACEHOLDER,
     };
 
-    selection_actions.send(selection::Action::Move(delta));
-    move_widgets.send(widgets::Move { delta });
+    drag_widgets.send(widgets::Drag( widgets::DragData {
+        target: trigger.target,
+        window,
+        screen_position: trigger.pointer_location.position,
+    }));
 }
