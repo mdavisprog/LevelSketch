@@ -64,7 +64,6 @@ impl<'a> ScopedFrameGuard<'a> {
 #[derive(Resource)]
 struct State {
     hovered: Option<Entity>,
-    drag_offset: Vec3,
     is_dragging: bool,
 }
 
@@ -72,7 +71,6 @@ impl Default for State {
     fn default() -> Self {
         Self {
             hovered: None,
-            drag_offset: Vec3::ZERO,
             is_dragging: false,
         }
     }
@@ -81,24 +79,6 @@ impl Default for State {
 //
 // Utility
 //
-
-fn cast_ray(
-    camera: &Camera,
-    camera_transform: &GlobalTransform,
-    screen_position: Vec2,
-    widget_position: Vec3,
-    normal: Vec3
-) -> Vec3 {
-    let Ok(ray) = camera.viewport_to_world(camera_transform, screen_position) else {
-        return widget_position;
-    };
-
-    let Some(distance) = ray.intersect_plane(widget_position, InfinitePlane3d::new(normal)) else {
-        return widget_position;
-    };
-
-    return ray.get_point(distance);
-}
 
 fn is_rotating(camera: &Query<&camera::Controller>) -> bool {
     let Ok(camera) = camera.get_single() else {
@@ -264,44 +244,44 @@ fn on_pick(
 
 fn on_drag_start(
     trigger: Trigger<Pointer<DragStart>>,
-    axes: Query<&widgets::Axis>,
-    camera: Query<(&Camera, &GlobalTransform), With<ToolsCamera>>,
-    widget: Query<(&Transform, &widgets::Widget)>,
+    widgets: Query<&widgets::Widget>,
     frame: Res<FrameCount>,
     children: Query<&Children>,
     mut state: ResMut<State>,
     mut guard: Local<FrameGuard>,
-    mut events: EventWriter<widgets::Hover>,
+    mut drag_start_events: EventWriter<widgets::DragStart>,
+    mut hover_events: EventWriter<widgets::Hover>,
 ) {
     if trigger.button != PointerButton::Primary {
         return;
     }
 
-    let Ok((transform, widget)) = widget.get_single() else {
+    let Ok(widget) = widgets.get_single() else {
         return;
     };
 
-    let Some(axis_direction) = widget.get_axis_direction(trigger.target, &children, &axes) else {
+    if !widget.contains(trigger.target, &children) {
         return;
-    };
-
-    let Ok((camera, camera_transform)) = camera.get_single() else {
-        return;
-    };
+    }
 
     let Ok(_) = ScopedFrameGuard::try_new(&mut guard, frame.0) else {
         return;
     };
 
     state.is_dragging = true;
-    state.drag_offset = cast_ray(
-        camera,
-        camera_transform,
-        trigger.pointer_location.position,
-        transform.translation,
-        axis_direction.normal()) - transform.translation;
 
-    events.send(widgets::Hover {
+    let window = match trigger.pointer_location.target {
+        NormalizedRenderTarget::Window(value) => value.entity(),
+        _ => Entity::PLACEHOLDER,
+    };
+
+    drag_start_events.send(widgets::DragStart(widgets::DragData {
+        target: trigger.target,
+        window,
+        screen_position: trigger.pointer_location.position,
+    }));
+
+    hover_events.send(widgets::Hover {
         target: trigger.target,
         hovered: true
     });
