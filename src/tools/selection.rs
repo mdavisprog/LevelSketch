@@ -23,6 +23,7 @@ impl Default for Selection {
 #[derive(Event)]
 pub enum Action {
     Move(Vec3),
+    Scale(Vec3),
 }
 
 fn handle_actions(
@@ -40,6 +41,9 @@ fn handle_actions(
                 Action::Move(delta) => {
                     mesh.translation += delta;
                 },
+                Action::Scale(delta) => {
+                    mesh.scale += delta;
+                }
             }
         }
     }

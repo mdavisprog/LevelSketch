@@ -4,6 +4,21 @@ use crate::tools::constants;
 use super::*;
 
 #[derive(Component)]
+pub(super) enum TransformType {
+    Position,
+    Scale,
+}
+
+impl std::fmt::Display for TransformType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match *self {
+            Self::Position => write!(f, "Position"),
+            Self::Scale => write!(f, "Scale"),
+        }
+    }
+}
+
+#[derive(Component)]
 #[require(Transform, Visibility)]
 pub(super) struct TransformWidget;
 
@@ -30,10 +45,15 @@ impl TransformWidget {
         let plane_mesh = meshes.add(plane);
         let layer = RenderLayers::layer(constants::RENDER_LAYER);
 
-        let entity = commands.spawn((
-            Self,
-        ))
-        .with_children(|parent| {
+        let scale_controls = Self::spawn_scales(
+            commands,
+            meshes,
+            materials,
+            cylinder_height + cone_height + 1.25,
+        );
+
+        let mut entity = commands.spawn(Self);
+        entity.with_children(|parent| {
             // X-Axis
             parent.spawn((
                 layer.clone(),
@@ -43,6 +63,7 @@ impl TransformWidget {
                 axis::Axis {
                     direction: axis::Direction::X,
                 },
+                TransformType::Position,
                 Transform::from_rotation(
                     Quat::from_rotation_z(90.0_f32.to_radians()))
                     .with_translation(Vec3::new(AXIS_OFFSET, 0.0, 0.0)
@@ -69,6 +90,7 @@ impl TransformWidget {
                 axis::Axis {
                     direction: axis::Direction::Y,
                 },
+                TransformType::Position,
                 Transform::from_xyz(0.0, AXIS_OFFSET, 0.0),
             ))
             .with_children(|parent| {
@@ -89,6 +111,7 @@ impl TransformWidget {
                 axis::Axis {
                     direction: axis::Direction::Z,
                 },
+                TransformType::Position,
                 Transform::from_rotation(
                     Quat::from_rotation_x(90.0_f32.to_radians()))
                     .with_translation(Vec3::new(0.0, 0.0, AXIS_OFFSET)
@@ -112,6 +135,7 @@ impl TransformWidget {
                 axis::Axis {
                     direction: axis::Direction::XY,
                 },
+                TransformType::Position,
                 Transform::from_xyz(
                     plane_offset, plane_offset, cylinder_base * -0.5)
                     .with_rotation(Quat::from_rotation_x(90.0_f32.to_radians())
@@ -128,6 +152,7 @@ impl TransformWidget {
                 axis::Axis {
                     direction: axis::Direction::XZ,
                 },
+                TransformType::Position,
                 Transform::from_xyz(plane_offset, cylinder_base * -0.5, plane_offset),
                 RayCastBackfaces,
             ));
@@ -141,15 +166,80 @@ impl TransformWidget {
                 axis::Axis {
                     direction: axis::Direction::YZ,
                 },
+                TransformType::Position,
                 Transform::from_xyz(
                     cylinder_base * -0.5, plane_offset, plane_offset)
                     .with_rotation(Quat::from_rotation_z(-90.0_f32.to_radians())
                 ),
                 RayCastBackfaces,
             ));
-        }).id();
+        });
 
-        entity
+        entity.add_children(&scale_controls);
+
+        entity.id()
+    }
+
+    fn spawn_scales(
+        commands: &mut Commands,
+        meshes: &mut ResMut<Assets<Mesh>>,
+        materials: &mut ResMut<Assets<StandardMaterial>>,
+        offset: f32,
+    ) -> [Entity; 3] {
+        let mut result = [Entity::PLACEHOLDER; 3];
+
+        result[0] = Self::spawn_scale(
+            commands,
+            meshes,
+            materials,
+            Vec3::new(offset, 0.0, 0.0),
+            constants::X_AXIS_COLOR,
+            Direction::X,
+        );
+
+        result[1] = Self::spawn_scale(
+            commands,
+            meshes,
+            materials,
+            Vec3::new(0.0, offset, 0.0),
+            constants::Y_AXIS_COLOR,
+            Direction::Y,
+        );
+
+        result[2] = Self::spawn_scale(
+            commands,
+            meshes,
+            materials,
+            Vec3::new(0.0, 0.0, offset),
+            constants::Z_AXIS_COLOR,
+            Direction::Z,
+        );
+
+        result
+    }
+
+    fn spawn_scale(
+        commands: &mut Commands,
+        meshes: &mut ResMut<Assets<Mesh>>,
+        materials: &mut ResMut<Assets<StandardMaterial>>,
+        offset: Vec3,
+        color: Color,
+        direction: axis::Direction,
+    ) -> Entity {
+        let cuboid = Cuboid::from_length(0.15);
+        let cuboid_mesh = meshes.add(cuboid);
+
+        commands.spawn((
+            RenderLayers::layer(constants::RENDER_LAYER),
+            Mesh3d(cuboid_mesh),
+            MeshMaterial3d(materials.add(Self::standard_material(color))),
+            WidgetColor(color),
+            TransformType::Scale,
+            Transform::from_translation(offset),
+            axis::Axis {
+                direction,
+            }
+        )).id()
     }
 
     fn standard_material(color: Color) -> StandardMaterial {

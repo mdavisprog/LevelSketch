@@ -67,6 +67,7 @@ impl Widget {
 pub struct Settings {
     should_scale: bool,
     drag_offset: Vec3,
+    last_position: Vec3,
 }
 
 impl Settings {
@@ -74,6 +75,7 @@ impl Settings {
         Self {
             should_scale,
             drag_offset: Vec3::ZERO,
+            last_position: Vec3::ZERO,
         }
     }
 }
@@ -277,6 +279,7 @@ fn handle_drag_start(
         ) - widget_transform.translation;
 
         settings.drag_offset = widget.drag_offset;
+        settings.last_position = widget_transform.translation;
     }
 }
 
@@ -285,17 +288,17 @@ fn handle_drag(
     children: Query<&Children>,
     parent: Query<&Parent>,
     cameras: Query<(&Camera, &GlobalTransform), With<ToolsCamera>>,
-    settings: Res<Settings>,
+    transform_types: Query<&transform::TransformType>,
     mut drag_events: EventReader<Drag>,
     mut scale_events: EventWriter<Scale>,
     mut selection_events: EventWriter<selection::Action>,
     mut widgets: Query<&mut Transform, With<Widget>>,
+    mut settings: ResMut<Settings>,
 ) {
     let Ok(mut widget) = widgets.get_single_mut() else {
         return;
     };
 
-    let mut total_delta = Vec3::ZERO;
     for event in drag_events.read() {
         let data = &event.0;
 
@@ -303,11 +306,29 @@ fn handle_drag(
             continue;
         };
 
+        let transform_type = {
+            let mut result = None;
+
+            let hierarchy = get_heirarchy(data.target, &children, &parent);
+            for entity in &hierarchy {
+                if let Ok(transform_type) = transform_types.get(*entity) {
+                    result = Some(transform_type);
+                    break;
+                }
+            }
+
+            result
+        };
+
+        let Some(transform_type) = transform_type else {
+            continue;
+        };
+
         let position = cast_ray(
             data.window,
             &cameras,
             data.screen_position,
-            widget.translation,
+            settings.last_position,
             axis.normal(),
         ) - settings.drag_offset;
 
@@ -318,21 +339,29 @@ fn handle_drag(
             widgets::Direction::X |
             widgets::Direction::Y |
             widgets::Direction::Z => {
-                let v = position - widget.translation;
+                let v = position - settings.last_position;
                 v.dot(direction) / direction.dot(direction) * direction
             },
             widgets::Direction::XY |
             widgets::Direction::XZ |
             widgets::Direction::YZ => {
-                position - widget.translation
+                position - settings.last_position
             }
         };
 
-        total_delta += delta;
+        match *transform_type {
+            transform::TransformType::Position => {
+                widget.translation += delta;
+                selection_events.send(selection::Action::Move(delta));
+            },
+            transform::TransformType::Scale => {
+                selection_events.send(selection::Action::Scale(delta));
+            }
+        }
+
+        settings.last_position = position;
     }
 
-    widget.translation += total_delta;
-    selection_events.send(selection::Action::Move(total_delta));
     scale_events.send(Scale);
 }
 
