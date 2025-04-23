@@ -4,9 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy = "0.15.1"
-resvg = "0.45.0"
-bitflags = "2.8.0"
+bevy = "=0.15.3"
+resvg = "=0.45.0"
+bitflags = "=2.8.0"
 
 [profile.dev]
 opt-level = 1
