@@ -15,7 +15,7 @@ const MAX_SIZE: f32 = 20.0;
 
 pub(super) fn build(app: &mut App) {
     app
-        .insert_resource(Settings::new(true))
+        .insert_resource(State::new(true))
         .add_event::<Hover>()
         .add_event::<DragStart>()
         .add_event::<Drag>()
@@ -64,13 +64,13 @@ impl Widget {
 }
 
 #[derive(Resource)]
-pub struct Settings {
+struct State {
     should_scale: bool,
     drag_offset: Vec3,
     last_position: Vec3,
 }
 
-impl Settings {
+impl State {
     pub fn new(should_scale: bool) -> Self {
         Self {
             should_scale,
@@ -252,7 +252,7 @@ fn handle_drag_start(
     cameras: Query<(&Camera, &GlobalTransform), With<ToolsCamera>>,
     mut drag_start_events: EventReader<DragStart>,
     mut widgets: Query<(&mut Widget, &Transform)>,
-    mut settings: ResMut<Settings>,
+    mut state: ResMut<State>,
 ) {
     let Ok((mut widget, widget_transform)) = widgets.get_single_mut() else {
         return;
@@ -278,8 +278,8 @@ fn handle_drag_start(
             axis.normal(),
         ) - widget_transform.translation;
 
-        settings.drag_offset = widget.drag_offset;
-        settings.last_position = widget_transform.translation;
+        state.drag_offset = widget.drag_offset;
+        state.last_position = widget_transform.translation;
     }
 }
 
@@ -293,7 +293,7 @@ fn handle_drag(
     mut scale_events: EventWriter<Scale>,
     mut selection_events: EventWriter<selection::Action>,
     mut widgets: Query<&mut Transform, With<Widget>>,
-    mut settings: ResMut<Settings>,
+    mut state: ResMut<State>,
 ) {
     let Ok(mut widget) = widgets.get_single_mut() else {
         return;
@@ -328,9 +328,9 @@ fn handle_drag(
             data.window,
             &cameras,
             data.screen_position,
-            settings.last_position,
+            state.last_position,
             axis.normal(),
-        ) - settings.drag_offset;
+        ) - state.drag_offset;
 
         let direction = axis.direction(&widget);
 
@@ -339,13 +339,13 @@ fn handle_drag(
             widgets::Direction::X |
             widgets::Direction::Y |
             widgets::Direction::Z => {
-                let v = position - settings.last_position;
+                let v = position - state.last_position;
                 v.dot(direction) / direction.dot(direction) * direction
             },
             widgets::Direction::XY |
             widgets::Direction::XZ |
             widgets::Direction::YZ => {
-                position - settings.last_position
+                position - state.last_position
             }
         };
 
@@ -359,7 +359,7 @@ fn handle_drag(
             }
         }
 
-        settings.last_position = position;
+        state.last_position = position;
     }
 
     scale_events.send(Scale);
@@ -367,11 +367,11 @@ fn handle_drag(
 
 fn handle_scale(
     camera: Query<(&Projection, &GlobalTransform), With<ToolsCamera>>,
-    settings: Res<Settings>,
+    state: Res<State>,
     mut events: EventReader<Scale>,
     mut widgets: Query<&mut Transform, With<Widget>>,
 ) {
-    if !settings.should_scale {
+    if !state.should_scale {
         return;
     }
 
