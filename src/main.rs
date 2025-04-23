@@ -10,6 +10,7 @@ use std::time::Duration;
 mod camera;
 mod gui;
 mod menus;
+mod shapes;
 mod svg;
 mod tools;
 
