@@ -24,6 +24,7 @@ impl Default for Selection {
 pub enum Action {
     Move(Vec3),
     Scale(Vec3),
+    Rotation(Vec3),
 }
 
 fn handle_actions(
@@ -43,7 +44,12 @@ fn handle_actions(
                 },
                 Action::Scale(delta) => {
                     mesh.scale += delta;
-                }
+                },
+                Action::Rotation(delta) => {
+                    mesh.rotate_x(delta.x.to_radians());
+                    mesh.rotate_y(delta.y.to_radians());
+                    mesh.rotate_z(delta.z.to_radians());
+                },
             }
         }
     }
