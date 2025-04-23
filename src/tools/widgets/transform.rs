@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy::render::view::RenderLayers;
+use crate::shapes;
 use crate::tools::constants;
 use super::*;
 
@@ -7,6 +8,7 @@ use super::*;
 pub(super) enum TransformType {
     Position,
     Scale,
+    Rotation(Direction),
 }
 
 impl std::fmt::Display for TransformType {
@@ -14,6 +16,7 @@ impl std::fmt::Display for TransformType {
         match *self {
             Self::Position => write!(f, "Position"),
             Self::Scale => write!(f, "Scale"),
+            Self::Rotation(dir) => write!(f, "Rotation: {dir}"),
         }
     }
 }
@@ -50,6 +53,13 @@ impl TransformWidget {
             meshes,
             materials,
             cylinder_height + cone_height + 1.25,
+        );
+
+        let rotation_controls = Self::spawn_rotations(
+            commands,
+            meshes,
+            materials,
+            0.75,
         );
 
         let mut entity = commands.spawn(Self);
@@ -130,8 +140,8 @@ impl TransformWidget {
             parent.spawn((
                 layer.clone(),
                 Mesh3d(plane_mesh.clone()),
-                MeshMaterial3d(materials.add(Self::standard_material_no_cull(constants::Y_AXIS_COLOR))),
-                WidgetColor(constants::Y_AXIS_COLOR),
+                MeshMaterial3d(materials.add(Self::standard_material_no_cull(constants::Z_AXIS_COLOR))),
+                WidgetColor(constants::Z_AXIS_COLOR),
                 axis::Axis {
                     direction: axis::Direction::XY,
                 },
@@ -147,8 +157,8 @@ impl TransformWidget {
             parent.spawn((
                 layer.clone(),
                 Mesh3d(plane_mesh.clone()),
-                MeshMaterial3d(materials.add(Self::standard_material_no_cull(constants::X_AXIS_COLOR))),
-                WidgetColor(constants::X_AXIS_COLOR),
+                MeshMaterial3d(materials.add(Self::standard_material_no_cull(constants::Y_AXIS_COLOR))),
+                WidgetColor(constants::Y_AXIS_COLOR),
                 axis::Axis {
                     direction: axis::Direction::XZ,
                 },
@@ -161,8 +171,8 @@ impl TransformWidget {
             parent.spawn((
                 layer.clone(),
                 Mesh3d(plane_mesh.clone()),
-                MeshMaterial3d(materials.add(Self::standard_material_no_cull(constants::Z_AXIS_COLOR))),
-                WidgetColor(constants::Z_AXIS_COLOR),
+                MeshMaterial3d(materials.add(Self::standard_material_no_cull(constants::X_AXIS_COLOR))),
+                WidgetColor(constants::X_AXIS_COLOR),
                 axis::Axis {
                     direction: axis::Direction::YZ,
                 },
@@ -175,7 +185,9 @@ impl TransformWidget {
             ));
         });
 
-        entity.add_children(&scale_controls);
+        entity
+            .add_children(&scale_controls)
+            .add_children(&rotation_controls);
 
         entity.id()
     }
@@ -241,6 +253,71 @@ impl TransformWidget {
             }
         )).id()
     }
+
+    fn spawn_rotations(
+        commands: &mut Commands,
+        meshes: &mut ResMut<Assets<Mesh>>,
+        materials: &mut ResMut<Assets<StandardMaterial>>,
+        offset: f32,
+    ) -> [Entity; 3] {
+        let mut result = [Entity::PLACEHOLDER; 3];
+
+        let arc = shapes::AnnulusSector::new(25.0_f32.to_radians(), 35.0_f32.to_radians(), 60.0_f32.to_radians());
+        let mesh = meshes.add(arc);
+
+        result[0] = commands.spawn(Self::rotation_bundle(
+            mesh.clone(),
+            materials.add(Self::standard_material_no_cull(constants::Y_AXIS_COLOR)),
+            constants::Y_AXIS_COLOR,
+            Quat::from_euler(EulerRot::XYZ, 90.0_f32.to_radians(), 0.0, -45.0_f32.to_radians()),
+            Vec3::new(offset, 0.0, offset),
+            Direction::Y,
+            Direction::X,
+        )).id();
+
+        result[1] = commands.spawn(Self::rotation_bundle(
+            mesh.clone(),
+            materials.add(Self::standard_material_no_cull(constants::Z_AXIS_COLOR)),
+            constants::Z_AXIS_COLOR,
+            Quat::from_euler(EulerRot::XYZ, 45.0_f32.to_radians(), 90.0_f32.to_radians(), 0.0),
+            Vec3::new(0.0, offset, offset),
+            Direction::X,
+            Direction::Y,
+        )).id();
+
+        result[2] = commands.spawn(Self::rotation_bundle(
+            mesh.clone(),
+            materials.add(Self::standard_material_no_cull(constants::X_AXIS_COLOR)),
+            constants::X_AXIS_COLOR,
+            Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, -45.0_f32.to_radians()),
+            Vec3::new(offset, offset, 0.0),
+            Direction::Z,
+            Direction::Y,
+        )).id();
+
+        result
+    }
+
+    fn rotation_bundle(
+        mesh: Handle<Mesh>,
+        material: Handle<StandardMaterial>,
+        color: Color,
+        rotation: Quat,
+        translation: Vec3,
+        rotation_direction: Direction,
+        translation_direction: Direction,
+    ) -> impl Bundle {(
+        RenderLayers::layer(constants::RENDER_LAYER),
+        Mesh3d(mesh),
+        MeshMaterial3d(material),
+        WidgetColor(color),
+        TransformType::Rotation(rotation_direction),
+        Transform::from_rotation(rotation).with_translation(translation),
+        axis::Axis {
+            direction: translation_direction,
+        },
+        RayCastBackfaces,
+    )}
 
     fn standard_material(color: Color) -> StandardMaterial {
         StandardMaterial {

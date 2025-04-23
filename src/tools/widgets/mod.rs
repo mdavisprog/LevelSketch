@@ -4,10 +4,12 @@ use bevy::window::WindowRef;
 use super::*;
 
 mod axis;
+mod settings;
 mod transform;
 
 pub use axis::Axis;
 pub use axis::Direction;
+pub use settings::Settings;
 
 const AXIS_OFFSET: f32 = 1.0;
 const MIN_SIZE: f32 = 0.5;
@@ -15,6 +17,7 @@ const MAX_SIZE: f32 = 20.0;
 
 pub(super) fn build(app: &mut App) {
     app
+        .init_resource::<Settings>()
         .insert_resource(State::new(true))
         .add_event::<Hover>()
         .add_event::<DragStart>()
@@ -289,6 +292,7 @@ fn handle_drag(
     parent: Query<&Parent>,
     cameras: Query<(&Camera, &GlobalTransform), With<ToolsCamera>>,
     transform_types: Query<&transform::TransformType>,
+    settings: Res<Settings>,
     mut drag_events: EventReader<Drag>,
     mut scale_events: EventWriter<Scale>,
     mut selection_events: EventWriter<selection::Action>,
@@ -349,6 +353,16 @@ fn handle_drag(
             }
         };
 
+        fn get_non_zero_component(value: Vec3) -> f32 {
+            if value.x != 0.0 {
+                value.x
+            } else if value.y != 0.0 {
+                value.y
+            } else {
+                value.z
+            }
+        }
+
         match *transform_type {
             transform::TransformType::Position => {
                 widget.translation += delta;
@@ -356,7 +370,18 @@ fn handle_drag(
             },
             transform::TransformType::Scale => {
                 selection_events.send(selection::Action::Scale(delta));
-            }
+            },
+            transform::TransformType::Rotation(dir) => {
+                let component = get_non_zero_component(delta);
+                let dir_vector = match dir {
+                    Direction::X => Vec3::X * -component,
+                    Direction::Y => Vec3::Y * component,
+                    Direction::Z => Vec3::Z * component,
+                    _ => Vec3::ZERO,
+                };
+
+                selection_events.send(selection::Action::Rotation(dir_vector * settings.rotation_rate));
+            },
         }
 
         state.last_position = position;
