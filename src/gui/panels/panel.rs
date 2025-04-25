@@ -23,6 +23,7 @@ impl Default for PanelOptions {
 
 pub struct PanelResult {
     pub panel: Entity,
+    // The entity that contains the caller's components.
     pub components: Entity,
 }
 
