@@ -1,8 +1,12 @@
 use bevy::ecs::system::SystemId;
 use bevy::prelude::*;
 use crate::camera;
-use crate::gui::style;
-use crate::gui::droppable::*;
+use crate::gui::{
+    droppable::*,
+    icons,
+    style,
+};
+use crate::svg;
 use crate::tools::selection;
 use super::*;
 
@@ -21,6 +25,9 @@ pub struct Shapes;
 impl Shapes {
     pub fn create(
         commands: &mut Commands,
+        icons: &mut ResMut<icons::Icons>,
+        asset_server: &Res<AssetServer>,
+        svgs: &Res<Assets<svg::SvgAsset>>,
         resources: &Res<Resources>,
         position: Vec2,
     ) {
@@ -31,32 +38,77 @@ impl Shapes {
             ..default()
         };
 
+        struct ShapeIcon {
+            icon: &'static str,
+            kind: Shape,
+        }
+
+        let shapes = [
+            ShapeIcon { icon: "icons/shapes/cuboid.svg", kind: Shape::Cube },
+            ShapeIcon { icon: "icons/shapes/cone.svg", kind: Shape::Cone },
+            ShapeIcon { icon: "icons/shapes/tetrahedron.svg", kind: Shape::Tetrahedron },
+            ShapeIcon { icon: "icons/shapes/capsule.svg", kind: Shape::Capsule },
+            ShapeIcon { icon: "icons/shapes/torus.svg", kind: Shape::Torus },
+            ShapeIcon { icon: "icons/shapes/cylinder.svg", kind: Shape::Cylinder },
+            ShapeIcon { icon: "icons/shapes/conical_frustum.svg", kind: Shape::ConicalFrustum },
+            ShapeIcon { icon: "icons/shapes/sphere.svg", kind: Shape::Sphere },
+        ];
+
         let system = commands.register_system(Self::on_drop_item);
+        let items = {
+            let mut result = Vec::new();
+
+            for shape in shapes {
+                let inner = match Self::spawn_inner(shape.icon, icons, asset_server, svgs, commands) {
+                    Ok(result) => result,
+                    Err(error) => { 
+                        println!("{error}");
+                        continue;
+                    },
+                };
+
+                let item = Self::spawn_item(commands, shape.kind, system);
+                commands.entity(item).add_child(inner);
+                result.push(item);
+            }
+
+            result
+        };
 
         let result = Panel::create(commands, &options, resources, Self);
         commands
             .entity(result.components)
-            .with_children(|parent| {
-                Self::spawn_item(parent, Shape::Cube, system);
-                Self::spawn_item(parent, Shape::Cone, system);
-            });
+            .add_children(&items);
     }
 
     fn spawn_item(
-        parent: &mut ChildBuilder,
+        commands: &mut Commands,
         shape: Shape,
         system: SystemId,
-    ) {
-        parent
+    ) -> Entity {
+        commands
             .spawn((
                 Item { shape },
                 Droppable::new(system),
             ))
-            .with_children(|parent| {
-                parent.spawn(Inner);
-            })
             .observe(Item::on_over)
-            .observe(Item::on_out);
+            .observe(Item::on_out)
+            .id()
+    }
+
+    fn spawn_inner(
+        icon_name: &str,
+        icons: &mut ResMut<icons::Icons>,
+        asset_server: &Res<AssetServer>,
+        svgs: &Res<Assets<svg::SvgAsset>>,
+        commands: &mut Commands,
+    ) -> Result<Entity, String> {
+        let handle = match icons.get(icon_name, asset_server, svgs) {
+            Ok(result) => result,
+            Err(error) => return Err(format!("Failed to spawn inner!\n{error}")),
+        };
+
+        Ok(commands.spawn(Inner::new(handle)).id())
     }
 
     fn on_drop_item(
@@ -109,12 +161,14 @@ impl Shapes {
                 };
         
                 let mesh = match item.shape {
-                    Shape::Cone => {
-                        &handles.cone
-                    },
-                    Shape::Cube => {
-                        &handles.cube
-                    },
+                    Shape::Cone => &handles.cone,
+                    Shape::Cube => &handles.cube,
+                    Shape::Tetrahedron => &handles.tetrahedron,
+                    Shape::Capsule => &handles.capsule,
+                    Shape::Torus => &handles.torus,
+                    Shape::Cylinder => &handles.cylinder,
+                    Shape::ConicalFrustum => &handles.conical_frustum,
+                    Shape::Sphere => &handles.sphere,
                 };
         
                 let mesh = if let Some(value) = mesh {
@@ -199,32 +253,40 @@ impl Item {
 
 #[derive(Component)]
 #[require(
-    Node(Self::node),
-    BackgroundColor(|| Color::srgb(0.3, 0.6, 0.3)),
+    Node,
     PickingBehavior(|| PickingBehavior::IGNORE),
 )]
 struct Inner;
 
 impl Inner {
-    fn node() -> Node {
-        Node {
-            width: Val::Px(40.0),
-            height: Val::Px(40.0),
-            ..default()
-        }
-    }
+    fn new(image: Handle<Image>) -> impl Bundle {(
+        Self,
+        ImageNode::new(image),
+    )}
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Shape {
     Cube,
     Cone,
+    Tetrahedron,
+    Capsule,
+    Torus,
+    Cylinder,
+    ConicalFrustum,
+    Sphere,
 }
 
 #[derive(Resource, Default)]
 struct Handles {
     cone: Option<Handle<Mesh>>,
     cube: Option<Handle<Mesh>>,
+    tetrahedron: Option<Handle<Mesh>>,
+    capsule: Option<Handle<Mesh>>,
+    torus: Option<Handle<Mesh>>,
+    cylinder: Option<Handle<Mesh>>,
+    conical_frustum: Option<Handle<Mesh>>,
+    sphere: Option<Handle<Mesh>>,
     material: Option<Handle<StandardMaterial>>,
 }
 
@@ -234,8 +296,14 @@ impl Handles {
         mut materials: ResMut<Assets<StandardMaterial>>,
         mut handles: ResMut<Handles>,
     ) {
-        handles.cone = Some(meshes.add(Cone::new(1.0, 1.0)));
-        handles.cube = Some(meshes.add(Cuboid::new(1.0, 1.0, 1.0)));
+        handles.cone = Some(meshes.add(Cone::default()));
+        handles.cube = Some(meshes.add(Cuboid::default()));
+        handles.tetrahedron = Some(meshes.add(Tetrahedron::default()));
+        handles.capsule = Some(meshes.add(Capsule3d::default()));
+        handles.torus = Some(meshes.add(Torus::default()));
+        handles.cylinder = Some(meshes.add(Cylinder::default()));
+        handles.conical_frustum = Some(meshes.add(ConicalFrustum::default()));
+        handles.sphere = Some(meshes.add(Sphere::default()));
         handles.material = Some(materials.add(Color::srgb(0.5, 0.5, 0.5)));
     }
 }

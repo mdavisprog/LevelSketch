@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="40"
+   height="40"
+   viewBox="0 0 10.583333 10.583333"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4 (86a8ad7, 2024-10-11)"
+   sodipodi:docname="cone.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="8.1336326"
+     inkscape:cx="9.0980259"
+     inkscape:cy="21.08529"
+     inkscape:window-width="1920"
+     inkscape:window-height="1009"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1">
+    <linearGradient
+       id="linearGradient1"
+       inkscape:collect="always">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop1" />
+      <stop
+         style="stop-color:#000000;stop-opacity:0;"
+         offset="1"
+         id="stop2" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient1"
+       id="linearGradient2"
+       x1="2.2551863"
+       y1="4.1744294"
+       x2="11.493575"
+       y2="4.8250203"
+       gradientUnits="userSpaceOnUse" />
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g2"
+       transform="translate(0.54235427,-0.20582547)"
+       style="fill-opacity:1;fill:url(#linearGradient2)">
+      <path
+         id="path1"
+         style="fill:url(#linearGradient2);fill-opacity:1;stroke-width:0.244"
+         d="M 5.0097616 2.0491238 L 1.6259888 7.098428 A 3.4481311 1.3011817 0 0 0 1.3138632 7.5640327 L 1.3092123 7.5712674 L 1.3128296 7.5712674 A 3.4481311 1.3011817 0 0 0 1.3009441 7.6446479 A 3.4481311 1.3011817 0 0 0 4.7493124 8.9458605 A 3.4481311 1.3011817 0 0 0 8.1976807 7.6446479 A 3.4481311 1.3011817 0 0 0 7.94705 7.1578559 L 5.0097616 2.0491238 z " />
+    </g>
+  </g>
+</svg>

@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use crate::svg;
 
 pub mod buttonex;
 pub mod droppable;
@@ -81,6 +82,9 @@ fn setup(
 fn on_icons_loaded(
     resources: Res<panels::Resources>,
     mut commands: Commands,
+    mut icons: ResMut<icons::Icons>,
+    asset_server: Res<AssetServer>,
+    svgs: Res<Assets<svg::SvgAsset>>,
 ) {
-    panels::Shapes::create(&mut commands, &resources, Vec2::new(50.0, 50.0));
+    panels::Shapes::create(&mut commands, &mut icons, &asset_server, &svgs, &resources, Vec2::new(50.0, 50.0));
 }

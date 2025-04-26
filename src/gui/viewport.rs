@@ -1,8 +1,10 @@
 use bevy::prelude::*;
 use bevy::render::camera::NormalizedRenderTarget;
 use super::droppable::{Droppable, DropInfo};
+use super::icons;
 use super::panels;
 use super::State;
+use super::svg;
 
 /// UI Node that rests on top of the world viewport and below all other GUI nodes.
 /// This node acts as a catch all for any interaction with viewport.
@@ -60,7 +62,10 @@ impl Viewport {
         state: Res<State>,
         windows: Query<&Window>,
         resources: Res<panels::Resources>,
+        asset_server: Res<AssetServer>,
+        svgs: Res<Assets<svg::SvgAsset>>,
         mut commands: Commands,
+        mut icons: ResMut<icons::Icons>,
     ) {
         if trigger.button != PointerButton::Secondary {
             return;
@@ -84,7 +89,14 @@ impl Viewport {
                 return;
             };
     
-            panels::Shapes::create(&mut commands, &resources, cursor_position);
+            panels::Shapes::create(
+                &mut commands,
+                &mut icons,
+                &asset_server,
+                &svgs,
+                &resources,
+                cursor_position
+            );
         }
     }
     
