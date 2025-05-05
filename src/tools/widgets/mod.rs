@@ -1,6 +1,8 @@
-use bevy::prelude::*;
-use bevy::render::camera::RenderTarget;
-use bevy::window::WindowRef;
+use bevy::{
+    prelude::*,
+    render::camera::RenderTarget,
+    window::WindowRef,
+};
 use super::*;
 
 mod axis;
@@ -35,7 +37,7 @@ pub(super) fn build(app: &mut App) {
 #[derive(Component)]
 #[require(
     Transform,
-    Visibility(|| Visibility::Hidden),
+    Visibility = Visibility::Hidden,
 )]
 pub struct Widget {
     root: Entity,
@@ -112,7 +114,7 @@ struct WidgetColor(Color);
 fn get_heirarchy(
     entity: Entity,
     children: &Query<&Children>,
-    parent: &Query<&Parent>,
+    parent: &Query<&ChildOf>,
 ) -> Vec<Entity> {
     let mut result = Vec::new();
 
@@ -132,7 +134,7 @@ fn get_heirarchy(
 fn get_axis_direction(
     entity: Entity,
     children: &Query<&Children>,
-    parent: &Query<&Parent>,
+    parent: &Query<&ChildOf>,
     axes: &Query<&Axis>,
 ) -> Option<Direction> {
     let entities = get_heirarchy(entity, children, parent);
@@ -215,7 +217,7 @@ fn handle_hover(
     colors: Query<&WidgetColor>,
     meshes: Query<&MeshMaterial3d<StandardMaterial>>,
     children: Query<&Children>,
-    parent: Query<&Parent>,
+    parent: Query<&ChildOf>,
     mut events: EventReader<Hover>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
@@ -251,13 +253,13 @@ fn handle_hover(
 fn handle_drag_start(
     axes: Query<&Axis>,
     children: Query<&Children>,
-    parent: Query<&Parent>,
+    parent: Query<&ChildOf>,
     cameras: Query<(&Camera, &GlobalTransform), With<ToolsCamera>>,
     mut drag_start_events: EventReader<DragStart>,
     mut widgets: Query<(&mut Widget, &Transform)>,
     mut state: ResMut<State>,
 ) {
-    let Ok((mut widget, widget_transform)) = widgets.get_single_mut() else {
+    let Ok((mut widget, widget_transform)) = widgets.single_mut() else {
         return;
     };
 
@@ -289,7 +291,7 @@ fn handle_drag_start(
 fn handle_drag(
     axes: Query<&Axis>,
     children: Query<&Children>,
-    parent: Query<&Parent>,
+    parent: Query<&ChildOf>,
     cameras: Query<(&Camera, &GlobalTransform), With<ToolsCamera>>,
     transform_types: Query<&transform::TransformType>,
     settings: Res<Settings>,
@@ -299,7 +301,7 @@ fn handle_drag(
     mut widgets: Query<&mut Transform, With<Widget>>,
     mut state: ResMut<State>,
 ) {
-    let Ok(mut widget) = widgets.get_single_mut() else {
+    let Ok(mut widget) = widgets.single_mut() else {
         return;
     };
 
@@ -366,10 +368,10 @@ fn handle_drag(
         match *transform_type {
             transform::TransformType::Position => {
                 widget.translation += delta;
-                selection_events.send(selection::Action::Move(delta));
+                selection_events.write(selection::Action::Move(delta));
             },
             transform::TransformType::Scale => {
-                selection_events.send(selection::Action::Scale(delta));
+                selection_events.write(selection::Action::Scale(delta));
             },
             transform::TransformType::Rotation(dir) => {
                 let component = get_non_zero_component(delta);
@@ -380,14 +382,14 @@ fn handle_drag(
                     _ => Vec3::ZERO,
                 };
 
-                selection_events.send(selection::Action::Rotation(dir_vector * settings.rotation_rate));
+                selection_events.write(selection::Action::Rotation(dir_vector * settings.rotation_rate));
             },
         }
 
         state.last_position = position;
     }
 
-    scale_events.send(Scale);
+    scale_events.write(Scale);
 }
 
 fn handle_scale(
@@ -400,13 +402,13 @@ fn handle_scale(
         return;
     }
 
-    let Ok((projection, transform)) = camera.get_single() else {
+    let Ok((projection, transform)) = camera.single() else {
         return;
     };
 
     let fov = match projection {
         Projection::Perspective(perspective) => perspective.fov,
-        Projection::Orthographic(_) => std::f32::consts::PI / 4.0,
+        _ => std::f32::consts::PI / 4.0,
     };
 
     for _ in events.read() {

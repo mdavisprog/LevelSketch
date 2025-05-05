@@ -30,7 +30,7 @@ pub struct PanelResult {
 #[derive(Component)]
 #[require(
     Node,
-    BackgroundColor(|| style::colors::BACKGROUND),
+    BackgroundColor = style::colors::BACKGROUND,
     ContentSize,
 )]
 pub struct Panel;
@@ -96,24 +96,24 @@ impl Panel {
 
     fn on_close(
         trigger: Trigger<buttonex::OnClick>,
-        parents: Query<&Parent>,
+        child_of: Query<&ChildOf>,
         panels: Query<&Panel>,
         mut commands: Commands,
     ) {
-        let root = parents.root_ancestor(trigger.entity());
+        let root = child_of.root_ancestor(trigger.target());
 
         if !panels.contains(root) {
             return;
         }
 
-        commands.entity(root).despawn_recursive();
+        commands.entity(root).despawn();
     }
 }
 
 #[derive(Component)]
 #[require(
-    Node(Self::node),
-    ContentSize
+    Node = Self::node(),
+    ContentSize,
 )]
 struct Header {
     panel: Entity,
@@ -158,11 +158,11 @@ impl Header {
 
 #[derive(Component)]
 #[require(
-    Node(Self::node),
+    Node = Self::node(),
     Text,
-    TextLayout(|| TextLayout::new_with_justify(JustifyText::Center)),
-    TextFont(Self::text_font),
-    PickingBehavior(|| PickingBehavior::IGNORE),
+    TextLayout = TextLayout::new_with_justify(JustifyText::Center),
+    TextFont = Self::text_font(),
+    Pickable = Pickable::IGNORE,
 )]
 struct Title;
 

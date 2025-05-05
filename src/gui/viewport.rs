@@ -1,18 +1,25 @@
-use bevy::prelude::*;
-use bevy::render::camera::NormalizedRenderTarget;
-use super::droppable::{Droppable, DropInfo};
-use super::icons;
-use super::panels;
-use super::State;
-use super::svg;
+use bevy::{
+    prelude::*,
+    render::camera::NormalizedRenderTarget,
+};
+use super::{
+    droppable::{
+        Droppable,
+        DropInfo,
+    },
+    icons,
+    panels,
+    State,
+    svg,
+};
 
 /// UI Node that rests on top of the world viewport and below all other GUI nodes.
 /// This node acts as a catch all for any interaction with viewport.
 #[derive(Component)]
 #[require(
-    Node(Self::node),
-    GlobalZIndex(|| GlobalZIndex(-1)),
-    PickingBehavior(Self::picking_behavior),
+    Node = Self::node(),
+    GlobalZIndex(-1),
+    Pickable = Self::pickable(),
 )]
 pub struct Viewport;
 
@@ -44,7 +51,7 @@ impl Viewport {
     }
     
     fn on_down(
-        trigger: Trigger<Pointer<Down>>,
+        trigger: Trigger<Pointer<Pressed>>,
         mut commands: Commands,
         mut state: ResMut<State>,
     ) {
@@ -158,8 +165,8 @@ impl Viewport {
         }
     }
 
-    fn picking_behavior() -> PickingBehavior {
-        PickingBehavior { 
+    fn pickable() -> Pickable {
+        Pickable { 
             should_block_lower: false,
             is_hoverable: true,
         }

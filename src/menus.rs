@@ -1,6 +1,8 @@
 use bevy::prelude::*;
-use super::camera;
-use super::gui;
+use super::{
+    camera,
+    gui,
+};
 
 pub fn init(app: &mut App) {
     app.add_systems(Startup, setup);
@@ -34,7 +36,7 @@ mod file {
             vec![
                 ("Quit", Observer::new(quit)),
             ],
-            trigger.entity(),
+            trigger.target(),
         );
     }
 
@@ -43,7 +45,7 @@ mod file {
         mut events: EventWriter<AppExit>,
     ) {
         if *trigger.event() == gui::menu::MenuItemEvent::Pressed {
-            events.send(AppExit::Success);
+            events.write(AppExit::Success);
         }
     }
 }
@@ -64,7 +66,7 @@ mod camera_menu {
             vec![
                 ("Reset", Observer::new(reset)),
             ],
-            trigger.entity(),
+            trigger.target(),
         );
     }
 

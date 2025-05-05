@@ -1,5 +1,7 @@
-use bevy::prelude::*;
-use bevy::ui::RelativeCursorPosition;
+use bevy::{
+    prelude::*,
+    ui::RelativeCursorPosition,
+};
 use bitflags;
 use super::style;
 
@@ -108,9 +110,9 @@ impl Anchors {
 
 #[derive(Component)]
 #[require(
-    Node(Self::node),
-    PickingBehavior(Self::picking_behavior),
-    ZIndex(|| ZIndex(i32::MAX)),
+    Node = Self::node(),
+    Pickable = Self::pickable(),
+    ZIndex(i32::MAX),
     RelativeCursorPosition,
 )]
 pub struct Sizer {
@@ -133,16 +135,16 @@ impl Sizer {
     /// this function can be revisited when that feature is implemented.
     /// 
     pub fn on_added(
-        trigger: Trigger<OnAdd, Parent>,
-        sizers: Query<(Entity, &Parent), With<Self>>,
+        trigger: Trigger<OnAdd, ChildOf>,
+        sizers: Query<(Entity, &ChildOf), With<Self>>,
         mut nodes: Query<&mut Node>,
         mut commands: Commands,
     ) {
-        let Ok((sizer, parent)) = sizers.get(trigger.entity()) else {
+        let Ok((sizer, child_of)) = sizers.get(trigger.target()) else {
             return;
         };
 
-        let Ok([mut sizer_node, parent_node]) = nodes.get_many_mut([trigger.entity(), parent.get()]) else {
+        let Ok([mut sizer_node, parent_node]) = nodes.get_many_mut([trigger.target(), child_of.parent()]) else {
             return;
         };
 
@@ -164,7 +166,7 @@ impl Sizer {
     }
 
     fn on_down(
-        mut trigger: Trigger<Pointer<Down>>,
+        mut trigger: Trigger<Pointer<Pressed>>,
         mut sizers: Query<(&mut Sizer, &Node, &RelativeCursorPosition)>,
     ) {
         let Ok((mut sizer, node, relative_position)) = sizers.get_mut(trigger.target) else {
@@ -187,7 +189,7 @@ impl Sizer {
     }
 
     fn on_up(
-        trigger: Trigger<Pointer<Up>>,
+        trigger: Trigger<Pointer<Released>>,
         mut sizers: Query<&mut Sizer>,
     ) {
         let Ok(mut sizer) = sizers.get_mut(trigger.target) else {
@@ -199,14 +201,14 @@ impl Sizer {
 
     fn on_drag(
         trigger: Trigger<Pointer<Drag>>,
-        sizers: Query<(&Sizer, &Parent)>,
+        sizers: Query<(&Sizer, &ChildOf)>,
         mut nodes: Query<&mut Node>,
     ) {
-        let Ok((sizer, parent)) = sizers.get(trigger.target) else {
+        let Ok((sizer, child_of)) = sizers.get(trigger.target) else {
             return;
         };
 
-        let Ok([mut node, mut parent_node]) = nodes.get_many_mut([trigger.target, parent.get()]) else {
+        let Ok([mut node, mut parent_node]) = nodes.get_many_mut([trigger.target, child_of.parent()]) else {
             return;
         };
 
@@ -341,8 +343,8 @@ impl Sizer {
         }
     }
 
-    fn picking_behavior() -> PickingBehavior {
-        PickingBehavior {
+    fn pickable() -> Pickable {
+        Pickable {
             should_block_lower: false,
             is_hoverable: true
         }

@@ -1,7 +1,9 @@
-use bevy::input::keyboard::*;
-use bevy::input::mouse::*;
-use bevy::prelude::*;
-use bevy::window::*;
+use bevy::{
+    input::keyboard::*,
+    input::mouse::*,
+    prelude::*,
+    window::*,
+};
 use std::f32::consts::*;
 use super::gui;
 
@@ -16,7 +18,7 @@ impl bevy::prelude::Plugin for Plugin {
 #[derive(Component)]
 #[require(
     Camera3d,
-    Transform(Controller::transform),
+    Transform = Self::transform(),
 )]
 pub struct Controller {
     pub velocity: Vec3,
@@ -47,11 +49,11 @@ impl Controller {
         mut camera: Query<(&mut Transform, &mut Controller)>,
         mut window: Query<&mut Window>,
     ) {
-        let Ok((mut transform, mut camera_controller)) = camera.get_single_mut() else {
+        let Ok((mut transform, mut camera_controller)) = camera.single_mut() else {
             return;
         };
     
-        let Ok(mut window) = window.get_single_mut() else {
+        let Ok(mut window) = window.single_mut() else {
             return;
         };
 

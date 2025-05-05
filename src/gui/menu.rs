@@ -98,8 +98,8 @@ struct State;
 
 #[derive(Component)]
 #[require(
-    Node(MenuBar::node),
-    BackgroundColor(|| style::colors::BACKGROUND)
+    Node = Self::node(),
+    BackgroundColor = style::colors::BACKGROUND,
 )]
 struct MenuBar;
 
@@ -119,8 +119,8 @@ impl MenuBar {
 #[derive(Component)]
 #[require(
     Text,
-    TextFont(MenuItemLabel::text_font),
-    PickingBehavior(|| PickingBehavior::IGNORE),
+    TextFont = Self::text_font(),
+    Pickable = Pickable::IGNORE,
 )]
 struct MenuItemLabel;
 
@@ -135,9 +135,9 @@ impl MenuItemLabel {
 
 #[derive(Component)]
 #[require(
-    Node(MenuItem::node),
-    BackgroundColor(|| style::colors::BACKGROUND),
-    BorderColor(|| Color::srgb(1.0, 0.0, 0.0)),
+    Node = MenuItem::node(),
+    BackgroundColor = style::colors::BACKGROUND,
+    BorderColor = Color::srgb(1.0, 0.0, 0.0),
 )]
 struct MenuItem;
 
@@ -170,7 +170,7 @@ impl MenuItem {
         mut query: Query<(&mut BackgroundColor, Option<&MenuBarItem>), With<MenuItem>>,
         mut commands: Commands,
     ) {
-        let Ok((mut background_color, is_menu_bar)) = query.get_mut(trigger.entity()) else {
+        let Ok((mut background_color, is_menu_bar)) = query.get_mut(trigger.target()) else {
             return;
         };
 
@@ -182,11 +182,11 @@ impl MenuItem {
             None => false,
         };
 
-        commands.trigger_targets(MenuItemEvent::Enter, [trigger.entity()]);
+        commands.trigger_targets(MenuItemEvent::Enter, [trigger.target()]);
 
         if is_menu_bar {
             if is_menu_opened {
-                commands.trigger_targets(MenuItemEvent::Pressed, [trigger.entity()]);
+                commands.trigger_targets(MenuItemEvent::Pressed, [trigger.target()]);
                 Menu::close_all(&query_menu, &mut commands);
             }
         }
@@ -197,31 +197,31 @@ impl MenuItem {
         mut query: Query<&mut BackgroundColor, With<MenuItem>>,
         mut commands: Commands,
     ) {
-        let Ok(mut background_color) = query.get_mut(trigger.entity()) else {
+        let Ok(mut background_color) = query.get_mut(trigger.target()) else {
             return;
         };
     
         *background_color = style::colors::BACKGROUND.into();
-        commands.trigger_targets(MenuItemEvent::Leave, [trigger.entity()]);
+        commands.trigger_targets(MenuItemEvent::Leave, [trigger.target()]);
     }
     
     fn on_down(
-        trigger: Trigger<Pointer<Down>>,
+        trigger: Trigger<Pointer<Pressed>>,
         query: Query<Entity, With<Menu>>,
         query_item: Query<&MenuBarItem>,
         mut commands: Commands,
     ) {
         let menu_opened = !query.is_empty();
-        let is_owned_menu_bar = query_item.contains(trigger.entity());
+        let is_owned_menu_bar = query_item.contains(trigger.target());
 
         // Check if this menu item is owned by the menu bar. If so, only trigger if
         // no menu is open. If not part of the menu bar, always trigger.
         if is_owned_menu_bar {
             if !menu_opened {
-                commands.trigger_targets(MenuItemEvent::Pressed, [trigger.entity()]);
+                commands.trigger_targets(MenuItemEvent::Pressed, [trigger.target()]);
             }
         } else {
-            commands.trigger_targets(MenuItemEvent::Pressed, [trigger.entity()]);
+            commands.trigger_targets(MenuItemEvent::Pressed, [trigger.target()]);
         }
 
         Menu::close_all(&query, &mut commands);
@@ -241,8 +241,8 @@ enum MenuEvent {
 
 #[derive(Component)]
 #[require(
-    Node(Menu::node),
-    BackgroundColor(|| style::colors::BACKGROUND),
+    Node = Self::node(),
+    BackgroundColor = style::colors::BACKGROUND,
 )]
 struct Menu {
     menu_item: Entity,
@@ -274,7 +274,7 @@ impl Menu {
         item: Query<(&GlobalTransform, &ComputedNode, Option<&MenuBarItem>), With<MenuItem>>,
         mut menu: Query<(&mut Node, &Menu)>,
     ) {
-        let Ok((mut node, menu)) = menu.get_mut(trigger.entity()) else {
+        let Ok((mut node, menu)) = menu.get_mut(trigger.target()) else {
             return;
         };
 
@@ -295,7 +295,7 @@ impl Menu {
         commands: &mut Commands,
     ) {
         for menu in query.iter() {
-            commands.entity(menu).despawn_recursive();
+            commands.entity(menu).despawn();
         }
     }
 

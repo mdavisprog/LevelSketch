@@ -18,7 +18,7 @@ pub(super) fn build(app: &mut App) {
 
 #[derive(Component)]
 #[require(
-    Node(Self::node)
+    Node = Self::node(),
 )]
 pub struct Shapes;
 
@@ -133,7 +133,7 @@ impl Shapes {
             return;
         };
 
-        let Ok((camera, camera_entity)) = camera.get_single() else {
+        let Ok((camera, camera_entity)) = camera.single() else {
             return;
         };
 
@@ -189,7 +189,7 @@ impl Shapes {
             },
             DropState::Drag => {
                 let delta = point - shapes_state.last_point;
-                selection_actions.send(selection::Action::Move(delta));
+                selection_actions.write(selection::Action::Move(delta));
             },
             DropState::End => {},
         }
@@ -210,8 +210,8 @@ impl Shapes {
 
 #[derive(Component)]
 #[require(
-    Node(Self::node),
-    BackgroundColor(|| style::colors::NORMAL),
+    Node = Self::node(),
+    BackgroundColor = style::colors::NORMAL,
 )]
 struct Item {
     shape: Shape,
@@ -254,7 +254,7 @@ impl Item {
 #[derive(Component)]
 #[require(
     Node,
-    PickingBehavior(|| PickingBehavior::IGNORE),
+    Pickable = Pickable::IGNORE,
 )]
 struct Inner;
 

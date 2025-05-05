@@ -1,6 +1,8 @@
-use bevy::ecs::system::IntoObserverSystem;
-use bevy::picking::focus::HoverMap;
-use bevy::prelude::*;
+use bevy::{
+    ecs::system::IntoObserverSystem,
+    picking::hover::HoverMap,
+    prelude::*,
+};
 use super::style;
 
 #[derive(Event)]
@@ -11,8 +13,8 @@ pub struct OnClick;
 /// 
 #[derive(Component)]
 #[require(
-    Node(ButtonEx::node),
-    BackgroundColor(|| style::colors::BACKGROUND),
+    Node = Self::node(),
+    BackgroundColor = style::colors::BACKGROUND,
 )]
 pub struct ButtonEx;
 
@@ -22,7 +24,7 @@ impl ButtonEx {
     }
 
     pub fn create_label<E: Event, B: Bundle, M>(
-        commands: &mut ChildBuilder,
+        commands: &mut ChildSpawnerCommands,
         label: &str,
         callback: impl IntoObserverSystem<E, B, M>,
         components: impl Bundle,
@@ -36,7 +38,7 @@ impl ButtonEx {
             parent.spawn((
                 Text::new(label),
                 TextFont::from_font_size(12.0),
-                PickingBehavior::IGNORE,
+                Pickable::IGNORE,
             ));
         });
 
@@ -46,7 +48,7 @@ impl ButtonEx {
     }
 
     pub fn create_image<E: Event, B: Bundle, M>(
-        commands: &mut ChildBuilder,
+        commands: &mut ChildSpawnerCommands,
         image: Handle<Image>,
         callback: impl IntoObserverSystem<E, B, M>,
         components: impl Bundle,
@@ -59,7 +61,7 @@ impl ButtonEx {
         entity.with_children(|parent| {
             parent.spawn((
                 ImageNode::new(image),
-                PickingBehavior::IGNORE,
+                Pickable::IGNORE,
             ));
         });
 
@@ -127,7 +129,7 @@ impl ButtonEx {
     }
 
     fn on_down(
-        trigger: Trigger<Pointer<Down>>,
+        trigger: Trigger<Pointer<Pressed>>,
         mut colors: Query<&mut BackgroundColor, With<ButtonEx>>,
         mut state: ResMut<State>,
     ) {
@@ -144,7 +146,7 @@ impl ButtonEx {
     /// the mouse is up, but no longer on the hot button.
     /// 
     fn on_up(
-        trigger: Trigger<Pointer<Up>>,
+        trigger: Trigger<Pointer<Released>>,
         hovers: Res<HoverMap>,
         mut colors: Query<&mut BackgroundColor, With<ButtonEx>>,
         mut state: ResMut<State>,

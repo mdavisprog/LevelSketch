@@ -1,7 +1,12 @@
-use bevy::core::FrameCount;
-use bevy::picking::focus::HoverMap;
-use bevy::prelude::*;
-use bevy::render::{view::RenderLayers, camera::NormalizedRenderTarget};
+use bevy::{
+    diagnostic::FrameCount,
+    picking::hover::HoverMap,
+    prelude::*,
+    render::{
+        view::RenderLayers,
+        camera::NormalizedRenderTarget,
+    },
+};
 use super::camera;
 
 mod constants;
@@ -81,7 +86,7 @@ impl Default for State {
 //
 
 fn is_rotating(camera: &Query<&camera::Controller>) -> bool {
-    let Ok(camera) = camera.get_single() else {
+    let Ok(camera) = camera.single() else {
         return false;
     };
 
@@ -113,11 +118,11 @@ fn sync_camera(
     controller: Query<&Transform, With<camera::Controller>>,
     mut camera: Query<&mut Transform, (With<ToolsCamera>, Without<camera::Controller>)>,
 ) {
-    let Ok(controller) = controller.get_single() else {
+    let Ok(controller) = controller.single() else {
         return;
     };
 
-    let Ok(mut camera) = camera.get_single_mut() else {
+    let Ok(mut camera) = camera.single_mut() else {
         return;
     };
 
@@ -151,9 +156,9 @@ fn on_over(
 
     state.hovered = Some(trigger.target);
 
-    if let Ok(widget) = widget.get_single() {
+    if let Ok(widget) = widget.single() {
         if widget.contains(trigger.target, &children) {
-            events.send(widgets::Hover {
+            events.write(widgets::Hover {
                 target: trigger.target,
                 hovered: true
             });
@@ -185,9 +190,9 @@ fn on_out(
 
     state.hovered = None;
 
-    if let Ok(widget) = widget.get_single() {
+    if let Ok(widget) = widget.single() {
         if widget.contains(trigger.target, &children) {
-            events.send(widgets::Hover {
+            events.write(widgets::Hover {
                 target: trigger.target,
                 hovered: false
             });
@@ -209,7 +214,7 @@ fn on_pick(
         return;
     }
 
-    let Ok((mut visibility, mut transform, widget)) = widget.get_single_mut() else {
+    let Ok((mut visibility, mut transform, widget)) = widget.single_mut() else {
         return;
     };
 
@@ -256,7 +261,7 @@ fn on_drag_start(
         return;
     }
 
-    let Ok(widget) = widgets.get_single() else {
+    let Ok(widget) = widgets.single() else {
         return;
     };
 
@@ -275,13 +280,13 @@ fn on_drag_start(
         _ => Entity::PLACEHOLDER,
     };
 
-    drag_start_events.send(widgets::DragStart(widgets::DragData {
+    drag_start_events.write(widgets::DragStart(widgets::DragData {
         target: trigger.target,
         window,
         screen_position: trigger.pointer_location.position,
     }));
 
-    hover_events.send(widgets::Hover {
+    hover_events.write(widgets::Hover {
         target: trigger.target,
         hovered: true
     });
@@ -305,7 +310,7 @@ fn on_drag_end(
         return;
     };
 
-    let Ok(widget) = widget.get_single() else {
+    let Ok(widget) = widget.single() else {
         return;
     };
 
@@ -319,7 +324,7 @@ fn on_drag_end(
     }
 
     if widget.contains(hovered, &children) && !is_hovered {
-        events.send(widgets::Hover {
+        events.write(widgets::Hover {
             target: hovered,
             hovered: false
         });
@@ -338,7 +343,7 @@ fn on_drag(
         return;
     }
 
-    let Ok(widget) = widget.get_single() else {
+    let Ok(widget) = widget.single() else {
         return;
     };
 
@@ -355,7 +360,7 @@ fn on_drag(
         _ => Entity::PLACEHOLDER,
     };
 
-    drag_widgets.send(widgets::Drag( widgets::DragData {
+    drag_widgets.write(widgets::Drag( widgets::DragData {
         target: trigger.target,
         window,
         screen_position: trigger.pointer_location.position,

@@ -1,7 +1,12 @@
-use bevy::asset::{LoadState, LoadedFolder};
-use bevy::ecs::system::SystemId;
-use bevy::prelude::*;
-use bevy::utils::HashMap;
+use bevy::{
+    asset::{
+        LoadState,
+        LoadedFolder,
+    },
+    ecs::system::SystemId,
+    platform::collections::HashMap,
+    prelude::*,
+};
 use crate::svg;
 
 pub fn build(app: &mut App) {

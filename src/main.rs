@@ -83,6 +83,6 @@ fn check_exit(
     keys: Res<ButtonInput<KeyCode>>,
 ) {
     if keys.just_pressed(KeyCode::Escape) {
-        events.send(AppExit::Success);
+        events.write(AppExit::Success);
     }
 }

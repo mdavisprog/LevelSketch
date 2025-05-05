@@ -1,7 +1,11 @@
-use bevy::prelude::*;
-use bevy::utils::HashMap;
-use crate::gui::icons;
-use crate::svg;
+use bevy::{
+    platform::collections::HashMap,
+    prelude::*,
+};
+use crate::{
+    gui::icons,
+    svg,
+};
 
 pub fn initialize(app: &mut App) {
     app
