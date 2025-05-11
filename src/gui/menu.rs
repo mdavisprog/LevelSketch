@@ -69,7 +69,7 @@ pub fn create_menu(
             MenuItem::add_observers(&mut entity);
 
             observer.watch_entity(entity.id());
-            entity.with_child(observer);
+            parent.spawn(observer);
         }
     });
 }
