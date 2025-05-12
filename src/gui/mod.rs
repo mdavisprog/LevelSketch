@@ -9,6 +9,7 @@ pub mod panels;
 pub mod style;
 
 mod sizer;
+mod trail;
 mod viewport;
 
 //
@@ -39,6 +40,7 @@ impl Plugin for GUIPlugin {
 
         droppable::build(app);
         icons::build(app);
+        trail::build(app);
     }
 }
 

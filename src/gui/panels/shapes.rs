@@ -5,6 +5,7 @@ use crate::gui::{
     droppable::*,
     icons,
     style,
+    trail::Trail,
 };
 use crate::svg;
 use crate::tools::selection;
@@ -93,6 +94,7 @@ impl Shapes {
             ))
             .observe(Item::on_over)
             .observe(Item::on_out)
+            .observe(Item::on_drag_start)
             .id()
     }
 
@@ -208,7 +210,7 @@ impl Shapes {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Clone)]
 #[require(
     Node = Self::node(),
     BackgroundColor = style::colors::NORMAL,
@@ -240,6 +242,13 @@ impl Item {
         *item_color = style::colors::NORMAL.into();
     }
 
+    fn on_drag_start(
+        trigger: Trigger<Pointer<DragStart>>,
+        mut commands: Commands,
+    ) {
+        commands.spawn(Trail::bundle(trigger.target()));
+    }
+
     fn node() -> Node {
         Node {
             width: Val::Px(60.0),
@@ -251,7 +260,7 @@ impl Item {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Clone)]
 #[require(
     Node,
     Pickable = Pickable::IGNORE,
