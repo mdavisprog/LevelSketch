@@ -14,6 +14,7 @@ impl Trail {
         Self {
             clone,
         },
+        GlobalZIndex(i32::MAX),
     )}
 }
 
