@@ -17,9 +17,13 @@ impl Trail {
     )}
 }
 
+#[derive(Event)]
+pub struct DespawnTrail;
+
 pub(super) fn build(app: &mut App) {
     app
         .add_observer(on_add)
+        .add_observer(on_despawn_trail)
         .add_systems(Update, update);
 }
 
@@ -37,6 +41,16 @@ fn on_add(
         .entity(entity)
         .add_child(cloned)
         .insert(Pickable::IGNORE);
+}
+
+fn on_despawn_trail(
+    _: Trigger<DespawnTrail>,
+    trails: Query<Entity, With<Trail>>,
+    mut commands: Commands,
+) {
+    for trail in trails {
+        commands.entity(trail).despawn();
+    }
 }
 
 fn update(
@@ -63,7 +77,7 @@ fn update(
         return;
     };
 
-    for trail in trails.iter() {
+    for trail in trails {
         let Ok(mut node) = nodes.get_mut(trail) else {
             continue;
         };
@@ -73,8 +87,6 @@ fn update(
     }
 
     if mouse.just_released(MouseButton::Left) {
-        for trail in trails.iter() {
-            commands.entity(trail).despawn();
-        }
+        commands.trigger(DespawnTrail);
     }
 }

@@ -1,14 +1,18 @@
-use bevy::ecs::system::SystemId;
-use bevy::prelude::*;
-use crate::camera;
-use crate::gui::{
-    droppable::*,
-    icons,
-    style,
-    trail::Trail,
+use bevy::{
+    ecs::system::SystemId,
+    prelude::*,
 };
-use crate::svg;
-use crate::tools::selection;
+use crate::{
+    camera,
+    gui::{
+        droppable::*,
+        icons,
+        style,
+        trail::{Trail, DespawnTrail},
+    },
+    svg,
+    tools::selection,
+};
 use super::*;
 
 pub(super) fn build(app: &mut App) {
@@ -188,6 +192,8 @@ impl Shapes {
                 shapes_state.last_selection = selection.world.clone();
                 selection.world.clear();
                 selection.world.push(entity);
+
+                commands.trigger(DespawnTrail);
             },
             DropState::Drag => {
                 let delta = point - shapes_state.last_point;
