@@ -39,9 +39,17 @@ fn on_add(
 
     let cloned = commands.clone_hierarchy(trail.clone).id();
     commands
+        .entity(cloned)
+        .insert(Pickable::IGNORE);
+
+    commands
         .entity(entity)
         .add_child(cloned)
         .insert(Pickable::IGNORE);
+
+    // TODO: Should we iterate over all children and mark them as 'Pickable::IGNORE'?
+    // One issue is that the relationship isn't set up until the current commands have been executed.
+    // For now, just ignoring the root cloned entity.
 }
 
 fn on_despawn_trail(
