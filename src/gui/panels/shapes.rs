@@ -1,9 +1,11 @@
 use bevy::{
     ecs::system::SystemId,
     prelude::*,
+    ui::RelativeCursorPosition,
 };
 use crate::{
     camera,
+    extensions::prelude::*,
     gui::{
         droppable::*,
         icons,
@@ -220,6 +222,7 @@ impl Shapes {
 #[require(
     Node = Self::node(),
     BackgroundColor = style::colors::NORMAL,
+    RelativeCursorPosition,
 )]
 struct Item {
     shape: Shape,
@@ -250,9 +253,31 @@ impl Item {
 
     fn on_drag_start(
         trigger: Trigger<Pointer<DragStart>>,
+        nodes: Query<&Node>,
+        relative_positions: Query<&RelativeCursorPosition>,
         mut commands: Commands,
     ) {
-        commands.spawn(Trail::bundle(trigger.target()));
+        let offset: Vec2 = if let Ok(relative_position) = relative_positions.get(trigger.target()) {
+            if let Some(result) = relative_position.normalized {
+                if let Ok(node) = nodes.get(trigger.target()) {
+                    let width = node.width.to_px_or(0.0);
+                    let height = node.height.to_px_or(0.0);
+
+                    Vec2::new(
+                        width * result.x,
+                        height * result.y,
+                    )
+                } else {
+                    Vec2::ZERO
+                }
+            } else {
+                Vec2::ZERO
+            }
+        } else {
+            Vec2::ZERO
+        };
+
+        commands.spawn(Trail::bundle_with_offset(trigger.target(), -offset));
     }
 
     fn node() -> Node {

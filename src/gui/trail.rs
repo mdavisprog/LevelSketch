@@ -7,12 +7,19 @@ use crate::commands::prelude::*;
 #[require(Node)]
 pub struct Trail {
     clone: Entity,
+    offset: Vec2,
 }
 
 impl Trail {
-    pub fn bundle(clone: Entity) -> impl Bundle {(
+    #[allow(unused)]
+    pub fn bundle(clone: Entity) -> impl Bundle {
+        Self::bundle_with_offset(clone, Vec2::ZERO)
+    }
+
+    pub fn bundle_with_offset(clone: Entity, offset: Vec2) -> impl Bundle {(
         Self {
             clone,
+            offset,
         },
         GlobalZIndex(i32::MAX),
     )}
@@ -42,10 +49,16 @@ fn on_add(
         .entity(cloned)
         .insert(Pickable::IGNORE);
 
+    let offset = trail.offset;
     commands
         .entity(entity)
         .add_child(cloned)
-        .insert(Pickable::IGNORE);
+        .insert(Pickable::IGNORE)
+        .entry::<Node>()
+        .and_modify(move |mut node| {
+            node.left = Val::Px(offset.x);
+            node.top = Val::Px(offset.y);
+        });
 
     // TODO: Should we iterate over all children and mark them as 'Pickable::IGNORE'?
     // One issue is that the relationship isn't set up until the current commands have been executed.
@@ -63,7 +76,7 @@ fn on_despawn_trail(
 }
 
 fn update(
-    trails: Query<Entity, With<Trail>>,
+    trails: Query<(Entity, &Trail)>,
     windows: Query<&Window>,
     mouse: Res<ButtonInput<MouseButton>>,
     mut nodes: Query<&mut Node>,
@@ -86,13 +99,13 @@ fn update(
         return;
     };
 
-    for trail in trails {
-        let Ok(mut node) = nodes.get_mut(trail) else {
+    for (entity, trail) in trails {
+        let Ok(mut node) = nodes.get_mut(entity) else {
             continue;
         };
 
-        node.left = Val::Px(cursor_position.x);
-        node.top = Val::Px(cursor_position.y);
+        node.left = Val::Px(cursor_position.x + trail.offset.x);
+        node.top = Val::Px(cursor_position.y + trail.offset.y);
     }
 
     if mouse.just_released(MouseButton::Left) {
