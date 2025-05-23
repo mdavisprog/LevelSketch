@@ -1,7 +1,13 @@
 [package]
 name = "levelsketch"
+description = "A generic 3D level editor written in Rust using Bevy."
 version = "0.1.0"
 edition = "2021"
+readme = "README.md"
+homepage = "https://github.com/mdavisprog/LevelSketch"
+repository = "https://github.com/mdavisprog/LevelSketch"
+license-file = "LICENSE"
+publish = false
 
 [dependencies]
 bevy = "=0.16.0"
