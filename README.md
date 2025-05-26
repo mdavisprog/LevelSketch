@@ -3,4 +3,4 @@ LevelSketch is a generic 3D level editor built in rust using the [bevy](https://
 
 The latest version is [0.1.0](https://https://github.com/mdavisprog/LevelSketch/wiki/0.1.0). This page contains more information about this release.
 
-[[https://raw.githubusercontent.com/wiki/mdavisprog/LevelSketch/Images/0.1.0/shapes_spawn.gif]]
+![Example](https://raw.githubusercontent.com/wiki/mdavisprog/LevelSketch/Images/0.1.0/shapes_spawn.gif)
