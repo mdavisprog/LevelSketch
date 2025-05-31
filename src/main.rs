@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy::winit::*;
 use std::f32::consts::*;
 use std::time::Duration;
+use kea::prelude::*;
 
 //
 // Includes
@@ -13,7 +14,6 @@ mod extensions;
 mod gui;
 mod menus;
 mod shapes;
-mod svg;
 mod tools;
 
 //
@@ -28,6 +28,7 @@ fn main() {
             unfocused_mode: UpdateMode::reactive_low_power(Duration::from_secs(2))
         })
         .add_plugins((
+            KeaPlugin::default(),
             DefaultPlugins.set(WindowPlugin {
                 primary_window: Some(Window {
                     title: "Level Sketch".into(),
@@ -35,7 +36,6 @@ fn main() {
                 }),
                 ..default()
             }),
-            svg::Plugin,
             camera::Plugin,
             gui::GUIPlugin,
             tools::Plugin,

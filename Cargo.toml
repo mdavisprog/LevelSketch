@@ -9,10 +9,17 @@ repository = "https://github.com/mdavisprog/LevelSketch"
 license-file = "LICENSE"
 publish = false
 
+[workspace]
+resolver = "3"
+members = [
+    "crates/kea"
+]
+
 [dependencies]
 bevy = "=0.16.0"
 resvg = "=0.45.0"
 bitflags = "=2.8.0"
+kea = { path = "crates/kea" }
 
 [profile.dev]
 opt-level = 1

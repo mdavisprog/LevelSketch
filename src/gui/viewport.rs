@@ -7,10 +7,8 @@ use super::{
         Droppable,
         DropInfo,
     },
-    icons,
     panels,
     State,
-    svg,
 };
 
 /// UI Node that rests on top of the world viewport and below all other GUI nodes.
@@ -68,11 +66,7 @@ impl Viewport {
         trigger: Trigger<Pointer<Click>>,
         state: Res<State>,
         windows: Query<&Window>,
-        resources: Res<panels::Resources>,
-        asset_server: Res<AssetServer>,
-        svgs: Res<Assets<svg::SvgAsset>>,
         mut commands: Commands,
-        mut icons: ResMut<icons::Icons>,
     ) {
         if trigger.button != PointerButton::Secondary {
             return;
@@ -95,15 +89,9 @@ impl Viewport {
             let Some(cursor_position) = window.cursor_position() else {
                 return;
             };
-    
-            panels::Shapes::create(
-                &mut commands,
-                &mut icons,
-                &asset_server,
-                &svgs,
-                &resources,
-                cursor_position
-            );
+
+            let bundle = panels::Shapes::bundle(cursor_position, &mut commands);
+            commands.spawn(bundle);
         }
     }
     

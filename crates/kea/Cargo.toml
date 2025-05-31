@@ -1,0 +1,11 @@
+[package]
+name = "kea"
+description = "GUI library used for Level Sketch."
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bevy = "=0.16.0"
+resvg = "=0.45.0"
+bitflags = "=2.8.0"
+serde = { version = "=1.0", features = ["derive"] }

@@ -8,14 +8,12 @@ use crate::{
     extensions::prelude::*,
     gui::{
         droppable::*,
-        icons,
         style,
         trail::{Trail, DespawnTrail},
     },
-    svg,
     tools::selection,
 };
-use super::*;
+use kea::prelude::*;
 
 pub(super) fn build(app: &mut App) {
     app
@@ -30,93 +28,29 @@ pub(super) fn build(app: &mut App) {
 pub struct Shapes;
 
 impl Shapes {
-    pub fn create(
-        commands: &mut Commands,
-        icons: &mut ResMut<icons::Icons>,
-        asset_server: &Res<AssetServer>,
-        svgs: &Res<Assets<svg::SvgAsset>>,
-        resources: &Res<Resources>,
+    pub fn bundle(
         position: Vec2,
-    ) {
-        let options = PanelOptions {
+        commands: &mut Commands,
+    ) -> impl Bundle {
+        let callback = commands.register_system(Self::on_drop_item);
+        KeaPanel::bundle(KeaPanelOptions {
             title: format!("Shapes"),
             position,
             size: Vec2::new(400.0, 200.0),
-            ..default()
-        };
-
-        struct ShapeIcon {
-            icon: &'static str,
-            kind: Shape,
-        }
-
-        let shapes = [
-            ShapeIcon { icon: "icons/shapes/cuboid.svg", kind: Shape::Cube },
-            ShapeIcon { icon: "icons/shapes/cone.svg", kind: Shape::Cone },
-            ShapeIcon { icon: "icons/shapes/tetrahedron.svg", kind: Shape::Tetrahedron },
-            ShapeIcon { icon: "icons/shapes/capsule.svg", kind: Shape::Capsule },
-            ShapeIcon { icon: "icons/shapes/torus.svg", kind: Shape::Torus },
-            ShapeIcon { icon: "icons/shapes/cylinder.svg", kind: Shape::Cylinder },
-            ShapeIcon { icon: "icons/shapes/conical_frustum.svg", kind: Shape::ConicalFrustum },
-            ShapeIcon { icon: "icons/shapes/sphere.svg", kind: Shape::Sphere },
-        ];
-
-        let system = commands.register_system(Self::on_drop_item);
-        let items = {
-            let mut result = Vec::new();
-
-            for shape in shapes {
-                let inner = match Self::spawn_inner(shape.icon, icons, asset_server, svgs, commands) {
-                    Ok(result) => result,
-                    Err(error) => { 
-                        println!("{error}");
-                        continue;
-                    },
-                };
-
-                let item = Self::spawn_item(commands, shape.kind, system);
-                commands.entity(item).add_child(inner);
-                result.push(item);
-            }
-
-            result
-        };
-
-        let result = Panel::create(commands, &options, resources, Self);
-        commands
-            .entity(result.components)
-            .add_children(&items);
-    }
-
-    fn spawn_item(
-        commands: &mut Commands,
-        shape: Shape,
-        system: SystemId,
-    ) -> Entity {
-        commands
-            .spawn((
-                Item { shape },
-                Droppable::new(system),
-            ))
-            .observe(Item::on_over)
-            .observe(Item::on_out)
-            .observe(Item::on_drag_start)
-            .id()
-    }
-
-    fn spawn_inner(
-        icon_name: &str,
-        icons: &mut ResMut<icons::Icons>,
-        asset_server: &Res<AssetServer>,
-        svgs: &Res<Assets<svg::SvgAsset>>,
-        commands: &mut Commands,
-    ) -> Result<Entity, String> {
-        let handle = match icons.get(icon_name, asset_server, svgs) {
-            Ok(result) => result,
-            Err(error) => return Err(format!("Failed to spawn inner!\n{error}")),
-        };
-
-        Ok(commands.spawn(Inner::new(handle)).id())
+        },
+        (
+            Self,
+            children![
+                Item::bundle(Shape::Cube, "icons/shapes/cuboid.svg#image", callback),
+                Item::bundle(Shape::Cone, "icons/shapes/cone.svg#image", callback),
+                Item::bundle(Shape::Tetrahedron, "icons/shapes/tetrahedron.svg#image", callback),
+                Item::bundle(Shape::Capsule, "icons/shapes/capsule.svg#image", callback),
+                Item::bundle(Shape::Torus, "icons/shapes/torus.svg#image", callback),
+                Item::bundle(Shape::Cylinder, "icons/shapes/cylinder.svg#image", callback),
+                Item::bundle(Shape::ConicalFrustum, "icons/shapes/conical_frustum.svg#image", callback),
+                Item::bundle(Shape::Sphere, "icons/shapes/sphere.svg#image", callback),
+            ]
+        ))
     }
 
     fn on_drop_item(
@@ -229,6 +163,25 @@ struct Item {
 }
 
 impl Item {
+    fn bundle(
+        shape: Shape,
+        path: &str,
+        callback: SystemId,
+    ) -> impl Bundle {(
+        Self {
+            shape
+        },
+        KeaObservers::new(vec![
+            Observer::new(Self::on_over),
+            Observer::new(Self::on_out),
+            Observer::new(Self::on_drag_start),
+        ]),
+        Droppable::new(callback),
+        children![(
+            Inner::bundle(path),
+        )]
+    )}
+
     fn on_over(
         trigger: Trigger<Pointer<Over>>,
         mut items: Query<&mut BackgroundColor, With<Item>>,
@@ -299,9 +252,9 @@ impl Item {
 struct Inner;
 
 impl Inner {
-    fn new(image: Handle<Image>) -> impl Bundle {(
+    fn bundle(path: &str) -> impl Bundle {(
         Self,
-        ImageNode::new(image),
+        KeaImageNode(path.to_string()),
     )}
 }
 
