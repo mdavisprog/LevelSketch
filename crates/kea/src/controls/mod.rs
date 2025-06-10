@@ -10,7 +10,8 @@ pub(super) struct Plugin;
 
 impl bevy::prelude::Plugin for Plugin {
     fn build(&self, app: &mut App) {
-        button::build(app);
+        app.add_plugins(button::Plugin);
+
         image::build(app);
         sizer::build(app);
     }

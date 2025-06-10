@@ -1,104 +1,15 @@
 use bevy::{
-    ecs::system::IntoObserverSystem,
     picking::hover::HoverMap,
-    prelude::*,
+    prelude::*
 };
-use crate::{
-    constants,
-    observers::KeaObservers,
-    style,
-};
+use crate::style;
 use super::{
-    image::KeaImageNode,
+    component::KeaButton,
+    events::KeaButtonClick,
+    State
 };
 
-///
-/// KeaButton
-///
-#[derive(Component)]
-#[require(
-    Node = Self::node(),
-    BackgroundColor = style::colors::BACKGROUND,
-    ZIndex(constants::BASE_Z_INDEX),
-)]
-pub struct KeaButton {
-    _private: (),
-}
-
-impl KeaButton {
-    pub fn label_bundle<E: Event, B: Bundle, M>(
-        callback: impl IntoObserverSystem<E, B, M>,
-        label: &str,
-    ) -> impl Bundle {(
-        Self::bundle(callback),
-        children![(
-            Text::new(label),
-            TextFont::from_font_size(12.0),
-            Pickable::IGNORE,
-        )],
-    )}
-
-    pub fn image_bundle<E: Event, B: Bundle, M>(
-        callback: impl IntoObserverSystem<E, B, M>,
-        path: &str,
-    ) -> impl Bundle {(
-        Self::bundle(callback),
-        children![(
-            KeaImageNode(path.to_string()),
-            Pickable::IGNORE,
-        )],
-    )}
-
-    fn bundle<E: Event, B: Bundle, M>(
-        callback: impl IntoObserverSystem<E, B, M>,
-    ) -> impl Bundle {(
-        Self {
-            _private: (),
-        },
-        KeaObservers::new(vec![
-            Observer::new(callback),
-            Observer::new(mouse_over),
-            Observer::new(mouse_out),
-            Observer::new(mouse_pressed),
-            Observer::new(mouse_click),
-        ]),
-    )}
-
-    fn node() -> Node {
-        Node {
-            padding: style::properties::BUTTON_PADDING,
-            ..default()
-        }
-    }
-}
-
-///
-/// KeaButtonClick
-///
-/// Event that is emitted when the button has been clicked.
-///
-#[derive(Event)]
-pub struct KeaButtonClick;
-
-///
-/// State
-///
-/// Keeps track of information related to all buttons.
-///
-#[derive(Resource)]
-struct State {
-    hot_button: Option<Entity>,
-}
-
-pub(super) fn build(app: &mut App) {
-    app
-        .insert_resource(State {
-            hot_button: None,
-        })
-        .add_observer(global_mouse_released);
-}
-
-fn mouse_over(
+pub(super) fn mouse_over(
     trigger: Trigger<Pointer<Over>>,
     state: Res<State>,
     mut colors: Query<&mut BackgroundColor, With<KeaButton>>,
@@ -112,7 +23,7 @@ fn mouse_over(
     }
 }
 
-fn mouse_out(
+pub(super) fn mouse_out(
     trigger: Trigger<Pointer<Out>>,
     state: Res<State>,
     mut colors: Query<&mut BackgroundColor, With<KeaButton>>,
@@ -137,7 +48,7 @@ fn mouse_out(
     }
 }
 
-fn mouse_pressed(
+pub(super) fn mouse_pressed(
     trigger: Trigger<Pointer<Pressed>>,
     mut colors: Query<&mut BackgroundColor, With<KeaButton>>,
     mut state: ResMut<State>,
@@ -150,7 +61,7 @@ fn mouse_pressed(
     state.hot_button = Some(trigger.target);
 }
 
-fn mouse_click(
+pub(super) fn mouse_click(
     trigger: Trigger<Pointer<Click>>,
     mut commands: Commands,
 ) {
@@ -161,7 +72,7 @@ fn mouse_click(
 /// This is observed only globally. Need to detect cases where 
 /// the mouse is up, but no longer on the hot button.
 ///
-fn global_mouse_released(
+pub(super) fn global_mouse_released(
     trigger: Trigger<Pointer<Released>>,
     hovers: Res<HoverMap>,
     mut colors: Query<&mut BackgroundColor, With<KeaButton>>,
