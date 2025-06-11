@@ -14,6 +14,7 @@ pub mod prelude {
         button::{
             KeaButton,
             KeaButtonClick,
+            KeaButtonCommandsExt
         },
         image::{
             KeaImageNode,

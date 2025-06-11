@@ -1,12 +1,15 @@
 use bevy::prelude::*;
 
+mod commands;
 mod component;
 mod events;
+mod extensions;
 mod systems;
 
 pub use {
     component::KeaButton,
     events::KeaButtonClick,
+    extensions::KeaButtonCommandsExt,
 };
 
 pub(super) struct Plugin;
