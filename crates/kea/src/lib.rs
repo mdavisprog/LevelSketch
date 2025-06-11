@@ -7,6 +7,8 @@ mod plugin;
 mod position;
 mod style;
 
+pub mod tools;
+
 pub mod prelude {
     use super::*;
 
