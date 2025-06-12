@@ -22,7 +22,11 @@ pub mod prelude {
         panel::{
             KeaPanel,
             KeaPanelOptions,
-        }
+        },
+        sizer::{
+            KeaSizer,
+            KeaSizerTarget,
+        },
     };
     pub use observers::KeaObservers;
     pub use position::KeaPosition;

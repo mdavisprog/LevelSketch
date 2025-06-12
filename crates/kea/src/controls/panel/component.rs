@@ -1,17 +1,14 @@
 use bevy::prelude::*;
 use crate::{
     constants,
+    controls::button::KeaButton,
     observers::KeaObservers,
     overrides::NodeOverrides,
     style,
 };
-use super::{
-    anchors::KeaAnchors,
-    sizer::KeaSizer,
-    button::{
-        KeaButton,
-        KeaButtonClick,
-    },
+use super::systems::{
+    on_close,
+    on_header_drag,
 };
 
 ///
@@ -55,6 +52,7 @@ impl KeaPanel {
             min_width: Val::Px(20.0),
             min_height: Val::Px(20.0),
             padding: UiRect::all(Val::Px(style::properties::PADDING)),
+            overflow: Overflow::scroll(),
             ..default()
         },
         children![
@@ -63,9 +61,6 @@ impl KeaPanel {
             ),
             (
                 contents,
-            ),
-            (
-                KeaSizer::bundle(KeaAnchors::all()),
             ),
         ]
     )}
@@ -128,44 +123,4 @@ impl KeaPanelTitle {
             ..default()
         }
     }
-}
-
-fn on_close(
-    trigger: Trigger<KeaButtonClick>,
-    child: Query<&ChildOf>,
-    mut commands: Commands,
-) {
-    let root = child.root_ancestor(trigger.target());
-
-    commands
-        .entity(root)
-        .try_despawn();
-}
-
-fn on_header_drag(
-    trigger: Trigger<Pointer<Drag>>,
-    children: Query<&ChildOf>,
-    mut panels: Query<&mut Node, With<KeaPanel>>,
-) {
-    let Ok(child) = children.get(trigger.target) else {
-        return;
-    };
-
-    let Ok(mut panel) = panels.get_mut(child.parent()) else {
-        return;
-    };
-
-    let left = match panel.left {
-        Val::Px(value) => value,
-        _ => 0.0,
-    };
-
-    let top = match panel.top {
-        Val::Px(value) => value,
-        _ => 0.0,
-    };
-
-    let delta = trigger.delta;
-    panel.left = Val::Px(left + delta.x);
-    panel.top = Val::Px(top + delta.y);
 }
