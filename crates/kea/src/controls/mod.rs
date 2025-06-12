@@ -3,6 +3,7 @@ use bevy::prelude::*;
 pub(super) mod anchors;
 pub(super) mod button;
 pub(super) mod image;
+pub(super) mod list;
 pub(super) mod panel;
 pub(super) mod sizer;
 
@@ -12,6 +13,7 @@ impl bevy::prelude::Plugin for Plugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((
             button::Plugin,
+            list::Plugin,
             panel::Plugin,
         ));
 
