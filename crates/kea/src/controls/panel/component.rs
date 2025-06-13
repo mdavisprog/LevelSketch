@@ -9,6 +9,7 @@ use crate::{
 use super::systems::{
     on_close,
     on_header_drag,
+    on_scroll,
 };
 
 ///
@@ -52,7 +53,7 @@ impl KeaPanel {
             min_width: Val::Px(20.0),
             min_height: Val::Px(20.0),
             padding: UiRect::all(Val::Px(style::properties::PADDING)),
-            overflow: Overflow::scroll(),
+            overflow: Overflow::clip(),
             ..default()
         },
         children![
@@ -60,7 +61,18 @@ impl KeaPanel {
                 KeaPanelHeader::bundle(&options.title),
             ),
             (
-                contents,
+                Node {
+                    width: Val::Percent(100.0),
+                    overflow: Overflow::scroll(),
+                    ..default()
+                },
+                children![(
+                    contents,
+                    ScrollPosition::default(),
+                )],
+                KeaObservers::new(vec![
+                    Observer::new(on_scroll),
+                ]),
             ),
         ]
     )}

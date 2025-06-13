@@ -1,4 +1,7 @@
-use bevy::prelude::*;
+use bevy::{
+    input::mouse::MouseScrollUnit,
+    prelude::*,
+};
 use crate::{
     controls::{
         anchors::KeaAnchors,
@@ -60,4 +63,21 @@ pub(super) fn on_header_drag(
     let delta = trigger.delta;
     panel.left = Val::Px(left + delta.x);
     panel.top = Val::Px(top + delta.y);
+}
+
+pub(super) fn on_scroll(
+    trigger: Trigger<Pointer<Scroll>>,
+    mut scroll_positions: Query<&mut ScrollPosition>,
+) {
+    let Ok(mut scroll_position) = scroll_positions.get_mut(trigger.target()) else {
+        return;
+    };
+
+    let scalar = match trigger.event().unit {
+        MouseScrollUnit::Line => 12.0,
+        MouseScrollUnit::Pixel => 1.0,
+    };
+
+    scroll_position.offset_x -= trigger.event().x * scalar;
+    scroll_position.offset_y -= trigger.event().y * scalar;
 }
