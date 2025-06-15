@@ -9,7 +9,6 @@ use crate::{
 use super::systems::{
     on_close,
     on_header_drag,
-    on_scroll,
 };
 
 ///
@@ -19,6 +18,16 @@ pub struct KeaPanelOptions {
     pub title: String,
     pub position: Vec2,
     pub size: Vec2,
+}
+
+impl Default for KeaPanelOptions {
+    fn default() -> Self {
+        Self {
+            title: format!(""),
+            position: Vec2::ZERO,
+            size: Vec2::ZERO,
+        }
+    }
 }
 
 ///
@@ -68,11 +77,7 @@ impl KeaPanel {
                 },
                 children![(
                     contents,
-                    ScrollPosition::default(),
                 )],
-                KeaObservers::new(vec![
-                    Observer::new(on_scroll),
-                ]),
             ),
         ]
     )}
