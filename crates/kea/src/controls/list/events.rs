@@ -7,7 +7,11 @@ use bevy::prelude::*;
 ///
 #[derive(Event)]
 pub struct KeaListSelect {
+    /// The list item entity
     pub entity: Entity,
+
+    /// Index into the children array
+    pub index: usize,
 }
 
 #[derive(Event)]

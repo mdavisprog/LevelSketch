@@ -113,16 +113,27 @@ fn on_list_item_out(
 
 fn on_list_item_pressed(
     trigger: Trigger<Pointer<Pressed>>,
-    children: Query<&ChildOf>,
+    children: Query<&Children>,
+    parents: Query<&ChildOf>,
     mut commands: Commands,
 ) {
-    let Ok(child) = children.get(trigger.target()) else {
+    let Ok(parent) = parents.get(trigger.target()) else {
         return;
     };
 
+    let Ok(children) = children.get(parent.parent()) else {
+        return;
+    };
+
+    let index = children
+        .iter()
+        .position(|element| element == trigger.target())
+        .unwrap_or(0);
+
     commands
-        .kea_list_select(child.parent(), &[trigger.target()])
+        .kea_list_select(parent.parent(), &[trigger.target()])
         .trigger_targets(KeaListSelect {
-            entity: trigger.target()
-        }, child.parent());
+            entity: trigger.target(),
+            index,
+        }, parent.parent());
 }
