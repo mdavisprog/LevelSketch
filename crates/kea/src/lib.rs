@@ -26,6 +26,8 @@ pub mod prelude {
             KeaListBehavior,
             KeaListCommandsExt,
             KeaListLabelItems,
+            // Events
+            KeaListHover,
             KeaListSelect,
         },
         panel::{

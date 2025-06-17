@@ -12,7 +12,10 @@ pub use {
         KeaListBehavior,
         KeaListLabelItems,
     },
-    events::KeaListSelect,
+    events::{
+        KeaListHover,
+        KeaListSelect,
+    },
     extensions::KeaListCommandsExt,
 };
 

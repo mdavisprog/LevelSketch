@@ -9,3 +9,12 @@ use bevy::prelude::*;
 pub struct KeaListSelect {
     pub entity: Entity,
 }
+
+#[derive(Event)]
+pub struct KeaListHover {
+    /// The list item entity
+    pub entity: Entity,
+
+    /// Index into the children array
+    pub index: usize,
+}
