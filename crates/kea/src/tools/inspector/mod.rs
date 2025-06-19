@@ -73,6 +73,7 @@ impl KeaInspector {
                     Node {
                         flex_direction: FlexDirection::Row,
                         align_content: AlignContent::Stretch,
+                        column_gap: Val::Px(4.0),
                         width: Val::Percent(100.0),
                         ..default()
                     },
