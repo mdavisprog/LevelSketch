@@ -18,6 +18,7 @@ use super::systems;
     Node = Self::node(),
     BackgroundColor = style::colors::BUTTON_BACKGROUND,
     ZIndex(constants::BASE_Z_INDEX),
+    BorderRadius = BorderRadius::all(Val::Px(3.0)),
 )]
 pub struct KeaButton {
     _private: (),
