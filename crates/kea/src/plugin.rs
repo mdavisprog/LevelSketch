@@ -8,6 +8,7 @@ use super::{
     observers,
     overrides,
     position,
+    tools,
 };
 
 #[derive(Default)]
@@ -32,6 +33,7 @@ impl Plugin for KeaPlugin {
         app.add_plugins((
             assets::Plugin,
             controls::Plugin,
+            tools::Plugin,
         ));
 
         observers::build(app);

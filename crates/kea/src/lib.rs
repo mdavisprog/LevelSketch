@@ -6,6 +6,7 @@ mod overrides;
 mod plugin;
 mod position;
 mod style;
+mod utility;
 
 pub mod tools;
 

@@ -2,8 +2,11 @@ use bevy::prelude::*;
 
 #[derive(Component, Default)]
 pub(crate) struct NodeOverrides {
+    pub display: Option<Display>,
+    pub position_type: Option<PositionType>,
     pub align_self: Option<AlignSelf>,
     pub padding: Option<UiRect>,
+    pub flex_grow: Option<f32>,
 }
 
 pub(super) fn build(app: &mut App) {
@@ -33,8 +36,11 @@ fn on_add(
         return;
     };
 
+    assign(&node_override.display, &mut node.display);
+    assign(&node_override.position_type, &mut node.position_type);
     assign(&node_override.align_self, &mut node.align_self);
     assign(&node_override.padding, &mut node.padding);
+    assign(&node_override.flex_grow, &mut node.flex_grow);
 
     commands
         .entity(trigger.target())
