@@ -16,7 +16,7 @@ use super::systems;
 #[derive(Component)]
 #[require(
     Node = Self::node(),
-    BackgroundColor = style::colors::BACKGROUND,
+    BackgroundColor = style::colors::BUTTON_BACKGROUND,
     ZIndex(constants::BASE_Z_INDEX),
 )]
 pub struct KeaButton {

@@ -44,7 +44,7 @@ pub(super) fn mouse_out(
     };
 
     if change_color {
-        *color = style::colors::BACKGROUND.into();
+        *color = style::colors::BUTTON_BACKGROUND.into();
     }
 }
 

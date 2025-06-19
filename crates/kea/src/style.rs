@@ -9,8 +9,9 @@ pub mod colors {
     use super::*;
 
     pub const BACKGROUND: Color = Color::srgb(0.10, 0.10, 0.10);
-    pub const HIGHLIGHT: Color = Color::srgb(0.40, 0.40, 0.40);
-    pub const PRESSED: Color = Color::srgb(0.25, 0.25, 0.25);
+    pub const BUTTON_BACKGROUND: Color = Color::srgb(0.20, 0.20, 0.20);
+    pub const HIGHLIGHT: Color = Color::srgb(0.50, 0.50, 0.50);
+    pub const PRESSED: Color = Color::srgb(0.35, 0.35, 0.35);
 }
 
 pub mod properties {
