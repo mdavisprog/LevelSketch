@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 pub(super) mod anchors;
 pub(super) mod button;
+pub(super) mod checkbox;
 pub(super) mod image;
 pub(super) mod list;
 pub(super) mod panel;
@@ -18,6 +19,7 @@ impl bevy::prelude::Plugin for Plugin {
             panel::Plugin,
         ));
 
+        checkbox::build(app);
         image::build(app);
         sizer::build(app);
     }

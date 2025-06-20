@@ -20,4 +20,6 @@ pub mod properties {
     pub const BUTTON_PADDING: UiRect = UiRect::px(12.0, 12.0, 4.0, 4.0);
     pub const PADDING: f32 = 4.0;
     pub const SIZER_SIZE: f32 = 5.0;
+    pub const BORDER_RADIUS: BorderRadius = BorderRadius::all(Val::Px(3.0));
+    pub const FONT_SIZE: f32 = 12.0;
 }

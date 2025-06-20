@@ -19,6 +19,11 @@ pub mod prelude {
             KeaButtonClick,
             KeaButtonCommandsExt,
         },
+        checkbox::{
+            KeaCheckbox,
+            KeaCheckboxClicked,
+            KeaCheckboxState,
+        },
         image::{
             KeaImageNode,
         },
