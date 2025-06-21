@@ -37,9 +37,17 @@ impl KeaCheckbox {
     pub fn bundle<E: Event, B: Bundle, M>(
         callback: impl IntoObserverSystem<E, B, M>,
         label: &str,
+    ) -> impl Bundle {
+        Self::bundle_with_state(callback, label, KeaCheckboxState::Unchecked)
+    }
+
+    pub fn bundle_with_state<E: Event, B: Bundle, M>(
+        callback: impl IntoObserverSystem<E, B, M>,
+        label: &str,
+        state: KeaCheckboxState,
     ) -> impl Bundle {(
         Self {
-            state: KeaCheckboxState::Unchecked,
+            state,
             hot: false,
         },
         KeaObservers::new(vec![
@@ -56,7 +64,7 @@ impl KeaCheckbox {
             (
                 Label::bundle(label),
             )
-        ]
+        ],
     )}
 
     pub fn state(&self) -> KeaCheckboxState {
@@ -110,10 +118,12 @@ pub struct KeaCheckboxClicked {
 struct Box;
 
 impl Box {
+    const PATH: &str = "kea://icons/check.svg#image12x12";
+
     fn bundle() -> impl Bundle {(
         Self,
         children![(
-            Check::bundle("kea://icons/check.svg#image12x12"),
+            Check::bundle(Self::PATH),
         )]
     )}
 
@@ -175,7 +185,33 @@ impl Label {
 }
 
 pub(super) fn build(app: &mut App) {
-    app.add_observer(on_released);
+    app
+        .add_observer(on_add)
+        .add_observer(on_released);
+}
+
+fn on_add(
+    trigger: Trigger<OnAdd, Check>,
+    checkboxes: Query<&KeaCheckbox>,
+    children: Query<&ChildOf>,
+    mut checks: Query<&mut Visibility, With<KeaImageNode>>,
+) {
+    let Ok(mut check) = checks.get_mut(trigger.target()) else {
+        return;
+    };
+
+    for parent in children.iter_ancestors(trigger.target()) {
+        let Ok(checkbox) = checkboxes.get(parent) else {
+            continue;
+        };
+
+        *check = match checkbox.state() {
+            KeaCheckboxState::Unchecked => Visibility::Hidden,
+            KeaCheckboxState::Checked => Visibility::Visible,
+        };
+
+        break;
+    }
 }
 
 fn set_box_color(
