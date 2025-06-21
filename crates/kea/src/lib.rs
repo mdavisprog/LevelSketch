@@ -22,6 +22,7 @@ pub mod prelude {
         checkbox::{
             KeaCheckbox,
             KeaCheckboxClicked,
+            KeaCheckboxCommandsExt,
             KeaCheckboxState,
         },
         image::{

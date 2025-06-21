@@ -1,5 +1,8 @@
 use bevy::{
-    ecs::system::IntoObserverSystem,
+    ecs::system::{
+        IntoObserverSystem,
+        SystemState,
+    },
     prelude::*,
 };
 use crate::{
@@ -71,6 +74,13 @@ impl KeaCheckbox {
         self.state
     }
 
+    fn visibility(&self) -> Visibility {
+        match self.state {
+            KeaCheckboxState::Unchecked => Visibility::Hidden,
+            KeaCheckboxState::Checked => Visibility::Visible,
+        }
+    }
+
     fn node() -> Node {
         Node {
             flex_direction: FlexDirection::Row,
@@ -101,6 +111,18 @@ impl KeaCheckbox {
 #[derive(Event)]
 pub struct KeaCheckboxClicked {
     pub state: KeaCheckboxState,
+}
+
+/// Additional commands for checkboxes.
+pub trait KeaCheckboxCommandsExt {
+    fn kea_checkbox_set_state(&mut self, checkbox: Entity, state: KeaCheckboxState) -> &mut Self;
+}
+
+impl<'w, 's> KeaCheckboxCommandsExt for Commands<'w, 's> {
+    fn kea_checkbox_set_state(&mut self, checkbox: Entity, state: KeaCheckboxState) -> &mut Self {
+        self.queue(move |world: &mut World| set_check_state(world, checkbox, state));
+        self
+    }
 }
 
 ///
@@ -297,10 +319,7 @@ fn on_click(
 
     for child in parents.iter_descendants(trigger.target()) {
         if let Ok(mut check) = checks.get_mut(child) {
-            *check = match checkbox.state {
-                KeaCheckboxState::Unchecked => Visibility::Hidden,
-                KeaCheckboxState::Checked => Visibility::Visible,
-            };
+            *check = checkbox.visibility();
 
             commands.trigger_targets(KeaCheckboxClicked {
                 state: checkbox.state,
@@ -309,4 +328,46 @@ fn on_click(
             break;
         }
     }
+}
+
+fn set_check_state(
+    world: &mut World,
+    checkbox_entity: Entity,
+    state: KeaCheckboxState,
+) {
+    let mut system_state: SystemState<(
+        Query<&Children>,
+        Query<&mut KeaCheckbox>,
+        Query<&mut Visibility, With<Check>>,
+        Commands,
+    )> = SystemState::new(world);
+
+    let (
+        parents,
+        mut checkboxes,
+        mut checks,
+        mut commands,
+    ) = system_state.get_mut(world);
+
+    let Ok(mut checkbox) = checkboxes.get_mut(checkbox_entity) else {
+        return;
+    };
+
+    checkbox.state = state;
+
+    for child in parents.iter_descendants_depth_first(checkbox_entity) {
+        let Ok(mut check) = checks.get_mut(child) else {
+            continue;
+        };
+
+        *check = checkbox.visibility();
+
+        commands
+            .trigger_targets(KeaCheckboxClicked {
+                state
+            }, checkbox_entity);
+        break;
+    }
+
+    system_state.apply(world);
 }
