@@ -48,6 +48,7 @@ pub mod prelude {
         },
     };
     pub use observers::KeaObservers;
+    pub use overrides::KeaNodeOverrides;
     pub use position::KeaPosition;
     pub use plugin::KeaPlugin;
 }

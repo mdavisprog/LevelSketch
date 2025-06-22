@@ -27,7 +27,7 @@ use crate::{
         scrollable::KeaScrollable,
     },
     observers::KeaObservers,
-    overrides::NodeOverrides,
+    overrides::KeaNodeOverrides,
     utility,
 };
 
@@ -100,7 +100,7 @@ impl KeaInspector {
         bundles: impl Bundle,
     ) -> impl Bundle {(
         KeaButton::label_bundle(callback, label),
-        NodeOverrides {
+        KeaNodeOverrides {
             flex_grow: Some(1.0),
             ..default()
         },
@@ -150,7 +150,7 @@ impl Contents {
                 KeaScrollable,
                 children![
                     (
-                        NodeOverrides {
+                        KeaNodeOverrides {
                             display: Some(Display::None),
                             ..default()
                         },
@@ -304,7 +304,7 @@ fn toggle_display(
             commands
                 .entity(entity)
                 .insert((
-                    NodeOverrides {
+                    KeaNodeOverrides {
                         display: Some(display),
                         ..default()
                     },

@@ -3,7 +3,7 @@ use crate::{
     constants,
     controls::button::KeaButton,
     observers::KeaObservers,
-    overrides::NodeOverrides,
+    overrides::KeaNodeOverrides,
     style,
 };
 use super::systems::{
@@ -101,7 +101,7 @@ impl KeaPanelHeader {
             ),
             (
                 KeaButton::image_bundle(on_close, "kea://icons/close.svg#image12x12"),
-                NodeOverrides {
+                KeaNodeOverrides {
                     align_self: Some(AlignSelf::End),
                     padding: Some(UiRect::ZERO),
                     ..default()
