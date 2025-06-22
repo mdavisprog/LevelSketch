@@ -46,6 +46,13 @@ pub mod prelude {
             KeaSizer,
             KeaSizerTarget,
         },
+        text::{
+            KeaTextInput,
+            KeaTextInputCommands,
+            KeaTextInputResource,
+            // Events
+            KeaTextInputConfirm,
+        },
     };
     pub use observers::KeaObservers;
     pub use overrides::KeaNodeOverrides;

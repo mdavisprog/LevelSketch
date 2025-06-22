@@ -12,6 +12,7 @@ pub mod colors {
     pub const BUTTON_BACKGROUND: Color = Color::srgb(0.20, 0.20, 0.20);
     pub const HIGHLIGHT: Color = Color::srgb(0.50, 0.50, 0.50);
     pub const PRESSED: Color = Color::srgb(0.35, 0.35, 0.35);
+    pub const TEXT_INPUT_EDIT: Color = Color::srgb(0.25, 0.25, 0.80);
 }
 
 pub mod properties {

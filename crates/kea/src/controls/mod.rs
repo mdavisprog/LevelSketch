@@ -8,6 +8,7 @@ pub(super) mod list;
 pub(super) mod panel;
 pub(super) mod scrollable;
 pub(super) mod sizer;
+pub(super) mod text;
 
 pub(super) struct Plugin;
 
@@ -17,6 +18,7 @@ impl bevy::prelude::Plugin for Plugin {
             button::Plugin,
             list::Plugin,
             panel::Plugin,
+            text::Plugin,
         ));
 
         checkbox::build(app);
