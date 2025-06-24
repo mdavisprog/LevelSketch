@@ -4,6 +4,7 @@ use bevy::{
     prelude::*,
     window::*,
 };
+use kea::prelude::*;
 use std::f32::consts::*;
 use super::gui;
 
@@ -46,9 +47,14 @@ impl Controller {
         mouse_buttons: Res<ButtonInput<MouseButton>>,
         mouse_move: Res<AccumulatedMouseMotion>,
         gui_state: Res<gui::State>,
+        text_input: Res<KeaTextInputResource>,
         mut camera: Query<(&mut Transform, &mut Controller)>,
         mut window: Query<&mut Window>,
     ) {
+        if text_input.has_focused() {
+            return;
+        }
+
         let Ok((mut transform, mut camera_controller)) = camera.single_mut() else {
             return;
         };
