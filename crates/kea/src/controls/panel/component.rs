@@ -62,6 +62,7 @@ impl KeaPanel {
             min_width: Val::Px(20.0),
             min_height: Val::Px(20.0),
             padding: UiRect::all(Val::Px(style::properties::PADDING)),
+            row_gap: Val::Px(4.0),
             overflow: Overflow::clip(),
             ..default()
         },
