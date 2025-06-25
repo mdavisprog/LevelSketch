@@ -68,6 +68,7 @@ impl KeaButton {
         Node {
             justify_content: JustifyContent::Center,
             padding: style::properties::BUTTON_PADDING,
+            height: Val::Px(style::properties::CONTROL_HEIGHT),
             ..default()
         }
     }

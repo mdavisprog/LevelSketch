@@ -40,7 +40,7 @@ impl KeaTextInput {
         Node {
             overflow: Overflow::clip(),
             width: Val::Px(75.0),
-            height: Val::Px(style::properties::FONT_SIZE + 6.0),
+            height: Val::Px(style::properties::CONTROL_HEIGHT),
             padding: UiRect::horizontal(Val::Px(6.0)),
             justify_content: JustifyContent::Center,
             ..default()

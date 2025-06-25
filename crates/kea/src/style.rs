@@ -23,4 +23,5 @@ pub mod properties {
     pub const SIZER_SIZE: f32 = 5.0;
     pub const BORDER_RADIUS: BorderRadius = BorderRadius::all(Val::Px(3.0));
     pub const FONT_SIZE: f32 = 12.0;
+    pub const CONTROL_HEIGHT: f32 = FONT_SIZE + 12.0;
 }
