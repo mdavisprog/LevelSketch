@@ -73,6 +73,7 @@ impl KeaPanel {
             (
                 Node {
                     width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
                     overflow: Overflow::scroll(),
                     ..default()
                 },
