@@ -13,6 +13,7 @@ pub mod colors {
     pub const HIGHLIGHT: Color = Color::srgb(0.50, 0.50, 0.50);
     pub const PRESSED: Color = Color::srgb(0.35, 0.35, 0.35);
     pub const TEXT_INPUT_EDIT: Color = Color::srgb(0.25, 0.25, 0.80);
+    pub const SEPARATOR: Color = Color::srgb(0.45, 0.45, 0.45);
 }
 
 pub mod properties {
@@ -23,5 +24,8 @@ pub mod properties {
     pub const SIZER_SIZE: f32 = 5.0;
     pub const BORDER_RADIUS: BorderRadius = BorderRadius::all(Val::Px(3.0));
     pub const FONT_SIZE: f32 = 12.0;
+    pub const SEPARATOR_GAP: f32 = 15.0;
+    pub const SEPARATOR_SIZE: f32 = 2.0;
+    pub const SEPARATOR_PADDING: f32 = 4.0;
     pub const CONTROL_HEIGHT: f32 = FONT_SIZE + 12.0;
 }

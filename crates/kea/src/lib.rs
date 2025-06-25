@@ -42,6 +42,7 @@ pub mod prelude {
             KeaPanelOptions,
         },
         scrollable::KeaScrollable,
+        separator::KeaSeparator,
         sizer::{
             KeaSizer,
             KeaSizerTarget,
