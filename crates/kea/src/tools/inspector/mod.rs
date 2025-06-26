@@ -511,6 +511,7 @@ fn update_inspectors(
     data: Res<Data>,
     content: Query<(Entity, &ContentType)>,
     inspectors: Query<(Entity, &mut KeaInspector)>,
+    names: Query<&Name>,
     mut texts: Query<&mut Text>,
     mut commands: Commands,
 ) {
@@ -561,7 +562,11 @@ fn update_inspectors(
 
                     let mut items = Vec::<String>::new();
                     for hovered in &inspector.hovered {
-                        items.push(format!("Node {hovered}"));
+                        if let Ok(name) = names.get(*hovered) {
+                            items.push(format!("{} {hovered}", name.as_str()));
+                        } else {
+                            items.push(format!("Node {hovered}"));
+                        }
                     }
 
                     commands
