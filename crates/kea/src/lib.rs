@@ -28,6 +28,7 @@ pub mod prelude {
         image::{
             KeaImageNode,
         },
+        label::KeaLabel,
         list::{
             KeaList,
             KeaListBehavior,
