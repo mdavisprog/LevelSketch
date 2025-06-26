@@ -104,7 +104,6 @@ impl KeaPanelHeader {
             (
                 KeaButton::image_bundle(on_close, "kea://icons/close.svg#image12x12"),
                 KeaNodeOverrides {
-                    align_self: Some(AlignSelf::End),
                     padding: Some(UiRect::ZERO),
                     ..default()
                 }
@@ -115,6 +114,7 @@ impl KeaPanelHeader {
     fn node() -> Node {
         Node {
             width: Val::Percent(100.0),
+            align_items: AlignItems::Center,
             ..default()
         }
     }

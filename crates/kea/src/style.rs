@@ -27,5 +27,4 @@ pub mod properties {
     pub const SEPARATOR_GAP: f32 = 15.0;
     pub const SEPARATOR_SIZE: f32 = 2.0;
     pub const SEPARATOR_PADDING: f32 = 4.0;
-    pub const CONTROL_HEIGHT: f32 = FONT_SIZE + 12.0;
 }
