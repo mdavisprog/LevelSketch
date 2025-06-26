@@ -7,6 +7,7 @@ pub(super) mod image;
 pub(super) mod label;
 pub(super) mod list;
 pub(super) mod panel;
+pub(super) mod property;
 pub(super) mod scrollable;
 pub(super) mod separator;
 pub(super) mod sizer;
