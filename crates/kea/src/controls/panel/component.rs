@@ -75,6 +75,7 @@ impl KeaPanel {
                     width: Val::Percent(100.0),
                     height: Val::Percent(100.0),
                     overflow: Overflow::scroll(),
+                    align_items: AlignItems::Start,
                     ..default()
                 },
                 children![(
