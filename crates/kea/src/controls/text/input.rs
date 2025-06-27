@@ -18,12 +18,16 @@ pub struct KeaTextInput {
 }
 
 impl KeaTextInput {
-    pub fn bundle() -> impl Bundle {(
+    pub fn bundle() -> impl Bundle {
+        Self::bundle_with_text("")
+    }
+
+    pub fn bundle_with_text(text: &str) -> impl Bundle {(
         Self {
             _private: (),
         },
         children![
-            TextInput,
+            TextInput::bundle(text),
         ]
     )}
 
@@ -34,6 +38,16 @@ impl KeaTextInput {
         KeaObservers::new(vec![
             Observer::new(callback),
         ]),
+    )}
+
+    pub fn bundle_with_callback_and_text<E: Event, B: Bundle, M>(
+        callback: impl IntoObserverSystem<E, B, M>,
+        text: &str,
+    ) -> impl Bundle {(
+        Self::bundle_with_text(text),
+        KeaObservers::new(vec![
+            Observer::new(callback),
+        ])
     )}
 
     fn node() -> Node {
@@ -59,6 +73,11 @@ impl KeaTextInput {
 pub(super) struct TextInput;
 
 impl TextInput {
+    fn bundle(text: &str) -> impl Bundle {(
+        Self,
+        Text::new(text),
+    )}
+
     fn node() -> Node {
         Node {
             align_self: AlignSelf::Center,

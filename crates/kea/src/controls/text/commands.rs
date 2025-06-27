@@ -3,15 +3,42 @@ use bevy::{
     prelude::*,
 };
 use crate::style;
-use super::resources::KeaTextInputResource;
+use super::{
+    input::TextInput,
+    resources::KeaTextInputResource,
+};
 
 pub trait KeaTextInputCommands {
     fn kea_text_input_set_focus(&mut self, text_input: Entity, focused: bool) -> &mut Self;
+    fn kea_text_input_set_text(&mut self, text_input: Entity, text: String) -> &mut Self;
 }
 
 impl<'w, 's> KeaTextInputCommands for Commands<'w, 's> {
     fn kea_text_input_set_focus(&mut self, text_input: Entity, focused: bool) -> &mut Self {
         self.queue(move |world: &mut World| text_input_focus(world, text_input, focused));
+        self
+    }
+
+    fn kea_text_input_set_text(&mut self, text_input: Entity, text: String) -> &mut Self {
+        self.queue(move |world: &mut World| {
+            let mut system_state: SystemState<(
+                Query<&Children>,
+                Query<&mut Text, With<TextInput>>,
+            )> = SystemState::new(world);
+
+            let (parents, mut texts) = system_state.get_mut(world);
+
+            for child in parents.iter_descendants(text_input) {
+                let Ok(mut text_input) = texts.get_mut(child) else {
+                    continue;
+                };
+
+                *text_input = text.into();
+                break;
+            }
+
+            system_state.apply(world);
+        });
         self
     }
 }
