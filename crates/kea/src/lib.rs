@@ -42,7 +42,10 @@ pub mod prelude {
             KeaPanel,
             KeaPanelOptions,
         },
-        property::KeaProperty,
+        property::{
+            KeaProperty,
+            KeaPropertyCommandsExt,
+        },
         scrollable::KeaScrollable,
         separator::KeaSeparator,
         sizer::{
