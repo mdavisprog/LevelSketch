@@ -5,6 +5,7 @@ mod observers;
 mod overrides;
 mod plugin;
 mod position;
+mod ready;
 mod style;
 mod utility;
 
@@ -64,4 +65,9 @@ pub mod prelude {
     pub use overrides::KeaNodeOverrides;
     pub use position::KeaPosition;
     pub use plugin::KeaPlugin;
+    pub use ready::{
+        KeaOnReadyComponent,
+        // Events
+        KeaOnReady,
+    };
 }

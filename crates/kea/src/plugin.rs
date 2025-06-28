@@ -8,6 +8,7 @@ use super::{
     observers,
     overrides,
     position,
+    ready,
     tools,
 };
 
@@ -39,5 +40,6 @@ impl Plugin for KeaPlugin {
         observers::build(app);
         overrides::build(app);
         position::build(app);
+        ready::build(app);
     }
 }
