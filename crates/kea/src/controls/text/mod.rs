@@ -9,7 +9,11 @@ mod systems;
 pub use {
     commands::KeaTextInputCommands,
     events::KeaTextInputConfirm,
-    input::KeaTextInput,
+    input::{
+        KeaTextInput,
+        KeaTextInputFormat,
+        KeaTextInputFormatNumber,
+    },
     resources::KeaTextInputResource,
 };
 

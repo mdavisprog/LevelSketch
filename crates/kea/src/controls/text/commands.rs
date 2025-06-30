@@ -4,7 +4,10 @@ use bevy::{
 };
 use crate::style;
 use super::{
-    input::TextInput,
+    input::{
+        KeaTextInput,
+        TextInput,
+    },
     resources::KeaTextInputResource,
 };
 
@@ -23,17 +26,22 @@ impl<'w, 's> KeaTextInputCommands for Commands<'w, 's> {
         self.queue(move |world: &mut World| {
             let mut system_state: SystemState<(
                 Query<&Children>,
+                Query<&KeaTextInput>,
                 Query<&mut Text, With<TextInput>>,
             )> = SystemState::new(world);
 
-            let (parents, mut texts) = system_state.get_mut(world);
+            let (parents, text_inputs, mut texts) = system_state.get_mut(world);
+
+            let Ok(input) = text_inputs.get(text_input) else {
+                return;
+            };
 
             for child in parents.iter_descendants(text_input) {
-                let Ok(mut text_input) = texts.get_mut(child) else {
+                let Ok(mut text_object) = texts.get_mut(child) else {
                     continue;
                 };
 
-                *text_input = text.into();
+                text_object.0 = input.format.convert(&text);
                 break;
             }
 

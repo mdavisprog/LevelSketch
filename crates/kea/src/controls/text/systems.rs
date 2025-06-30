@@ -11,6 +11,7 @@ use super::{
     input::TextInput,
     KeaTextInput,
     KeaTextInputCommands,
+    KeaTextInputFormat,
     KeaTextInputResource,
 };
 
@@ -48,6 +49,7 @@ fn on_click(
 fn keyboard_input(
     resource: Res<KeaTextInputResource>,
     parents: Query<&Children>,
+    text_inputs: Query<&KeaTextInput>,
     mut events: EventReader<KeyboardInput>,
     mut texts: Query<&mut Text, With<TextInput>>,
     mut commands: Commands,
@@ -65,10 +67,16 @@ fn keyboard_input(
         return;
     };
 
+    let Ok(text_input) = text_inputs.get(resource.focused) else {
+        events.clear();
+        return;
+    };
+
     for event in events.read() {
         if event.state == ButtonState::Pressed {
             match event.key_code {
                 KeyCode::Enter | KeyCode::NumpadEnter => {
+                    text.0 = text_input.format.convert(&text.0);
                     commands
                         .kea_text_input_set_focus(resource.focused, false)
                         .trigger_targets(KeaTextInputConfirm {
@@ -83,7 +91,31 @@ fn keyboard_input(
                         continue;
                     };
 
-                    text.0 += pending_text.as_str();
+                    let string = pending_text.to_string();
+                    let delta = match text_input.format {
+                        KeaTextInputFormat::Default => string,
+                        KeaTextInputFormat::Numbers(_) => {
+                            if pending_text.parse::<f32>().is_ok() {
+                                string
+                            } else if pending_text == "." {
+                                if !text.0.contains(".") {
+                                    string
+                                } else {
+                                    format!("")
+                                }
+                            } else if pending_text == "-" {
+                                if text.0.is_empty() {
+                                    string
+                                } else {
+                                    format!("")
+                                }
+                            } else {
+                                format!("")
+                            }
+                        },
+                    };
+
+                    text.0 += &delta;
                 },
             }
         }

@@ -11,6 +11,8 @@ use crate::{
         text::{
             KeaTextInput,
             KeaTextInputCommands,
+            KeaTextInputFormat,
+            KeaTextInputFormatNumber,
         },
     },
     overrides::KeaNodeOverrides,
@@ -36,6 +38,50 @@ impl KeaProperty {
         label: &str,
         text: &str,
         callback: impl IntoObserverSystem<E, B, M>,
+    ) -> impl Bundle {
+        Self::bundle_with_text_format(
+            label,
+            text,
+            KeaTextInputFormat::Default,
+            callback
+        )
+    }
+
+    pub fn bundle_with_numbers<E: Event, B: Bundle, M>(
+        label: &str,
+        number: f32,
+        callback: impl IntoObserverSystem<E, B, M>,
+    ) -> impl Bundle {
+        Self::bundle_with_numbers_and_precision(
+            label,
+            number,
+            4,
+            callback
+        )
+    }
+
+    pub fn bundle_with_numbers_and_precision<E: Event, B: Bundle, M>(
+        label: &str,
+        number: f32,
+        precision: usize,
+        callback: impl IntoObserverSystem<E, B, M>,
+    ) -> impl Bundle {
+        let format = KeaTextInputFormat::Numbers(KeaTextInputFormatNumber {
+            precision,
+        });
+        Self::bundle_with_text_format(
+            label,
+            &format.convert(&number.to_string()),
+            format,
+            callback,
+        )
+    }
+
+    fn bundle_with_text_format<E: Event, B: Bundle, M>(
+        label: &str,
+        text: &str,
+        format: KeaTextInputFormat,
+        callback: impl IntoObserverSystem<E, B, M>,
     ) -> impl Bundle {(
         Self {
             _private: (),
@@ -45,7 +91,7 @@ impl KeaProperty {
                 KeaLabel::bundle(label),
             ),
             (
-                KeaTextInput::bundle_with_callback_and_text(callback, text),
+                KeaTextInput::bundle_with_callback_and_text(text, format, callback),
                 KeaNodeOverrides {
                     flex_grow: Some(1.0),
                     ..default()

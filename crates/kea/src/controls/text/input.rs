@@ -7,6 +7,33 @@ use crate::{
     style,
 };
 
+#[derive(Default)]
+pub struct KeaTextInputFormatNumber {
+    pub precision: usize,
+}
+
+pub enum KeaTextInputFormat {
+    Default,
+    Numbers(KeaTextInputFormatNumber),
+}
+
+impl KeaTextInputFormat {
+    pub fn convert(&self, text: &str) -> String {
+        match self {
+            Self::Default => text.to_string(),
+            Self::Numbers(format) => {
+                let value = if let Ok(value) = text.parse::<f32>() {
+                    value
+                } else {
+                    0.0
+                };
+
+                format!("{:.prec$}", value, prec = format.precision)
+            }
+        }
+    }
+}
+
 #[derive(Component)]
 #[require(
     Node = Self::node(),
@@ -14,17 +41,17 @@ use crate::{
     BackgroundColor = style::colors::BUTTON_BACKGROUND,
 )]
 pub struct KeaTextInput {
-    _private: (),
+    pub(super) format: KeaTextInputFormat,
 }
 
 impl KeaTextInput {
     pub fn bundle() -> impl Bundle {
-        Self::bundle_with_text("")
+        Self::bundle_with_text("", KeaTextInputFormat::Default)
     }
 
-    pub fn bundle_with_text(text: &str) -> impl Bundle {(
+    pub fn bundle_with_text(text: &str, format: KeaTextInputFormat) -> impl Bundle {(
         Self {
-            _private: (),
+            format,
         },
         children![
             TextInput::bundle(text),
@@ -41,10 +68,11 @@ impl KeaTextInput {
     )}
 
     pub fn bundle_with_callback_and_text<E: Event, B: Bundle, M>(
-        callback: impl IntoObserverSystem<E, B, M>,
         text: &str,
+        format: KeaTextInputFormat,
+        callback: impl IntoObserverSystem<E, B, M>,
     ) -> impl Bundle {(
-        Self::bundle_with_text(text),
+        Self::bundle_with_text(text, format),
         KeaObservers::new(vec![
             Observer::new(callback),
         ])

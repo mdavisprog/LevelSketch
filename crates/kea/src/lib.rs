@@ -56,6 +56,7 @@ pub mod prelude {
         text::{
             KeaTextInput,
             KeaTextInputCommands,
+            KeaTextInputFormat,
             KeaTextInputResource,
             // Events
             KeaTextInputConfirm,
