@@ -4,10 +4,13 @@ use bevy::{
 };
 use crate::style;
 use super::{
-    input::{
-        KeaTextInput,
-        TextInput,
+    cursor::Cursor,
+    document::{
+        Document,
+        DocumentContents,
     },
+    events::KeaTextInputSetCursorPosition,
+    input::KeaTextInput,
     resources::KeaTextInputResource,
 };
 
@@ -27,7 +30,7 @@ impl<'w, 's> KeaTextInputCommands for Commands<'w, 's> {
             let mut system_state: SystemState<(
                 Query<&Children>,
                 Query<&KeaTextInput>,
-                Query<&mut Text, With<TextInput>>,
+                Query<&mut Text, With<DocumentContents>>,
             )> = SystemState::new(world);
 
             let (parents, text_inputs, mut texts) = system_state.get_mut(world);
@@ -57,12 +60,24 @@ fn text_input_focus(
     focused: bool,
 ) {
     let mut system_state: SystemState<(
+        Query<&Children>,
+        Query<&Document>,
         Query<&mut BackgroundColor>,
         Query<&mut Node>,
+        Query<&mut Visibility, With<Cursor>>,
         ResMut<KeaTextInputResource>,
+        EventWriter<KeaTextInputSetCursorPosition>,
     )> = SystemState::new(world);
 
-    let (mut background_colors, mut nodes, mut resource) = system_state.get_mut(world);
+    let (
+        parents,
+        documents,
+        mut background_colors,
+        mut nodes,
+        mut cursors,
+        mut resource,
+        mut events,
+    ) = system_state.get_mut(world);
 
     resource.focused = if focused {
         text_input
@@ -78,12 +93,38 @@ fn text_input_focus(
         };
     }
 
-    if let Ok(mut node) = nodes.get_mut(text_input) {
+    let mut document = Entity::PLACEHOLDER;
+    let mut cursor = Entity::PLACEHOLDER;
+
+    for child in parents.iter_descendants(text_input) {
+        if documents.contains(child) {
+            document = child;
+        } else if cursors.contains(child) {
+            cursor = child;
+        }
+    }
+
+    // Update the text justification of the Document based on focus state.
+    if let Ok(mut node) = nodes.get_mut(document) {
         node.justify_content = if focused {
             JustifyContent::Start
         } else {
             JustifyContent::Center
         };
+    }
+
+    // Show/hide the cursor entity and set its index to the end of the text.
+    if let Ok(mut visibility) = cursors.get_mut(cursor) {
+        *visibility = if focused {
+            Visibility::Visible
+        } else {
+            Visibility::Hidden
+        };
+
+        events.write(KeaTextInputSetCursorPosition {
+            text_input,
+            index: usize::MAX,
+        });
     }
 
     system_state.apply(world);

@@ -4,3 +4,9 @@ use bevy::prelude::*;
 pub struct KeaTextInputConfirm {
     pub text: String,
 }
+
+#[derive(Event)]
+pub(super) struct KeaTextInputSetCursorPosition {
+    pub text_input: Entity,
+    pub index: usize,
+}

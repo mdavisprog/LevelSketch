@@ -6,6 +6,7 @@ use crate::{
     observers::KeaObservers,
     style,
 };
+use super::document::Document;
 
 #[derive(Default)]
 pub struct KeaTextInputFormatNumber {
@@ -54,7 +55,7 @@ impl KeaTextInput {
             format,
         },
         children![
-            TextInput::bundle(text),
+            Document::bundle(text),
         ]
     )}
 
@@ -85,30 +86,6 @@ impl KeaTextInput {
             height: Val::Px(style::properties::FONT_SIZE + 6.0),
             padding: UiRect::horizontal(Val::Px(6.0)),
             justify_content: JustifyContent::Center,
-            ..default()
-        }
-    }
-}
-
-#[derive(Component)]
-#[require(
-    Node = Self::node(),
-    Text,
-    TextFont = TextFont::from_font_size(style::properties::FONT_SIZE),
-    TextLayout = TextLayout::new_with_linebreak(LineBreak::NoWrap),
-    Pickable = Pickable::IGNORE,
-)]
-pub(super) struct TextInput;
-
-impl TextInput {
-    fn bundle(text: &str) -> impl Bundle {(
-        Self,
-        Text::new(text),
-    )}
-
-    fn node() -> Node {
-        Node {
-            align_self: AlignSelf::Center,
             ..default()
         }
     }

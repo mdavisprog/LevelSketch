@@ -14,6 +14,7 @@ pub mod colors {
     pub const PRESSED: Color = Color::srgb(0.35, 0.35, 0.35);
     pub const TEXT_INPUT_EDIT: Color = Color::srgb(0.25, 0.25, 0.80);
     pub const SEPARATOR: Color = Color::srgb(0.45, 0.45, 0.45);
+    pub const CURSOR: Color = Color::srgb(0.80, 0.80, 0.80);
 }
 
 pub mod properties {
