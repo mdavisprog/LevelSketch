@@ -712,19 +712,24 @@ fn update_component_info(world: &mut World) {
             continue;
         };
 
-        let mut info = String::new();
+        let mut names: Vec<String> = Vec::new();
         for component in components {
             let name = component.name();
             let tokens: Vec<&str> = name.rsplit("::").collect();
             if tokens.is_empty() {
-                info += name;
+                names.push(name.to_string());
             } else {
-                info += tokens[0];
+                names.push(tokens[0].to_string());
             }
-
-            info += "\n";
         }
 
+        names.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
+
+        let mut info = String::new();
+        for name in names {
+            info += &name;
+            info += "\n";
+        }
         // Remove the last '\n' character
         info.pop();
 
