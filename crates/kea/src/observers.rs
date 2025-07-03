@@ -1,4 +1,8 @@
 use bevy::prelude::*;
+use super::ready::{
+    KeaOnReady,
+    KeaOnReadyComponent,
+};
 
 ///
 /// KeaObservers
@@ -8,13 +12,29 @@ use bevy::prelude::*;
 /// the owning entity and spawned before the component is removed.
 ///
 #[derive(Component)]
-pub struct KeaObservers(Vec<Observer>);
+pub struct KeaObservers {
+    observers: Vec<Observer>,
+    observe_parent: bool,
+}
 
 impl KeaObservers {
     pub fn new(observers: Vec<Observer>) -> Self {
-        Self(observers)
+        Self {
+            observers,
+            observe_parent: false,
+        }
+    }
+
+    pub fn new_observe_parent(observers: Vec<Observer>) -> Self {
+        Self {
+            observers,
+            observe_parent: true,
+        }
     }
 }
+
+#[derive(Component)]
+struct LatentDespawn(Entity);
 
 pub(super) fn build(app: &mut App) {
     app.add_observer(on_add);
@@ -22,6 +42,7 @@ pub(super) fn build(app: &mut App) {
 
 fn on_add(
     trigger: Trigger<OnAdd, KeaObservers>,
+    children: Query<&ChildOf>,
     mut observers: Query<&mut KeaObservers>,
     mut commands: Commands,
 ) {
@@ -29,12 +50,43 @@ fn on_add(
         return;
     };
 
-    for mut observer in core::mem::take(&mut observers.0) {
-        observer.watch_entity(trigger.target());
+    let target = if observers.observe_parent {
+        if let Ok(child) = children.get(trigger.target()) {
+            child.parent()
+        } else {
+            trigger.target()
+        }
+    } else {
+        trigger.target()
+    };
+
+    for mut observer in core::mem::take(&mut observers.observers) {
+        observer.watch_entity(target);
         commands.spawn(observer);
     }
 
-    commands
-        .entity(trigger.target())
-        .remove::<KeaObservers>();
+    if observers.observe_parent {
+        commands.spawn((
+            KeaOnReadyComponent,
+            LatentDespawn(trigger.target()),
+        ))
+        .observe(on_ready);
+    } else {
+        commands
+            .entity(trigger.target())
+            .remove::<KeaObservers>();
+    }
+}
+
+fn on_ready(
+    trigger: Trigger<KeaOnReady>,
+    latent_despawns: Query<&LatentDespawn>,
+    mut commands: Commands,
+) {
+    let Ok(latent_despawn) = latent_despawns.get(trigger.target()) else {
+        return;
+    };
+
+    commands.entity(latent_despawn.0).despawn();
+    commands.entity(trigger.target()).despawn();
 }
