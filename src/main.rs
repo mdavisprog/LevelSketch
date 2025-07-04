@@ -12,7 +12,6 @@ mod camera;
 mod commands;
 mod extensions;
 mod gui;
-mod menus;
 mod shapes;
 mod tools;
 
@@ -42,8 +41,6 @@ fn main() {
         ))
         .add_systems(Startup, setup)
         .add_systems(Update, check_exit);
-
-    menus::init(&mut app);
 
     app.run();
 }

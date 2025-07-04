@@ -50,11 +50,8 @@ impl Viewport {
     
     fn on_down(
         trigger: Trigger<Pointer<Pressed>>,
-        mut commands: Commands,
         mut state: ResMut<State>,
     ) {
-        super::close_menus(&mut commands);
-    
         if trigger.button != PointerButton::Secondary {
             return;
         }

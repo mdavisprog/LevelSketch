@@ -1,20 +1,11 @@
 use bevy::prelude::*;
 
 pub mod droppable;
-pub mod menu;
 pub mod panels;
 pub mod style;
 
 mod trail;
 mod viewport;
-
-//
-// Public API
-//
-
-pub fn close_menus(commands: &mut Commands) {
-    menu::close_menus(commands);
-}
 
 //
 // Types
@@ -27,7 +18,6 @@ impl Plugin for GUIPlugin {
         app
             .init_resource::<State>()
             .add_plugins((
-                menu::Plugin,
                 panels::Plugin,
             ))
             .add_systems(Startup, setup);
