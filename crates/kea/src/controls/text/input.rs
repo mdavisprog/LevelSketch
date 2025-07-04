@@ -61,22 +61,32 @@ impl KeaTextInput {
 
     pub fn bundle_with_callback<E: Event, B: Bundle, M>(
         callback: impl IntoObserverSystem<E, B, M>
-    ) -> impl Bundle {(
-        Self::bundle(),
-        KeaObservers::new(vec![
-            Observer::new(callback),
-        ]),
-    )}
+    ) -> impl Bundle {
+        Self::bundle_with_callback_and_text(
+            "",
+            KeaTextInputFormat::Default,
+            callback
+        )
+    }
 
     pub fn bundle_with_callback_and_text<E: Event, B: Bundle, M>(
         text: &str,
         format: KeaTextInputFormat,
         callback: impl IntoObserverSystem<E, B, M>,
     ) -> impl Bundle {(
-        Self::bundle_with_text(text, format),
-        KeaObservers::new(vec![
-            Observer::new(callback),
-        ])
+        Self {
+            format,
+        },
+        children![
+            (
+                Document::bundle(text),
+            ),
+            (
+                KeaObservers::new_observe_parent(vec![
+                    Observer::new(callback),
+                ]),
+            )
+        ],
     )}
 
     fn node() -> Node {
