@@ -11,10 +11,7 @@ use bevy::{
 use super::{
     cursor::Cursor,
     document::DocumentContents,
-    events::{
-        KeaTextInputConfirm,
-        KeaTextInputSetCursorPosition,
-    },
+    events::KeaTextInputSetCursorPosition,
     KeaTextInput,
     KeaTextInputCommands,
     KeaTextInputFormat,
@@ -93,12 +90,7 @@ fn keyboard_input(
         if event.state == ButtonState::Pressed {
             match event.key_code {
                 KeyCode::Enter | KeyCode::NumpadEnter => {
-                    text.0 = text_input.format.convert(&text.0);
-                    commands
-                        .kea_text_input_set_focus(resource.focused, false)
-                        .trigger_targets(KeaTextInputConfirm {
-                            text: text.0.clone(),
-                        }, resource.focused);
+                    commands.kea_text_input_set_focus(resource.focused, false);
                 },
                 KeyCode::Backspace => {
                     if cursor.index < text.0.len() {
