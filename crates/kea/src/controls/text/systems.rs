@@ -1,5 +1,4 @@
 use bevy::{
-    diagnostic::FrameCount,
     input::{
         ButtonState,
         keyboard::KeyboardInput,
@@ -15,50 +14,56 @@ use super::{
     KeaTextInput,
     KeaTextInputCommands,
     KeaTextInputFormat,
-    KeaTextInputResource,
+    resources::{
+        FocusState,
+        KeaTextInputResource,
+    },
 };
 
 pub(super) fn build(app: &mut App) {
     app
         .add_observer(on_click)
-        .add_systems(Update, keyboard_input)
+        .add_systems(Update,
+            (
+                keyboard_input,
+                update_focused,
+            ))
         .add_systems(PostUpdate, set_cursor_position.after(UiSystem::PostLayout));
 }
 
+/// This trigger needs to be handled globally so that unfocused events can be detected
+/// if the user has clicked outside of all KeaTextInput controls.
 fn on_click(
     trigger: Trigger<Pointer<Click>>,
     text_inputs: Query<&KeaTextInput>,
-    frame: Res<FrameCount>,
     mut resource: ResMut<KeaTextInputResource>,
-    mut commands: Commands,
-    mut last_frame: Local<u32>,
 ) {
     let target = trigger.target();
 
-    if text_inputs.contains(target) {
-        resource.focused = target;
-        *last_frame = frame.0;
-        commands.kea_text_input_set_focus(target, true);
-    } else {
-        if *last_frame < frame.0 {
-            if resource.focused != Entity::PLACEHOLDER {
-                commands.kea_text_input_set_focus(resource.focused, false);
+    match resource.focus_state {
+        FocusState::None => {
+            resource.focus_state = if text_inputs.contains(target) {
+                FocusState::Pending(target)
+            } else {
+                FocusState::Pending(Entity::PLACEHOLDER)
             }
-
-            resource.focused = Entity::PLACEHOLDER;
+        },
+        FocusState::Pending(_) => {
+            if text_inputs.contains(target) {
+                resource.focus_state = FocusState::Pending(target);
+            }
         }
     }
 }
 
 fn keyboard_input(
-    resource: Res<KeaTextInputResource>,
     parents: Query<&Children>,
     text_inputs: Query<&KeaTextInput>,
     mut key_events: EventReader<KeyboardInput>,
     mut cursor_events: EventWriter<KeaTextInputSetCursorPosition>,
     mut texts: Query<&mut Text, With<DocumentContents>>,
     mut cursors: Query<&mut Cursor>,
-    mut commands: Commands,
+    mut resource: ResMut<KeaTextInputResource>,
 ) {
     let mut text_entity = Entity::PLACEHOLDER;
     let mut cursor_entity = Entity::PLACEHOLDER;
@@ -90,7 +95,7 @@ fn keyboard_input(
         if event.state == ButtonState::Pressed {
             match event.key_code {
                 KeyCode::Enter | KeyCode::NumpadEnter => {
-                    commands.kea_text_input_set_focus(resource.focused, false);
+                    resource.focus_state = FocusState::Pending(Entity::PLACEHOLDER);
                 },
                 KeyCode::Backspace => {
                     if cursor.index < text.0.len() {
@@ -203,5 +208,29 @@ fn set_cursor_position(
                 cursor_node.left = Val::Px(position.x);
             }
         }
+    }
+}
+
+fn update_focused(
+    mut resource: ResMut<KeaTextInputResource>,
+    mut commands: Commands,
+) {
+    match resource.focus_state {
+        FocusState::Pending(pending) => {
+            if pending != resource.focused {
+                if resource.focused != Entity::PLACEHOLDER {
+                    commands.kea_text_input_set_focus(resource.focused, false);
+                }
+
+                resource.focused = pending;
+
+                if resource.focused != Entity::PLACEHOLDER {
+                    commands.kea_text_input_set_focus(resource.focused, true);
+                }
+            }
+
+            resource.focus_state = FocusState::None;
+        },
+        FocusState::None => {},
     }
 }
