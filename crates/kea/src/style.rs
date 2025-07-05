@@ -25,6 +25,7 @@ pub mod properties {
     pub const SIZER_SIZE: f32 = 5.0;
     pub const BORDER_RADIUS: BorderRadius = BorderRadius::all(Val::Px(3.0));
     pub const FONT_SIZE: f32 = 12.0;
+    pub const PANEL_HEADER_FONT_SIZE: f32 = 16.0;
     pub const SEPARATOR_GAP: f32 = 15.0;
     pub const SEPARATOR_SIZE: f32 = 2.0;
     pub const SEPARATOR_PADDING: f32 = 4.0;

@@ -103,7 +103,13 @@ impl KeaPanelHeader {
                 KeaPanelTitle::bundle(title),
             ),
             (
-                KeaButton::image_bundle(on_close, "kea://icons/close.svg#image12x12"),
+                KeaButton::image_bundle(
+                    on_close,
+                    &format!(
+                        "kea://icons/close.svg#image{size}x{size}",
+                        size = style::properties::PANEL_HEADER_FONT_SIZE
+                    ),
+                ),
                 KeaNodeOverrides {
                     padding: Some(UiRect::ZERO),
                     ..default()
@@ -124,7 +130,7 @@ impl KeaPanelHeader {
 #[derive(Component)]
 #[require(
     Node = Self::node(),
-    TextFont = TextFont::from_font_size(12.0),
+    TextFont = TextFont::from_font_size(style::properties::PANEL_HEADER_FONT_SIZE),
     TextLayout = TextLayout::new_with_justify(JustifyText::Center),
     Pickable = Pickable::IGNORE,
 )]
