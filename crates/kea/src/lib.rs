@@ -6,9 +6,9 @@ mod overrides;
 mod plugin;
 mod position;
 mod ready;
-mod style;
 mod utility;
 
+pub mod style;
 pub mod tools;
 
 pub mod prelude {
