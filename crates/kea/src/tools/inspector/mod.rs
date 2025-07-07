@@ -99,7 +99,7 @@ impl KeaInspector {
         label: &str,
         bundles: impl Bundle,
     ) -> impl Bundle {(
-        KeaButton::label_bundle(callback, label),
+        KeaButton::label_bundle(label, callback),
         KeaNodeOverrides {
             flex_grow: Some(1.0),
             ..default()

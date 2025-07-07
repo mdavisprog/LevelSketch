@@ -104,11 +104,11 @@ impl KeaPanelHeader {
             ),
             (
                 KeaButton::image_bundle(
-                    on_close,
                     &format!(
                         "kea://icons/close.svg#image{size}x{size}",
                         size = style::properties::PANEL_HEADER_FONT_SIZE
                     ),
+                    on_close,
                 ),
                 KeaNodeOverrides {
                     padding: Some(UiRect::ZERO),

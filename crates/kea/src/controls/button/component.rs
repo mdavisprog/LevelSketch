@@ -26,8 +26,8 @@ pub struct KeaButton {
 
 impl KeaButton {
     pub fn label_bundle<E: Event, B: Bundle, M>(
-        callback: impl IntoObserverSystem<E, B, M>,
         label: &str,
+        callback: impl IntoObserverSystem<E, B, M>,
     ) -> impl Bundle {(
         Self::bundle(callback),
         children![(
@@ -39,8 +39,8 @@ impl KeaButton {
     )}
 
     pub fn image_bundle<E: Event, B: Bundle, M>(
-        callback: impl IntoObserverSystem<E, B, M>,
         path: &str,
+        callback: impl IntoObserverSystem<E, B, M>,
     ) -> impl Bundle {(
         Self::bundle(callback),
         children![(
