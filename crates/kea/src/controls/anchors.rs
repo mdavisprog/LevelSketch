@@ -8,7 +8,7 @@ bitflags::bitflags! {
     ///
     /// Bit flags to determine which anchors of a parent node is resizable.
     ///
-    #[derive(Clone, Copy, Debug)]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     pub struct KeaAnchors: u16 {
         const LEFT = 1 << 0;
         const TOP = 1 << 1;

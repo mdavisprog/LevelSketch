@@ -762,4 +762,6 @@ fn update_component_info(world: &mut World) {
             *text = info.clone().into();
         }
     }
+
+    system_state.apply(world);
 }

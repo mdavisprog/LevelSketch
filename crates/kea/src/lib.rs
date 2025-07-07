@@ -1,6 +1,7 @@
 mod assets;
 mod constants;
 mod controls;
+mod mouse;
 mod observers;
 mod overrides;
 mod plugin;
