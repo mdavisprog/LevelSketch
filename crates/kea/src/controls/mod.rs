@@ -3,6 +3,7 @@ use bevy::prelude::*;
 pub(super) mod anchors;
 pub(super) mod button;
 pub(super) mod checkbox;
+pub(super) mod expander;
 pub(super) mod image;
 pub(super) mod label;
 pub(super) mod list;

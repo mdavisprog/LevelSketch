@@ -27,6 +27,7 @@ pub mod prelude {
             KeaCheckboxCommandsExt,
             KeaCheckboxState,
         },
+        expander::KeaExpander,
         image::{
             KeaImageNode,
         },
