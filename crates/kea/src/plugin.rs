@@ -3,6 +3,7 @@ use bevy::{
     prelude::*
 };
 use super::{
+    animation,
     assets,
     controls,
     mouse,
@@ -33,6 +34,7 @@ impl Plugin for KeaPlugin {
 
     fn finish(&self, app: &mut App) {
         app.add_plugins((
+            animation::Plugin,
             assets::Plugin,
             controls::Plugin,
             tools::Plugin,

@@ -1,3 +1,4 @@
+mod animation;
 mod assets;
 mod constants;
 mod controls;
@@ -15,6 +16,12 @@ pub mod tools;
 pub mod prelude {
     use super::*;
 
+    pub use animation::{
+        KeaAnimation,
+        KeaAnimationClip,
+        // Events
+        KeaAnimationComplete,
+    };
     pub use controls::{
         button::{
             KeaButton,
