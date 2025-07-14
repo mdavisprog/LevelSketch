@@ -27,6 +27,7 @@ pub(super) fn build(app: &mut App) {
             (
                 keyboard_input,
                 update_focused,
+                blink_cursors,
             ))
         .add_systems(PostUpdate, set_cursor_position.after(UiSystem::PostLayout));
 }
@@ -180,6 +181,7 @@ fn keyboard_input(
 fn set_cursor_position(
     parents: Query<&Children>,
     texts: Query<(&Text, &TextLayoutInfo)>,
+    mut resource: ResMut<KeaTextInputResource>,
     mut events: EventReader<KeaTextInputSetCursorPosition>,
     mut cursors: Query<(&mut Node, &mut Cursor)>,
 ) {
@@ -206,6 +208,8 @@ fn set_cursor_position(
                 };
 
                 cursor_node.left = Val::Px(position.x);
+                resource.cursor_state.elapsed = 0.0;
+                resource.cursor_state.visible = true;
             }
         }
     }
@@ -232,5 +236,30 @@ fn update_focused(
             resource.focus_state = FocusState::None;
         },
         FocusState::None => {},
+    }
+}
+
+fn blink_cursors(
+    time: Res<Time>,
+    cursors: Query<&mut BackgroundColor, With<Cursor>>,
+    mut resource: ResMut<KeaTextInputResource>,
+) {
+    if resource.focused == Entity::PLACEHOLDER {
+        return;
+    }
+
+    resource.cursor_state.elapsed += time.delta_secs();
+    if resource.cursor_state.is_complete() {
+        resource.cursor_state.elapsed = 0.0;
+        resource.cursor_state.toggle_visible();
+    } else {
+        for mut cursor in cursors {
+            let progress = resource.cursor_state.progress();
+            let mut alpha = EaseFunction::QuadraticIn.sample_clamped(progress);
+            if resource.cursor_state.visible {
+                alpha = 1.0 - alpha;
+            }
+            cursor.0.set_alpha(alpha);
+        }
     }
 }
