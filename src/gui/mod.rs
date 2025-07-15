@@ -5,6 +5,7 @@ pub mod droppable;
 pub mod panels;
 pub mod style;
 
+mod item;
 mod tools;
 mod trail;
 mod viewport;
@@ -21,6 +22,7 @@ impl Plugin for GUIPlugin {
             .init_resource::<State>()
             .add_plugins((
                 panels::Plugin,
+                tools::Plugin,
             ))
             .add_systems(Startup, setup);
 
@@ -76,6 +78,7 @@ fn setup(
             children![
                 KeaExpander::bundle("File", tools::FileTools::bundle()),
                 KeaExpander::bundle("Camera", tools::CameraTools::bundle()),
+                KeaExpander::bundle("Shapes", tools::ShapesTools::bundle()),
             ],
         )),
     );

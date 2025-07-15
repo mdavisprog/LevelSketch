@@ -4,7 +4,10 @@ use bevy::prelude::*;
 use crate::commands::prelude::*;
 
 #[derive(Component)]
-#[require(Node)]
+#[require(
+    Node,
+    Pickable = Pickable::IGNORE,
+)]
 pub struct Trail {
     clone: Entity,
     offset: Vec2,
