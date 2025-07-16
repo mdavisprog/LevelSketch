@@ -9,6 +9,7 @@ pub struct KeaNodeOverrides {
     pub flex_grow: Option<f32>,
     pub width: Option<Val>,
     pub height: Option<Val>,
+    pub overflow: Option<Overflow>,
 }
 
 pub(super) fn build(app: &mut App) {
@@ -45,6 +46,7 @@ fn on_add(
     assign(&node_override.flex_grow, &mut node.flex_grow);
     assign(&node_override.width, &mut node.width);
     assign(&node_override.height, &mut node.height);
+    assign(&node_override.overflow, &mut node.overflow);
 
     commands
         .entity(trigger.target())

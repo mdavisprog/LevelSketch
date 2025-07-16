@@ -2,18 +2,24 @@ use bevy::{
     input::mouse::MouseScrollUnit,
     prelude::*,
 };
-use crate::observers::KeaObservers;
+use crate::{
+    constants,
+    observers::KeaObservers,
+    overrides::KeaNodeOverrides,
+};
 
-///
-/// KeaScrollable
-///
 /// Utility component to update a node's scroll position with the mouse wheel.
 ///
 /// TODO: Add support for displaying and interacting with scroll bars.
-///
 #[derive(Component)]
 #[require(
     KeaObservers = Self::observers(),
+    KeaNodeOverrides = Self::overrides(),
+    ZIndex(constants::SIZER_Z_INDEX),
+    Pickable = Pickable {
+        should_block_lower: false,
+        is_hoverable: true,
+    },
 )]
 pub struct KeaScrollable;
 
@@ -22,6 +28,13 @@ impl KeaScrollable {
         KeaObservers::new(vec![
             Observer::new(on_scroll),
         ])
+    }
+
+    fn overrides() -> KeaNodeOverrides {
+        KeaNodeOverrides {
+            overflow: Some(Overflow::scroll()),
+            ..default()
+        }
     }
 }
 
