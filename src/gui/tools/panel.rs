@@ -26,8 +26,10 @@ impl ToolsPanel {
                 flex_direction: FlexDirection::Column,
                 row_gap: Val::Px(kea::style::properties::ROW_GAP),
                 width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
                 ..default()
             },
+            KeaScrollable,
             children![
                 KeaExpander::bundle("File", FileTools::bundle()),
                 KeaExpander::bundle("Camera", CameraTools::bundle()),
