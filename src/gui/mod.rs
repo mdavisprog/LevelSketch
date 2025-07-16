@@ -1,9 +1,4 @@
 use bevy::prelude::*;
-use kea::prelude::*;
-
-pub mod droppable;
-pub mod panels;
-pub mod style;
 
 mod item;
 mod tools;
@@ -21,12 +16,10 @@ impl Plugin for GUIPlugin {
         app
             .init_resource::<State>()
             .add_plugins((
-                panels::Plugin,
                 tools::Plugin,
             ))
             .add_systems(Startup, setup);
 
-        droppable::build(app);
         trail::build(app);
     }
 }
@@ -63,23 +56,6 @@ fn setup(
     viewport::Viewport::observe(&mut entity);
 
     commands.spawn(
-        KeaPanel::bundle(KeaPanelOptions {
-            title: format!("Tools"),
-            position: Vec2::new(100.0, 100.0),
-            size: Vec2::new(200.0, 400.0),
-        },
-        (
-            Node {
-                flex_direction: FlexDirection::Column,
-                row_gap: Val::Px(kea::style::properties::ROW_GAP),
-                width: Val::Percent(100.0),
-                ..default()
-            },
-            children![
-                KeaExpander::bundle("File", tools::FileTools::bundle()),
-                KeaExpander::bundle("Camera", tools::CameraTools::bundle()),
-                KeaExpander::bundle("Shapes", tools::ShapesTools::bundle()),
-            ],
-        )),
+        tools::ToolsPanel::bundle()
     );
 }

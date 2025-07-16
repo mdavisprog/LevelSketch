@@ -10,7 +10,6 @@ use kea::prelude::*;
 
 mod camera;
 mod commands;
-mod extensions;
 mod gui;
 mod shapes;
 mod tools;

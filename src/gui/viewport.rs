@@ -2,14 +2,7 @@ use bevy::{
     prelude::*,
     render::camera::NormalizedRenderTarget,
 };
-use super::{
-    droppable::{
-        Droppable,
-        DropInfo,
-    },
-    panels,
-    State,
-};
+use super::State;
 
 /// UI Node that rests on top of the world viewport and below all other GUI nodes.
 /// This node acts as a catch all for any interaction with viewport.
@@ -27,11 +20,7 @@ impl Viewport {
             .observe(Self::on_over)
             .observe(Self::on_out)
             .observe(Self::on_down)
-            .observe(Self::on_click)
-            .observe(Self::on_drag_start)
-            .observe(Self::on_drag_enter)
-            .observe(Self::on_drag_over)
-            .observe(Self::on_drag_drop);
+            .observe(Self::on_click);
     }
 
     fn on_over(
@@ -63,7 +52,7 @@ impl Viewport {
         trigger: Trigger<Pointer<Click>>,
         state: Res<State>,
         windows: Query<&Window>,
-        mut commands: Commands,
+        mut _commands: Commands,
     ) {
         if trigger.button != PointerButton::Secondary {
             return;
@@ -83,63 +72,10 @@ impl Viewport {
                 return;
             };
     
-            let Some(cursor_position) = window.cursor_position() else {
+            let Some(_cursor_position) = window.cursor_position() else {
                 return;
             };
-
-            let bundle = panels::Shapes::bundle(cursor_position, &mut commands);
-            commands.spawn(bundle);
         }
-    }
-    
-    fn on_drag_start(
-        trigger: Trigger<Pointer<DragStart>>,
-        mut state: ResMut<State>,
-    ) {
-        if trigger.button != PointerButton::Secondary {
-            return;
-        }
-    
-        state.did_drag = true;
-    }
-    
-    fn on_drag_enter(
-        trigger: Trigger<Pointer<DragEnter>>,
-        droppables: Query<&Droppable>,
-        mut commands: Commands,
-        mut drop_info: ResMut<DropInfo>,
-    ) {
-        let Ok(droppable) = droppables.get(trigger.dragged) else {
-            return;
-        };
-    
-        drop_info.begin(droppable, trigger, &mut commands);
-    }
-    
-    fn on_drag_over(
-        trigger: Trigger<Pointer<DragOver>>,
-        droppables: Query<&Droppable>,
-        mut commands: Commands,
-        mut drop_info: ResMut<DropInfo>,
-    ) {
-        let Ok(droppable) = droppables.get(trigger.dragged) else {
-            return;
-        };
-    
-        drop_info.drag(droppable, trigger, &mut commands);
-    }
-    
-    fn on_drag_drop(
-        trigger: Trigger<Pointer<DragDrop>>,
-        droppables: Query<&Droppable>,
-        mut commands: Commands,
-        mut drop_info: ResMut<DropInfo>,
-    ) {
-        let Ok(droppable) = droppables.get(trigger.dropped) else {
-            return;
-        };
-    
-        drop_info.end(droppable, trigger, &mut commands);
     }
 
     fn node() -> Node {
