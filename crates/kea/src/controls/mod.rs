@@ -9,7 +9,7 @@ pub(super) mod label;
 pub(super) mod list;
 pub(super) mod panel;
 pub(super) mod property;
-pub(super) mod scrollable;
+pub(super) mod scroll;
 pub(super) mod separator;
 pub(super) mod sizer;
 pub(super) mod text;
@@ -22,6 +22,7 @@ impl bevy::prelude::Plugin for Plugin {
             button::Plugin,
             list::Plugin,
             panel::Plugin,
+            scroll::Plugin,
             text::Plugin,
         ));
 

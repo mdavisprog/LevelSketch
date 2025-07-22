@@ -56,7 +56,7 @@ pub mod prelude {
             KeaProperty,
             KeaPropertyCommandsExt,
         },
-        scrollable::KeaScrollable,
+        scroll::KeaScrollable,
         separator::KeaSeparator,
         sizer::{
             KeaSizer,

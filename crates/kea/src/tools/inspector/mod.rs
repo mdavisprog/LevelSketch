@@ -24,7 +24,7 @@ use crate::{
             KeaPanel,
             KeaPanelOptions,
         },
-        scrollable::KeaScrollable,
+        scroll::KeaScrollable,
     },
     observers::KeaObservers,
     overrides::KeaNodeOverrides,
