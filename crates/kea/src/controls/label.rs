@@ -16,4 +16,9 @@ impl KeaLabel {
         },
         Text::new(text),
     )}
+
+    pub fn bundle_with_size(text: &str, font_size: f32) -> impl Bundle {(
+        Self::bundle(text),
+        TextFont::from_font_size(font_size),
+    )}
 }
