@@ -13,6 +13,7 @@ pub(super) mod scroll;
 pub(super) mod separator;
 pub(super) mod sizer;
 pub(super) mod text;
+pub(super) mod tree;
 
 pub(super) struct Plugin;
 

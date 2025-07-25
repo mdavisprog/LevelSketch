@@ -20,7 +20,7 @@ impl ToolsPanel {
             title: format!("Tools"),
             position: Vec2::new(50.0, 100.0),
             size: Vec2::new(300.0, 400.0),
-        }, 
+        },
         (
             Node {
                 flex_direction: FlexDirection::Column,

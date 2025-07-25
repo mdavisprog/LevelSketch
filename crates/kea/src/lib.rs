@@ -75,6 +75,9 @@ pub mod prelude {
             // Events
             KeaTextInputConfirm,
         },
+        tree::{
+            KeaTree,
+        },
     };
     pub use observers::{
         KeaObservers,

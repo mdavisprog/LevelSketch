@@ -42,7 +42,7 @@ impl KeaExpander {
         children![
             (
                 header,
-                KeaObservers::<Header>::new(vec![
+                KeaObservers::<HeaderClickObserver>::new(vec![
                     Observer::new(on_click_header),
                 ]),
             ),
@@ -57,7 +57,7 @@ impl KeaExpander {
         children![
             (
                 Header::bundle(label),
-                KeaObservers::<Header>::new(vec![
+                KeaObservers::<HeaderClickObserver>::new(vec![
                     Observer::new(on_click_header),
                 ]),
             ),
@@ -76,6 +76,10 @@ impl KeaExpander {
 
     pub fn is_collapsed(&self) -> bool {
         self.state == KeaExpanderState::Collapsed
+    }
+
+    pub fn contents_entity(&self) -> Entity {
+        self.contents_entity
     }
 
     fn new() -> Self {
@@ -129,6 +133,9 @@ impl KeaExpander {
     Node = Self::node(),
 )]
 pub(super) struct Header;
+
+/// Marker struct for use with KeaObservers
+struct HeaderClickObserver;
 
 impl Header {
     fn bundle(label: &str) -> impl Bundle {(
