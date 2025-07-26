@@ -34,7 +34,12 @@ pub mod prelude {
             KeaCheckboxCommandsExt,
             KeaCheckboxState,
         },
-        expander::KeaExpander,
+        expander::{
+            KeaExpander,
+            KeaExpanderState,
+            // Events
+            KeaExpanderEvent,
+        },
         image::{
             KeaImageNode,
         },

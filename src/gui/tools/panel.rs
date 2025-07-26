@@ -31,9 +31,9 @@ impl ToolsPanel {
             },
             KeaScrollable,
             children![
-                KeaExpander::bundle("File", FileTools::bundle()),
-                KeaExpander::bundle("Camera", CameraTools::bundle()),
-                KeaExpander::bundle("Shapes", ShapesTools::bundle()),
+                KeaExpander::bundle_with_header("File", FileTools::bundle()),
+                KeaExpander::bundle_with_header("Camera", CameraTools::bundle()),
+                KeaExpander::bundle_with_header("Shapes", ShapesTools::bundle()),
             ],
         )),
     )}
