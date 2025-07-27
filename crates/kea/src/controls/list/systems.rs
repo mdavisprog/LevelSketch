@@ -40,7 +40,7 @@ fn on_add_list_items(
             .with_child((
                 Text::new(item),
                 TextFont::from_font_size(12.0),
-                KeaObservers::new(vec![
+                KeaObservers::<KeaListItem>::new(vec![
                     Observer::new(on_list_item_over),
                     Observer::new(on_list_item_out),
                     Observer::new(on_list_item_pressed),

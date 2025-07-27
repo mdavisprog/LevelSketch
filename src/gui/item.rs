@@ -15,15 +15,13 @@ impl Item {
         contents: impl Bundle,
     ) -> impl Bundle {(
         Self,
+        KeaObservers::<Self>::new(vec![
+            Observer::new(on_over),
+            Observer::new(on_out),
+        ]),
         children![
             (
                 contents,
-            ),
-            (
-                KeaObservers::new_observe_parent(vec![
-                    Observer::new(on_over),
-                    Observer::new(on_out),
-                ]),
             ),
         ],
     )}

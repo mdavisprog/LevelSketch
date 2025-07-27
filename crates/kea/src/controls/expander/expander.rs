@@ -1,15 +1,10 @@
-use bevy::{
-    ecs::{
-        component::HookContext,
-        world::DeferredWorld,
-    },
-    prelude::*,
-};
+use bevy::prelude::*;
 use crate::{
     controls::{
         image::KeaImageNode,
         separator::KeaSeparator,
     },
+    observers::KeaObservers,
     style,
 };
 use super::systems::{
@@ -42,7 +37,9 @@ impl KeaExpander {
         children![
             (
                 header,
-                Listener,
+                KeaObservers::<Self>::new(vec![
+                    Observer::new(on_click_header),
+                ]),
             ),
             (
                 Self::contents(contents),
@@ -55,7 +52,9 @@ impl KeaExpander {
         children![
             (
                 Header::bundle(label),
-                Listener,
+                KeaObservers::<Self>::new(vec![
+                    Observer::new(on_click_header),
+                ]),
             ),
             (
                 KeaSeparator::horizontal(),
@@ -97,7 +96,7 @@ impl KeaExpander {
                 align_items: AlignItems::Start,
                 ..default()
             },
-            Contents,
+            Contents::bundle(),
             children![(
                 contents,
             )],
@@ -114,31 +113,6 @@ impl KeaExpander {
 }
 
 #[derive(Component)]
-#[component(
-    on_add = Self::on_add,
-)]
-struct Listener;
-
-impl Listener {
-    fn on_add(
-        mut world: DeferredWorld,
-        HookContext {
-            entity,
-            ..
-        }: HookContext,
-    ) {
-        let mut commands = world.commands();
-        commands
-            .entity(entity)
-            .remove::<Self>()
-            .observe(on_click_header);
-    }
-}
-
-#[derive(Component)]
-#[component(
-    on_add = Self::on_add,
-)]
 #[require(
     Node = Self::node(),
 )]
@@ -147,6 +121,9 @@ pub(super) struct Header;
 impl Header {
     fn bundle(label: &str) -> impl Bundle {(
         Self,
+        KeaObservers::<Self>::new(vec![
+            Observer::new(on_expander_event),
+        ]),
         children![
             (
                 Text::new(label),
@@ -179,38 +156,16 @@ impl Header {
             ..default()
         }
     }
-
-    fn on_add(
-        mut world: DeferredWorld,
-        HookContext {
-            entity,
-            ..
-        }: HookContext,
-    ) {
-        let mut commands = world.commands();
-        commands
-            .entity(entity)
-            .observe(on_expander_event);
-    }
 }
 
 #[derive(Component)]
-#[component(
-    on_add = Self::on_add,
-)]
 pub(super) struct Contents;
 
 impl Contents {
-    fn on_add(
-        mut world: DeferredWorld,
-        HookContext {
-            entity,
-            ..
-        }: HookContext,
-    ) {
-        let mut commands = world.commands();
-        commands
-            .entity(entity)
-            .observe(on_contents_anim_complete);
-    }
+    fn bundle() -> impl Bundle {(
+        Self,
+        KeaObservers::<Self>::new(vec![
+            Observer::new(on_contents_anim_complete),
+        ]),
+    )}
 }

@@ -1,92 +1,57 @@
-use bevy::prelude::*;
-use super::ready::{
-    KeaOnReady,
-    KeaOnReadyComponent,
+use bevy::{
+    ecs::{
+        component::HookContext,
+        world::DeferredWorld,
+    },
+    prelude::*,
 };
+use std::marker::PhantomData;
 
-///
-/// KeaObservers
-///
 /// Component that holds a list of Observer components. When this
 /// component is added, all Observer components are set to watch
 /// the owning entity and spawned before the component is removed.
-///
+/// 
+/// A generic can be supplied to prevent duplicate components from being
+/// added to an entity.
 #[derive(Component)]
-pub struct KeaObservers {
+#[component(
+    on_add = Self::on_add,
+)]
+pub struct KeaObservers<T: Send + Sync + 'static> {
     observers: Vec<Observer>,
-    observe_parent: bool,
+    _marker: PhantomData<T>,
 }
 
-impl KeaObservers {
+impl<T: Send + Sync + 'static> KeaObservers<T> {
     pub fn new(observers: Vec<Observer>) -> Self {
         Self {
             observers,
-            observe_parent: false,
+            _marker: PhantomData,
         }
     }
 
-    pub fn new_observe_parent(observers: Vec<Observer>) -> Self {
-        Self {
-            observers,
-            observe_parent: true,
-        }
-    }
-}
-
-#[derive(Component)]
-struct LatentDespawn(Entity);
-
-pub(super) fn build(app: &mut App) {
-    app.add_observer(on_add);
-}
-
-fn on_add(
-    trigger: Trigger<OnAdd, KeaObservers>,
-    children: Query<&ChildOf>,
-    mut observers: Query<&mut KeaObservers>,
-    mut commands: Commands,
-) {
-    let Ok(mut observers) = observers.get_mut(trigger.target()) else {
-        return;
-    };
-
-    let target = if observers.observe_parent {
-        if let Ok(child) = children.get(trigger.target()) {
-            child.parent()
+    fn on_add(
+        mut world: DeferredWorld,
+        HookContext {
+            entity,
+            ..
+        }: HookContext,
+    ) {
+        let observers = if let Some(mut component) = world.get_mut::<Self>(entity) {
+            core::mem::take(&mut component.observers)
         } else {
-            trigger.target()
+            Vec::<Observer>::new()
+        };
+
+        let mut commands = world.commands();
+
+        for mut observer in observers {
+            observer.watch_entity(entity);
+            commands.spawn(observer);
         }
-    } else {
-        trigger.target()
-    };
 
-    for mut observer in core::mem::take(&mut observers.observers) {
-        observer.watch_entity(target);
-        commands.spawn(observer);
-    }
-
-    if observers.observe_parent {
-        commands.spawn((
-            KeaOnReadyComponent,
-            LatentDespawn(trigger.target()),
-        ))
-        .observe(on_ready);
-    } else {
         commands
-            .entity(trigger.target())
-            .remove::<KeaObservers>();
+            .entity(entity)
+            .remove::<Self>();
     }
-}
-
-fn on_ready(
-    trigger: Trigger<KeaOnReady>,
-    latent_despawns: Query<&LatentDespawn>,
-    mut commands: Commands,
-) {
-    let Ok(latent_despawn) = latent_despawns.get(trigger.target()) else {
-        return;
-    };
-
-    commands.entity(latent_despawn.0).despawn();
-    commands.entity(trigger.target()).despawn();
 }

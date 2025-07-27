@@ -86,7 +86,7 @@ impl ShapeItem {
             KeaImageNode(image_path.to_string()),
             Pickable::IGNORE,
         )),
-        KeaObservers::new(vec![
+        KeaObservers::<Self>::new(vec![
             Observer::new(on_shape_item_drag_start),
             Observer::new(on_shape_item_drag_end),
             Observer::new(on_shape_item_drag),

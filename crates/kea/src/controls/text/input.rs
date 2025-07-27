@@ -77,15 +77,13 @@ impl KeaTextInput {
         Self {
             format,
         },
+        KeaObservers::<Self>::new(vec![
+            Observer::new(callback),
+        ]),
         children![
             (
                 Document::bundle(text),
             ),
-            (
-                KeaObservers::new_observe_parent(vec![
-                    Observer::new(callback),
-                ]),
-            )
         ],
     )}
 

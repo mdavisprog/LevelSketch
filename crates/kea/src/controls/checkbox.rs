@@ -53,7 +53,7 @@ impl KeaCheckbox {
             state,
             hot: false,
         },
-        KeaObservers::new(vec![
+        KeaObservers::<Self>::new(vec![
             Observer::new(on_over),
             Observer::new(on_out),
             Observer::new(on_pressed),

@@ -23,7 +23,7 @@ use super::{
     on_add = Self::on_add,
 )]
 #[require(
-    KeaObservers = Self::observers(),
+    KeaObservers<Self> = Self::observers(),
     KeaNodeOverrides = Self::overrides(),
     ZIndex(constants::SIZER_Z_INDEX),
     Pickable = Pickable {
@@ -34,7 +34,7 @@ use super::{
 pub struct KeaScrollable;
 
 impl KeaScrollable {
-    fn observers() -> KeaObservers {
+    fn observers() -> KeaObservers<Self> {
         KeaObservers::new(vec![
             Observer::new(on_scroll),
             Observer::new(scrollable::on_move),

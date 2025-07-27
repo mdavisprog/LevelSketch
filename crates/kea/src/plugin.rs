@@ -7,7 +7,6 @@ use super::{
     assets,
     controls,
     mouse,
-    observers,
     overrides,
     position,
     ready,
@@ -41,7 +40,6 @@ impl Plugin for KeaPlugin {
         ));
 
         mouse::build(app);
-        observers::build(app);
         overrides::build(app);
         position::build(app);
         ready::build(app);

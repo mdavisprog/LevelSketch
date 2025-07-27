@@ -61,7 +61,7 @@ pub(super) enum ScrollbarHoverState {
 #[require(
     BackgroundColor(style::colors::BUTTON_BACKGROUND),
     ZIndex(constants::SIZER_Z_INDEX),
-    KeaObservers = Self::observers(),
+    KeaObservers<Self> = Self::observers(),
 )]
 pub(super) struct Scrollbar {
     pub hover_state: ScrollbarHoverState,
@@ -120,7 +120,7 @@ impl Scrollbar {
         }
     }
 
-    fn observers() -> KeaObservers {
+    fn observers() -> KeaObservers<Self> {
         KeaObservers::new(vec![
             Observer::new(scrollbar::on_over),
             Observer::new(scrollbar::on_out),

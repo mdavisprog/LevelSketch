@@ -156,7 +156,7 @@ impl Contents {
                         },
                         KeaList::default(),
                         ContentType::HoverList,
-                        KeaObservers::new(vec![
+                        KeaObservers::<KeaList>::new(vec![
                             Observer::new(on_select_list_item),
                             Observer::new(on_hover_list_item),
                         ]),

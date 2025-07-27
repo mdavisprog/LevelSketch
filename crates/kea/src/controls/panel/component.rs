@@ -95,7 +95,7 @@ struct KeaPanelHeader;
 impl KeaPanelHeader {
     fn bundle(title: &str) -> impl Bundle {(
         Self,
-        KeaObservers::new(vec![
+        KeaObservers::<Self>::new(vec![
             Observer::new(on_header_drag),
         ]),
         children![

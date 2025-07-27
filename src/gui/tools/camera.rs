@@ -44,9 +44,8 @@ impl CameraTools {
                         .unwrap_or(camera.speed);
                     camera.max_speed = camera.speed;
                 }),
-                CameraProperty::Speed,
                 KeaOnReadyComponent,
-                KeaObservers::new(vec![
+                KeaObservers::<properties::Speed>::new(vec![
                     Observer::new(on_speed_ready),
                 ]),
             ),
@@ -54,9 +53,8 @@ impl CameraTools {
     )}
 }
 
-#[derive(Component)]
-enum CameraProperty {
-    Speed,
+mod properties {
+    pub struct Speed;
 }
 
 fn on_speed_ready(

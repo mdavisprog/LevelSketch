@@ -60,7 +60,7 @@ impl KeaSizer {
             pending_drag_anchor: KeaAnchors::empty(),
             target,
         },
-        KeaObservers::new(vec![
+        KeaObservers::<Self>::new(vec![
             Observer::new(on_move),
             Observer::new(on_out),
             Observer::new(on_down),

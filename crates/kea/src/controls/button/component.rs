@@ -55,7 +55,7 @@ impl KeaButton {
         Self {
             _private: (),
         },
-        KeaObservers::new(vec![
+        KeaObservers::<Self>::new(vec![
             Observer::new(callback),
             Observer::new(systems::mouse_over),
             Observer::new(systems::mouse_out),

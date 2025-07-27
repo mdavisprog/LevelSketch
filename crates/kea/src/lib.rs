@@ -76,7 +76,9 @@ pub mod prelude {
             KeaTextInputConfirm,
         },
     };
-    pub use observers::KeaObservers;
+    pub use observers::{
+        KeaObservers,
+    };
     pub use overrides::KeaNodeOverrides;
     pub use position::KeaPosition;
     pub use plugin::KeaPlugin;
