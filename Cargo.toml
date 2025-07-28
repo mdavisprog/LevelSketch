@@ -12,7 +12,8 @@ publish = false
 [workspace]
 resolver = "3"
 members = [
-    "crates/kea"
+    "crates/kea",
+    "crates/lstalk"
 ]
 
 [dependencies]
@@ -20,6 +21,7 @@ bevy = "=0.16.0"
 resvg = "=0.45.0"
 bitflags = "=2.8.0"
 kea = { path = "crates/kea" }
+lstalk = { path = "crates/lstalk" }
 
 [profile.dev]
 opt-level = 1

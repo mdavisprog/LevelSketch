@@ -1,0 +1,11 @@
+[package]
+name = "lstalk"
+description = "Communicate with Language Servers through the Language Server Protocol"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+async-process = "=2.4.0"
+futures-lite = "=2.6.0"
+serde = "1.0"
+serde_json = "1.0"
