@@ -11,8 +11,11 @@ use kea::prelude::*;
 mod camera;
 mod commands;
 mod gui;
+mod lsp;
 mod shapes;
 mod tools;
+
+use lsp::LSPServiceResource;
 
 //
 // Main
@@ -25,6 +28,7 @@ fn main() {
             focused_mode: UpdateMode::Continuous,
             unfocused_mode: UpdateMode::reactive_low_power(Duration::from_secs(2))
         })
+        .init_resource::<LSPServiceResource>()
         .add_plugins((
             KeaPlugin::default(),
             DefaultPlugins.set(WindowPlugin {
@@ -51,7 +55,8 @@ fn main() {
 fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut lsp_service: ResMut<LSPServiceResource>,
 ) {
     commands.spawn((
         camera::Controller::default(),
@@ -74,6 +79,8 @@ fn setup(
             ..default()
         }
     ));
+
+    lsp_service.start();
 }
 
 fn check_exit(
