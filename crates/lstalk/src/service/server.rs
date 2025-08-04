@@ -79,6 +79,7 @@ impl LanguageServer {
         let params = InitializeParams::default();
         let Ok(payload) = self.messages.make_request("initialize", params, |messages, _| {
             let _ = messages.make_request_forget("initialized", InitializedParams);
+            println!("Successfully connected to language server.");
         }) else {
             panic!("Failed to create 'initialize' request!");
         };
