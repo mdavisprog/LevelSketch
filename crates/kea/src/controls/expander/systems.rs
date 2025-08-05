@@ -81,10 +81,10 @@ pub(super) fn on_click_header(
     
     match expander.state {
         KeaExpanderState::Collapsed => {
-            commands.trigger_targets(KeaExpanderEvent::Collapse, trigger.target());
+            commands.trigger_targets(KeaExpanderEvent::Collapse, child.parent());
         },
         KeaExpanderState::Expanded => {
-            commands.trigger_targets(KeaExpanderEvent::Expand, trigger.target());
+            commands.trigger_targets(KeaExpanderEvent::Expand, child.parent());
         },
     }
 }
