@@ -7,7 +7,7 @@ use bevy::prelude::*;
 /// component can be added to request the KeaOnReady event to be triggered for that entity. This
 /// event is triggered in the PostUpdate schedule of the current frame to allow for any additional
 /// initialization steps to occur.
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct KeaOnReadyComponent;
 
 #[derive(Event)]
