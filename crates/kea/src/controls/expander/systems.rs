@@ -1,8 +1,11 @@
 use bevy::prelude::*;
-use crate::animation::{
-    KeaAnimation,
-    KeaAnimationClip,
-    KeaAnimationComplete,
+use crate::{
+    animation::{
+        KeaAnimation,
+        KeaAnimationClip,
+        KeaAnimationComplete,
+    },
+    ready::KeaOnReady,
 };
 use super::{
     events::KeaExpanderEvent,
@@ -12,6 +15,24 @@ use super::{
         KeaExpanderState,
     },
 };
+
+pub(super) fn on_ready(
+    trigger: Trigger<KeaOnReady>,
+    contents: Query<&Contents>,
+    parents: Query<&Children>,
+    mut expanders: Query<&mut KeaExpander>,
+) {
+    let Ok(mut expander) = expanders.get_mut(trigger.target()) else {
+        return;
+    };
+
+    for child in parents.iter_descendants(trigger.target()) {
+        if contents.contains(child) {
+            expander.contents_entity = child;
+            break;
+        }
+    }
+}
 
 pub(super) fn on_click_header(
     trigger: Trigger<Pointer<Click>>,

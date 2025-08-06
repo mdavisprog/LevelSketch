@@ -5,12 +5,14 @@ use crate::{
         separator::KeaSeparator,
     },
     observers::KeaObservers,
+    ready::KeaOnReadyComponent,
     style,
 };
 use super::systems::{
     on_click_header,
     on_contents_anim_complete,
     on_expander_event,
+    on_ready,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -25,10 +27,13 @@ pub enum KeaExpanderState {
 #[derive(Component)]
 #[require(
     Node = Self::node(),
+    KeaObservers<Self> = Self::observers(),
+    KeaOnReadyComponent,
 )]
 pub struct KeaExpander {
     pub(super) state: KeaExpanderState,
     pub(super) expanded_height: f32,
+    pub(super) contents_entity: Entity,
 }
 
 impl KeaExpander {
@@ -37,7 +42,7 @@ impl KeaExpander {
         children![
             (
                 header,
-                KeaObservers::<Self>::new(vec![
+                KeaObservers::<Header>::new(vec![
                     Observer::new(on_click_header),
                 ]),
             ),
@@ -52,7 +57,7 @@ impl KeaExpander {
         children![
             (
                 Header::bundle(label),
-                KeaObservers::<Self>::new(vec![
+                KeaObservers::<Header>::new(vec![
                     Observer::new(on_click_header),
                 ]),
             ),
@@ -77,6 +82,7 @@ impl KeaExpander {
         Self {
             state: KeaExpanderState::Expanded,
             expanded_height: 0.0,
+            contents_entity: Entity::PLACEHOLDER,
         }
     }
 
@@ -109,6 +115,12 @@ impl KeaExpander {
             row_gap: Val::Px(style::properties::ROW_GAP),
             ..default()
         }
+    }
+
+    fn observers() -> KeaObservers<Self> {
+        KeaObservers::new(vec![
+            Observer::new(on_ready),
+        ])
     }
 }
 
