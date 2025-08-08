@@ -12,6 +12,7 @@ mod camera;
 mod commands;
 mod gui;
 mod lsp;
+mod project;
 mod shapes;
 mod tools;
 
@@ -40,6 +41,7 @@ fn main() {
             }),
             camera::Plugin,
             gui::GUIPlugin,
+            project::Plugin,
             tools::Plugin,
         ))
         .add_systems(Startup, setup)
