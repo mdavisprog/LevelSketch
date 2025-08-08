@@ -1,5 +1,7 @@
 use bevy::prelude::*;
+use crate::project::ProjectResource;
 use kea::prelude::*;
+use rfd::FileDialog;
 use super::tools::Tools;
 
 #[derive(Component)]
@@ -13,14 +15,37 @@ impl FileTools {
         Self {
             _private: (),
         },
-        children![(
-            KeaButton::label_bundle( "Quit", |
-                _: Trigger<KeaButtonClick>,
-                mut events: EventWriter<AppExit>,
-                | {
-                    events.write(AppExit::Success);
-                },
+        children![
+            (
+                KeaButton::label_bundle( "Open Project", on_open_project),
             ),
-        )]
+            (
+                KeaButton::label_bundle( "Quit", on_quit),
+            ),
+        ]
     )}
+}
+
+fn on_open_project(
+    _: Trigger<KeaButtonClick>,
+    mut project_resource: ResMut<ProjectResource>
+) {
+    let Some(response) = FileDialog::new().pick_folder() else {
+        return;
+    };
+
+    let Some(path) = response.to_str() else {
+        return;
+    };
+
+    if let Err(error) = project_resource.project.open(path) {
+        warn!("Failed to load project: {error:?}");
+    }
+}
+
+fn on_quit(
+    _: Trigger<KeaButtonClick>,
+    mut events: EventWriter<AppExit>,
+) {
+    events.write(AppExit::Success);
 }
