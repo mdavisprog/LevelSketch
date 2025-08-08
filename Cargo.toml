@@ -20,6 +20,7 @@ members = [
 bevy = "=0.16.1"
 resvg = "=0.45.0"
 bitflags = "=2.9.0"
+rfd = "0.15"
 kea = { path = "crates/kea" }
 lstalk = { path = "crates/lstalk" }
 
