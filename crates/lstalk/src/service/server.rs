@@ -22,7 +22,10 @@ use std::{
 };
 use super::{
     errors::LanguageServerError,
-    handler::MessageHandler,
+    handler::{
+        MessageHandler,
+        MessageHandlerMessage,
+    },
     pipes::{
         ReadPipe,
         WritePipe,
@@ -38,6 +41,7 @@ pub(super) struct LanguageServer {
     process: Child,
     messages: MessageHandler,
     options: Arc<LSPServiceOptions>,
+    is_initialized: bool,
 }
 
 impl LanguageServer {
@@ -57,6 +61,7 @@ impl LanguageServer {
             process,
             messages: MessageHandler::new(),
             options,
+            is_initialized: false,
         })
     }
 
@@ -119,6 +124,14 @@ impl LanguageServer {
             if let Some(buffer) = out_pipe.read() {
                 self.messages.handle_response(buffer);
             }
+
+            while let Some(message) = self.messages.pop_message() {
+                match message {
+                    MessageHandlerMessage::Initialized => {
+                        self.is_initialized = true;
+                    },
+                }
+            }
         }
     }
 }
@@ -133,4 +146,5 @@ fn on_initialize_response(
         println!("Version: {}", server_info.version.unwrap_or(format!("undefined")));
     }
     let _ = messages.make_request_forget("initialized", InitializedParams);
+    messages.push_message(MessageHandlerMessage::Initialized);
 }

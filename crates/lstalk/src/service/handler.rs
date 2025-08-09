@@ -10,6 +10,7 @@ pub struct MessageHandler {
     id: i64,
     requests: Vec<RequestItem>,
     response_buffer: String,
+    messages: Vec<MessageHandlerMessage>,
 }
 
 impl MessageHandler {
@@ -18,6 +19,7 @@ impl MessageHandler {
             id: 1,
             requests: Vec::new(),
             response_buffer: String::new(),
+            messages: Vec::with_capacity(8),
         }
     }
 
@@ -36,6 +38,15 @@ impl MessageHandler {
         params: T,
     ) -> Result<String, MessageHandlerError> {
         Self::make_request_internal(self, method, params, None::<&dyn Fn(&mut Self, &Response)>)
+    }
+
+    pub fn push_message(&mut self, message: MessageHandlerMessage) -> &mut Self {
+        self.messages.push(message);
+        self
+    }
+
+    pub fn pop_message(&mut self) -> Option<MessageHandlerMessage> {
+        self.messages.pop()
     }
 
     fn make_request_internal<T: Serialize>(
@@ -173,4 +184,8 @@ impl std::fmt::Display for MessageHandlerError {
 struct RequestItem {
     request: Request,
     callback: Option<Rc<dyn Fn(&mut MessageHandler, &Response)>>,
+}
+
+pub enum MessageHandlerMessage {
+    Initialized,
 }
