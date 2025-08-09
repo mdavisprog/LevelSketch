@@ -1,4 +1,5 @@
 use serde::{
+	de::DeserializeOwned,
     Deserialize,
     Serialize,
 };
@@ -22,6 +23,32 @@ pub struct Response {
 
 	// The error object in case a request fails.
 	pub error: Option<ResponseError>,
+}
+
+impl Response {
+	pub fn parse_result<T: DeserializeOwned>(&self) -> Option<T> {
+		let Some(object) = &self.result else {
+			return None;
+		};
+
+		let json = match serde_json::to_string(&object) {
+			Ok(json) => json,
+			Err(error) => {
+				println!("Response_parse_result: Failed to convert '{object}' into string!");
+				return None;
+			}
+		};
+
+		let result = match serde_json::from_str::<T>(&json) {
+			Ok(result) => result,
+			Err(error) => {
+				println!("Response::parse_result: Failed to parse result of type {}.", std::any::type_name::<T>());
+				return None;
+			}
+		};
+
+		Some(result)
+	}
 }
 
 /// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#responseError

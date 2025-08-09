@@ -3,9 +3,13 @@ use async_process::{
     Command,
     Stdio,
 };
-use crate::protocol::lifecycle::{
-    InitializeParams,
-    InitializedParams,
+use crate::protocol::{
+    base::Response,
+    lifecycle::{
+        InitializedParams,
+        InitializeParams,
+        InitializeResult,
+    },
 };
 use std::{
     sync::{
@@ -77,10 +81,7 @@ impl LanguageServer {
         let mut write_pipe = WritePipe::new(stdin);
 
         let params = InitializeParams::default();
-        let Ok(payload) = self.messages.make_request("initialize", params, |messages, _| {
-            let _ = messages.make_request_forget("initialized", InitializedParams);
-            println!("Successfully connected to language server.");
-        }) else {
+        let Ok(payload) = self.messages.make_request("initialize", params, on_initialize_response) else {
             panic!("Failed to create 'initialize' request!");
         };
 
@@ -120,4 +121,16 @@ impl LanguageServer {
             }
         }
     }
+}
+
+fn on_initialize_response(
+    messages: &mut MessageHandler,
+    response: &Response,
+) {
+    if let Some(result) = response.parse_result::<InitializeResult>() {
+        let server_info = result.server_info.unwrap_or_default();
+        println!("Successfully connected to language server {}.", server_info.name);
+        println!("Version: {}", server_info.version.unwrap_or(format!("undefined")));
+    }
+    let _ = messages.make_request_forget("initialized", InitializedParams);
 }

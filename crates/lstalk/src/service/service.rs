@@ -52,7 +52,6 @@ impl LSPService {
         let Ok(result) = thread::Builder::new().name(format!("LSP Service")).spawn(move || {
             let mut server = match LanguageServer::spawn(&program_path, options) {
                 Ok(server) => {
-                    println!("Successfully spawned language server program '{program_path}'");
                     server
                 },
                 Err(error) => {

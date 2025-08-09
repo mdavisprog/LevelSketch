@@ -21,6 +21,25 @@ pub struct InitializeParams {
 	pub process_id: Option<Integer>,
 }
 
+/// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initializeResult
+#[derive(Deserialize)]
+pub struct InitializeResult {
+	// Information about the server.
+	//
+	// @since 3.15.0
+	#[serde(rename = "serverInfo")]
+	pub server_info: Option<ServerInfo>,
+}
+
 /// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initialized
 #[derive(Serialize, Deserialize)]
 pub struct InitializedParams;
+
+#[derive(Deserialize, Default)]
+pub struct ServerInfo {
+	// The name of the server as defined by the server.
+	pub name: String,
+
+	// The server's version as defined by the server.
+	pub version: Option<String>,
+}
