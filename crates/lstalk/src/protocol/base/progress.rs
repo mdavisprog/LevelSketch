@@ -9,3 +9,9 @@ pub enum ProgressToken {
     Int(i32),
     String(String),
 }
+
+impl Default for ProgressToken {
+    fn default() -> Self {
+        Self::Int(0)
+    }
+}
