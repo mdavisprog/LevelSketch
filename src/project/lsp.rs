@@ -2,8 +2,8 @@ use bevy::prelude::*;
 use lstalk::prelude::*;
 
 #[derive(Resource)]
-pub(super) struct LSPServiceResource {
-    service: LSPService,
+pub struct LSPServiceResource {
+    pub service: LSPService,
 }
 
 impl Default for LSPServiceResource {

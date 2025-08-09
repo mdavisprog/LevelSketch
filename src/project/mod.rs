@@ -4,6 +4,7 @@ mod lsp;
 mod project;
 
 pub use {
+    lsp::LSPServiceResource,
     project::{
         Project,
         ProjectResource,
