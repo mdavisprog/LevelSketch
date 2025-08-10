@@ -6,6 +6,7 @@ mod request;
 mod response;
 
 pub use {
+    message::Messagable,
     progress::ProgressToken,
     request::Request,
     response::Response,

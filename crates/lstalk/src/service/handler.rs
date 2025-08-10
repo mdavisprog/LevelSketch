@@ -1,4 +1,5 @@
 use crate::protocol::base::{
+    Messagable,
     Request,
     Response,
     types::*,
@@ -47,41 +48,6 @@ impl MessageHandler {
 
     pub fn pop_message(&mut self) -> Option<MessageHandlerMessage> {
         self.messages.pop()
-    }
-
-    fn make_request_internal<T: Serialize>(
-        &mut self,
-        method: &str,
-        params: T,
-        callback: Option<impl Fn(&mut Self, &Response) + 'static>,
-    ) -> Result<String, MessageHandlerError> {
-        let value = match serde_json::to_value(params) {
-            Ok(value) => value,
-            Err(error) => {
-                return Err(MessageHandlerError::FailedToParse(format!("{error:?}")));
-            }
-        };
-
-        let request = Request::new(
-            LSPAny::Integer(self.id),
-            method,
-            value.into(),
-        );
-
-        let payload = match request.serialize() {
-            Ok(payload) => payload,
-            Err(error) => {
-                return Err(MessageHandlerError::FailedToSerialize(error));
-            }
-        };
-
-        self.requests.push(RequestItem {
-            request,
-            callback: if callback.is_some() { Some(Rc::new(callback.unwrap())) } else { None },
-        });
-        self.id += 1;
-
-        Ok(payload)
     }
 
     pub fn handle_response(&mut self, response: String) {
@@ -164,6 +130,49 @@ impl MessageHandler {
                 true
             }
         });
+    }
+
+    fn make_request_internal<T: Serialize>(
+        &mut self,
+        method: &str,
+        params: T,
+        callback: Option<impl Fn(&mut Self, &Response) + 'static>,
+    ) -> Result<String, MessageHandlerError> {
+        let value = Self::convert(params)?;
+
+        let request = Request::new(
+            LSPAny::Integer(self.id),
+            method,
+            value.into(),
+        );
+
+        let payload = Self::encode(&request)?;
+
+        self.requests.push(RequestItem {
+            request,
+            callback: if callback.is_some() { Some(Rc::new(callback.unwrap())) } else { None },
+        });
+        self.id += 1;
+
+        Ok(payload)
+    }
+
+    fn convert<T: Serialize>(params: T) -> Result<serde_json::Value, MessageHandlerError> {
+        match serde_json::to_value(params) {
+            Ok(value) => Ok(value),
+            Err(error) => {
+                return Err(MessageHandlerError::FailedToParse(format!("{error:?}")));
+            }
+        }
+    }
+
+    fn encode<T: Messagable>(message: &T) -> Result<String, MessageHandlerError> {
+        match message.encode() {
+            Ok(payload) => Ok(payload),
+            Err(error) => {
+                return Err(MessageHandlerError::FailedToSerialize(error));
+            }
+        }
     }
 }
 

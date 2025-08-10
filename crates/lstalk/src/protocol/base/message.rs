@@ -17,3 +17,16 @@ impl Default for Message {
         }
     }
 }
+
+pub trait Messagable: Serialize {
+    fn encode(&self) -> Result<String, String> {
+        let payload = match serde_json::to_string(self) {
+            Ok(result) => result,
+            Err(error) => {
+                return Err(format!("{error:?}"));
+            }
+        };
+
+        Ok(format!("Content-Length: {}\r\n\r\n{payload}", payload.len()))
+    }
+}

@@ -3,7 +3,10 @@ use serde::{
     Serialize,
 };
 use super::{
-    message::Message,
+    message::{
+        Messagable,
+        Message,
+    },
     types::*,
 };
 
@@ -11,7 +14,7 @@ use super::{
 #[derive(Serialize, Deserialize)]
 pub struct Request {
     #[serde(flatten)]
-    message: Message,
+    pub message: Message,
 
 	// The request id.
     // number | string
@@ -46,3 +49,5 @@ impl Request {
         Ok(format!("Content-Length: {}\r\n\r\n{payload}", payload.len()))
     }
 }
+
+impl Messagable for Request {}
