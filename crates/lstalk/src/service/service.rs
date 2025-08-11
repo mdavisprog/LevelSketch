@@ -18,6 +18,7 @@ use super::{
 
 pub enum LSPServiceMessage {
     Shutdown,
+    RequestTypes(Vec<String>),
 }
 
 #[derive(Default)]
@@ -90,6 +91,21 @@ impl LSPService {
         let Ok(_) = handle.join() else {
             return Ok(())
         };
+
+        Ok(())
+    }
+
+    pub fn request_types(&self, paths: Vec<String>) -> Result<(), LSPServiceError> {
+        let Some(sender) = &self.sender else {
+            return Err(LSPServiceError::DidNotStart);
+        };
+
+        match sender.send(LSPServiceMessage::RequestTypes(paths)) {
+            Ok(_) => {},
+            Err(_) => {
+                return Err(LSPServiceError::FailedToSendMessage);
+            }
+        }
 
         Ok(())
     }

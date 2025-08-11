@@ -1,6 +1,7 @@
 pub enum LSPServiceError {
     FailedToStart,
     DidNotStart,
+    FailedToSendMessage,
 }
 
 impl std::fmt::Display for LSPServiceError {
@@ -8,6 +9,8 @@ impl std::fmt::Display for LSPServiceError {
         match *self {
             Self::FailedToStart => write!(f, "The LSP service failed to start"),
             Self::DidNotStart => write!(f, "The LSP service did not start"),
+            Self::FailedToSendMessage =>
+                write!(f, "The LSP service failed to send a message to the server"),
         }
     }
 }

@@ -5,11 +5,13 @@ use async_process::{
 };
 use crate::protocol::{
     base::Response,
+    document::DidOpenTextDocumentParams,
     lifecycle::{
         InitializedParams,
         InitializeParams,
         InitializeResult,
     },
+    structures::TextDocumentItem,
 };
 use std::{
     sync::{
@@ -99,6 +101,31 @@ impl LanguageServer {
                     match message {
                         LSPServiceMessage::Shutdown => {
                             break;
+                        },
+                        LSPServiceMessage::RequestTypes(paths) => {
+                            for path in paths {
+                                let text_document = match TextDocumentItem::new(path) {
+                                    Ok(result) => result,
+                                    Err(error) => {
+                                        println!("{error:?}");
+                                        continue;
+                                    }
+                                };
+
+                                match self.messages.make_notification(
+                                    "textDocument/didOpen",
+                                    DidOpenTextDocumentParams {
+                                        text_document,
+                                    },
+                                ) {
+                                    Ok(payload) => {
+                                        write_pipe.write(payload);
+                                    },
+                                    Err(error) => {
+                                        println!("Failed to request to open document: {error}");
+                                    },
+                                };
+                            }
                         },
                     }
                 },

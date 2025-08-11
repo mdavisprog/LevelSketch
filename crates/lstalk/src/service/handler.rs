@@ -1,5 +1,6 @@
 use crate::protocol::base::{
     Messagable,
+    Notification,
     Request,
     Response,
     types::*,
@@ -39,6 +40,17 @@ impl MessageHandler {
         params: T,
     ) -> Result<String, MessageHandlerError> {
         Self::make_request_internal(self, method, params, None::<&dyn Fn(&mut Self, &Response)>)
+    }
+
+    pub fn make_notification<T: Serialize>(
+        &mut self,
+        method: &str,
+        params: T
+    ) -> Result<String, MessageHandlerError> {
+        let value = Self::convert(params)?;
+        let notification = Notification::new(method, value.into());
+        let payload = Self::encode(&notification)?;
+        Ok(payload)
     }
 
     pub fn push_message(&mut self, message: MessageHandlerMessage) -> &mut Self {

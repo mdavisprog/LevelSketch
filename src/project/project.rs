@@ -24,13 +24,10 @@ impl Project {
 
         self.folder = folder.to_string();
 
-        let files = self.find_source_files();
-        println!("Retrieved {} files.", files.len());
-
         Ok(())
     }
 
-    fn find_source_files(&self) -> Vec<String> {
+    pub fn gather_source_files(&self) -> Vec<String> {
         self.retrieve_files(&self.folder)
     }
 

@@ -1,5 +1,8 @@
 use bevy::prelude::*;
-use crate::project::ProjectResource;
+use crate::project::{
+    LSPServiceResource,
+    ProjectResource,
+};
 use kea::prelude::*;
 use rfd::FileDialog;
 use super::tools::Tools;
@@ -28,6 +31,7 @@ impl FileTools {
 
 fn on_open_project(
     _: Trigger<KeaButtonClick>,
+    lsp: Res<LSPServiceResource>,
     mut project_resource: ResMut<ProjectResource>
 ) {
     let Some(response) = FileDialog::new().pick_folder() else {
@@ -40,6 +44,15 @@ fn on_open_project(
 
     if let Err(error) = project_resource.project.open(path) {
         warn!("Failed to load project: {error:?}");
+        return;
+    }
+
+    let files = project_resource.project.gather_source_files();
+    match lsp.service.request_types(files) {
+        Ok(_) => {},
+        Err(error) => {
+            warn!("Failed to request project types from language server service: {error}.");
+        }
     }
 }
 
