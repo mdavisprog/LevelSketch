@@ -21,6 +21,15 @@ pub struct InitializeParams {
 	pub process_id: Option<Integer>,
 }
 
+impl InitializeParams {
+	pub fn new() -> Self {
+		Self {
+			work_done_progress: WorkDoneProgressParams::default(),
+			process_id: Some(std::process::id() as Integer),
+		}
+	}
+}
+
 /// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initializeResult
 #[derive(Deserialize)]
 pub struct InitializeResult {

@@ -85,7 +85,7 @@ impl LanguageServer {
         let mut error_pipe = ReadPipe::new(stderr);
         let mut write_pipe = WritePipe::new(stdin);
 
-        let params = InitializeParams::default();
+        let params = InitializeParams::new();
         let Ok(payload) = self.messages.make_request("initialize", params, on_initialize_response) else {
             panic!("Failed to create 'initialize' request!");
         };
