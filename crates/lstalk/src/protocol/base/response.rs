@@ -15,7 +15,7 @@ pub struct Response {
     pub message: Message,
 
 	// The request id.
-	pub id: LSPAny,
+	pub id: Option<LSPAny>,
 
 	// The result of a request. This member is REQUIRED on success.
 	// This member MUST NOT exist if there was an error invoking the method.

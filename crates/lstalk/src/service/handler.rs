@@ -108,9 +108,11 @@ impl MessageHandler {
             let mut result: Option<Rc<dyn Fn(&mut Self, &Response)>> = None;
 
             for item in &self.requests {
-                if item.request.id == response.id {
-                    result = item.callback.clone();
-                    break;
+                if let Some(id) = &response.id {
+                    if item.request.id == *id {
+                        result = item.callback.clone();
+                        break;
+                    }
                 }
             }
 
@@ -124,10 +126,14 @@ impl MessageHandler {
 
         // Finally, remove the request from the list.
         self.requests.retain(|item| {
-            if item.request.id == response.id {
-                false
+            if let Some(id) = &response.id {
+                if item.request.id == *id {
+                    false
+                } else {
+                    true
+                }
             } else {
-                true
+                false
             }
         });
     }
