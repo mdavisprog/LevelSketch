@@ -122,6 +122,10 @@ impl LanguageServer {
             }
 
             if let Some(buffer) = out_pipe.read() {
+                if self.options.print_stdout {
+                    println!("buffer: {buffer}");
+                }
+
                 self.messages.handle_response(buffer);
             }
 
