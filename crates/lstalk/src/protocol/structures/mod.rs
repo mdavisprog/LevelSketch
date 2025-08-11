@@ -1,10 +1,16 @@
-mod basic;
+mod document;
+mod uri;
 mod work;
 
 pub use {
-    basic::{
+    document::{
+        TextDocumentIdentifier,
+        TextDocumentItem,
+    },
+    uri::{
         DocumentUri,
         URI,
+        make_file_uri,
     },
     work::WorkDoneProgressParams,
 };

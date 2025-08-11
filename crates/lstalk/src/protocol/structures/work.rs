@@ -1,7 +1,4 @@
-use crate::protocol::{
-    base::ProgressToken,
-    structures::basic::*,
-};
+use crate::protocol::base::ProgressToken;
 use serde::{
 	Deserialize,
 	Serialize,
