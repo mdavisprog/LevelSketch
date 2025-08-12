@@ -34,7 +34,7 @@ impl Response {
 		let json = match serde_json::to_string(&object) {
 			Ok(json) => json,
 			Err(error) => {
-				println!("Response_parse_result: Failed to convert '{object}' into string!");
+				println!("Response_parse_result: Failed to convert '{object}' into string: {error:?}");
 				return None;
 			}
 		};
@@ -42,7 +42,7 @@ impl Response {
 		let result = match serde_json::from_str::<T>(&json) {
 			Ok(result) => result,
 			Err(error) => {
-				println!("Response::parse_result: Failed to parse result of type {}.", std::any::type_name::<T>());
+				println!("Response::parse_result: Failed to parse result of type {}: {error:?}", std::any::type_name::<T>());
 				return None;
 			}
 		};
