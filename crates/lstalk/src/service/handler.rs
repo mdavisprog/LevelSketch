@@ -34,6 +34,7 @@ impl MessageHandler {
         Self::make_request_internal(self, method, params, Some(callback))
     }
 
+    #[expect(unused)]
     pub fn make_request_forget<T: Serialize>(
         &mut self,
         method: &str,
@@ -137,17 +138,15 @@ impl MessageHandler {
         }
 
         // Finally, remove the request from the list.
-        self.requests.retain(|item| {
-            if let Some(id) = &response.id {
+        if let Some(id) = &response.id {
+            self.requests.retain(|item| {
                 if item.request.id == *id {
                     false
                 } else {
                     true
                 }
-            } else {
-                false
-            }
-        });
+            });
+        }
     }
 
     fn make_request_internal<T: Serialize>(

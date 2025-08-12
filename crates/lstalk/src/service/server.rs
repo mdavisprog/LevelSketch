@@ -176,6 +176,6 @@ fn on_initialize_response(
         println!("Successfully connected to language server {}.", server_info.name);
         println!("Version: {}", server_info.version.unwrap_or(format!("undefined")));
     }
-    let _ = messages.make_request_forget("initialized", InitializedParams);
+    let _ = messages.make_notification("initialized", InitializedParams);
     messages.push_message(MessageHandlerMessage::Initialized);
 }
