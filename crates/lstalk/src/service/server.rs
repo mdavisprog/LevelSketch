@@ -83,44 +83,8 @@ impl LanguageServer {
 
         loop {
             // Handle any messages from the owning thread.
-            match receiver.try_recv() {
-                Ok(message) => {
-                    match message {
-                        LSPServiceMessage::Shutdown => {
-                            break;
-                        },
-                        LSPServiceMessage::RequestTypes(paths) => {
-                            for path in paths {
-                                match self.messages.did_open(&path) {
-                                    Ok(payload) => {
-                                        write_pipe.write(payload);
-
-                                        match self.messages.document_symbol(&path) {
-                                            Ok(payload) => {
-                                                write_pipe.write(payload);
-                                            },
-                                            Err(error) => {
-                                                println!("Failed to request symbols: {error}.");
-                                            },
-                                        }
-                                    },
-                                    Err(error) => {
-                                        println!("Failed to request to open document: {error}");
-                                    },
-                                };
-                            }
-                        },
-                    }
-                },
-                Err(error) => {
-                    match error {
-                        TryRecvError::Disconnected => {
-                            println!("Service thread received a disconnected error.");
-                            break;
-                        },
-                        TryRecvError::Empty => {},
-                    }
-                },
+            if !self.read_receiver(&receiver, &mut write_pipe) {
+                break;
             }
 
             write_pipe.poll();
@@ -147,5 +111,54 @@ impl LanguageServer {
                 }
             }
         }
+    }
+
+    fn read_receiver(
+        &mut self,
+        receiver: &Receiver<LSPServiceMessage>,
+        write_pipe: &mut WritePipe,
+    ) -> bool {
+        // Handle any messages from the owning thread.
+        match receiver.try_recv() {
+            Ok(message) => {
+                match message {
+                    LSPServiceMessage::Shutdown => {
+                        return false;
+                    },
+                    LSPServiceMessage::RequestTypes(paths) => {
+                        for path in paths {
+                            match self.messages.did_open(&path) {
+                                Ok(payload) => {
+                                    write_pipe.write(payload);
+
+                                    match self.messages.document_symbol(&path) {
+                                        Ok(payload) => {
+                                            write_pipe.write(payload);
+                                        },
+                                        Err(error) => {
+                                            println!("Failed to request symbols: {error}.");
+                                        },
+                                    }
+                                },
+                                Err(error) => {
+                                    println!("Failed to request to open document: {error}");
+                                },
+                            };
+                        }
+                    },
+                }
+            },
+            Err(error) => {
+                match error {
+                    TryRecvError::Disconnected => {
+                        println!("Service thread received a disconnected error.");
+                        return false;
+                    },
+                    TryRecvError::Empty => {},
+                }
+            },
+        }
+
+        true
     }
 }
