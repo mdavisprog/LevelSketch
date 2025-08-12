@@ -42,7 +42,7 @@ pub struct TextDocumentItem {
 }
 
 impl TextDocumentItem {
-	pub fn new(uri: String) -> Result<Self, io::Error> {
+	pub fn new(uri: &str) -> Result<Self, io::Error> {
 		let (language_id, text) = {
 			let path = Path::new(&uri);
 			let extension = match path.extension() {
@@ -61,7 +61,7 @@ impl TextDocumentItem {
 		};
 
 		Ok(Self {
-			uri: make_file_uri(&uri),
+			uri: make_file_uri(uri),
 			language_id,
 			version: 1,
 			text,

@@ -34,12 +34,12 @@ pub struct DocumentSymbolParams {
 }
 
 impl DocumentSymbolParams {
-    pub fn new(uri: String) -> Self {
+    pub fn new(uri: &str) -> Self {
         Self {
             work_done_progress: WorkDoneProgressParams::default(),
             partial_result_params: PartialResultParams::default(),
             text_document: TextDocumentIdentifier {
-                uri: make_file_uri(&uri),
+                uri: make_file_uri(uri),
             },
         }
     }

@@ -3,20 +3,6 @@ use async_process::{
     Command,
     Stdio,
 };
-use crate::protocol::{
-    base::Response,
-    document::{
-        DidOpenTextDocumentParams,
-        DocumentSymbolParams,
-        SymbolInformation,
-    },
-    lifecycle::{
-        InitializedParams,
-        InitializeParams,
-        InitializeResult,
-    },
-    structures::TextDocumentItem,
-};
 use std::{
     sync::{
         Arc,
@@ -28,10 +14,8 @@ use std::{
 };
 use super::{
     errors::LanguageServerError,
-    handler::{
-        MessageHandler,
-        MessageHandlerMessage,
-    },
+    handler::MessageHandlerMessage,
+    messages::Messages,
     pipes::{
         ReadPipe,
         WritePipe,
@@ -45,7 +29,7 @@ use super::{
 /// Represents a child process and the thread for communication.
 pub(super) struct LanguageServer {
     process: Child,
-    messages: MessageHandler,
+    messages: Messages,
     options: Arc<LSPServiceOptions>,
     is_initialized: bool,
 }
@@ -65,7 +49,7 @@ impl LanguageServer {
 
         Ok(Self {
             process,
-            messages: MessageHandler::new(),
+            messages: Messages::new(),
             options,
             is_initialized: false,
         })
@@ -91,8 +75,7 @@ impl LanguageServer {
         let mut error_pipe = ReadPipe::new(stderr);
         let mut write_pipe = WritePipe::new(stdin);
 
-        let params = InitializeParams::new();
-        let Ok(payload) = self.messages.make_request("initialize", params, on_initialize_response) else {
+        let Ok(payload) = self.messages.initialize() else {
             panic!("Failed to create 'initialize' request!");
         };
 
@@ -108,29 +91,11 @@ impl LanguageServer {
                         },
                         LSPServiceMessage::RequestTypes(paths) => {
                             for path in paths {
-                                let text_document = match TextDocumentItem::new(path.clone()) {
-                                    Ok(result) => result,
-                                    Err(error) => {
-                                        println!("{error:?}");
-                                        continue;
-                                    }
-                                };
-
-                                match self.messages.make_notification(
-                                    "textDocument/didOpen",
-                                    DidOpenTextDocumentParams {
-                                        text_document,
-                                    },
-                                ) {
+                                match self.messages.did_open(&path) {
                                     Ok(payload) => {
                                         write_pipe.write(payload);
 
-                                        let document_symbols = DocumentSymbolParams::new(path);
-                                        match self.messages.make_request(
-                                            "textDocument/documentSymbol",
-                                            document_symbols,
-                                            on_document_symbol,
-                                        ) {
+                                        match self.messages.document_symbol(&path) {
                                             Ok(payload) => {
                                                 write_pipe.write(payload);
                                             },
@@ -171,10 +136,10 @@ impl LanguageServer {
                     println!("buffer: {buffer}");
                 }
 
-                self.messages.handle_response(buffer);
+                self.messages.handler().handle_response(buffer);
             }
 
-            while let Some(message) = self.messages.pop_message() {
+            while let Some(message) = self.messages.handler().pop_message() {
                 match message {
                     MessageHandlerMessage::Initialized => {
                         self.is_initialized = true;
@@ -183,29 +148,4 @@ impl LanguageServer {
             }
         }
     }
-}
-
-fn on_initialize_response(
-    messages: &mut MessageHandler,
-    response: &Response,
-) {
-    if let Some(result) = response.parse_result::<InitializeResult>() {
-        let server_info = result.server_info.unwrap_or_default();
-        println!("Successfully connected to language server {}.", server_info.name);
-        println!("Version: {}", server_info.version.unwrap_or(format!("undefined")));
-    }
-    let _ = messages.make_notification("initialized", InitializedParams);
-    messages.push_message(MessageHandlerMessage::Initialized);
-}
-
-fn on_document_symbol(
-    _messages: &mut MessageHandler,
-    response: &Response,
-) {
-    let Some(symbols) = response.parse_result::<Vec<SymbolInformation>>() else {
-        println!("documentSymbol did not return SymbolInformation! Need to implement DocumentSymbol");
-        return;
-    };
-
-    println!("Retrieved {} symbols.", symbols.len());
 }
