@@ -5,7 +5,11 @@ use async_process::{
 };
 use crate::protocol::{
     base::Response,
-    document::DidOpenTextDocumentParams,
+    document::{
+        DidOpenTextDocumentParams,
+        DocumentSymbolParams,
+        SymbolInformation,
+    },
     lifecycle::{
         InitializedParams,
         InitializeParams,
@@ -104,7 +108,7 @@ impl LanguageServer {
                         },
                         LSPServiceMessage::RequestTypes(paths) => {
                             for path in paths {
-                                let text_document = match TextDocumentItem::new(path) {
+                                let text_document = match TextDocumentItem::new(path.clone()) {
                                     Ok(result) => result,
                                     Err(error) => {
                                         println!("{error:?}");
@@ -120,6 +124,20 @@ impl LanguageServer {
                                 ) {
                                     Ok(payload) => {
                                         write_pipe.write(payload);
+
+                                        let document_symbols = DocumentSymbolParams::new(path);
+                                        match self.messages.make_request(
+                                            "textDocument/documentSymbol",
+                                            document_symbols,
+                                            on_document_symbol,
+                                        ) {
+                                            Ok(payload) => {
+                                                write_pipe.write(payload);
+                                            },
+                                            Err(error) => {
+                                                println!("Failed to request symbols: {error}.");
+                                            },
+                                        }
                                     },
                                     Err(error) => {
                                         println!("Failed to request to open document: {error}");
@@ -178,4 +196,16 @@ fn on_initialize_response(
     }
     let _ = messages.make_notification("initialized", InitializedParams);
     messages.push_message(MessageHandlerMessage::Initialized);
+}
+
+fn on_document_symbol(
+    _messages: &mut MessageHandler,
+    response: &Response,
+) {
+    let Some(symbols) = response.parse_result::<Vec<SymbolInformation>>() else {
+        println!("documentSymbol did not return SymbolInformation! Need to implement DocumentSymbol");
+        return;
+    };
+
+    println!("Retrieved {} symbols.", symbols.len());
 }

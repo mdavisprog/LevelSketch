@@ -3047,6 +3047,7 @@ dependencies = [
  "futures-lite",
  "serde",
  "serde_json",
+ "serde_repr",
 ]
 
 [[package]]

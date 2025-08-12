@@ -4,7 +4,12 @@ use serde::{
     Serialize,
 };
 use std::{
-	fs::File, io::{self, Read}, path::Path
+	fs::File,
+	io::{
+		self,
+		Read
+	},
+	path::Path,
 };
 use super::{
 	DocumentUri,
@@ -62,4 +67,37 @@ impl TextDocumentItem {
 			text,
 		})
 	}
+}
+
+/// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#position
+#[derive(Serialize, Deserialize)]
+pub struct Position {
+	// Line position in a document (zero-based).
+	pub line: UInteger,
+
+	// Character offset on a line in a document (zero-based). The meaning of this
+	// offset is determined by the negotiated `PositionEncodingKind`.
+	//
+	// If the character value is greater than the line length it defaults back
+	// to the line length.
+	pub character: UInteger,
+}
+
+/// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#range
+#[derive(Serialize, Deserialize)]
+pub struct Range {
+	// The range's start position.
+	pub start: Position,
+
+	// The range's end position.
+	end: Position,
+}
+
+/// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#location
+///
+/// Represents a location inside a resource, such as a line inside a text file.
+#[derive(Serialize, Deserialize)]
+pub struct Location {
+	pub uri: DocumentUri,
+	pub range: Range,
 }
