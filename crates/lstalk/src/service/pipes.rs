@@ -70,7 +70,7 @@ impl<'a, T: AsyncRead + Unpin> ReadPipe<'a, T> {
 pub struct WritePipe<'a> {
     stdin: ChildStdin,
     context: Context<'a>,
-    stack: Vec<String>,
+    queue: Vec<String>,
     written: usize,
 }
 
@@ -79,28 +79,29 @@ impl<'a> WritePipe<'a> {
         Self {
             stdin,
             context: Context::from_waker(Waker::noop()),
-            stack: Vec::new(),
+            queue: Vec::new(),
             written: 0,
         }
     }
 
     pub fn write(&mut self, buffer: String) {
-        self.stack.push(buffer);
+        self.queue.push(buffer);
     }
 
     pub fn poll(&mut self) {
-        let Some(top) = self.stack.last() else {
+        let Some(first) = self.queue.first() else {
             return;
         };
 
-        match self.stdin.write(top.as_bytes()).poll(&mut self.context) {
+        // TODO: Test this with really large buffers.
+        match self.stdin.write(first.as_bytes()).poll(&mut self.context) {
             Poll::Pending => {},
             Poll::Ready(result) => {
                 if let Ok(written) = result {
                     self.written += written;
 
-                    if self.written >= top.len() {
-                        self.stack.pop();
+                    if self.written >= first.len() {
+                        self.queue.remove(0);
                         self.written = 0;
                     }
                 }
