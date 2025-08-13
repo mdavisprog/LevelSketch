@@ -108,8 +108,15 @@ impl MessageHandler {
         true
     }
 
-    pub fn handle_response(&mut self, response: String) {
+    pub fn append_response(&mut self, response: String) -> &mut Self {
         self.response_buffer += &response;
+        self
+    }
+
+    pub fn process_responses(&mut self) {
+        if self.response_buffer.is_empty() {
+            return;
+        }
 
         const CONTENT_LENGTH: &str = "Content-Length: ";
         // Check to find the 'Content-Length' token that marks the start of a response.

@@ -100,8 +100,10 @@ impl LanguageServer {
                     println!("buffer: {buffer}");
                 }
 
-                self.messages.handler().handle_response(buffer);
+                self.messages.handler().append_response(buffer);
             }
+
+            self.messages.handler().process_responses();
 
             while let Some(message) = self.messages.handler().pop_message() {
                 match message {
