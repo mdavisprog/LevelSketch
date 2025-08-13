@@ -1,5 +1,6 @@
 use crate::protocol::base::{
     Messagable,
+    MessageType,
     Notification,
     Request,
     Response,
@@ -7,10 +8,12 @@ use crate::protocol::base::{
 };
 use serde::Serialize;
 use std::rc::Rc;
+use super::pipes::WritePipe;
 
 pub struct MessageHandler {
     id: i64,
-    requests: Vec<RequestItem>,
+    queued: MessageQueue,
+    sent: MessageQueue,
     response_buffer: String,
     messages: Vec<MessageHandlerMessage>,
 }
@@ -19,39 +22,53 @@ impl MessageHandler {
     pub fn new() -> Self {
         Self {
             id: 1,
-            requests: Vec::new(),
+            queued: Vec::new(),
+            sent: Vec::new(),
             response_buffer: String::new(),
             messages: Vec::with_capacity(8),
         }
     }
 
-    pub fn make_request<T: Serialize>(
+    pub fn queue_notification<T: Serialize>(
+        &mut self,
+        method: &str,
+        params: T,
+    ) -> Result<(), MessageHandlerError> {
+        let value = Self::convert(params)?;
+        let notification = Notification::new(
+            method,
+            value.into(),
+        );
+
+        self.queued.insert(0, MessageItem {
+            message: MessageType::Notification(notification),
+            callback: None,
+        });
+
+        Ok(())
+    }
+
+    pub fn queue_request<T: Serialize>(
         &mut self,
         method: &str,
         params: T,
         callback: impl Fn(&mut Self, &Response) + 'static,
-    ) -> Result<String, MessageHandlerError> {
-        Self::make_request_internal(self, method, params, Some(callback))
-    }
-
-    #[expect(unused)]
-    pub fn make_request_forget<T: Serialize>(
-        &mut self,
-        method: &str,
-        params: T,
-    ) -> Result<String, MessageHandlerError> {
-        Self::make_request_internal(self, method, params, None::<&dyn Fn(&mut Self, &Response)>)
-    }
-
-    pub fn make_notification<T: Serialize>(
-        &mut self,
-        method: &str,
-        params: T
-    ) -> Result<String, MessageHandlerError> {
+    ) -> Result<(), MessageHandlerError> {
         let value = Self::convert(params)?;
-        let notification = Notification::new(method, value.into());
-        let payload = Self::encode(&notification)?;
-        Ok(payload)
+
+        let request = Request::new(
+            LSPAny::Integer(self.id),
+            method,
+            value.into(),
+        );
+
+        self.queued.insert(0, MessageItem {
+            message: MessageType::Request(request),
+            callback: Some(Rc::new(callback)),
+        });
+        self.id += 1;
+
+        Ok(())
     }
 
     pub fn push_message(&mut self, message: MessageHandlerMessage) -> &mut Self {
@@ -61,6 +78,34 @@ impl MessageHandler {
 
     pub fn pop_message(&mut self) -> Option<MessageHandlerMessage> {
         self.messages.pop()
+    }
+
+    pub fn send_message(&mut self, writer: &mut WritePipe) -> bool {
+        let Some(message) = self.queued.pop() else {
+            return false;
+        };
+
+        let encoded = match &message.message {
+            MessageType::Notification(notification) => {
+                Self::encode(notification)
+            },
+            MessageType::Request(request) => {
+                let encoded = Self::encode(request);
+                self.sent.push(message);
+                encoded
+            }
+        };
+
+        match encoded {
+            Ok(payload) => {
+                writer.write(payload);
+            },
+            Err(error) => {
+                println!("Failed to encode message: {error}.");
+            },
+        }
+
+        true
     }
 
     pub fn handle_response(&mut self, response: String) {
@@ -120,9 +165,13 @@ impl MessageHandler {
         let callback = {
             let mut result: Option<Rc<dyn Fn(&mut Self, &Response)>> = None;
 
-            for item in &self.requests {
-                if let Some(id) = &response.id {
-                    if item.request.id == *id {
+            if let Some(id) = &response.id {
+                for item in &self.sent {
+                    let MessageType::Request(request) = &item.message else {
+                        continue;
+                    };
+
+                    if request.id == *id {
                         result = item.callback.clone();
                         break;
                     }
@@ -139,39 +188,20 @@ impl MessageHandler {
 
         // Finally, remove the request from the list.
         if let Some(id) = &response.id {
-            self.requests.retain(|item| {
-                if item.request.id == *id {
-                    false
+            self.sent.retain(|item| {
+                if let MessageType::Request(request) = &item.message {
+                    if request.id == *id {
+                        false
+                    } else {
+                        true
+                    }
                 } else {
-                    true
+                    // Think notifications should be removed as they dont expect
+                    // a callback.
+                    false
                 }
             });
         }
-    }
-
-    fn make_request_internal<T: Serialize>(
-        &mut self,
-        method: &str,
-        params: T,
-        callback: Option<impl Fn(&mut Self, &Response) + 'static>,
-    ) -> Result<String, MessageHandlerError> {
-        let value = Self::convert(params)?;
-
-        let request = Request::new(
-            LSPAny::Integer(self.id),
-            method,
-            value.into(),
-        );
-
-        let payload = Self::encode(&request)?;
-
-        self.requests.push(RequestItem {
-            request,
-            callback: if callback.is_some() { Some(Rc::new(callback.unwrap())) } else { None },
-        });
-        self.id += 1;
-
-        Ok(payload)
     }
 
     fn convert<T: Serialize>(params: T) -> Result<serde_json::Value, MessageHandlerError> {
@@ -196,6 +226,7 @@ impl MessageHandler {
 pub enum MessageHandlerError {
     FailedToParse(String),
     FailedToSerialize(String),
+    FailedToInitializeResource,
 }
 
 impl std::fmt::Display for MessageHandlerError {
@@ -203,15 +234,18 @@ impl std::fmt::Display for MessageHandlerError {
         match self {
             Self::FailedToParse(error) => write!(f, "Failed to parse: {error}"),
             Self::FailedToSerialize(error) => write!(f, "Failed to serialize: {error}"),
+            Self::FailedToInitializeResource => write!(f, "Failed to initialize resource"),
         }
     }
-}
-
-struct RequestItem {
-    request: Request,
-    callback: Option<Rc<dyn Fn(&mut MessageHandler, &Response)>>,
 }
 
 pub enum MessageHandlerMessage {
     Initialized,
 }
+
+struct MessageItem {
+    message: MessageType,
+    callback: Option<Rc<dyn Fn(&mut MessageHandler, &Response)>>,
+}
+
+type MessageQueue = Vec<MessageItem>;

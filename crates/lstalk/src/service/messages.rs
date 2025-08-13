@@ -29,50 +29,36 @@ impl Messages {
         }
     }
 
-    pub fn initialize(&mut self) -> Result<String, MessageHandlerError> {
-        self.handler.make_request(
+    pub fn initialize(&mut self) -> Result<(), MessageHandlerError> {
+        self.handler.queue_request(
             "initialize",
             InitializeParams::new(),
             on_initialize_response,
         )
     }
 
-    pub fn did_open(&mut self, path: &str) -> Result<String, String> {
+    pub fn did_open(&mut self, path: &str) -> Result<(), MessageHandlerError> {
         let text_document = match TextDocumentItem::new(path) {
             Ok(result) => result,
-            Err(error) => {
-                return Err(format!("Failed to create TextDocumentItem: {error}."));
+            Err(_) => {
+                return Err(MessageHandlerError::FailedToInitializeResource);
             }
         };
 
-        let payload = match self.handler.make_notification(
+        self.handler.queue_notification(
             "textDocument/didOpen",
             DidOpenTextDocumentParams {
                 text_document,
             },
-        ) {
-            Ok(result) => result,
-            Err(error) => {
-                return Err(format!("Failed to make 'didOpen' notification: {error}."));
-            }
-        };
-
-        Ok(payload)
+        )
     }
 
-    pub fn document_symbol(&mut self, path: &str) -> Result<String, String> {
-        let payload = match self.handler.make_request(
+    pub fn document_symbol(&mut self, path: &str) -> Result<(), MessageHandlerError> {
+        self.handler.queue_request(
             "textDocument/documentSymbol",
             DocumentSymbolParams::new(path),
             on_document_symbol,
-        ) {
-            Ok(result) => result,
-            Err(error) => {
-                return Err(format!("Failed to make 'documentSymbol' request: {error}."))
-            }
-        };
-
-        Ok(payload)
+        )
     }
 
     pub fn handler(&mut self) -> &mut MessageHandler {
@@ -89,7 +75,7 @@ fn on_initialize_response(
         println!("Successfully connected to language server {}.", server_info.name);
         println!("Version: {}", server_info.version.unwrap_or(format!("undefined")));
     }
-    let _ = messages.make_notification("initialized", InitializedParams);
+    let _ = messages.queue_notification("initialized", InitializedParams);
     messages.push_message(MessageHandlerMessage::Initialized);
 }
 

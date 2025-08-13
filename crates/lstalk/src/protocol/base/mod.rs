@@ -7,7 +7,10 @@ mod request;
 mod response;
 
 pub use {
-    message::Messagable,
+    message::{
+        Messagable,
+        MessageType,
+    },
     notification::Notification,
     progress::ProgressToken,
     request::Request,

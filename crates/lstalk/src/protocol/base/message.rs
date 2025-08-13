@@ -2,6 +2,10 @@ use serde::{
     Deserialize,
     Serialize,
 };
+use super::{
+    notification::Notification,
+    request::Request,
+};
 
 /// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#message
 #[derive(Serialize, Deserialize)]
@@ -29,4 +33,9 @@ pub trait Messagable: Serialize {
 
         Ok(format!("Content-Length: {}\r\n\r\n{payload}", payload.len()))
     }
+}
+
+pub enum MessageType {
+    Notification(Notification),
+    Request(Request),
 }

@@ -75,17 +75,17 @@ impl LanguageServer {
         let mut error_pipe = ReadPipe::new(stderr);
         let mut write_pipe = WritePipe::new(stdin);
 
-        let Ok(payload) = self.messages.initialize() else {
-            panic!("Failed to create 'initialize' request!");
-        };
-
-        write_pipe.write(payload);
+        if let Err(error) = self.messages.initialize() {
+            panic!("Failed to create 'initialize' request: {error}.");
+        }
 
         loop {
             // Handle any messages from the owning thread.
-            if !self.read_receiver(&receiver, &mut write_pipe) {
+            if !self.read_receiver(&receiver) {
                 break;
             }
+
+            self.messages.handler().send_message(&mut write_pipe);
 
             write_pipe.poll();
 
@@ -116,7 +116,6 @@ impl LanguageServer {
     fn read_receiver(
         &mut self,
         receiver: &Receiver<LSPServiceMessage>,
-        write_pipe: &mut WritePipe,
     ) -> bool {
         // Handle any messages from the owning thread.
         match receiver.try_recv() {
@@ -127,23 +126,14 @@ impl LanguageServer {
                     },
                     LSPServiceMessage::RequestTypes(paths) => {
                         for path in paths {
-                            match self.messages.did_open(&path) {
-                                Ok(payload) => {
-                                    write_pipe.write(payload);
+                            if let Err(error) = self.messages.did_open(&path) {
+                                println!("Failed to request to open document: {error}.");
+                                continue;
+                            }
 
-                                    match self.messages.document_symbol(&path) {
-                                        Ok(payload) => {
-                                            write_pipe.write(payload);
-                                        },
-                                        Err(error) => {
-                                            println!("Failed to request symbols: {error}.");
-                                        },
-                                    }
-                                },
-                                Err(error) => {
-                                    println!("Failed to request to open document: {error}");
-                                },
-                            };
+                            if let Err(error) = self.messages.document_symbol(&path) {
+                                println!("Failed to request symbols: {error}.");
+                            }
                         }
                     },
                 }
