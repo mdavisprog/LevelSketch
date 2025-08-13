@@ -9,10 +9,7 @@ pub struct LSPServiceResource {
 impl Default for LSPServiceResource {
     fn default() -> Self {
         Self {
-            service: LSPService::new_with_options(LSPServiceOptions {
-                print_stderr: false,
-                ..default()
-            }),
+            service: LSPService::new_with_options(Self::options_from_command_line()),
         }
     }
 }
@@ -52,5 +49,19 @@ impl LSPServiceResource {
                 warn!("Failed to start LSP service: {error}");
             }
         }
+    }
+
+    fn options_from_command_line() -> LSPServiceOptions {
+        let mut options = LSPServiceOptions::default();
+        for arg in std::env::args() {
+            match arg.as_str() {
+                "--lsp-stderr" => options.print_stderr = true,
+                "--lsp-stdout" => options.print_stdout = true,
+                "--lsp-send" => options.print_send = true,
+                _ => {},
+            }
+        }
+
+        options
     }
 }
