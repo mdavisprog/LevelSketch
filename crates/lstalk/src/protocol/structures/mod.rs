@@ -10,6 +10,7 @@ pub use {
         Range,
         TextDocumentIdentifier,
         TextDocumentItem,
+        TextDocumentPositionParams,
     },
     results::PartialResultParams,
     uri::{
