@@ -44,17 +44,7 @@ impl From<Value> for LSPAny {
             },
             Value::Bool(bool) => Self::Boolean(bool),
             Value::Null => Self::Null,
-            Value::Number(number) => {
-                if let Some(n) = number.as_f64() {
-                    Self::Decimal(n)
-                } else if let Some(n) = number.as_i64() {
-                    Self::Integer(n)
-                } else if let Some(n) = number.as_u64() {
-                    Self::UInteger(n)
-                } else {
-                    panic!("Invalid 'Number' value received from serde_json!");
-                }
-            },
+            Value::Number(number) => number.into(),
             Value::Object(object) => {
                 let mut map = LSPObject::with_capacity(object.len());
 
@@ -208,3 +198,23 @@ impl PartialEq for LSPAny {
 }
 
 impl Eq for LSPAny {}
+
+impl From<Number> for LSPAny {
+    fn from(value: Number) -> Self {
+        if value.is_f64() {
+            if let Some(n) = value.as_f64() {
+                return Self::Decimal(n);
+            }
+        } else if value.is_i64() {
+            if let Some(n) = value.as_i64() {
+                return Self::Integer(n);
+            }
+        } else if value.is_u64() {
+            if let Some(n) = value.as_u64() {
+                return Self::UInteger(n);
+            }
+        }
+
+        LSPAny::Null
+    }
+}
