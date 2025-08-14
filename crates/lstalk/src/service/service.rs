@@ -25,6 +25,7 @@ pub enum LSPServiceMessage {
 pub struct LSPServiceOptions {
     pub print_stderr: bool,
     pub print_stdout: bool,
+    pub print_send: bool,
 }
 
 pub struct LSPService {

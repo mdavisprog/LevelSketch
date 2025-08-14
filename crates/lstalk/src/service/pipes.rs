@@ -88,7 +88,7 @@ impl<'a> WritePipe<'a> {
         self.queue.push(buffer);
     }
 
-    pub fn poll(&mut self) {
+    pub fn poll(&mut self, print: bool) {
         let Some(first) = self.queue.first() else {
             return;
         };
@@ -101,6 +101,9 @@ impl<'a> WritePipe<'a> {
                     self.written += written;
 
                     if self.written >= first.len() {
+                        if print {
+                            println!("send: {first}");
+                        }
                         self.queue.remove(0);
                         self.written = 0;
                     }

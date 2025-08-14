@@ -87,7 +87,7 @@ impl LanguageServer {
 
             self.messages.handler().send_message(&mut write_pipe);
 
-            write_pipe.poll();
+            write_pipe.poll(self.options.print_send);
 
             if let Some(buffer) = error_pipe.read() {
                 if self.options.print_stderr {
