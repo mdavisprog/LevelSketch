@@ -31,7 +31,7 @@ impl FileTools {
 
 fn on_open_project(
     _: Trigger<KeaButtonClick>,
-    lsp: Res<LSPServiceResource>,
+    mut lsp: ResMut<LSPServiceResource>,
     mut project_resource: ResMut<ProjectResource>
 ) {
     let Some(response) = FileDialog::new().pick_folder() else {
@@ -48,12 +48,7 @@ fn on_open_project(
     }
 
     let files = project_resource.project.gather_source_files();
-    match lsp.service.request_types(files) {
-        Ok(_) => {},
-        Err(error) => {
-            warn!("Failed to request project types from language server service: {error}.");
-        }
-    }
+    lsp.service.request_types(files);
 }
 
 fn on_quit(

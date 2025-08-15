@@ -1,19 +1,9 @@
-use std::{
-    sync::{
-        Arc,
-        mpsc::{
-            self,
-            Sender,
-        },
-    },
-    thread::{
-        self,
-        JoinHandle,
-    },
-};
 use super::{
     errors::LSPServiceError,
-    server::LanguageServer,
+    server::{
+        LanguageServer,
+        LanguageServerMessage,
+    },
 };
 
 pub enum LSPServiceMessage {
@@ -21,7 +11,7 @@ pub enum LSPServiceMessage {
     RequestTypes(Vec<String>),
 }
 
-#[derive(Default)]
+#[derive(Default, Clone, Copy)]
 pub struct LSPServiceOptions {
     pub print_stderr: bool,
     pub print_stdout: bool,
@@ -29,9 +19,8 @@ pub struct LSPServiceOptions {
 }
 
 pub struct LSPService {
-    handle: Option<JoinHandle<()>>,
-    sender: Option<Sender<LSPServiceMessage>>,
-    options: Arc<LSPServiceOptions>,
+    options: LSPServiceOptions,
+    servers: Vec<LanguageServer>,
 }
 
 impl LSPService {
@@ -41,73 +30,53 @@ impl LSPService {
 
     pub fn new_with_options(options: LSPServiceOptions) -> Self {
         Self {
-            handle: None,
-            sender: None,
-            options: Arc::new(options),
+            options: options,
+            servers: Vec::new(),
         }
     }
 
     pub fn start(&mut self, program: &str) -> Result<(), LSPServiceError> {
-        let (sender, receiver) = mpsc::channel::<LSPServiceMessage>();
+        let mut server = LanguageServer::new(program.to_string());
 
-        let options = self.options.clone();
-        let program_path = program.to_string();
-        let Ok(result) = thread::Builder::new().name(format!("LSP Service")).spawn(move || {
-            let mut server = match LanguageServer::spawn(&program_path, options) {
-                Ok(server) => {
-                    server
-                },
-                Err(error) => {
-                    println!("Failed to spawn language server program '{program_path}': {error}.");
-                    return;
-                }
-            };
-
-            server.run(receiver);
-        }) else {
-            return Err(LSPServiceError::FailedToStart);
-        };
-
-        self.handle = Some(result);
-        self.sender = Some(sender);
-
-        Ok(())
-    }
-
-    pub fn stop(&mut self) -> Result<(), LSPServiceError> {
-        println!("Shutting down LSP service.");
-
-        let Some(handle) = self.handle.take() else {
-            return Err(LSPServiceError::DidNotStart);
-        };
-
-        let Some(sender) = self.sender.take() else {
-            return Err(LSPServiceError::DidNotStart);
-        };
-
-        if let Err(_) = sender.send(LSPServiceMessage::Shutdown) {
-            return Err(LSPServiceError::DidNotStart);
+        match server.run(self.options.clone()) {
+            Ok(_) => {
+                self.servers.push(server);
+            },
+            Err(error) => {
+                println!("Failed to launch and run language server: {error:?}.");
+                return Err(LSPServiceError::FailedToStart);
+            },
         }
 
-        let Ok(_) = handle.join() else {
-            return Ok(())
-        };
-
         Ok(())
     }
 
-    pub fn request_types(&self, paths: Vec<String>) -> Result<(), LSPServiceError> {
-        let Some(sender) = &self.sender else {
-            return Err(LSPServiceError::DidNotStart);
-        };
+    pub fn stop(&mut self) {
+        println!("Shutting down LSP service.");
+        self.broadcast_message(LanguageServerMessage::Shutdown);
 
-        match sender.send(LSPServiceMessage::RequestTypes(paths)) {
-            Ok(_) => {},
-            Err(_) => {
-                return Err(LSPServiceError::FailedToSendMessage);
+        for mut server in self.servers.drain(..) {
+            if let Err(error) = server.stop() {
+                println!("{error:?}.");
             }
         }
+    }
 
-        Ok(())
+    pub fn poll(&self) {
+        for server in &self.servers {
+            server.poll();
+        }
+    }
+
+    pub fn request_types(&mut self, paths: Vec<String>) {
+        self.broadcast_message(LanguageServerMessage::RequestTypes(paths));
+    }
+
+    fn broadcast_message(&mut self, message: LanguageServerMessage) {
+        for server in &mut self.servers {
+            if let Err(error) = server.send_message(message.clone()) {
+                println!("{error:?}.");
+            }
+        }
     }
 }

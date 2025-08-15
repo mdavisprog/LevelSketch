@@ -16,12 +16,7 @@ impl Default for LSPServiceResource {
 
 impl Drop for LSPServiceResource {
     fn drop(&mut self) {
-        match self.service.stop() {
-            Ok(_) => {},
-            Err(error) => {
-                error!("Failed to join LSP service: {error}.");
-            },
-        }
+        self.service.stop();
     }
 }
 
@@ -46,9 +41,13 @@ impl LSPServiceResource {
         match self.service.start(&program) {
             Ok(_) => {},
             Err(error) => {
-                warn!("Failed to start LSP service: {error}");
+                warn!("Failed to start LSP service: {error:?}");
             }
         }
+    }
+
+    pub fn poll(&self) {
+        self.service.poll();
     }
 
     fn options_from_command_line() -> LSPServiceOptions {

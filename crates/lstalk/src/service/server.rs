@@ -8,8 +8,15 @@ use std::{
         Arc,
         mpsc::{
             Receiver,
+            self,
+            Sender,
             TryRecvError,
         },
+        Mutex,
+    },
+    thread::{
+        JoinHandle,
+        self,
     },
 };
 use super::{
@@ -20,22 +27,147 @@ use super::{
         ReadPipe,
         WritePipe,
     },
-    service::{
-        LSPServiceMessage,
-        LSPServiceOptions,
-    },
+    service::LSPServiceOptions,
 };
 
 /// Represents a child process and the thread for communication.
-pub(super) struct LanguageServer {
-    process: Child,
-    messages: Messages,
-    options: Arc<LSPServiceOptions>,
-    is_initialized: bool,
+pub struct LanguageServer {
+    program: String,
+    join_handle: Option<JoinHandle<()>>,
+    messages: Option<Sender<LanguageServerMessage>>,
+    events: Option<Arc<Mutex<Receiver<LanguageServerEvent>>>>,
 }
 
 impl LanguageServer {
-    pub fn spawn(program: &str, options: Arc<LSPServiceOptions>) -> Result<Self, LanguageServerError> {
+    pub fn new(program: String) -> Self {
+        Self {
+            program,
+            join_handle: None,
+            messages: None,
+            events: None,
+        }
+    }
+
+    pub fn run(
+        &mut self,
+        options: LSPServiceOptions,
+    ) -> Result<(), LanguageServerError> {
+        // Data to be moved into thread.
+        let (sender, receiver) = mpsc::channel::<LanguageServerMessage>();
+        let (events_sender, events_receiver) = mpsc::channel::<LanguageServerEvent>();
+        let program = self.program.clone();
+
+        let join_handle = match thread::Builder::new()
+            .name(format!("Language Server"))
+            .spawn(move || {
+            let mut runner = match LanguageServerRunner::spawn(
+                program,
+                receiver,
+                events_sender,
+                options,
+            ) {
+                Ok(result) => result,
+                Err(error) => {
+                    println!("{error}");
+                    return;
+                }
+            };
+
+            runner.run();
+        }) {
+            Ok(result) => result,
+            Err(error) => {
+                println!("Failed to spawn thread: {error:?}.");
+                return Err(LanguageServerError::FailedToSpawn);
+            },
+        };
+
+        self.join_handle = Some(join_handle);
+        self.messages = Some(sender);
+        self.events = Some(Arc::new(Mutex::new(events_receiver)));
+
+        Ok(())
+    }
+
+    pub fn stop(&mut self) -> Result<(), LanguageServerError> {
+        let Some(handle) = self.join_handle.take() else {
+            return Err(LanguageServerError::DidNotState);
+        };
+
+        let Some(messages) = self.messages.take() else {
+            return Err(LanguageServerError::DidNotState);
+        };
+
+        if let Err(_) = messages.send(LanguageServerMessage::Shutdown) {
+            return Err(LanguageServerError::FailedToSendMessage);
+        }
+
+        if let Err(_) = handle.join() {
+            return  Err(LanguageServerError::FailedToStop);
+        }
+
+        Ok(())
+    }
+
+    pub fn send_message(
+        &mut self,
+        message: LanguageServerMessage
+    ) -> Result<(), LanguageServerError> {
+        let Some(messages) = &self.messages else {
+            return Err(LanguageServerError::FailedToSendMessage);
+        };
+
+        match messages.send(message) {
+            Ok(result) => Ok(result),
+            Err(_) => Err(LanguageServerError::FailedToSendMessage),
+        }
+    }
+
+    pub fn poll(&self) {
+        let Some(resource) = &self.events else {
+            return;
+        };
+
+        let Ok(events) = resource.try_lock() else {
+            return;
+        };
+
+        let event = match events.try_recv() {
+            Ok(result) => result,
+            Err(error) => {
+                match error {
+                    TryRecvError::Disconnected => {
+                        println!("Language server events has been disconnected.");
+                    },
+                    TryRecvError::Empty => {},
+                }
+                return;
+            }
+        };
+
+        match event {
+            LanguageServerEvent::Initialized => {
+                println!("Lanugage server Initialized!");
+            }
+        }
+    }
+}
+
+struct LanguageServerRunner {
+    process: Child,
+    messages: Messages,
+    server_messages: Receiver<LanguageServerMessage>,
+    events: Sender<LanguageServerEvent>,
+    options: LSPServiceOptions,
+}
+
+impl LanguageServerRunner {
+    fn spawn(
+        program: String,
+        server_messages: Receiver<LanguageServerMessage>,
+        events: Sender<LanguageServerEvent>,
+        options: LSPServiceOptions,
+    ) -> Result<Self, String> {
         let process = match Command::new(program)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
@@ -43,19 +175,20 @@ impl LanguageServer {
             .spawn() {
             Ok(child) => child,
             Err(_) => {
-                return Err(LanguageServerError::FailedToSpawn);
+                return Err(format!("Failed to spawn child process!"));
             }
         };
 
         Ok(Self {
             process,
             messages: Messages::new(),
+            server_messages: server_messages,
+            events: events,
             options,
-            is_initialized: false,
         })
     }
 
-    pub fn run(&mut self, receiver: Receiver<LSPServiceMessage>) {
+    fn run(&mut self) {
         let stdout = self.process
             .stdout
             .take()
@@ -81,7 +214,7 @@ impl LanguageServer {
 
         loop {
             // Handle any messages from the owning thread.
-            if !self.read_receiver(&receiver) {
+            if !self.handle_server_messages() {
                 break;
             }
 
@@ -108,49 +241,61 @@ impl LanguageServer {
             while let Some(message) = self.messages.handler().pop_message() {
                 match message {
                     MessageHandlerMessage::Initialized => {
-                        self.is_initialized = true;
+                        let _ = self.events.send(LanguageServerEvent::Initialized);
                     },
                 }
             }
         }
     }
 
-    fn read_receiver(
+    fn handle_server_messages(
         &mut self,
-        receiver: &Receiver<LSPServiceMessage>,
     ) -> bool {
-        // Handle any messages from the owning thread.
-        match receiver.try_recv() {
-            Ok(message) => {
-                match message {
-                    LSPServiceMessage::Shutdown => {
-                        return false;
-                    },
-                    LSPServiceMessage::RequestTypes(paths) => {
-                        for path in paths {
-                            if let Err(error) = self.messages.did_open(&path) {
-                                println!("Failed to request to open document: {error}.");
-                                continue;
-                            }
-
-                            if let Err(error) = self.messages.document_symbol(&path) {
-                                println!("Failed to request symbols: {error}.");
-                            }
-                        }
-                    },
-                }
-            },
+        let message = match self.server_messages.try_recv() {
+            Ok(result) => result,
             Err(error) => {
                 match error {
                     TryRecvError::Disconnected => {
-                        println!("Service thread received a disconnected error.");
+                        println!("Receiver channel disconnected.");
                         return false;
                     },
-                    TryRecvError::Empty => {},
+                    TryRecvError::Empty => {
+                        return true;
+                    }
+                }
+            }
+        };
+
+        match message {
+            LanguageServerMessage::Shutdown => {
+                return false;
+            },
+            LanguageServerMessage::RequestTypes(paths) => {
+                for path in paths {
+                    if let Err(error) = self.messages.did_open(&path) {
+                        println!("Failed to request to open document: {error}.");
+                        continue;
+                    }
+
+                    if let Err(error) = self.messages.document_symbol(&path) {
+                        println!("Failed to request symbols: {error}.");
+                    }
                 }
             },
         }
 
         true
     }
+}
+
+/// LanguageServer -> LanguageServerRunnable
+#[derive(Clone)]
+pub enum LanguageServerMessage {
+    Shutdown,
+    RequestTypes(Vec<String>),
+}
+
+/// LanguageServerRunnable -> LanguageServer
+pub enum LanguageServerEvent {
+    Initialized,
 }
