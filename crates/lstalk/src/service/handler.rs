@@ -118,10 +118,9 @@ impl MessageHandler {
             return;
         }
 
-        const CONTENT_LENGTH: &str = "Content-Length: ";
+        const CONTENT_LENGTH: &str = "Content-Length:";
         // Check to find the 'Content-Length' token that marks the start of a response.
         let Some(index) = self.response_buffer.find(CONTENT_LENGTH) else {
-            println!("Failed to find {CONTENT_LENGTH}");
             return;
         };
 
@@ -136,7 +135,7 @@ impl MessageHandler {
         };
 
         // Get the token slice and attempt to parse.
-        let length_token = &self.response_buffer[start..end];
+        let length_token = &self.response_buffer[start..end].trim();
         let length = match length_token.parse::<usize>() {
             Ok(result) => result,
             Err(error) => {
