@@ -47,7 +47,15 @@ impl LSPServiceResource {
     }
 
     pub fn poll(&self) {
-        self.service.poll();
+        let result = self.service.poll();
+
+        for item in result.items {
+            match item.event {
+                LanguageServerEvent::Initialized => {
+                    info!("Server '{}' has been initialized.", item.server.name());
+                }
+            }
+        }
     }
 
     fn options_from_command_line() -> LSPServiceOptions {

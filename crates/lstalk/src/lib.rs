@@ -5,9 +5,12 @@ pub mod prelude {
     use super::*;
 
     pub use service::{
+        LanguageServerEvent,
         LSPService,
         LSPServiceError,
-        LSPServiceOptions,
         LSPServiceMessage,
+        LSPServiceOptions,
+        LSPServicePollResult,
+        LSPServicePollResultItem,
     };
 }

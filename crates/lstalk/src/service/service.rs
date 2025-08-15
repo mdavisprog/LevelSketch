@@ -3,6 +3,7 @@ use super::{
     errors::LSPServiceError,
     server::{
         LanguageServer,
+        LanguageServerEvent,
         LanguageServerMessage,
     },
 };
@@ -73,10 +74,19 @@ impl LSPService {
         }
     }
 
-    pub fn poll(&self) {
+    pub fn poll(&self) -> LSPServicePollResult {
+        let mut result = LSPServicePollResult::new();
+
         for server in &self.servers {
-            server.poll();
+            if let Some(event) = server.poll() {
+                result.items.push(LSPServicePollResultItem {
+                    server: server,
+                    event,
+                });
+            }
         }
+
+        result
     }
 
     pub fn request_types(&mut self, paths: Vec<String>) {
@@ -90,4 +100,21 @@ impl LSPService {
             }
         }
     }
+}
+
+pub struct LSPServicePollResult<'a> {
+    pub items: Vec<LSPServicePollResultItem<'a>>,
+}
+
+impl<'a> LSPServicePollResult<'a> {
+    fn new() -> Self {
+        Self {
+            items: Vec::new(),
+        }
+    }
+}
+
+pub struct LSPServicePollResultItem<'a> {
+    pub server: &'a LanguageServer,
+    pub event: LanguageServerEvent,
 }

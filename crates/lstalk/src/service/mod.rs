@@ -7,9 +7,12 @@ mod service;
 
 pub use {
     errors::LSPServiceError,
+    server::LanguageServerEvent,
     service::{
         LSPService,
         LSPServiceOptions,
         LSPServiceMessage,
+        LSPServicePollResult,
+        LSPServicePollResultItem,
     },
 };

@@ -125,13 +125,13 @@ impl LanguageServer {
         }
     }
 
-    pub fn poll(&self) {
+    pub fn poll(&self) -> Option<LanguageServerEvent> {
         let Some(resource) = &self.events else {
-            return;
+            return None;
         };
 
         let Ok(events) = resource.try_lock() else {
-            return;
+            return None;
         };
 
         let event = match events.try_recv() {
@@ -143,15 +143,13 @@ impl LanguageServer {
                     },
                     TryRecvError::Empty => {},
                 }
-                return;
+
+                return None;
             }
         };
 
-        match event {
-            LanguageServerEvent::Initialized => {
-                println!("Lanugage server {} has been initialized.", self.name);
-            }
-        }
+        Some(event)
+    }
 
     pub fn name(&self) -> &str {
         &self.name
