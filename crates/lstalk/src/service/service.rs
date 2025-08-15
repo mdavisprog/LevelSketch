@@ -1,3 +1,4 @@
+use std::path::Path;
 use super::{
     errors::LSPServiceError,
     server::{
@@ -36,7 +37,17 @@ impl LSPService {
     }
 
     pub fn start(&mut self, program: &str) -> Result<(), LSPServiceError> {
-        let mut server = LanguageServer::new(program.to_string());
+        let name = if let Some(stem) = Path::new(program).file_stem() {
+            if let Some(result) = stem.to_str() {
+                result.to_string()
+            } else {
+                program.to_string()
+            }
+        } else {
+            program.to_string()
+        };
+
+        let mut server = LanguageServer::new(program.to_string(), name);
 
         match server.run(self.options.clone()) {
             Ok(_) => {

@@ -33,15 +33,17 @@ use super::{
 /// Represents a child process and the thread for communication.
 pub struct LanguageServer {
     program: String,
+    name: String,
     join_handle: Option<JoinHandle<()>>,
     messages: Option<Sender<LanguageServerMessage>>,
     events: Option<Arc<Mutex<Receiver<LanguageServerEvent>>>>,
 }
 
 impl LanguageServer {
-    pub fn new(program: String) -> Self {
+    pub fn new(program: String, name: String) -> Self {
         Self {
             program,
+            name,
             join_handle: None,
             messages: None,
             events: None,
@@ -58,7 +60,7 @@ impl LanguageServer {
         let program = self.program.clone();
 
         let join_handle = match thread::Builder::new()
-            .name(format!("Language Server"))
+            .name(format!("Language Server: {}", self.name))
             .spawn(move || {
             let mut runner = match LanguageServerRunner::spawn(
                 program,
@@ -147,9 +149,12 @@ impl LanguageServer {
 
         match event {
             LanguageServerEvent::Initialized => {
-                println!("Lanugage server Initialized!");
+                println!("Lanugage server {} has been initialized.", self.name);
             }
         }
+
+    pub fn name(&self) -> &str {
+        &self.name
     }
 }
 
