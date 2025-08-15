@@ -47,8 +47,7 @@ fn on_open_project(
         return;
     }
 
-    let files = project_resource.project.gather_source_files();
-    lsp.service.request_types(files);
+    lsp.start(path);
 }
 
 fn on_quit(

@@ -4,3 +4,4 @@ pub(super) mod base;
 pub(super) mod document;
 pub(super) mod lifecycle;
 pub(super) mod structures;
+pub(super) mod workspace;

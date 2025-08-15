@@ -1,11 +1,17 @@
 use crate::protocol::{
     base::types::*,
-    structures::WorkDoneProgressParams,
+    structures::{
+        DocumentUri,
+        make_file_uri,
+        WorkDoneProgressParams,
+    },
+    workspace::WorkspaceFolder,
 };
 use serde::{
     Deserialize,
     Serialize,
 };
+use std::path::Path;
 
 /// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initializeParams
 #[derive(Serialize, Deserialize, Default)]
@@ -19,6 +25,30 @@ pub struct InitializeParams {
     // its process.
     #[serde(rename = "processId")]
     pub process_id: Option<Integer>,
+
+	// The rootPath of the workspace. Is null
+	// if no folder is open.
+	//
+	// @deprecated in favour of `rootUri`.
+    #[serde(rename = "rootPath")]
+	pub root_path: Option<String>,
+
+	// The rootUri of the workspace. Is null if no
+	// folder is open. If both `rootPath` and `rootUri` are set
+	// `rootUri` wins.
+	//
+	// @deprecated in favour of `workspaceFolders`
+    #[serde(rename = "rootUri")]
+	pub root_uri: Option<DocumentUri>,
+
+	// The workspace folders configured in the client when the server starts.
+	// This property is only available if the client supports workspace folders.
+	// It can be `null` if the client supports workspace folders but none are
+	// configured.
+	//
+	// @since 3.6.0
+    #[serde(rename = "workspaceFolders")]
+	pub workspace_folders: Option<Vec<WorkspaceFolder>>,
 }
 
 impl InitializeParams {
@@ -26,7 +56,32 @@ impl InitializeParams {
         Self {
             work_done_progress: WorkDoneProgressParams::default(),
             process_id: Some(std::process::id() as Integer),
+            root_path: None,
+            root_uri: None,
+            workspace_folders: None,
         }
+    }
+
+    pub fn new_with_workspace(path: &str) -> Self {
+        let name = if let Some(file_name) = Path::new(path).file_name() {
+            file_name
+                .to_str()
+                .unwrap_or_else(|| path)
+                .to_string()
+        } else {
+            path.to_string()
+        };
+
+        let uri = make_file_uri(path);
+
+        let mut result = Self::new();
+        result.root_path = Some(uri.clone());
+        result.root_uri = Some(uri);
+        result.workspace_folders = Some(vec![
+            WorkspaceFolder::new(path, name),
+        ]);
+
+        result
     }
 }
 

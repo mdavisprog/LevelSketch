@@ -1,14 +1,12 @@
 use bevy::prelude::*;
+use lstalk::prelude::*;
 
 mod lsp;
 mod project;
 
 pub use {
     lsp::LSPServiceResource,
-    project::{
-        Project,
-        ProjectResource,
-    },
+    project::ProjectResource,
 };
 
 pub(super) struct Plugin;
@@ -18,15 +16,27 @@ impl bevy::prelude::Plugin for Plugin {
         app
             .init_resource::<project::ProjectResource>()
             .init_resource::<lsp::LSPServiceResource>()
-            .add_systems(Startup, setup)
             .add_systems(Update, update);
     }
 }
 
-fn setup(mut lsp_resource: ResMut<lsp::LSPServiceResource>) {
-    lsp_resource.start();
-}
+fn update(
+    project_resource: Res<ProjectResource>,
+    mut lsp_resource: ResMut<LSPServiceResource>,
+) {
+    let result = lsp_resource.poll();
 
-fn update(lsp_resource: Res<lsp::LSPServiceResource>) {
-    lsp_resource.poll();
+    let mut initialized = false;
+    for item in result.items {
+        match item.event {
+            LanguageServerEvent::Initialized => {
+                initialized = true;
+            },
+        }
+    }
+
+    if initialized {
+        let documents = project_resource.project.gather_source_files();
+        lsp_resource.service.request_types(documents);
+    }
 }

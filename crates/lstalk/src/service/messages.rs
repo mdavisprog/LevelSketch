@@ -29,10 +29,10 @@ impl Messages {
         }
     }
 
-    pub fn initialize(&mut self) -> Result<(), MessageHandlerError> {
+    pub fn initialize(&mut self, workspace_folder: &str) -> Result<(), MessageHandlerError> {
         self.handler.queue_request(
             "initialize",
-            InitializeParams::new(),
+            InitializeParams::new_with_workspace(workspace_folder),
             on_initialize_response,
         )
     }

@@ -21,7 +21,7 @@ impl Drop for LSPServiceResource {
 }
 
 impl LSPServiceResource {
-    pub fn start(&mut self) {
+    pub fn start(&mut self, workspace_folder: &str) {
         let program = {
             let mut result = String::new();
 
@@ -38,7 +38,7 @@ impl LSPServiceResource {
             result
         };
 
-        match self.service.start(&program) {
+        match self.service.start(&program, workspace_folder) {
             Ok(_) => {},
             Err(error) => {
                 warn!("Failed to start LSP service: {error:?}");
@@ -46,16 +46,8 @@ impl LSPServiceResource {
         }
     }
 
-    pub fn poll(&self) {
-        let result = self.service.poll();
-
-        for item in result.items {
-            match item.event {
-                LanguageServerEvent::Initialized => {
-                    info!("Server '{}' has been initialized.", item.server.name());
-                }
-            }
-        }
+    pub fn poll(&self) -> LSPServicePollResult {
+        self.service.poll()
     }
 
     fn options_from_command_line() -> LSPServiceOptions {

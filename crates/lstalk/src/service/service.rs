@@ -37,18 +37,24 @@ impl LSPService {
         }
     }
 
-    pub fn start(&mut self, program: &str) -> Result<(), LSPServiceError> {
+    pub fn start(
+        &mut self,
+        program: &str,
+        workspace_folder: &str,
+    ) -> Result<(), LSPServiceError> {
         let name = if let Some(stem) = Path::new(program).file_stem() {
-            if let Some(result) = stem.to_str() {
-                result.to_string()
-            } else {
-                program.to_string()
-            }
+            stem
+                .to_str()
+                .unwrap_or_else(|| program)
+                .to_string()
         } else {
             program.to_string()
         };
 
-        let mut server = LanguageServer::new(program.to_string(), name);
+        let mut server = LanguageServer::new()
+            .set_program(program.to_string())
+            .set_name(name)
+            .set_workspace_folder(workspace_folder.to_string());
 
         match server.run(self.options.clone()) {
             Ok(_) => {

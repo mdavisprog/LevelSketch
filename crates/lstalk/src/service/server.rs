@@ -37,17 +37,34 @@ pub struct LanguageServer {
     join_handle: Option<JoinHandle<()>>,
     messages: Option<Sender<LanguageServerMessage>>,
     events: Option<Arc<Mutex<Receiver<LanguageServerEvent>>>>,
+    workspace_folder: String,
 }
 
 impl LanguageServer {
-    pub fn new(program: String, name: String) -> Self {
+    pub fn new() -> Self {
         Self {
-            program,
-            name,
+            program: String::new(),
+            name: String::new(),
             join_handle: None,
             messages: None,
             events: None,
+            workspace_folder: String::new(),
         }
+    }
+
+    pub fn set_name(mut self, name: String) -> Self {
+        self.name = name;
+        self
+    }
+
+    pub fn set_program(mut self, program: String) -> Self {
+        self.program = program;
+        self
+    }
+
+    pub fn set_workspace_folder(mut self, workspace_folder: String) -> Self {
+        self.workspace_folder = workspace_folder;
+        self
     }
 
     pub fn run(
@@ -58,6 +75,7 @@ impl LanguageServer {
         let (sender, receiver) = mpsc::channel::<LanguageServerMessage>();
         let (events_sender, events_receiver) = mpsc::channel::<LanguageServerEvent>();
         let program = self.program.clone();
+        let workspace_folder = self.workspace_folder.clone();
 
         let join_handle = match thread::Builder::new()
             .name(format!("Language Server: {}", self.name))
@@ -75,7 +93,7 @@ impl LanguageServer {
                 }
             };
 
-            runner.run();
+            runner.run(workspace_folder);
         }) {
             Ok(result) => result,
             Err(error) => {
@@ -191,7 +209,7 @@ impl LanguageServerRunner {
         })
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, workspace_folder: String) {
         let stdout = self.process
             .stdout
             .take()
@@ -211,7 +229,7 @@ impl LanguageServerRunner {
         let mut error_pipe = ReadPipe::new(stderr);
         let mut write_pipe = WritePipe::new(stdin);
 
-        if let Err(error) = self.messages.initialize() {
+        if let Err(error) = self.messages.initialize(&workspace_folder) {
             panic!("Failed to create 'initialize' request: {error}.");
         }
 
