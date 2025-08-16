@@ -36,7 +36,7 @@ pub struct LanguageServer {
     name: String,
     join_handle: Option<JoinHandle<()>>,
     messages: Option<Sender<LanguageServerMessage>>,
-    events: Option<Arc<Mutex<Receiver<LanguageServerEvent>>>>,
+    events: Option<Arc<Mutex<Receiver<LanguageServerRunnerEvent>>>>,
     workspace_folder: String,
 }
 
@@ -73,7 +73,7 @@ impl LanguageServer {
     ) -> Result<(), LanguageServerError> {
         // Data to be moved into thread.
         let (sender, receiver) = mpsc::channel::<LanguageServerMessage>();
-        let (events_sender, events_receiver) = mpsc::channel::<LanguageServerEvent>();
+        let (events_sender, events_receiver) = mpsc::channel::<LanguageServerRunnerEvent>();
         let program = self.program.clone();
         let workspace_folder = self.workspace_folder.clone();
 
@@ -166,7 +166,11 @@ impl LanguageServer {
             }
         };
 
-        Some(event)
+        let result = match event {
+            LanguageServerRunnerEvent::Initialized => LanguageServerEvent::Initialized,
+        };
+
+        Some(result)
     }
 
     pub fn name(&self) -> &str {
@@ -178,7 +182,7 @@ struct LanguageServerRunner {
     process: Child,
     messages: Messages,
     server_messages: Receiver<LanguageServerMessage>,
-    events: Sender<LanguageServerEvent>,
+    events: Sender<LanguageServerRunnerEvent>,
     options: LSPServiceOptions,
 }
 
@@ -186,7 +190,7 @@ impl LanguageServerRunner {
     fn spawn(
         program: String,
         server_messages: Receiver<LanguageServerMessage>,
-        events: Sender<LanguageServerEvent>,
+        events: Sender<LanguageServerRunnerEvent>,
         options: LSPServiceOptions,
     ) -> Result<Self, String> {
         let process = match Command::new(program)
@@ -262,7 +266,7 @@ impl LanguageServerRunner {
             while let Some(message) = self.messages.handler().pop_message() {
                 match message {
                     MessageHandlerMessage::Initialized => {
-                        let _ = self.events.send(LanguageServerEvent::Initialized);
+                        let _ = self.events.send(LanguageServerRunnerEvent::Initialized);
                     },
                 }
             }
@@ -316,7 +320,12 @@ pub enum LanguageServerMessage {
     RequestTypes(Vec<String>),
 }
 
-/// LanguageServerRunnable -> LanguageServer
+/// LanguageServer -> LSPService -> User
 pub enum LanguageServerEvent {
+    Initialized,
+}
+
+/// LanguageServerRunner -> LanguageServer
+enum LanguageServerRunnerEvent {
     Initialized,
 }
