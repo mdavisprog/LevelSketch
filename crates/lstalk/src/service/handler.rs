@@ -175,8 +175,6 @@ impl MessageHandler {
 
         self.response_buffer.drain(0..content_end);
 
-        let last_count = self.sent.len();
-
         let sent = self.sent.extract_if(.., |element| -> bool {
             match &element.message {
                 MessageType::Request(request) => {
@@ -190,8 +188,6 @@ impl MessageHandler {
             }
         })
         .collect::<Vec<MessageItem>>();
-
-        println!("Pre: {last_count} Post: {}", self.sent.len());
 
         for item in sent {
             let Some(callback) = item.callback else {

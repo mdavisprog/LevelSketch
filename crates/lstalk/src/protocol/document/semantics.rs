@@ -59,15 +59,15 @@ impl SemanticTokens {
 
         let mut result = Vec::<SemanticToken>::new();
         let mut index = 0;
-        while index < self.data.len() - 5 {
+        while index < self.data.len() {
             let data = &self.data[index..(index+5)];
 
             let token = SemanticToken {
-                line: data[0],
-                start: data[1],
-                length: data[2],
-                token_type: data[3],
-                modifiers: data[4],
+                line: data[0] as usize,
+                start: data[1] as usize,
+                length: data[2] as usize,
+                token_type: data[3] as usize,
+                modifiers: data[4] as usize,
             };
 
             result.push(token);
@@ -81,9 +81,9 @@ impl SemanticTokens {
 
 /// Representation of a single token representation within the data array.
 pub struct SemanticToken {
-    pub line: UInteger,
-    pub start: UInteger,
-    pub length: UInteger,
-    pub token_type: UInteger,
-    pub modifiers: UInteger,
+    pub line: usize,
+    pub start: usize,
+    pub length: usize,
+    pub token_type: usize,
+    pub modifiers: usize,
 }

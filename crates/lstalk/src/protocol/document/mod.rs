@@ -4,6 +4,7 @@ mod sync;
 
 pub use {
     semantics::{
+        SemanticToken,
         SemanticTokens,
         SemanticTokensParams,
     },

@@ -3,8 +3,18 @@ use async_process::{
     Command,
     Stdio,
 };
-use crate::protocol::lifecycle::ServerCapabilities;
+use crate::{
+    constructs,
+    protocol::{
+        lifecycle::ServerCapabilities,
+        structures::{
+            DocumentUri,
+            make_file_uri,
+        },
+    },
+};
 use std::{
+    collections::HashMap,
     sync::{
         Arc,
         mpsc::{
@@ -21,6 +31,7 @@ use std::{
     },
 };
 use super::{
+    document::Document,
     errors::LanguageServerError,
     handler::MessageHandlerMessage,
     messages::Messages,
@@ -186,6 +197,7 @@ struct LanguageServerRunner {
     events: Sender<LanguageServerRunnerEvent>,
     options: LSPServiceOptions,
     server_capabilities: Option<ServerCapabilities>,
+    symbol_requests: HashMap<String, SymbolRequest>,
 }
 
 impl LanguageServerRunner {
@@ -213,6 +225,7 @@ impl LanguageServerRunner {
             events: events,
             options,
             server_capabilities: None,
+            symbol_requests: HashMap::new(),
         })
     }
 
@@ -277,9 +290,67 @@ impl LanguageServerRunner {
 
                         let _ = self.events.send(LanguageServerRunnerEvent::Initialized);
                     },
-                    MessageHandlerMessage::DocumentSymbols(_symbols) => {
+                    MessageHandlerMessage::DocumentSymbols(result) => {
+                        let Some(symbols) = result.data else {
+                            continue;
+                        };
+
+                        let Some(request) = self.symbol_requests.get_mut(&result.uri) else {
+                            println!("DocumentSymbols: Failed to find symbol table for document '{}'.", result.uri);
+                            continue;
+                        };
+
+                        for symbol in symbols {
+                            request
+                                .symbols
+                                .insert(symbol.name.clone(), symbol.into());
+                        }
                     },
-                    MessageHandlerMessage::SemanticTokens(_result) => {
+                    MessageHandlerMessage::SemanticTokens(result) => {
+                        let Some(semantic_tokens) = result.data else {
+                            continue;
+                        };
+
+                        let Some(capabilities) = &self.server_capabilities else {
+                            continue;
+                        };
+
+                        let Some(provider) = &capabilities.semantic_tokens_provider else {
+                            continue;
+                        };
+
+                        let Some(request) = self.symbol_requests.get_mut(&result.uri) else {
+                            continue;
+                        };
+
+                        let Some(tokens) = semantic_tokens.parse_data() else {
+                            continue;
+                        };
+
+                        let resolved = request.document.resolve(&tokens);
+                        for item in resolved {
+                            let Some(token_type) = provider.legend.token_types.get(item.token_type) else {
+                                continue;
+                            };
+
+                            let Some(symbol_request) = self.symbol_requests.get_mut(&result.uri) else {
+                                continue;
+                            };
+
+                            let Some(symbol) = symbol_request.symbols.get_mut(&item.name) else {
+                                continue;
+                            };
+
+                            symbol.semantic_type = token_type.as_str().into();
+
+                            for i in 0..u64::BITS {
+                                if item.token_modifiers & (1 << i) != 0 {
+                                    if let Some(modifier) = provider.legend.token_modifiers.get(i as usize) {
+                                        symbol.modifiers.push(modifier.as_str().into());
+                                    }
+                                }
+                            }
+                        }
                     },
                 }
             }
@@ -317,7 +388,14 @@ impl LanguageServerRunner {
 
                     if let Err(error) = self.messages.document_symbol(&path) {
                         println!("Failed to request symbols: {error}.");
+                        continue;
                     }
+
+                    let Some(request) = SymbolRequest::make(&path) else {
+                        continue;
+                    };
+
+                    self.symbol_requests.insert(request.uri.clone(), request);
                 }
             },
         }
@@ -341,4 +419,24 @@ pub enum LanguageServerEvent {
 /// LanguageServerRunner -> LanguageServer
 enum LanguageServerRunnerEvent {
     Initialized,
+}
+
+struct SymbolRequest {
+    uri: DocumentUri,
+    document: Document,
+    symbols: constructs::SymbolTable,
+}
+
+impl SymbolRequest {
+    pub fn make(path: &str) -> Option<Self> {
+        let Ok(document) = Document::open(path) else {
+            return None;
+        };
+
+        Some(Self {
+            uri: make_file_uri(path),
+            document,
+            symbols: constructs::SymbolTable::new(),
+        })
+    }
 }

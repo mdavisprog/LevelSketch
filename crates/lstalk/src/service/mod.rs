@@ -1,3 +1,4 @@
+mod document;
 mod errors;
 mod handler;
 mod messages;
