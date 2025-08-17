@@ -17,7 +17,7 @@ pub type Decimal = f64;
 pub type LSPObject = HashMap<String, LSPAny>;
 pub type LSPArray = Vec<LSPAny>;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(untagged)]
 pub enum LSPAny {
     Null,

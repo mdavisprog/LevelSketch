@@ -1,8 +1,16 @@
+mod capabilities;
 mod initialize;
 
-pub use initialize::{
-    InitializedParams,
-    InitializeParams,
-    InitializeResult,
-    ServerInfo,
+pub use {
+    capabilities::{
+        SemanticTokensLegend,
+        SemanticTokensOptions,
+        ServerCapabilities,
+    },
+    initialize::{
+        InitializedParams,
+        InitializeParams,
+        InitializeResult,
+        ServerInfo,
+    },
 };

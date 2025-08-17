@@ -20,7 +20,7 @@ use serde_repr::{
 };
 
 /// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentSymbolParams
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct DocumentSymbolParams {
     #[serde(flatten)]
     pub work_done_progress: WorkDoneProgressParams,

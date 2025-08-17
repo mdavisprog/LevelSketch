@@ -1,4 +1,5 @@
 use serde::{
+    de::DeserializeOwned,
     Deserialize,
     Serialize,
 };
@@ -47,6 +48,30 @@ impl Request {
         };
 
         Ok(format!("Content-Length: {}\r\n\r\n{payload}", payload.len()))
+    }
+
+    pub fn parse_params<T: DeserializeOwned>(&self) -> Option<T> {
+        let Some(params) = &self.params else {
+            return None;
+        };
+
+        let json = match serde_json::to_string(&params) {
+            Ok(json) => json,
+            Err(error) => {
+                println!("Response_parse_result: Failed to convert '{params}' into string: {error:?}");
+                return None;
+            }
+        };
+
+        let result = match serde_json::from_str::<T>(&json) {
+            Ok(result) => result,
+            Err(error) => {
+                println!("Response::parse_result: Failed to parse result of type {}: {error:?}", std::any::type_name::<T>());
+                return None;
+            }
+        };
+
+        Some(result)
     }
 }
 

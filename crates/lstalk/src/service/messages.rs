@@ -1,8 +1,9 @@
 use crate::protocol::{
-    base::Response,
     document::{
         DidOpenTextDocumentParams,
         DocumentSymbolParams,
+        SemanticTokens,
+        SemanticTokensParams,
         SymbolInformation,
     },
     lifecycle::{
@@ -13,9 +14,11 @@ use crate::protocol::{
     structures::TextDocumentItem,
 };
 use super::handler::{
+    DocumentResponse,
     MessageHandler,
     MessageHandlerMessage,
     MessageHandlerError,
+    MessageResponse,
 };
 
 pub struct Messages {
@@ -54,11 +57,19 @@ impl Messages {
     }
 
     pub fn document_symbol(&mut self, path: &str) -> Result<(), MessageHandlerError> {
-        self.handler.queue_request(
+        let result = self.handler.queue_request(
             "textDocument/documentSymbol",
             DocumentSymbolParams::new(path),
             on_document_symbol,
-        )
+        );
+
+        let _ = self.handler.queue_request(
+            "textDocument/semanticTokens/full",
+            SemanticTokensParams::new(path),
+            on_semantic_tokens,
+        );
+
+        result
     }
 
     pub fn handler(&mut self) -> &mut MessageHandler {
@@ -67,26 +78,68 @@ impl Messages {
 }
 
 fn on_initialize_response(
-    messages: &mut MessageHandler,
-    response: &Response,
+    message_response: &mut MessageResponse,
 ) {
-    if let Some(result) = response.parse_result::<InitializeResult>() {
-        let server_info = result.server_info.unwrap_or_default();
-        println!("Successfully connected to language server {}.", server_info.name);
-        println!("Version: {}", server_info.version.unwrap_or(format!("undefined")));
+    let parsed = message_response.response.parse_result::<InitializeResult>();
+    if let Some(result) = &parsed {
+        if let Some(server_info) = &result.server_info {
+            println!("Successfully connected to language server {}.", server_info.name);
+            println!("Version: {}", if let Some(version) = &server_info.version {
+                version
+            } else {
+                ""
+            });
+        }
     }
-    let _ = messages.queue_notification("initialized", InitializedParams);
-    messages.push_message(MessageHandlerMessage::Initialized);
+
+    let _ = message_response
+        .messages
+        .queue_notification("initialized", InitializedParams);
+
+    message_response
+        .messages
+        .push_message(MessageHandlerMessage::Initialized(parsed));
 }
 
 fn on_document_symbol(
-    _messages: &mut MessageHandler,
-    response: &Response,
+    message_response: &mut MessageResponse,
 ) {
-    let Some(symbols) = response.parse_result::<Vec<SymbolInformation>>() else {
+    let Some(symbols) = message_response.response.parse_result::<Vec<SymbolInformation>>() else {
         println!("documentSymbol did not return SymbolInformation! Need to implement DocumentSymbol");
         return;
     };
 
-    println!("Retrieved {} symbols.", symbols.len());
+    let Some(params) = message_response.request.parse_params::<DocumentSymbolParams>() else {
+        println!("Failed to retrieve params made for documentSymbol request!");
+        return;
+    };
+
+    let response = DocumentResponse {
+        uri: params.text_document.uri,
+        data: Some(symbols),
+    };
+
+    message_response
+        .messages
+        .push_message(MessageHandlerMessage::DocumentSymbols(response));
+}
+
+fn on_semantic_tokens(
+    message_response: &mut MessageResponse,
+) {
+    let Some(params) = message_response.request.parse_params::<SemanticTokensParams>() else {
+        println!("Failed to retrieve params made for semanticTokens request!");
+        return;
+    };
+
+    let semantic_tokens = message_response.response.parse_result::<SemanticTokens>();
+
+    let response = DocumentResponse {
+        uri: params.text_document.uri,
+        data: semantic_tokens,
+    };
+
+    message_response
+        .messages
+        .push_message(MessageHandlerMessage::SemanticTokens(response));
 }

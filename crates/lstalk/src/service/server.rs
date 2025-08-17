@@ -3,6 +3,7 @@ use async_process::{
     Command,
     Stdio,
 };
+use crate::protocol::lifecycle::ServerCapabilities;
 use std::{
     sync::{
         Arc,
@@ -184,6 +185,7 @@ struct LanguageServerRunner {
     server_messages: Receiver<LanguageServerMessage>,
     events: Sender<LanguageServerRunnerEvent>,
     options: LSPServiceOptions,
+    server_capabilities: Option<ServerCapabilities>,
 }
 
 impl LanguageServerRunner {
@@ -210,6 +212,7 @@ impl LanguageServerRunner {
             server_messages: server_messages,
             events: events,
             options,
+            server_capabilities: None,
         })
     }
 
@@ -265,8 +268,18 @@ impl LanguageServerRunner {
 
             while let Some(message) = self.messages.handler().pop_message() {
                 match message {
-                    MessageHandlerMessage::Initialized => {
+                    MessageHandlerMessage::Initialized(result) => {
+                        self.server_capabilities = if let Some(result) = result {
+                            Some(result.capabilities)
+                        } else {
+                            None
+                        };
+
                         let _ = self.events.send(LanguageServerRunnerEvent::Initialized);
+                    },
+                    MessageHandlerMessage::DocumentSymbols(_symbols) => {
+                    },
+                    MessageHandlerMessage::SemanticTokens(_result) => {
                     },
                 }
             }

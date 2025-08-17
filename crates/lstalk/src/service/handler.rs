@@ -1,10 +1,18 @@
-use crate::protocol::base::{
-    Messagable,
-    MessageType,
-    Notification,
-    Request,
-    Response,
-    types::*,
+use crate::protocol::{
+    base::{
+        Messagable,
+        MessageType,
+        Notification,
+        Request,
+        Response,
+        types::*,
+    },
+    document::{
+        SemanticTokens,
+        SymbolInformation,
+    },
+    lifecycle::InitializeResult,
+    structures::DocumentUri,
 };
 use serde::Serialize;
 use std::rc::Rc;
@@ -52,7 +60,7 @@ impl MessageHandler {
         &mut self,
         method: &str,
         params: T,
-        callback: impl Fn(&mut Self, &Response) + 'static,
+        callback: impl Fn(&mut MessageResponse) + 'static,
     ) -> Result<(), MessageHandlerError> {
         let value = Self::convert(params)?;
 
@@ -167,46 +175,40 @@ impl MessageHandler {
 
         self.response_buffer.drain(0..content_end);
 
-        // Get the optional callback from the request item based on the response id.
-        let callback = {
-            let mut result: Option<Rc<dyn Fn(&mut Self, &Response)>> = None;
+        let last_count = self.sent.len();
 
-            if let Some(id) = &response.id {
-                for item in &self.sent {
-                    let MessageType::Request(request) = &item.message else {
-                        continue;
-                    };
-
-                    if request.id == *id {
-                        result = item.callback.clone();
-                        break;
-                    }
-                }
-            }
-
-            result
-        };
-
-        // If a callback was supplied, then invoke.
-        if let Some(callback) = callback {
-            (*callback)(self, &response);
-        }
-
-        // Finally, remove the request from the list.
-        if let Some(id) = &response.id {
-            self.sent.retain(|item| {
-                if let MessageType::Request(request) = &item.message {
-                    if request.id == *id {
-                        false
+        let sent = self.sent.extract_if(.., |element| -> bool {
+            match &element.message {
+                MessageType::Request(request) => {
+                    if let Some(id) = &response.id {
+                        request.id == *id
                     } else {
-                        true
+                        false
                     }
-                } else {
-                    // Think notifications should be removed as they dont expect
-                    // a callback.
-                    false
-                }
-            });
+                },
+                _ => false,
+            }
+        })
+        .collect::<Vec<MessageItem>>();
+
+        println!("Pre: {last_count} Post: {}", self.sent.len());
+
+        for item in sent {
+            let Some(callback) = item.callback else {
+                continue;
+            };
+
+            let MessageType::Request(request) = item.message else {
+                continue;
+            };
+
+            let mut object = MessageResponse {
+                messages: self,
+                request: &request,
+                response: &response,
+            };
+
+            (*callback)(&mut object);
         }
     }
 
@@ -245,13 +247,27 @@ impl std::fmt::Display for MessageHandlerError {
     }
 }
 
+pub struct DocumentResponse<T> {
+    pub uri: DocumentUri,
+    pub data: Option<T>,
+}
+
 pub enum MessageHandlerMessage {
-    Initialized,
+    Initialized(Option<InitializeResult>),
+    // TODO: Need a Or type with this Or<SymbolInformation, DocumentSymbol>.
+    DocumentSymbols(DocumentResponse<Vec<SymbolInformation>>),
+    SemanticTokens(DocumentResponse<SemanticTokens>),
+}
+
+pub(super) struct MessageResponse<'a> {
+    pub messages: &'a mut MessageHandler,
+    pub response: &'a Response,
+    pub request: &'a Request,
 }
 
 struct MessageItem {
     message: MessageType,
-    callback: Option<Rc<dyn Fn(&mut MessageHandler, &Response)>>,
+    callback: Option<Rc<dyn Fn(&mut MessageResponse)>>,
 }
 
 type MessageQueue = Vec<MessageItem>;

@@ -12,6 +12,7 @@ use serde::{
     Serialize,
 };
 use std::path::Path;
+use super::capabilities::ServerCapabilities;
 
 /// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initializeParams
 #[derive(Serialize, Deserialize, Default)]
@@ -88,6 +89,9 @@ impl InitializeParams {
 /// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initializeResult
 #[derive(Deserialize)]
 pub struct InitializeResult {
+    // The capabilities the language server provides.
+    pub capabilities: ServerCapabilities,
+
     // Information about the server.
     //
     // @since 3.15.0
