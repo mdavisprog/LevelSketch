@@ -140,7 +140,7 @@ pub struct DocumentSymbol {
 /// interfaces etc.
 ///
 /// @deprecated use DocumentSymbol or WorkspaceSymbol instead.
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct SymbolInformation {
     // The name of this symbol.
     pub name: String,

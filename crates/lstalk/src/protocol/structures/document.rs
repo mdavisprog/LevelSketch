@@ -17,7 +17,7 @@ use super::{
 };
 
 /// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentIdentifier
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default, Clone)]
 pub struct TextDocumentIdentifier {
     // The text document's URI.
     pub uri: DocumentUri,
@@ -104,7 +104,7 @@ impl std::fmt::Display for Position {
 }
 
 /// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#range
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default, Clone, Copy)]
 pub struct Range {
     // The range's start position.
     pub start: Position,
@@ -119,10 +119,39 @@ impl std::fmt::Display for Range {
     }
 }
 
+impl Range {
+    pub fn contains(&self, other: Range) -> bool {
+        if other.start.line < self.start.line || other.start.line > self.end.line {
+            return false;
+        }
+
+        if other.end.line > self.end.line {
+            return false;
+        }
+
+        // If on the same line
+        if other.start.line == self.start.line {
+            if other.start.character < self.start.character {
+                return false;
+            }
+
+            if other.start.character > self.end.character {
+                return false;
+            }
+        } else if other.end.line == self.end.line {
+            if other.end.character > self.end.character {
+                return false;
+            }
+        }
+
+        true
+    }
+}
+
 /// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#location
 ///
 /// Represents a location inside a resource, such as a line inside a text file.
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default, Clone)]
 pub struct Location {
     pub uri: DocumentUri,
     pub range: Range,

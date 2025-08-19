@@ -10,6 +10,7 @@ use crate::{
         structures::{
             DocumentUri,
             make_file_uri,
+            Range,
         },
     },
 };
@@ -352,10 +353,40 @@ impl LanguageServerRunner {
                     return;
                 };
 
-                for symbol in symbols {
+                // Convert and insert all symbols into the request's symbol table. Keep a mapping
+                // of a symbol name and its location.
+                let mut locations = Vec::<(String, Range)>::new();
+                for symbol in &symbols {
+                    locations.push((symbol.name.clone(), symbol.location.range));
+
                     request
                         .symbols
-                        .insert(symbol.name.clone(), symbol.into());
+                        .insert(symbol.name.clone(), symbol.clone().into());
+
+                    // TODO: Infer data-type of all Fields.
+                }
+
+                // Move symbols into their respective parent based on the location within
+                // the document.
+                for (name, location) in locations {
+                    for info in &symbols {
+                        if !info.location.range.contains(location) {
+                            continue;
+                        }
+
+                        let Some(symbol) = request.symbols.remove(&name) else {
+                            continue;
+                        };
+
+                        if let Some(parent) = request.symbols.get_mut(&info.name) {
+                            parent.symbols.insert(name, symbol);
+                        } else {
+                            // If the parent wasn't found, then put the symbol back.
+                            request.symbols.insert(name, symbol);
+                        }
+
+                        break;
+                    }
                 }
             },
             MessageHandlerMessage::SemanticTokens(result) => {

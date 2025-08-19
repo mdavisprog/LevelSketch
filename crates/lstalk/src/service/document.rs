@@ -1,4 +1,7 @@
-use crate::protocol::document::SemanticToken;
+use crate::protocol::{
+    document::SemanticToken,
+    structures::Range,
+};
 use std::{
     fs,
     io::{
@@ -64,6 +67,45 @@ impl Document {
         }
 
         result
+    }
+
+    #[expect(unused)]
+    pub fn get_contents_from_range(&self, range: Range) -> Option<String> {
+        if range.start.line == range.end.line {
+            let Some(line) = self.lines.get(range.start.line as usize) else {
+                return None;
+            };
+
+            let start = range.start.character as usize;
+            let end= range.end.character as usize;
+
+            Some(line[start..end].to_string())
+        } else {
+            let min_line = range.start.line.min(range.end.line) as usize;
+            let max_line = range.start.line.max(range.end.line) as usize;
+
+            let (min_char, max_char) = if range.start.line < range.end.line {
+                (range.start.character as usize, range.end.character as usize)
+            } else {
+                (range.end.character as usize, range.start.character as usize)
+            };
+
+            let mut result = String::new();
+
+            for index in min_line..=max_line {
+                let line = &self.lines[index];
+
+                if index == min_line {
+                    result += &line[min_char..];
+                } else if index == max_line {
+                    result += &line[..max_char];
+                } else {
+                    result += line;
+                }
+            }
+
+            Some(result)
+        }
     }
 
     fn get_name(

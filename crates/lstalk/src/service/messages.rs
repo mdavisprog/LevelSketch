@@ -101,9 +101,7 @@ fn on_initialize_response(
         .push_message(MessageHandlerMessage::Initialized(parsed));
 }
 
-fn on_document_symbol(
-    message_response: &mut MessageResponse,
-) {
+fn on_document_symbol(message_response: &mut MessageResponse) {
     let Some(symbols) = message_response.response.parse_result::<Vec<SymbolInformation>>() else {
         println!("documentSymbol did not return SymbolInformation! Need to implement DocumentSymbol");
         return;
@@ -124,9 +122,7 @@ fn on_document_symbol(
         .push_message(MessageHandlerMessage::DocumentSymbols(response));
 }
 
-fn on_semantic_tokens(
-    message_response: &mut MessageResponse,
-) {
+fn on_semantic_tokens(message_response: &mut MessageResponse) {
     let Some(params) = message_response.request.parse_params::<SemanticTokensParams>() else {
         println!("Failed to retrieve params made for semanticTokens request!");
         return;

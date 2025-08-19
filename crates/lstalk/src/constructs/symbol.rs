@@ -56,6 +56,28 @@ impl From<document::SymbolInformation> for Symbol {
     }
 }
 
+impl Symbol {
+    pub fn to_string(&self) -> String {
+        self.to_string_recurse(self, 0)
+    }
+
+    fn to_string_recurse(&self, symbol: &Self, level: usize) -> String {
+        let indent = " ".repeat(level);
+        let mut result = format!("{indent}{} => {:?}",
+            symbol.name,
+            symbol.kind,
+        );
+
+        for (_, child) in &symbol.symbols {
+            result += "\n";
+            result += &self.to_string_recurse(child, level + 4);
+        }
+
+        result
+    }
+}
+
+#[derive(Debug)]
 pub enum SymbolKind {
     None,
     Class,
