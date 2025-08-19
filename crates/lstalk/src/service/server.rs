@@ -280,79 +280,7 @@ impl LanguageServerRunner {
             self.messages.handler().process_responses();
 
             while let Some(message) = self.messages.handler().pop_message() {
-                match message {
-                    MessageHandlerMessage::Initialized(result) => {
-                        self.server_capabilities = if let Some(result) = result {
-                            Some(result.capabilities)
-                        } else {
-                            None
-                        };
-
-                        let _ = self.events.send(LanguageServerRunnerEvent::Initialized);
-                    },
-                    MessageHandlerMessage::DocumentSymbols(result) => {
-                        let Some(symbols) = result.data else {
-                            continue;
-                        };
-
-                        let Some(request) = self.symbol_requests.get_mut(&result.uri) else {
-                            println!("DocumentSymbols: Failed to find symbol table for document '{}'.", result.uri);
-                            continue;
-                        };
-
-                        for symbol in symbols {
-                            request
-                                .symbols
-                                .insert(symbol.name.clone(), symbol.into());
-                        }
-                    },
-                    MessageHandlerMessage::SemanticTokens(result) => {
-                        let Some(semantic_tokens) = result.data else {
-                            continue;
-                        };
-
-                        let Some(capabilities) = &self.server_capabilities else {
-                            continue;
-                        };
-
-                        let Some(provider) = &capabilities.semantic_tokens_provider else {
-                            continue;
-                        };
-
-                        let Some(request) = self.symbol_requests.get_mut(&result.uri) else {
-                            continue;
-                        };
-
-                        let Some(tokens) = semantic_tokens.parse_data() else {
-                            continue;
-                        };
-
-                        let resolved = request.document.resolve(&tokens);
-                        for item in resolved {
-                            let Some(token_type) = provider.legend.token_types.get(item.token_type) else {
-                                continue;
-                            };
-
-                            let Some(symbol_request) = self.symbol_requests.get_mut(&result.uri) else {
-                                continue;
-                            };
-
-                            let Some(symbol) = symbol_request.symbols.get_mut(&item.name) else {
-                                continue;
-                            };
-
-                            symbol.semantic_type = token_type.as_str().into();
-
-                            for i in 0..u64::BITS {
-                                if item.token_modifiers & (1 << i) != 0 {
-                                    if let Some(modifier) = provider.legend.token_modifiers.get(i as usize) {
-                                        symbol.modifiers.push(modifier.as_str().into());
-                                    }
-                                }
-                            }
-                        }
-                    },
-                }
+                self.handle_response(message);
             }
         }
     }
@@ -401,6 +329,78 @@ impl LanguageServerRunner {
         }
 
         true
+    }
+
+    fn handle_response(&mut self, message: MessageHandlerMessage) {
+        match message {
+            MessageHandlerMessage::Initialized(result) => {
+                self.server_capabilities = if let Some(result) = result {
+                    Some(result.capabilities)
+                } else {
+                    None
+                };
+
+                let _ = self.events.send(LanguageServerRunnerEvent::Initialized);
+            },
+            MessageHandlerMessage::DocumentSymbols(result) => {
+                let Some(symbols) = result.data else {
+                    return;
+                };
+
+                let Some(request) = self.symbol_requests.get_mut(&result.uri) else {
+                    println!("DocumentSymbols: Failed to find symbol table for document '{}'.", result.uri);
+                    return;
+                };
+
+                for symbol in symbols {
+                    request
+                        .symbols
+                        .insert(symbol.name.clone(), symbol.into());
+                }
+            },
+            MessageHandlerMessage::SemanticTokens(result) => {
+                let Some(semantic_tokens) = result.data else {
+                    return;
+                };
+
+                let Some(capabilities) = &self.server_capabilities else {
+                    return;
+                };
+
+                let Some(provider) = &capabilities.semantic_tokens_provider else {
+                    return;
+                };
+
+                let Some(request) = self.symbol_requests.get_mut(&result.uri) else {
+                    return;
+                };
+
+                let Some(tokens) = semantic_tokens.parse_data() else {
+                    return;
+                };
+
+                let resolved = request.document.resolve(&tokens);
+                for item in resolved {
+                    let Some(token_type) = provider.legend.token_types.get(item.token_type) else {
+                        continue;
+                    };
+
+                    let Some(symbol) = request.symbols.get_mut(&item.name) else {
+                        continue;
+                    };
+
+                    symbol.semantic_type = token_type.as_str().into();
+
+                    for i in 0..u64::BITS {
+                        if item.token_modifiers & (1 << i) != 0 {
+                            if let Some(modifier) = provider.legend.token_modifiers.get(i as usize) {
+                                symbol.modifiers.push(modifier.as_str().into());
+                            }
+                        }
+                    }
+                }
+            },
+        }
     }
 }
 
