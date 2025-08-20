@@ -32,6 +32,12 @@ fn update(
             LanguageServerEvent::Initialized => {
                 initialized = true;
             },
+            LanguageServerEvent::RetrievedSymbols(symbols) => {
+                println!("Retrieved {} symbols.", symbols.len());
+                for (_, symbol) in &symbols {
+                    println!("{}", symbol.to_string());
+                }
+            },
         }
     }
 

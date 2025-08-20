@@ -188,6 +188,8 @@ impl LanguageServer {
 
         let result = match event {
             LanguageServerRunnerEvent::Initialized => LanguageServerEvent::Initialized,
+            LanguageServerRunnerEvent::RetrievedSymbols(symbols) =>
+                LanguageServerEvent::RetrievedSymbols(symbols),
         };
 
         Some(result)
@@ -470,6 +472,8 @@ impl LanguageServerRunner {
                         }
                     }
                 }
+
+                let _ = self.events.send(LanguageServerRunnerEvent::RetrievedSymbols(request.symbols));
             },
         }
     }
@@ -485,11 +489,13 @@ pub enum LanguageServerMessage {
 /// LanguageServer -> LSPService -> User
 pub enum LanguageServerEvent {
     Initialized,
+    RetrievedSymbols(SymbolTable),
 }
 
 /// LanguageServerRunner -> LanguageServer
 enum LanguageServerRunnerEvent {
     Initialized,
+    RetrievedSymbols(SymbolTable),
 }
 
 struct SymbolRequest {
