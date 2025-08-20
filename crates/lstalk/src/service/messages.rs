@@ -1,5 +1,6 @@
 use crate::protocol::{
     document::{
+        DidCloseTextDocumentParams,
         DidOpenTextDocumentParams,
         DocumentSymbolParams,
         SemanticTokens,
@@ -131,11 +132,17 @@ fn on_semantic_tokens(message_response: &mut MessageResponse) {
     let semantic_tokens = message_response.response.parse_result::<SemanticTokens>();
 
     let response = DocumentResponse {
-        uri: params.text_document.uri,
+        uri: params.text_document.uri.clone(),
         data: semantic_tokens,
     };
 
-    message_response
+    let _ = message_response
         .messages
-        .push_message(MessageHandlerMessage::SemanticTokens(response));
+        .push_message(MessageHandlerMessage::SemanticTokens(response))
+        .queue_notification(
+            "textDocument/didClose",
+            DidCloseTextDocumentParams {
+                text_document: params.text_document,
+            },
+        );
 }

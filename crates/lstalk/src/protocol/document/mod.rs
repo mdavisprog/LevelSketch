@@ -15,5 +15,8 @@ pub use {
         SymbolKind,
         SymbolTag,
     },
-    sync::DidOpenTextDocumentParams,
+    sync::{
+        DidCloseTextDocumentParams,
+        DidOpenTextDocumentParams,
+    },
 };
