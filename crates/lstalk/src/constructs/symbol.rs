@@ -1,5 +1,6 @@
 use crate::protocol::document;
 use super::{
+    data::DataType,
     semantic::{
         SemanticTokenModifiers,
         SemanticTokenType,
@@ -28,6 +29,9 @@ pub struct Symbol {
 
     /// Describes extra information about this symbol such as static, abstract, etc.
     pub(crate) modifiers: SemanticTokenModifiers,
+
+    /// Describes how data should be represented for this symbol.
+    pub(crate) data_type: DataType,
 }
 
 impl Symbol {
@@ -41,6 +45,7 @@ impl Symbol {
             symbols: SymbolTable::new(),
             semantic_type: SemanticTokenType::Type,
             modifiers: SemanticTokenModifiers::new(),
+            data_type: DataType::None,
         }
     }
 
@@ -63,9 +68,10 @@ impl Symbol {
 
     fn to_string_recurse(&self, symbol: &Self, level: usize) -> String {
         let indent = " ".repeat(level);
-        let mut result = format!("{indent}{} => {:?}",
+        let mut result = format!("{indent}{} => {:?} {:?}",
             symbol.name,
             symbol.kind,
+            symbol.data_type,
         );
 
         for (_, child) in &symbol.symbols {

@@ -69,7 +69,6 @@ impl Document {
         result
     }
 
-    #[expect(unused)]
     pub fn get_contents_from_range(&self, range: Range) -> Option<String> {
         if range.start.line == range.end.line {
             let Some(line) = self.lines.get(range.start.line as usize) else {

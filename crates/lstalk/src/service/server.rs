@@ -4,8 +4,14 @@ use async_process::{
     Stdio,
 };
 use crate::{
-    constructs,
+    constructs::{
+        DataType,
+        DataTypeDB,
+        self,
+        SymbolTable,
+    },
     protocol::{
+        document::SymbolKind,
         lifecycle::ServerCapabilities,
         structures::{
             DocumentUri,
@@ -16,6 +22,7 @@ use crate::{
 };
 use std::{
     collections::HashMap,
+    path::Path,
     sync::{
         Arc,
         mpsc::{
@@ -355,6 +362,7 @@ impl LanguageServerRunner {
 
                 // Convert and insert all symbols into the request's symbol table. Keep a mapping
                 // of a symbol name and its location.
+                let db = DataTypeDB::default();
                 let mut locations = Vec::<(String, Range)>::new();
                 for symbol in &symbols {
                     locations.push((symbol.name.clone(), symbol.location.range));
@@ -363,7 +371,39 @@ impl LanguageServerRunner {
                         .symbols
                         .insert(symbol.name.clone(), symbol.clone().into());
 
-                    // TODO: Infer data-type of all Fields.
+                    let data_type = match symbol.kind {
+                        SymbolKind::Class => DataType::Object,
+                        SymbolKind::Field => {
+                            let Some(contents) = request
+                                .document
+                                .get_contents_from_range(symbol.location.range) else {
+                                continue;
+                            };
+
+                            let ext = if let Some(ext) = Path::new(&symbol.location.uri).extension() {
+                                ext.to_str().unwrap_or("").to_string()
+                            } else {
+                                String::new()
+                            };
+
+                            let tokens: Vec<&str> = contents.split(" ").collect();
+                            let mut result = DataType::None;
+                            for token in tokens {
+                                result = db.get_data_type(&ext, &token.to_string());
+
+                                if result != DataType::None {
+                                    break;
+                                }
+                            }
+
+                            result
+                        },
+                        _ => DataType::None,
+                    };
+
+                    if let Some(symbol_result) = request.symbols.get_mut(&symbol.name) {
+                        symbol_result.data_type = data_type;
+                    }
                 }
 
                 // Move symbols into their respective parent based on the location within
@@ -402,7 +442,7 @@ impl LanguageServerRunner {
                     return;
                 };
 
-                let Some(request) = self.symbol_requests.get_mut(&result.uri) else {
+                let Some(mut request) = self.symbol_requests.remove(&result.uri) else {
                     return;
                 };
 
