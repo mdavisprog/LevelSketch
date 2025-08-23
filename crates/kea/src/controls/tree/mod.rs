@@ -1,4 +1,8 @@
+mod commands;
 mod systems;
 mod tree;
 
-pub use tree::KeaTree;
+pub use {
+    commands::KeaTreeCommands,
+    tree::KeaTree,
+};

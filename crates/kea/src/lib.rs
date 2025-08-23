@@ -77,6 +77,7 @@ pub mod prelude {
         },
         tree::{
             KeaTree,
+            KeaTreeCommands,
         },
     };
     pub use observers::{
