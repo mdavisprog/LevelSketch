@@ -5,6 +5,11 @@ mod service;
 pub mod prelude {
     use super::*;
 
+    pub use constructs::{
+        Symbol,
+        SymbolKind,
+        SymbolTable,
+    };
     pub use service::{
         LanguageServerEvent,
         LSPService,

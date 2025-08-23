@@ -49,7 +49,19 @@ impl Symbol {
         }
     }
 
-    pub fn add(&mut self, symbol: Symbol) -> &mut Self {
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn kind(&self) -> SymbolKind {
+        self.kind
+    }
+
+    pub fn symbols(&self) -> &SymbolTable {
+        &self.symbols
+    }
+
+    pub(crate) fn add(&mut self, symbol: Symbol) -> &mut Self {
         self.symbols.insert(symbol.name.clone(), symbol);
         self
     }
@@ -83,7 +95,7 @@ impl Symbol {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum SymbolKind {
     None,
     Class,
