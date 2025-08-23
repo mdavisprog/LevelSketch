@@ -15,7 +15,7 @@ use super::systems::{
     on_ready,
 };
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum KeaExpanderState {
     Expanded,
     Collapsed,
@@ -124,6 +124,7 @@ impl KeaExpander {
     fn observers() -> KeaObservers<Self> {
         KeaObservers::new(vec![
             Observer::new(on_ready),
+            Observer::new(on_expander_event),
         ])
     }
 }
@@ -140,9 +141,6 @@ struct HeaderClickObserver;
 impl Header {
     fn bundle(label: &str) -> impl Bundle {(
         Self,
-        KeaObservers::<Self>::new(vec![
-            Observer::new(on_expander_event),
-        ]),
         children![
             (
                 Text::new(label),
