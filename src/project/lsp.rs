@@ -4,12 +4,14 @@ use lstalk::prelude::*;
 #[derive(Resource)]
 pub struct LSPServiceResource {
     pub service: LSPService,
+    pub(super) symbols: Option<SymbolTable>,
 }
 
 impl Default for LSPServiceResource {
     fn default() -> Self {
         Self {
             service: LSPService::new_with_options(Self::options_from_command_line()),
+            symbols: None,
         }
     }
 }
@@ -48,6 +50,14 @@ impl LSPServiceResource {
 
     pub fn poll(&self) -> LSPServicePollResult {
         self.service.poll()
+    }
+
+    pub fn symbols(&self) -> Option<&SymbolTable> {
+        if let Some(symbols) = &self.symbols {
+            return Some(symbols);
+        }
+
+        None
     }
 
     fn options_from_command_line() -> LSPServiceOptions {

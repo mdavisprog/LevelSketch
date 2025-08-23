@@ -9,6 +9,11 @@ pub use {
     project::ProjectResource,
 };
 
+#[derive(Event)]
+pub enum LSPEvent {
+    Symbols,
+}
+
 pub(super) struct Plugin;
 
 impl bevy::prelude::Plugin for Plugin {
@@ -23,9 +28,11 @@ impl bevy::prelude::Plugin for Plugin {
 fn update(
     project_resource: Res<ProjectResource>,
     mut lsp_resource: ResMut<LSPServiceResource>,
+    mut commands: Commands,
 ) {
     let result = lsp_resource.poll();
 
+    let mut symbols_result = None;
     let mut initialized = false;
     for item in result.items {
         match item.event {
@@ -33,10 +40,8 @@ fn update(
                 initialized = true;
             },
             LanguageServerEvent::RetrievedSymbols(symbols) => {
-                println!("Retrieved {} symbols.", symbols.len());
-                for (_, symbol) in &symbols {
-                    println!("{}", symbol.to_string());
-                }
+                symbols_result = Some(symbols);
+                commands.trigger(LSPEvent::Symbols);
             },
         }
     }
@@ -45,4 +50,6 @@ fn update(
         let documents = project_resource.project.gather_source_files();
         lsp_resource.service.request_types(documents);
     }
+
+    lsp_resource.symbols = symbols_result;
 }

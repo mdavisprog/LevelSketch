@@ -4,6 +4,7 @@ use super::{
     CameraTools,
     FileTools,
     ShapesTools,
+    types::TypesTool,
 };
 
 #[derive(Component)]
@@ -33,6 +34,7 @@ impl ToolsPanel {
             children![
                 KeaExpander::bundle_with_header("File", FileTools::bundle()),
                 KeaExpander::bundle_with_header("Camera", CameraTools::bundle()),
+                KeaExpander::bundle_with_header("Types", TypesTool::bundle()),
                 KeaExpander::bundle_with_header("Shapes", ShapesTools::bundle()),
             ],
         )),
