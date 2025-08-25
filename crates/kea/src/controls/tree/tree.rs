@@ -18,6 +18,8 @@ use super::systems::{
     on_tree_update,
     on_tree_children_added,
     on_tree_children_removed,
+    on_tree_over,
+    on_tree_out,
 };
 
 #[derive(Component)]
@@ -62,6 +64,7 @@ impl KeaTree {
             left: Val::Px(style::properties::FONT_SIZE),
             flex_direction: FlexDirection::Column,
             row_gap: Val::Px(style::properties::ROW_GAP),
+            width: Val::Percent(100.0),
             ..default()
         }
     }
@@ -97,6 +100,7 @@ pub(super) enum DataItemContent {
 #[derive(Component)]
 #[require(
     Node = Self::node(),
+    KeaObservers<Self> = Self::observers(),
 )]
 pub(super) struct DataItem;
 
@@ -128,7 +132,15 @@ impl DataItem {
     fn node() -> Node {
         Node {
             align_items: AlignItems::Center,
+            width: Val::Percent(100.0),
             ..default()
         }
+    }
+
+    fn observers() -> KeaObservers<Self> {
+        KeaObservers::new(vec![
+            Observer::new(on_tree_over),
+            Observer::new(on_tree_out),
+        ])
     }
 }

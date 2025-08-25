@@ -9,6 +9,7 @@ use crate::{
         KeaExpanderEvent,
     },
     ready::KeaOnReady,
+    style,
 };
 use super::tree::{
     KeaTree,
@@ -143,4 +144,22 @@ pub(super) fn on_tree_children_removed(
     mut commands: Commands,
 ) {
     commands.trigger_targets(UpdateTree, trigger.target());
+}
+
+pub(super) fn on_tree_over(
+    trigger: Trigger<Pointer<Over>>,
+    mut commands: Commands,
+) {
+    commands
+        .entity(trigger.target())
+        .insert(BackgroundColor(style::colors::HIGHLIGHT));
+}
+
+pub(super) fn on_tree_out(
+    trigger: Trigger<Pointer<Out>>,
+    mut commands: Commands,
+) {
+    commands
+        .entity(trigger.target())
+        .insert(BackgroundColor(Color::NONE));
 }
