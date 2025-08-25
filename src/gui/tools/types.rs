@@ -8,10 +8,7 @@ use lstalk::prelude::*;
 use super::tools::Tools;
 
 #[derive(Component)]
-#[require(
-    Node = Self::node(),
-    Tools,
-)]
+#[require(Tools)]
 pub struct TypesTool {
     _private: (),
 }
@@ -20,14 +17,6 @@ impl TypesTool {
     pub fn bundle() -> impl Bundle {
         Self {
             _private: (),
-        }
-    }
-
-    fn node() -> Node {
-        Node {
-            flex_direction: FlexDirection::Column,
-            row_gap: Val::Px(kea::style::properties::ROW_GAP),
-            ..default()
         }
     }
 }
