@@ -58,6 +58,11 @@ pub mod prelude {
             KeaPanel,
             KeaPanelOptions,
         },
+        popup::{
+            KeaPopupCommands,
+            KeaPopupPosition,
+            KeaPopupSize,
+        },
         property::{
             KeaProperty,
             KeaPropertyCommandsExt,

@@ -34,6 +34,7 @@ fn main() {
             DefaultPlugins.set(WindowPlugin {
                 primary_window: Some(Window {
                     title: "Level Sketch".into(),
+                    position: WindowPosition::At(IVec2::new(100, 100)),
                     ..default()
                 }),
                 exit_condition: ExitCondition::OnPrimaryClosed,
