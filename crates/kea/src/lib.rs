@@ -36,6 +36,7 @@ pub mod prelude {
         },
         expander::{
             KeaExpander,
+            KeaExpanderCommands,
             KeaExpanderState,
             // Events
             KeaExpanderEvent,
