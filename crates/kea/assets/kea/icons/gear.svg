@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="24"
+   height="24"
+   viewBox="0 0 6.3499999 6.35"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4 (86a8ad7, 2024-10-11)"
+   sodipodi:docname="gear.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="mm"
+     inkscape:zoom="23.005387"
+     inkscape:cx="7.3678395"
+     inkscape:cy="9.3673712"
+     inkscape:window-width="1920"
+     inkscape:window-height="1009"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <ellipse
+       style="fill:#ffffff;stroke-width:0.66145833;stroke:#ffffff;stroke-opacity:1;stroke-dasharray:none;fill-opacity:0"
+       id="path1"
+       cx="3.175"
+       cy="3.175"
+       rx="2.1170001"
+       ry="2.1166666" />
+    <path
+       style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.661458;stroke-dasharray:none;stroke-opacity:1"
+       d="M 2.6797165,0.25302045 H 3.5997909 L 3.9884895,1.2208452 h -1.626979 z"
+       id="path2"
+       sodipodi:nodetypes="ccccc" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#path2"
+       id="use2"
+       transform="rotate(180,3.175,3.1917246)" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#path2"
+       id="use3"
+       transform="rotate(-90,3.175,3.1917246)" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#use2"
+       id="use4"
+       transform="rotate(-90,3.175,3.1917246)" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#use3"
+       id="use5"
+       transform="rotate(-45,3.175,3.1917246)" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#use4"
+       id="use6"
+       transform="rotate(-45,3.175,3.1917246)" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#use5"
+       id="use7"
+       transform="rotate(-90,3.175,3.1917246)" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#use6"
+       id="use8"
+       transform="rotate(-90,3.175,3.1917246)" />
+  </g>
+</svg>
