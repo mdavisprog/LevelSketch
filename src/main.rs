@@ -14,9 +14,12 @@ use kea::prelude::*;
 mod camera;
 mod commands;
 mod gui;
+mod level;
 mod project;
 mod shapes;
 mod tools;
+
+use level::LevelCommands;
 
 //
 // Main
@@ -42,6 +45,7 @@ fn main() {
             }),
             camera::Plugin,
             gui::GUIPlugin,
+            level::Plugin,
             project::Plugin,
             tools::Plugin,
         ))
@@ -65,12 +69,6 @@ fn setup(
     ));
 
     commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(2.0, 2.0, 2.0))),
-        MeshMaterial3d(materials.add(Color::linear_rgba(0.5, 0.5, 0.5, 1.0))),
-        Transform::from_xyz(0.0, 0.0, 0.0)
-    ));
-
-    commands.spawn((
         DirectionalLight {
             shadows_enabled: true,
             ..default()
@@ -79,8 +77,15 @@ fn setup(
             translation: Vec3::new(0.0, 2.0, 0.0),
             rotation: Quat::from_rotation_x(-PI / 4.0),
             ..default()
-        }
+        },
     ));
+
+    commands
+        .spawn_level((
+            Mesh3d(meshes.add(Cuboid::new(2.0, 2.0, 2.0))),
+            MeshMaterial3d(materials.add(Color::linear_rgba(0.5, 0.5, 0.5, 1.0))),
+            Transform::from_xyz(0.0, 0.0, 0.0),
+        ));
 }
 
 fn check_exit(

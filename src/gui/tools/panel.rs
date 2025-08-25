@@ -3,6 +3,7 @@ use kea::prelude::*;
 use super::{
     CameraTools,
     FileTools,
+    level::LevelTools,
     ShapesTools,
     types::TypesTool,
 };
@@ -34,6 +35,7 @@ impl ToolsPanel {
             children![
                 KeaExpander::bundle_with_header("File", FileTools::bundle()),
                 KeaExpander::bundle_with_header("Camera", CameraTools::bundle()),
+                KeaExpander::bundle_with_header("Level", LevelTools::bundle()),
                 KeaExpander::bundle_with_header("Types", TypesTool::bundle()),
                 KeaExpander::bundle_with_header("Shapes", ShapesTools::bundle()),
             ],

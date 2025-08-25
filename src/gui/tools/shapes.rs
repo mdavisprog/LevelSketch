@@ -4,6 +4,7 @@ use bevy::{
 };
 use crate::{
     camera,
+    level::LevelCommands,
     gui::{
         item::Item,
         trail::{
@@ -233,7 +234,7 @@ fn on_drag_enter(
         return;
     };
 
-    let spawned_entity = commands.spawn((
+    let spawned_entity = commands.spawn_level((
         Mesh3d(mesh),
         MeshMaterial3d(material),
         Transform::from_translation(point),
