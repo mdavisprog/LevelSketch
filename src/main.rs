@@ -1,4 +1,7 @@
-use bevy::prelude::*;
+use bevy::{
+    prelude::*,
+    window::ExitCondition,
+};
 use bevy::winit::*;
 use std::f32::consts::*;
 use std::time::Duration;
@@ -33,6 +36,7 @@ fn main() {
                     title: "Level Sketch".into(),
                     ..default()
                 }),
+                exit_condition: ExitCondition::OnPrimaryClosed,
                 ..default()
             }),
             camera::Plugin,
