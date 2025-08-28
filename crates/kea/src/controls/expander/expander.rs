@@ -54,6 +54,9 @@ impl KeaExpander {
 
     pub fn bundle_with_header(label: &str, contents: impl Bundle) -> impl Bundle {(
         Self::new(),
+        KeaObservers::<LabelHeaderObserver>::new(vec![
+            Observer::new(on_expander_event),
+        ]),
         children![
             (
                 Header::bundle(label),
@@ -124,10 +127,12 @@ impl KeaExpander {
     fn observers() -> KeaObservers<Self> {
         KeaObservers::new(vec![
             Observer::new(on_ready),
-            Observer::new(on_expander_event),
         ])
     }
 }
+
+/// Marker struct for use with label headers.
+struct LabelHeaderObserver;
 
 #[derive(Component)]
 #[require(
