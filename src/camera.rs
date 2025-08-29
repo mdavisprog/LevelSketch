@@ -49,7 +49,7 @@ impl Controller {
         gui_state: Res<gui::State>,
         text_input: Res<KeaTextInputResource>,
         mut camera: Query<(&mut Transform, &mut Controller)>,
-        mut window: Query<&mut Window>,
+        mut window: Query<&mut Window, With<PrimaryWindow>>,
     ) {
         if text_input.has_focused() {
             return;
