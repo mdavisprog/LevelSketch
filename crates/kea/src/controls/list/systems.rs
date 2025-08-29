@@ -17,7 +17,9 @@ use super::{
 };
 
 pub(super) fn build(app: &mut App) {
-    app.add_observer(on_add_list_items);
+    app
+        .add_systems(Update, on_add_list_item)
+        .add_observer(on_add_list_items);
 }
 
 fn on_add_list_items(
@@ -40,12 +42,6 @@ fn on_add_list_items(
             .with_child((
                 Text::new(item),
                 TextFont::from_font_size(12.0),
-                KeaObservers::<KeaListItem>::new(vec![
-                    Observer::new(on_list_item_over),
-                    Observer::new(on_list_item_out),
-                    Observer::new(on_list_item_pressed),
-                ]),
-                KeaListItem,
             ));
     }
 
@@ -136,4 +132,29 @@ fn on_list_item_pressed(
             entity: trigger.target(),
             index,
         }, parent.parent());
+}
+
+fn on_add_list_item(
+    lists: Query<&Children, (Changed<Children>, With<KeaList>)>,
+    items: Query<&KeaListItem>,
+    mut commands: Commands,
+) {
+    for list in &lists {
+        for child in list {
+            if items.contains(*child) {
+                continue;
+            }
+
+            commands
+                .entity(*child)
+                .insert((
+                    KeaObservers::<KeaListItem>::new(vec![
+                        Observer::new(on_list_item_over),
+                        Observer::new(on_list_item_out),
+                        Observer::new(on_list_item_pressed),
+                    ]),
+                    KeaListItem,
+                ));
+        }
+    }
 }
