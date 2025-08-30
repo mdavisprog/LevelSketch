@@ -1,8 +1,9 @@
-use bevy::{
-    prelude::*,
-    render::camera::NormalizedRenderTarget,
+use bevy::prelude::*;
+use kea::prelude::*;
+use super::{
+    State,
+    menus::ToolsMenu,
 };
-use super::State;
 
 /// UI Node that rests on top of the world viewport and below all other GUI nodes.
 /// This node acts as a catch all for any interaction with viewport.
@@ -20,6 +21,7 @@ impl Viewport {
             .observe(Self::on_over)
             .observe(Self::on_out)
             .observe(Self::on_down)
+            .observe(Self::on_drag)
             .observe(Self::on_click);
     }
 
@@ -47,34 +49,33 @@ impl Viewport {
     
         state.did_drag = false;
     }
+
+    fn on_drag(
+        trigger: Trigger<Pointer<Drag>>,
+        mut state: ResMut<State>,
+    ) {
+        if trigger.button != PointerButton::Secondary {
+            return;
+        }
+
+        state.did_drag = true;
+    }
     
     fn on_click(
         trigger: Trigger<Pointer<Click>>,
         state: Res<State>,
-        windows: Query<&Window>,
-        mut _commands: Commands,
+        mut commands: Commands,
     ) {
         if trigger.button != PointerButton::Secondary {
             return;
         }
     
         if !state.did_drag {
-            let window_entity = match trigger.pointer_location.target {
-                NormalizedRenderTarget::Window(value) => Some(value.entity()),
-                _ => None,
-            };
-    
-            let Some(window_entity) = window_entity else {
-                return;
-            };
-    
-            let Ok(window) = windows.get(window_entity) else {
-                return;
-            };
-    
-            let Some(_cursor_position) = window.cursor_position() else {
-                return;
-            };
+            commands.kea_popup_open(
+                ToolsMenu::bundle(),
+                KeaPopupPosition::AtMouse,
+                KeaPopupSize::Fixed(Vec2::new(100.0, 100.0)),
+            );
         }
     }
 

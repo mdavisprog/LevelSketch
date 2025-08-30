@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 mod item;
+mod menus;
 mod tools;
 mod trail;
 mod viewport;
@@ -16,6 +17,7 @@ impl Plugin for GUIPlugin {
         app
             .init_resource::<State>()
             .add_plugins((
+                menus::Plugin,
                 tools::Plugin,
             ))
             .add_systems(Startup, setup);
