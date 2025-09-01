@@ -10,19 +10,38 @@ pub enum KeaPopupSize {
 }
 
 #[derive(Component)]
-#[require(
-    Node = Self::node(),
-)]
 pub(super) struct KeaPopup {
-    pub window: Entity,
+    pub(super) window: Entity,
+    pub(super) state: PopupState,
 }
 
 impl KeaPopup {
-    fn node() -> Node {
+    pub fn bundle_window(window: Entity) -> impl Bundle {(
+        Self {
+            window,
+            state: PopupState::Closed,
+        },
         Node {
             width: Val::Percent(100.0),
             height: Val::Percent(100.0),
             ..default()
-        }
-    }
+        },
+    )}
+
+    pub fn bundle() -> impl Bundle {(
+        Self {
+            window: Entity::PLACEHOLDER,
+            state: PopupState::Closed,
+        },
+        Node::default(),
+        Visibility::Hidden,
+    )}
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(super) enum PopupState {
+    Closed,
+    Closing,
+    Open,
+    Opening,
 }

@@ -8,60 +8,84 @@ use bevy::{
         WindowRef,
     },
 };
-use super::popup::KeaPopup;
+use super::popup::{
+    KeaPopup,
+    PopupState,
+};
 
 #[derive(Resource, Default)]
 pub(super) struct WindowPositions {
     pub map: HashMap<Entity, IVec2>,
 }
 
+#[derive(Resource)]
+pub(super) struct KeaPopupSettings {
+    separate_window: bool,
+}
+
+impl Default for KeaPopupSettings {
+    fn default() -> Self {
+        Self {
+            separate_window: false,
+        }
+    }
+}
+
 pub(super) fn build(app: &mut App) {
     app
         .init_resource::<WindowPositions>()
+        .init_resource::<KeaPopupSettings>()
         .add_systems(Startup, setup)
-        .add_systems(PreUpdate, on_mouse_button)
+        .add_systems(PreUpdate, (
+            on_mouse_button,
+            update_state,
+        ))
         .add_systems(Update, (
             on_window_created,
             on_window_moved,
         ));
 }
 
-fn setup(mut commands: Commands) {
-    let window = commands.spawn(
-        Window {
-            decorations: false,
-            resizable: false,
-            window_level: WindowLevel::AlwaysOnTop,
-            skip_taskbar: true,
-            // Need the window to be open and visible on the first frame so that all resources
-            // are initialized.
-            visible: true,
-            position: WindowPosition::At(IVec2::ZERO),
-            ..default()
-        },
-    )
-    .id();
+fn setup(
+    settings: Res<KeaPopupSettings>,
+    mut commands: Commands,
+) {
+    if settings.separate_window {
+        let window = commands.spawn(
+            Window {
+                decorations: false,
+                resizable: false,
+                window_level: WindowLevel::AlwaysOnTop,
+                skip_taskbar: true,
+                // Need the window to be open and visible on the first frame so that all resources
+                // are initialized.
+                visible: true,
+                position: WindowPosition::At(IVec2::ZERO),
+                ..default()
+            },
+        )
+        .id();
 
-    let camera = commands.spawn((
-        Camera3d::default(),
-        Camera {
-            target: RenderTarget::Window(WindowRef::Entity(window)),
-            ..default()
-        }
-    ))
-    .id();
+        let camera = commands.spawn((
+            Camera3d::default(),
+            Camera {
+                target: RenderTarget::Window(WindowRef::Entity(window)),
+                ..default()
+            }
+        ))
+        .id();
 
-    commands.spawn((
-        KeaPopup {
-            window,
-        },
-        UiTargetCamera(camera),
-    ));
+        commands.spawn((
+            KeaPopup::bundle_window(window),
+            UiTargetCamera(camera),
+        ));
+    } else {
+        commands.spawn(KeaPopup::bundle());
+    }
 }
 
 fn on_window_created(
-    popups: Query<&ComputedNodeTarget, With<KeaPopup>>,
-    cameras: Query<&Camera>,
+    popups: Query<&KeaPopup>,
     mut windows: Query<&mut Window>,
     mut events: EventReader<WindowCreated>,
 ) {
@@ -73,24 +97,12 @@ fn on_window_created(
         return;
     };
 
-    let Ok(camera) = cameras.get(popup.camera().unwrap_or(Entity::PLACEHOLDER)) else {
-        return;
-    };
-
-    let RenderTarget::Window(window_ref) = camera.target else {
-        return;
-    };
-
-    let WindowRef::Entity(window_entity) = window_ref else {
-        return;
-    };
-
     for event in events.read() {
-        if event.window != window_entity {
+        if event.window != popup.window {
             continue;
         }
 
-        let Ok(mut window) = windows.get_mut(window_entity) else {
+        let Ok(mut window) = windows.get_mut(popup.window) else {
             continue;
         };
 
@@ -109,8 +121,10 @@ fn on_window_moved(
 
 fn on_mouse_button(
     buttons: Res<ButtonInput<MouseButton>>,
-    popups: Query<&KeaPopup>,
+    nodes: Query<(&ComputedNode, &GlobalTransform)>,
+    mut popups: Query<(Entity, &mut KeaPopup)>,
     mut windows: Query<(Entity, &mut Window)>,
+    mut visibilities: Query<&mut Visibility>,
 ) {
     const BUTTONS: [MouseButton; 3] = [
         MouseButton::Left,
@@ -118,21 +132,27 @@ fn on_mouse_button(
         MouseButton::Middle,
     ];
 
-    let Ok(popup) = popups.single() else {
+    if !buttons.any_just_pressed(BUTTONS) {
+        return;
+    }
+
+    let Ok((popup_entity, mut popup)) = popups.single_mut() else {
         return;
     };
 
     let mut mouse_window = Entity::PLACEHOLDER;
-    if buttons.any_just_pressed(BUTTONS) {
-        for (entity, window) in &windows {
-            if window.cursor_position().is_none() {
-                continue;
-            };
+    let mut cursor_position = Vec2::ZERO;
+    for (entity, window) in &windows {
+        let Some(position) = window.cursor_position() else {
+            continue;
+        };
 
-            mouse_window = entity;
-            break;
-        }
+        mouse_window = entity;
+        cursor_position = position;
+        break;
+    }
 
+    if popup.window != Entity::PLACEHOLDER {
         let Ok((_, mut window)) = windows.get_mut(popup.window) else {
             return;
         };
@@ -142,5 +162,43 @@ fn on_mouse_button(
         }
 
         window.visible = popup.window == mouse_window;
+    } else {
+        let Ok((node, transform)) = nodes.get(popup_entity) else {
+            return;
+        };
+
+        let Ok(mut visibility) = visibilities.get_mut(popup_entity) else {
+            return;
+        };
+
+        let bounds = Rect::from_center_size(
+            transform.translation().truncate(),
+            node.size()
+        );
+
+        if bounds.contains(cursor_position) {
+            return;
+        }
+
+        if popup.state == PopupState::Closing {
+            return;
+        }
+
+        *visibility = Visibility::Hidden;
+        popup.state = PopupState::Closing;
+    }
+}
+
+fn update_state(mut popups: Query<&mut KeaPopup>) {
+    for mut popup in &mut popups {
+        popup.state = match popup.state {
+            PopupState::Closing => {
+                PopupState::Closed
+            },
+            PopupState::Opening => {
+                PopupState::Open
+            },
+            _ => popup.state,
+        }
     }
 }
