@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use crate::{
+    constants,
     controls::{
         anchors::KeaAnchors,
         button::KeaButtonClick,
@@ -47,6 +48,29 @@ pub(super) fn on_close(
             },
         }
         break;
+    }
+}
+
+pub(super) fn on_header_pressed(
+    trigger: Trigger<Pointer<Pressed>>,
+    children: Query<&ChildOf>,
+    panels: Query<Entity, With<KeaPanel>>,
+    mut indices: Query<&mut ZIndex>,
+) {
+    let Ok(child) = children.get(trigger.target()) else {
+        return;
+    };
+
+    for panel in panels {
+        let Ok(mut index) = indices.get_mut(panel) else {
+            continue;
+        };
+
+        if panel == child.parent() {
+            index.0 = constants::PANEL_FOCUSED_Z_INDEX;
+        } else {
+            index.0 = constants::BASE_Z_INDEX;
+        }
     }
 }
 

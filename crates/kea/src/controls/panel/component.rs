@@ -8,6 +8,7 @@ use crate::{
 };
 use super::systems::{
     on_close,
+    on_header_pressed,
     on_header_drag,
 };
 
@@ -104,6 +105,7 @@ impl KeaPanelHeader {
     fn bundle(title: &str) -> impl Bundle {(
         Self,
         KeaObservers::<Self>::new(vec![
+            Observer::new(on_header_pressed),
             Observer::new(on_header_drag),
         ]),
         children![
