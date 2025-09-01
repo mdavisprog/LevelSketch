@@ -1,5 +1,11 @@
-use bevy::prelude::*;
-use crate::gui::tools::ToolsPanel;
+use bevy::{
+    platform::collections::HashMap,
+    prelude::*,
+};
+use crate::gui::tools::{
+    ToolsPanel,
+    ToolsPanelType,
+};
 use kea::prelude::*;
 
 #[derive(Component)]
@@ -20,11 +26,10 @@ impl ToolsMenu {
             (
                 KeaList::new(KeaListBehavior::NoSelect),
                 KeaObservers::<Self>::new(vec![
+                    Observer::new(on_ready),
                     Observer::new(on_select),
                 ]),
-                children![
-                    ToolsMenuItem::bundle("Tools", ToolsMenuItemType::Tools),
-                ],
+                KeaOnReadyComponent,
             ),
         ],
     )}
@@ -38,11 +43,6 @@ impl ToolsMenu {
     }
 }
 
-#[derive(Clone, Copy)]
-enum ToolsMenuItemType {
-    Tools,
-}
-
 #[derive(Component)]
 struct ToolsMenuItemImage;
 
@@ -50,20 +50,16 @@ struct ToolsMenuItemImage;
 #[require(
     Node = Self::node(),
 )]
-struct ToolsMenuItem {
-    item_type: ToolsMenuItemType,
-}
+struct ToolsMenuItem;
 
 impl ToolsMenuItem {
-    fn bundle(label: &str, item_type: ToolsMenuItemType) -> impl Bundle {(
-        Self {
-            item_type,
-        },
+    fn bundle(label: &str, is_checked: bool) -> impl Bundle {(
+        Self,
         children![
             (
                 KeaImageNode(format!("kea://icons/check.svg#image18x18")),
                 ToolsMenuItemImage,
-                Visibility::Hidden,
+                if is_checked { Visibility::Inherited } else { Visibility::Hidden },
             ),
             (
                 KeaLabel::bundle(label),
@@ -83,50 +79,47 @@ impl ToolsMenuItem {
 
 pub(super) fn build(app: &mut App) {
     app
-        .add_systems(Update, on_add_menu_item_image)
+        //.add_systems(Update, on_add_menu_item_image)
         .add_observer(on_close_panel);
 }
 
-fn on_add_menu_item_image(
-    images: Query<(Entity, &ChildOf), Added<ToolsMenuItemImage>>,
-    items: Query<&ToolsMenuItem>,
-    panels: Query<Entity, With<ToolsPanel>>,
-    mut visibilities: Query<&mut Visibility>,
+fn on_ready(
+    trigger: Trigger<KeaOnReady>,
+    panels: Query<(&ToolsPanelType, &Visibility)>,
+    mut commands: Commands,
 ) {
-    if images.is_empty() {
-        return;
-    }
+    const ITEMS: [ToolsPanelType; 2] = [
+        ToolsPanelType::Project,
+        ToolsPanelType::Assets,
+    ];
 
-    for (image, child) in &images {
-        let Ok(item) = items.get(child.parent()) else {
-            continue;
+    let mut visibilities = HashMap::<ToolsPanelType, bool>::new();
+
+    for (panel, visibility) in panels {
+        let is_checked = match visibility {
+            Visibility::Hidden => false,
+            _ => true,
         };
 
-        match item.item_type {
-            ToolsMenuItemType::Tools => {
-                let Ok(panel) = panels.single() else {
-                    continue;
-                };
+        visibilities.insert(*panel, is_checked);
+    }
 
-                let Ok([mut visibility, panel_visibility]) = visibilities.get_many_mut([image, panel]) else {
-                    continue;
-                };
-
-                *visibility = match *panel_visibility {
-                    Visibility::Hidden => Visibility::Hidden,
-                    _ => Visibility::Inherited,
-                };
-            },
-        }
+    for item in ITEMS {
+        commands
+            .entity(trigger.target())
+            .with_child((
+                ToolsMenuItem::bundle(&format!("{item:?}"), visibilities[&item]),
+                item,
+            ));
     }
 }
 
 fn on_select(
     trigger: Trigger<KeaListSelect>,
     parents: Query<&Children>,
-    tools_items: Query<&ToolsMenuItem>,
-    tools_panels: Query<Entity, With<ToolsPanel>>,
     visibilities: Query<&Visibility>,
+    panels: Query<Entity, With<ToolsPanel>>,
+    panel_types: Query<&ToolsPanelType>,
     mut commands: Commands,
 ) {
     let Ok(list) = parents.get(trigger.target()) else {
@@ -138,30 +131,32 @@ fn on_select(
         return;
     };
 
-    let Ok(tools_item) = tools_items.get(*child) else {
+    let Ok(item_type) = panel_types.get(*child) else {
         return;
     };
 
-    match tools_item.item_type {
-        ToolsMenuItemType::Tools => {
-            let Ok(tools_panel) = tools_panels.single() else {
-                return;
-            };
+    for panel in panels {
+        let Ok(panel_type) = panel_types.get(panel) else {
+            continue;
+        };
 
-            let Ok(visibility) = visibilities.get(tools_panel) else {
-                return;
-            };
+        if item_type != panel_type {
+            continue;
+        }
 
-            let new_vis = match visibility {
+        let Ok(visibility) = visibilities.get(panel) else {
+            continue;
+        };
+
+        commands
+            .entity(panel)
+            .insert(match visibility {
                 Visibility::Hidden => Visibility::Visible,
                 _ => Visibility::Hidden,
-            };
+            });
 
-            commands
-                .entity(tools_panel)
-                .insert(new_vis);
-        },
-    };
+        break;
+    }
 
     commands.kea_popup_close();
 }

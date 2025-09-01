@@ -57,7 +57,6 @@ fn setup(
     let mut entity = commands.spawn(viewport::Viewport);
     viewport::Viewport::observe(&mut entity);
 
-    commands.spawn(
-        tools::ToolsPanel::bundle()
-    );
+    commands.spawn(tools::ToolsPanel::project_panel());
+    commands.spawn(tools::ToolsPanel::assets_panel());
 }
