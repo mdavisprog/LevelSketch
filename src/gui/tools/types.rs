@@ -36,6 +36,7 @@ impl TypesPanel {
             title: format!("Types"),
             position,
             size,
+            ..default()
         },
         (
             Node {

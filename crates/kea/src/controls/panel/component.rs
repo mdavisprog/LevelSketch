@@ -11,6 +11,12 @@ use super::systems::{
     on_header_drag,
 };
 
+#[derive(Debug, Clone, Copy)]
+pub enum KeaPanelCloseBehavior {
+    Close,
+    Trigger,
+}
+
 ///
 /// KeaPanelOptions
 ///
@@ -18,6 +24,7 @@ pub struct KeaPanelOptions {
     pub title: String,
     pub position: Vec2,
     pub size: Vec2,
+    pub close_behavior: KeaPanelCloseBehavior,
 }
 
 impl Default for KeaPanelOptions {
@@ -26,6 +33,7 @@ impl Default for KeaPanelOptions {
             title: format!(""),
             position: Vec2::ZERO,
             size: Vec2::ZERO,
+            close_behavior: KeaPanelCloseBehavior::Close,
         }
     }
 }
@@ -42,7 +50,7 @@ impl Default for KeaPanelOptions {
     ZIndex(constants::BASE_Z_INDEX),
 )]
 pub struct KeaPanel {
-    _private: (),
+    pub(super) close_behavior: KeaPanelCloseBehavior,
 }
 
 impl KeaPanel {
@@ -51,7 +59,7 @@ impl KeaPanel {
         contents: impl Bundle,
     ) -> impl Bundle {(
         Self {
-            _private: (),
+            close_behavior: options.close_behavior,
         },
         Node {
             flex_direction: FlexDirection::Column,

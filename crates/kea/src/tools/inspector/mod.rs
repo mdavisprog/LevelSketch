@@ -55,6 +55,7 @@ impl KeaInspector {
             title: format!("Inspector"),
             position: Vec2::new(100.0, 100.0),
             size: Vec2::new(400.0, 500.0),
+            ..default()
         },
         (
             Self {

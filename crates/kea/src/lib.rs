@@ -56,6 +56,8 @@ pub mod prelude {
         },
         panel::{
             KeaPanel,
+            KeaPanelClose,
+            KeaPanelCloseBehavior,
             KeaPanelOptions,
         },
         popup::{

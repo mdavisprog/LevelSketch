@@ -5,8 +5,12 @@ mod systems;
 
 pub use component::{
     KeaPanel,
+    KeaPanelCloseBehavior,
     KeaPanelOptions,
 };
+
+#[derive(Event)]
+pub struct KeaPanelClose;
 
 pub(super) struct Plugin;
 

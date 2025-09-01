@@ -82,29 +82,39 @@ impl ToolsMenuItem {
 }
 
 pub(super) fn build(app: &mut App) {
-    app.add_systems(Update, on_add_menu_item_image);
+    app
+        .add_systems(Update, on_add_menu_item_image)
+        .add_observer(on_close_panel);
 }
 
 fn on_add_menu_item_image(
+    images: Query<(Entity, &ChildOf), Added<ToolsMenuItemImage>>,
     items: Query<&ToolsMenuItem>,
-    panels: Query<&ToolsPanel>,
-    mut images: Query<(&ChildOf, &mut Visibility), Added<ToolsMenuItemImage>>,
+    panels: Query<Entity, With<ToolsPanel>>,
+    mut visibilities: Query<&mut Visibility>,
 ) {
     if images.is_empty() {
         return;
     }
 
-    for (image, mut visibility) in &mut images {
-        let Ok(item) = items.get(image.parent()) else {
+    for (image, child) in &images {
+        let Ok(item) = items.get(child.parent()) else {
             continue;
         };
 
         match item.item_type {
             ToolsMenuItemType::Tools => {
-                *visibility = if panels.is_empty() {
-                    Visibility::Hidden
-                } else {
-                    Visibility::Inherited
+                let Ok(panel) = panels.single() else {
+                    continue;
+                };
+
+                let Ok([mut visibility, panel_visibility]) = visibilities.get_many_mut([image, panel]) else {
+                    continue;
+                };
+
+                *visibility = match *panel_visibility {
+                    Visibility::Hidden => Visibility::Hidden,
+                    _ => Visibility::Inherited,
                 };
             },
         }
@@ -116,6 +126,7 @@ fn on_select(
     parents: Query<&Children>,
     tools_items: Query<&ToolsMenuItem>,
     tools_panels: Query<Entity, With<ToolsPanel>>,
+    visibilities: Query<&Visibility>,
     mut commands: Commands,
 ) {
     let Ok(list) = parents.get(trigger.target()) else {
@@ -133,17 +144,38 @@ fn on_select(
 
     match tools_item.item_type {
         ToolsMenuItemType::Tools => {
-            if tools_panels.is_empty() {
-                commands.spawn(ToolsPanel::bundle());
-            } else {
-                for panel in tools_panels {
-                    commands
-                        .entity(panel)
-                        .despawn();
-                }
-            }
+            let Ok(tools_panel) = tools_panels.single() else {
+                return;
+            };
+
+            let Ok(visibility) = visibilities.get(tools_panel) else {
+                return;
+            };
+
+            let new_vis = match visibility {
+                Visibility::Hidden => Visibility::Visible,
+                _ => Visibility::Hidden,
+            };
+
+            commands
+                .entity(tools_panel)
+                .insert(new_vis);
         },
-    }
+    };
 
     commands.kea_popup_close();
+}
+
+fn on_close_panel(
+    trigger: Trigger<KeaPanelClose>,
+    tools_panels: Query<&ToolsPanel>,
+    mut commands: Commands,
+) {
+    if !tools_panels.contains(trigger.target()) {
+        return;
+    }
+
+    commands
+        .entity(trigger.target())
+        .insert(Visibility::Hidden);
 }

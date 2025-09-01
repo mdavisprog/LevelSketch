@@ -7,6 +7,10 @@ use crate::{
         sizer::KeaSizer,
     },
 };
+use super::{
+    component::KeaPanelCloseBehavior,
+    KeaPanelClose,
+};
 
 pub(super) fn build(app: &mut App) {
     app.add_observer(on_add);
@@ -28,13 +32,21 @@ pub(super) fn on_close(
     mut commands: Commands,
 ) {
     for parent in child.iter_ancestors(trigger.target()) {
-        if !panels.contains(parent) {
+        let Ok(panel) = panels.get(parent) else {
             continue;
-        }
+        };
 
-        commands
-            .entity(parent)
-            .try_despawn();
+        match panel.close_behavior {
+            KeaPanelCloseBehavior::Close => {
+                commands
+                    .entity(parent)
+                    .try_despawn();
+            },
+            KeaPanelCloseBehavior::Trigger => {
+                commands.trigger_targets(KeaPanelClose, parent);
+            },
+        }
+        break;
     }
 }
 
