@@ -9,8 +9,7 @@ use crate::{
 };
 
 pub(super) fn build(app: &mut App) {
-    app
-        .add_observer(on_add);
+    app.add_observer(on_add);
 }
 
 fn on_add(
@@ -25,13 +24,18 @@ fn on_add(
 pub(super) fn on_close(
     trigger: Trigger<KeaButtonClick>,
     child: Query<&ChildOf>,
+    panels: Query<&KeaPanel>,
     mut commands: Commands,
 ) {
-    let root = child.root_ancestor(trigger.target());
+    for parent in child.iter_ancestors(trigger.target()) {
+        if !panels.contains(parent) {
+            continue;
+        }
 
-    commands
-        .entity(root)
-        .try_despawn();
+        commands
+            .entity(parent)
+            .try_despawn();
+    }
 }
 
 pub(super) fn on_header_drag(
