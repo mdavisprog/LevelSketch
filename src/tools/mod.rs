@@ -206,9 +206,9 @@ fn on_pick(
     frame: Res<FrameCount>,
     state: Res<State>,
     children: Query<&Children>,
-    mut selection: ResMut<selection::Selection>,
     mut widget: Query<(&mut Visibility, &mut Transform, &widgets::Widget)>,
     mut guard: Local<FrameGuard>,
+    mut selection_actions: EventWriter<selection::SelectionAction>,
 ) {
     if trigger.button != PointerButton::Primary {
         return;
@@ -224,7 +224,7 @@ fn on_pick(
 
     let Some(hovered) = state.hovered else {
         *visibility = Visibility::Hidden;
-        selection.world.clear();
+        selection_actions.write(selection::SelectionAction::Clear);
         return;
     };
 
@@ -240,8 +240,8 @@ fn on_pick(
         return;
     };
 
-    selection.world.clear();
-    selection.world.push(hovered);
+    selection_actions.write(selection::SelectionAction::Clear);
+    selection_actions.write(selection::SelectionAction::Push(hovered));
 
     transform.translation = mesh.translation;
     *visibility = Visibility::Visible;

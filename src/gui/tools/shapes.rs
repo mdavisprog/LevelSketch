@@ -13,7 +13,11 @@ use crate::{
         },
         viewport::Viewport,
     },
-    tools::selection,
+    tools::selection::{
+        Action,
+        Selection,
+        SelectionAction,
+    },
 };
 use kea::prelude::*;
 use super::tools::Tools;
@@ -193,9 +197,10 @@ fn on_drag_enter(
     viewports: Query<&Viewport>,
     camera: Query<(&Camera, &GlobalTransform), With<camera::Controller>>,
     shape_items: Query<&ShapeItem>,
+    selection: Res<Selection>,
     mut resource: ResMut<ShapeItemsResource>,
     mut commands: Commands,
-    mut selection: ResMut<selection::Selection>,
+    mut selection_actions: EventWriter<SelectionAction>,
 ) {
     if resource.dragging.is_none() {
         return;
@@ -244,10 +249,8 @@ fn on_drag_enter(
     commands.trigger(DespawnTrail);
 
     resource.last_point = point;
-    resource.last_selection = core::mem::take(&mut selection.world);
-    selection.world = vec![
-        spawned_entity
-    ];
+    resource.last_selection = selection.world().clone();
+    selection_actions.write(SelectionAction::Push(spawned_entity));
 }
 
 fn on_shape_item_drag_start(
@@ -279,16 +282,18 @@ fn on_shape_item_drag_start(
 fn on_shape_item_drag_end(
     _: Trigger<Pointer<DragEnd>>,
     mut resource: ResMut<ShapeItemsResource>,
-    mut selection: ResMut<selection::Selection>,
+    mut selection_actions: EventWriter<SelectionAction>,
 ) {
     resource.dragging = None;
-    selection.world = core::mem::take(&mut resource.last_selection);
+    selection_actions.write(
+        SelectionAction::Set(core::mem::take(&mut resource.last_selection)),
+    );
 }
 
 fn on_shape_item_drag(
     trigger: Trigger<Pointer<Drag>>,
     camera: Query<(&Camera, &GlobalTransform), With<camera::Controller>>,
-    mut selection_actions: EventWriter<selection::Action>,
+    mut selection_actions: EventWriter<Action>,
     mut resource: ResMut<ShapeItemsResource>,
 ) {
     let Some(point) = get_point(&camera, trigger.pointer_location.position) else {
@@ -297,5 +302,5 @@ fn on_shape_item_drag(
 
     let delta = point - resource.last_point;
     resource.last_point = point;
-    selection_actions.write(selection::Action::Move(delta));
+    selection_actions.write(Action::Move(delta));
 }

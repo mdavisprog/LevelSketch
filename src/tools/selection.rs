@@ -4,12 +4,16 @@ pub(super) fn build(app: &mut App) {
     app
         .init_resource::<Selection>()
         .add_event::<Action>()
-        .add_systems(Update, handle_actions);
+        .add_event::<SelectionAction>()
+        .add_systems(Update, (
+            handle_actions,
+            handle_selection_actions,
+        ));
 }
 
 #[derive(Resource)]
 pub struct Selection {
-    pub world: Vec<Entity>,
+    world: Vec<Entity>,
 }
 
 impl Default for Selection {
@@ -20,11 +24,24 @@ impl Default for Selection {
     }
 }
 
+impl Selection {
+    pub fn world(&self) -> &Vec<Entity> {
+        &self.world
+    }
+}
+
 #[derive(Event)]
 pub enum Action {
     Move(Vec3),
     Scale(Vec3),
     Rotation(Vec3),
+}
+
+#[derive(Event)]
+pub enum SelectionAction {
+    Push(Entity),
+    Set(Vec<Entity>),
+    Clear,
 }
 
 fn handle_actions(
@@ -51,6 +68,25 @@ fn handle_actions(
                     mesh.rotate_z(delta.z.to_radians());
                 },
             }
+        }
+    }
+}
+
+fn handle_selection_actions(
+    mut events: EventReader<SelectionAction>,
+    mut selection: ResMut<Selection>,
+) {
+    for event in events.read() {
+        match event {
+            SelectionAction::Push(entity) => {
+                selection.world.push(*entity);
+            },
+            SelectionAction::Set(entities) => {
+                selection.world = entities.clone();
+            },
+            SelectionAction::Clear => {
+                selection.world.clear();
+            },
         }
     }
 }
