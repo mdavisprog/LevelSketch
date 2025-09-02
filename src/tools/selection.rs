@@ -37,12 +37,15 @@ pub enum Action {
     Rotation(Vec3),
 }
 
-#[derive(Event)]
+#[derive(Event, Debug)]
 pub enum SelectionAction {
     Push(Entity),
     Set(Vec<Entity>),
     Clear,
 }
+
+#[derive(Event)]
+pub struct SelectionChanged;
 
 fn handle_actions(
     selection: Res<Selection>,
@@ -75,18 +78,30 @@ fn handle_actions(
 fn handle_selection_actions(
     mut events: EventReader<SelectionAction>,
     mut selection: ResMut<Selection>,
+    mut commands: Commands,
 ) {
     for event in events.read() {
-        match event {
+        let trigger = match event {
             SelectionAction::Push(entity) => {
                 selection.world.push(*entity);
+                true
             },
             SelectionAction::Set(entities) => {
                 selection.world = entities.clone();
+                true
             },
             SelectionAction::Clear => {
-                selection.world.clear();
+                if selection.world.is_empty() {
+                    false
+                } else {
+                    selection.world.clear();
+                    true
+                }
             },
+        };
+
+        if trigger {
+            commands.trigger(SelectionChanged);
         }
     }
 }
