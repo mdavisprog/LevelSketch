@@ -11,11 +11,14 @@ use crate::{
     ready::KeaOnReady,
     style,
 };
-use super::tree::{
-    KeaTree,
-    KeaTreeRoot,
-    DataItem,
-    DataItemContent,
+use super::{
+    events::KeaTreeHover,
+    tree::{
+        KeaTree,
+        KeaTreeRoot,
+        DataItem,
+        DataItemContent,
+    },
 };
 
 #[derive(Event)]
@@ -91,6 +94,7 @@ pub(super) fn on_tree_ready(
             continue;
         }
 
+        tree_root.tree = child;
         commands.trigger_targets(UpdateTree, child);
 
         break;
@@ -148,8 +152,21 @@ pub(super) fn on_tree_children_removed(
 
 pub(super) fn on_tree_over(
     trigger: Trigger<Pointer<Over>>,
+    children: Query<&ChildOf>,
+    roots: Query<&KeaTreeRoot>,
     mut commands: Commands,
 ) {
+    for parent in children.iter_ancestors(trigger.target()) {
+        if !roots.contains(parent) {
+            continue;
+        }
+
+        commands.trigger_targets(KeaTreeHover {
+            hovered: true,
+        }, parent);
+        break;
+    }
+
     commands
         .entity(trigger.target())
         .insert(BackgroundColor(style::colors::HIGHLIGHT));
@@ -157,8 +174,21 @@ pub(super) fn on_tree_over(
 
 pub(super) fn on_tree_out(
     trigger: Trigger<Pointer<Out>>,
+    children: Query<&ChildOf>,
+    roots: Query<&KeaTreeRoot>,
     mut commands: Commands,
 ) {
+    for parent in children.iter_ancestors(trigger.target()) {
+        if !roots.contains(parent) {
+            continue;
+        }
+
+        commands.trigger_targets(KeaTreeHover {
+            hovered: false,
+        }, parent);
+        break;
+    }
+
     commands
         .entity(trigger.target())
         .insert(BackgroundColor(Color::NONE));

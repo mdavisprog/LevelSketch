@@ -44,6 +44,7 @@ impl KeaTree {
         KeaTreeRoot {
             data_item_block: Entity::PLACEHOLDER,
             data_item_image: Entity::PLACEHOLDER,
+            tree: Entity::PLACEHOLDER,
         },
     )}
 
@@ -79,6 +80,7 @@ impl KeaTree {
 pub struct KeaTreeRoot {
     pub(super) data_item_block: Entity,
     pub(super) data_item_image: Entity,
+    pub(super) tree: Entity,
 }
 
 impl KeaTreeRoot {

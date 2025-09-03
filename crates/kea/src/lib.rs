@@ -86,6 +86,8 @@ pub mod prelude {
         tree::{
             KeaTree,
             KeaTreeCommands,
+            // Events
+            KeaTreeHover,
         },
     };
     pub use observers::{
