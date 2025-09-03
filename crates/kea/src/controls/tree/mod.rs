@@ -1,3 +1,5 @@
+use bevy::prelude::*;
+
 mod commands;
 mod events;
 mod systems;
@@ -11,3 +13,11 @@ pub use {
     },
     tree::KeaTree,
 };
+
+pub(super) struct Plugin;
+
+impl bevy::prelude::Plugin for Plugin {
+    fn build(&self, app: &mut App) {
+        systems::build(app);
+    }
+}

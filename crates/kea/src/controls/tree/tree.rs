@@ -9,12 +9,10 @@ use crate::{
         label::KeaLabel,
     },
     observers::KeaObservers,
-    ready::KeaOnReadyComponent,
     style,
 };
 use super::systems::{
     on_expander_event,
-    on_tree_ready,
     on_tree_update,
     on_tree_children_added,
     on_tree_children_removed,
@@ -23,16 +21,15 @@ use super::systems::{
     on_tree_click,
 };
 
-/// TODO: Make KeaTree the root entity and change KeaTreeRoot to KeaTreeContents.
-/// KeaTree should hold all of the entities for quick access. API access for the
-/// KeaTreeContents entity for quick access to get the tree children.
 #[derive(Component)]
 #[require(
     KeaObservers<Self> = Self::observers(),
-    Node = Self::node(),
+    Node,
 )]
 pub struct KeaTree {
-    _private: (),
+    pub(super) data_item_block: Entity,
+    pub(super) data_item_image: Entity,
+    pub(super) contents: Entity,
 }
 
 impl KeaTree {
@@ -40,15 +37,13 @@ impl KeaTree {
     pub fn bundle(header: impl Bundle, items: impl Bundle) -> impl Bundle {(
         KeaExpander::bundle(DataItem::bundle(header),
         (
-            Self {
-                _private: (),
-            },
+            KeaTreeContents,
             items,
         )),
-        KeaTreeRoot {
+        Self {
             data_item_block: Entity::PLACEHOLDER,
             data_item_image: Entity::PLACEHOLDER,
-            tree: Entity::PLACEHOLDER,
+            contents: Entity::PLACEHOLDER,
         },
     )}
 
@@ -58,7 +53,23 @@ impl KeaTree {
 
     fn observers() -> KeaObservers<Self> {
         KeaObservers::new(vec![
+            Observer::new(on_expander_event),
             Observer::new(on_tree_update),
+        ])
+    }
+}
+
+/// The root point of the control. Should be a sibling of KeaExpander.
+#[derive(Component)]
+#[require(
+    KeaObservers<Self> = Self::observers(),
+    Node = Self::node(),
+)]
+pub struct KeaTreeContents;
+
+impl KeaTreeContents {
+    fn observers() -> KeaObservers<Self> {
+        KeaObservers::new(vec![
             Observer::new(on_tree_children_added),
             Observer::new(on_tree_children_removed),
         ])
@@ -72,27 +83,6 @@ impl KeaTree {
             width: Val::Percent(100.0),
             ..default()
         }
-    }
-}
-
-/// The root point of the control. Should be a sibling of KeaExpander.
-#[derive(Component)]
-#[require(
-    KeaOnReadyComponent,
-    KeaObservers<Self> = Self::observers(),
-)]
-pub struct KeaTreeRoot {
-    pub(super) data_item_block: Entity,
-    pub(super) data_item_image: Entity,
-    pub(super) tree: Entity,
-}
-
-impl KeaTreeRoot {
-    fn observers() -> KeaObservers<Self> {
-        KeaObservers::new(vec![
-            Observer::new(on_expander_event),
-            Observer::new(on_tree_ready),
-        ])
     }
 }
 

@@ -27,6 +27,7 @@ impl bevy::prelude::Plugin for Plugin {
             popup::Plugin,
             scroll::Plugin,
             text::Plugin,
+            tree::Plugin,
         ));
 
         checkbox::build(app);
