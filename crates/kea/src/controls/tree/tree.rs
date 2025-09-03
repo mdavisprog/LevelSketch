@@ -20,8 +20,12 @@ use super::systems::{
     on_tree_children_removed,
     on_tree_over,
     on_tree_out,
+    on_tree_click,
 };
 
+/// TODO: Make KeaTree the root entity and change KeaTreeRoot to KeaTreeContents.
+/// KeaTree should hold all of the entities for quick access. API access for the
+/// KeaTreeContents entity for quick access to get the tree children.
 #[derive(Component)]
 #[require(
     KeaObservers<Self> = Self::observers(),
@@ -143,6 +147,7 @@ impl DataItem {
         KeaObservers::new(vec![
             Observer::new(on_tree_over),
             Observer::new(on_tree_out),
+            Observer::new(on_tree_click),
         ])
     }
 }

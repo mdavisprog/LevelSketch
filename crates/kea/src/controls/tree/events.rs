@@ -4,3 +4,6 @@ use bevy::prelude::*;
 pub struct KeaTreeHover {
     pub hovered: bool,
 }
+
+#[derive(Event)]
+pub struct KeaTreeClick;

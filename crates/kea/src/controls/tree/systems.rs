@@ -12,7 +12,10 @@ use crate::{
     style,
 };
 use super::{
-    events::KeaTreeHover,
+    events::{
+        KeaTreeClick,
+        KeaTreeHover,
+    },
     tree::{
         KeaTree,
         KeaTreeRoot,
@@ -192,4 +195,20 @@ pub(super) fn on_tree_out(
     commands
         .entity(trigger.target())
         .insert(BackgroundColor(Color::NONE));
+}
+
+pub(super) fn on_tree_click(
+    trigger: Trigger<Pointer<Click>>,
+    children: Query<&ChildOf>,
+    roots: Query<&KeaTreeRoot>,
+    mut commands: Commands,
+) {
+    for parent in children.iter_ancestors(trigger.target()) {
+        if !roots.contains(parent) {
+            continue;
+        }
+
+        commands.trigger_targets(KeaTreeClick, parent);
+        break;
+    }
 }

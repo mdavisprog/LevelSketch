@@ -5,6 +5,9 @@ mod tree;
 
 pub use {
     commands::KeaTreeCommands,
-    events::KeaTreeHover,
+    events::{
+        KeaTreeClick,
+        KeaTreeHover,
+    },
     tree::KeaTree,
 };

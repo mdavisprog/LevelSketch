@@ -87,6 +87,7 @@ pub mod prelude {
             KeaTree,
             KeaTreeCommands,
             // Events
+            KeaTreeClick,
             KeaTreeHover,
         },
     };
