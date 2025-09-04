@@ -7,6 +7,7 @@ use bevy::{
         camera::NormalizedRenderTarget,
     },
 };
+use crate::gui;
 use super::camera;
 
 mod constants;
@@ -27,7 +28,8 @@ impl bevy::prelude::Plugin for Plugin {
             .add_observer(on_pick)
             .add_observer(on_drag_start)
             .add_observer(on_drag_end)
-            .add_observer(on_drag);
+            .add_observer(on_drag)
+            .add_observer(on_selection_changed);
 
         selection::build(app);
         widgets::build(app);
@@ -202,19 +204,19 @@ fn on_out(
 
 fn on_pick(
     trigger: Trigger<Pointer<Click>>,
-    meshes: Query<&Transform, (With<Mesh3d>, Without<widgets::Widget>)>,
     frame: Res<FrameCount>,
     state: Res<State>,
     children: Query<&Children>,
-    mut widget: Query<(&mut Visibility, &mut Transform, &widgets::Widget)>,
+    gui_state: Res<gui::State>,
+    widget: Query<&widgets::Widget>,
     mut guard: Local<FrameGuard>,
     mut selection_actions: EventWriter<selection::SelectionAction>,
 ) {
-    if trigger.button != PointerButton::Primary {
+    if trigger.button != PointerButton::Primary || gui_state.is_interacting() {
         return;
     }
 
-    let Ok((mut visibility, mut transform, widget)) = widget.single_mut() else {
+    let Ok(widget) = widget.single() else {
         return;
     };
 
@@ -223,12 +225,11 @@ fn on_pick(
     // set to the 'hovered' property.
 
     let Some(hovered) = state.hovered else {
-        *visibility = Visibility::Hidden;
-        selection_actions.write(selection::SelectionAction::Clear);
-        return;
-    };
+        let Ok(_) = ScopedFrameGuard::try_new(&mut guard, frame.0) else {
+            return;
+        };
 
-    let Ok(mesh) = meshes.get(hovered) else {
+        selection_actions.write(selection::SelectionAction::Clear);
         return;
     };
 
@@ -242,9 +243,6 @@ fn on_pick(
 
     selection_actions.write(selection::SelectionAction::Clear);
     selection_actions.write(selection::SelectionAction::Push(hovered));
-
-    transform.translation = mesh.translation;
-    *visibility = Visibility::Visible;
 }
 
 fn on_drag_start(
@@ -365,4 +363,41 @@ fn on_drag(
         window,
         screen_position: trigger.pointer_location.position,
     }));
+}
+
+fn on_selection_changed(
+    _: Trigger<selection::SelectionChanged>,
+    selection: Res<selection::Selection>,
+    widgets: Query<Entity, With<widgets::Widget>>,
+    mut transforms: Query<&mut Transform>,
+    mut visibilities: Query<&mut Visibility>,
+) {
+    let entity = if selection.world().is_empty() {
+        Entity::PLACEHOLDER
+    } else {
+        *selection.world().get(0).unwrap()
+    };
+
+    let Ok(widget) = widgets.single() else {
+        return;
+    };
+
+    let Ok(mut visibility) = visibilities.get_mut(widget) else {
+        return;
+    };
+
+    if entity == Entity::PLACEHOLDER {
+        *visibility = Visibility::Hidden;
+        return;
+    }
+
+    let Ok([
+        entity_transform,
+        mut widget_transform,
+    ]) = transforms.get_many_mut([entity, widget]) else {
+        return;
+    };
+
+    widget_transform.translation = entity_transform.translation;
+    *visibility = Visibility::Visible;
 }
