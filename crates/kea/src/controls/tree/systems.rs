@@ -195,10 +195,13 @@ pub(super) fn on_tree_out(
     trees: Query<&KeaTree>,
     mut commands: Commands,
 ) {
+    let mut revert = true;
     for parent in children.iter_ancestors(trigger.target()) {
-        if !trees.contains(parent) {
+        let Ok(tree) = trees.get(parent) else {
             continue;
-        }
+        };
+
+        revert = !tree.selected;
 
         commands.trigger_targets(KeaTreeHover {
             hovered: false,
@@ -206,9 +209,11 @@ pub(super) fn on_tree_out(
         break;
     }
 
-    commands
-        .entity(trigger.target())
-        .insert(BackgroundColor(Color::NONE));
+    if revert {
+        commands
+            .entity(trigger.target())
+            .insert(BackgroundColor(Color::NONE));
+    }
 }
 
 pub(super) fn on_tree_click(

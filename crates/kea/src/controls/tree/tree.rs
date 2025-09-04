@@ -30,6 +30,7 @@ pub struct KeaTree {
     pub(super) data_item_block: Entity,
     pub(super) data_item_image: Entity,
     pub(super) contents: Entity,
+    pub(super) selected: bool,
 }
 
 impl KeaTree {
@@ -44,6 +45,7 @@ impl KeaTree {
             data_item_block: Entity::PLACEHOLDER,
             data_item_image: Entity::PLACEHOLDER,
             contents: Entity::PLACEHOLDER,
+            selected: false,
         },
     )}
 
