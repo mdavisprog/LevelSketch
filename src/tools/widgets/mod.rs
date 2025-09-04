@@ -27,11 +27,14 @@ pub(super) fn build(app: &mut App) {
         .add_event::<Scale>()
         .add_systems(Startup, setup)
         .add_systems(Update, (
-            handle_hover,
-            handle_drag_start,
-            handle_drag,
-            handle_scale,
-        ).chain());
+            (
+                handle_hover,
+                handle_drag_start,
+                handle_drag,
+                handle_scale,
+            ).chain(),
+            on_transform_changed,
+        ));
 }
 
 #[derive(Component)]
@@ -418,5 +421,32 @@ fn handle_scale(
             let scale = distance * (tan * 2.0) * (1.0 / MAX_SIZE);
             widget.scale = Vec3::splat(scale + MIN_SIZE);
         }
+    }
+}
+
+fn on_transform_changed(
+    changed: Query<(Entity, &Transform), (Without<Widget>, Changed<Transform>)>,
+    selection: Res<selection::Selection>,
+    visibilities: Query<&Visibility>,
+    mut widgets: Query<(Entity, &mut Transform), With<Widget>>,
+) {
+    let Ok((widget, mut widget_transform)) = widgets.single_mut() else {
+        return;
+    };
+
+    let Ok(visibility) = visibilities.get(widget) else {
+        return;
+    };
+
+    if visibility == Visibility::Hidden {
+        return;
+    }
+
+    for (entity, transform) in changed {
+        if !selection.world().contains(&entity) {
+            continue;
+        }
+
+        widget_transform.translation = transform.translation;
     }
 }

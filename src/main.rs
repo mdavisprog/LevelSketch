@@ -13,6 +13,7 @@ use kea::prelude::*;
 
 mod camera;
 mod commands;
+mod entitiy;
 mod gui;
 mod level;
 mod project;

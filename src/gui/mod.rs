@@ -59,4 +59,5 @@ fn setup(
 
     commands.spawn(tools::ToolsPanel::project_panel());
     commands.spawn(tools::ToolsPanel::assets_panel());
+    commands.spawn(tools::ToolsPanel::properties_panel());
 }

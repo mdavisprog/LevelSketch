@@ -2,6 +2,7 @@ use bevy::{
     ecs::system::SystemState,
     prelude::*,
 };
+use crate::entitiy::EntityProperties;
 use super::{
     events::LevelEventAddEntity,
     level::Level,
@@ -34,6 +35,10 @@ impl<'w, 's> LevelCommands for Commands<'w, 's> {
             commands
                 .entity(level)
                 .add_child(entity);
+
+            commands
+                .entity(entity)
+                .insert_if_new(EntityProperties::new());
 
             events.write(LevelEventAddEntity {
                 entity,

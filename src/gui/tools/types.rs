@@ -1,10 +1,6 @@
 use bevy::prelude::*;
-use crate::project::{
-    LSPEvent,
-    LSPServiceResource,
-};
+use crate::project::LSPServiceResource;
 use kea::prelude::*;
-use lstalk::prelude::*;
 use super::tools::Tools;
 
 #[derive(Component)]
@@ -21,89 +17,107 @@ impl TypesTool {
     }
 }
 
-#[derive(Component)]
-pub struct TypesPanel {
-    _private: (),
+#[derive(Event)]
+pub struct TypeSelected {
+    pub name: String,
 }
 
-impl TypesPanel {
-    #[expect(unused)]
-    pub fn bundle(position: Vec2, size: Vec2) -> impl Bundle {(
-        Self {
-            _private: (),
-        },
-        KeaPanel::bundle(KeaPanelOptions {
-            title: format!("Types"),
-            position,
-            size,
-            ..default()
-        },
-        (
-            Node {
-                flex_direction: FlexDirection::Column,
-                row_gap: Val::Px(kea::style::properties::ROW_GAP),
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                ..default()
-            },
-            KeaScrollable,
-            children![
-                TypesTool::bundle(),
-            ],
-        )),
-    )}
-}
+#[derive(Event)]
+struct Refresh;
 
 pub(super) fn build(app: &mut App) {
-    app.add_observer(on_symbols);
+    app
+        .add_observer(on_add)
+        .add_observer(refresh);
 }
 
-fn on_symbols(
-    trigger: Trigger<LSPEvent>,
+fn on_add(
+    _: Trigger<OnAdd, TypesTool>,
+    mut commands: Commands,
+) {
+    commands.trigger(Refresh);
+}
+
+fn refresh(
+    _: Trigger<Refresh>,
+    types_tools: Query<Entity, With<TypesTool>>,
     lsp_resource: Res<LSPServiceResource>,
-    types_tool: Query<Entity, With<TypesTool>>,
+    mut commands: Commands,
+) {
+    for tool in types_tools {
+        commands
+            .entity(tool)
+            .despawn_related::<Children>();
+
+        let Some(symbols) = lsp_resource.symbols() else {
+            commands
+                .entity(tool)
+                .with_child(warning_message(
+                    "Language server has not been started. Please load a project to retrieve valid types."
+                ));
+            println!("Not initialized");
+            return;
+        };
+
+        if symbols.is_empty() {
+            commands
+                .entity(tool)
+                .with_child(warning_message(
+                    "Language server did not find any types from the project."
+                ));
+            println!("No symbols");
+            return;
+        }
+
+        let list = {
+            let mut list = commands.spawn(KeaList::new(KeaListBehavior::Select));
+
+            for name in symbols.sorted_names() {
+                list.with_child(KeaLabel::bundle(&name));
+            }
+
+            list
+                .observe(on_select)
+                .id()
+        };
+
+        commands
+            .entity(tool)
+            .add_child(list);
+    }
+}
+
+fn warning_message(message: &str) -> impl Bundle {(
+    KeaLabel::bundle(message),
+    TextLayout::new_with_justify(JustifyText::Center),
+)}
+
+fn on_select(
+    trigger: Trigger<KeaListSelect>,
+    children: Query<&ChildOf>,
+    texts: Query<&Text>,
+    tools: Query<&TypesTool>,
     mut commands: Commands,
 ) {
     let event = trigger.event();
 
-    match event {
-        LSPEvent::Symbols => {
-            for tool in types_tool {
-                commands
-                    .entity(tool)
-                    .despawn_related::<Children>();
-            }
-
-            let Some(symbols) = lsp_resource.symbols() else {
-                return;
-            };
-
-            for (name, symbol) in symbols {
-                if symbol.kind() == SymbolKind::Class {
-                    for tool in types_tool {
-                        let parent = commands.spawn(KeaTree::bundle_with_label(&name, ())).id();
-                        commands
-                            .entity(tool)
-                            .add_child(parent);
-
-                        spawn_symbols(symbol, parent, &mut commands);
-                    }
-                }
-            }
-        },
+    let mut tool = Entity::PLACEHOLDER;
+    for parent in children.iter_ancestors(trigger.target()) {
+        if tools.contains(parent) {
+            tool = parent;
+            break;
+        }
     }
-}
 
-fn spawn_symbols(
-    root: &Symbol,
-    parent: Entity,
-    commands: &mut Commands,
-) {
-    for (name, symbol) in root.symbols() {
-        let entity = commands
-            .kea_tree_spawn_child(parent, KeaTree::bundle_with_label(&name, ()))
-            .id();
+    assert!(tool != Entity::PLACEHOLDER);
 
-        spawn_symbols(symbol, entity, commands);
-    }
+    let Ok(text) = texts.get(event.entity) else {
+        panic!("Entity {} is not a KeaLabel.", event.entity);
+    };
+
+    commands
+        .kea_popup_close()
+        .trigger_targets(TypeSelected {
+            name: text.0.clone(),
+        }, tool);
 }

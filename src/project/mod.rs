@@ -32,7 +32,9 @@ fn update(
 ) {
     let result = lsp_resource.poll();
 
+    let mut update_symbols = false;
     let mut symbols_result = None;
+
     let mut initialized = false;
     for item in result.items {
         match item.event {
@@ -40,6 +42,7 @@ fn update(
                 initialized = true;
             },
             LanguageServerEvent::RetrievedSymbols(symbols) => {
+                update_symbols = true;
                 symbols_result = Some(symbols);
                 commands.trigger(LSPEvent::Symbols);
             },
@@ -51,5 +54,8 @@ fn update(
         lsp_resource.service.request_types(documents);
     }
 
-    lsp_resource.symbols = symbols_result;
+    // Need to perfrom move here due to borrow occurring in for loop above.
+    if update_symbols {
+        lsp_resource.symbols = symbols_result;
+    }
 }

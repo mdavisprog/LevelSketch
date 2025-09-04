@@ -74,7 +74,7 @@ impl Viewport {
             commands.kea_popup_open(
                 ToolsMenu::bundle(),
                 KeaPopupPosition::AtMouse,
-                KeaPopupSize::Fixed(Vec2::new(100.0, 100.0)),
+                KeaPopupSize::Fixed(Vec2::new(150.0, 100.0)),
             );
         }
     }

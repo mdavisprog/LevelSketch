@@ -29,23 +29,10 @@ impl CameraTools {
                 }),
             ),
             (
-                KeaProperty::bundle_with_numbers("Speed", 0.0, |
-                    trigger: Trigger<KeaTextInputConfirm>,
-                    mut cameras: Query<&mut camera::Controller>,
-                | {
-                    let Ok(mut camera) = cameras.single_mut() else {
-                        return;
-                    };
-
-                    camera.speed = trigger
-                        .event()
-                        .text
-                        .parse()
-                        .unwrap_or(camera.speed);
-                    camera.max_speed = camera.speed;
-                }),
+                KeaPropertyDecimal::bundle("Speed", 0.0),
                 KeaOnReadyComponent,
                 KeaObservers::<properties::Speed>::new(vec![
+                    Observer::new(on_speed_changed),
                     Observer::new(on_speed_ready),
                 ]),
             ),
@@ -55,6 +42,22 @@ impl CameraTools {
 
 mod properties {
     pub struct Speed;
+}
+
+fn on_speed_changed(
+    trigger: Trigger<KeaPropertyChanged>,
+    mut cameras: Query<&mut camera::Controller>,
+) {
+    let Ok(mut camera) = cameras.single_mut() else {
+        return;
+    };
+
+    let KeaPropertyData::Decimal(speed) = trigger.event().data else {
+        return;
+    };
+
+    camera.speed = speed as f32;
+    camera.max_speed = camera.speed;
 }
 
 fn on_speed_ready(

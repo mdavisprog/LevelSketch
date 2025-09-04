@@ -67,8 +67,13 @@ pub mod prelude {
             KeaPopupSize,
         },
         property::{
-            KeaProperty,
             KeaPropertyCommandsExt,
+            KeaPropertyData,
+            KeaPropertyDecimal,
+            KeaPropertyText,
+            KeaPropertyVector3,
+            // Events
+            KeaPropertyChanged,
         },
         scroll::KeaScrollable,
         separator::KeaSeparator,
@@ -80,6 +85,7 @@ pub mod prelude {
             KeaTextInput,
             KeaTextInputCommands,
             KeaTextInputFormat,
+            KeaTextInputFormatNumber,
             KeaTextInputResource,
             // Events
             KeaTextInputConfirm,

@@ -78,9 +78,7 @@ impl ToolsMenuItem {
 }
 
 pub(super) fn build(app: &mut App) {
-    app
-        //.add_systems(Update, on_add_menu_item_image)
-        .add_observer(on_close_panel);
+    app.add_observer(on_close_panel);
 }
 
 fn on_ready(
@@ -88,9 +86,11 @@ fn on_ready(
     panels: Query<(&ToolsPanelType, &Visibility)>,
     mut commands: Commands,
 ) {
-    const ITEMS: [ToolsPanelType; 2] = [
+    // Controls the ordering of how the menu items will appear.
+    const ITEMS: [ToolsPanelType; 3] = [
         ToolsPanelType::Project,
         ToolsPanelType::Assets,
+        ToolsPanelType::Properties,
     ];
 
     let mut visibilities = HashMap::<ToolsPanelType, bool>::new();

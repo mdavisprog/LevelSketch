@@ -2,6 +2,7 @@ mod camera;
 mod file;
 mod level;
 mod panel;
+mod properties;
 mod shapes;
 mod tools;
 mod types;
@@ -20,6 +21,8 @@ pub(super) struct Plugin;
 
 impl bevy::prelude::Plugin for Plugin {
     fn build(&self, app: &mut bevy::app::App) {
+        app.add_plugins(properties::Plugin);
+
         level::build(app);
         shapes::build(app);
         types::build(app);

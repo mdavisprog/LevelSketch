@@ -4,14 +4,15 @@ use super::{
     CameraTools,
     FileTools,
     level::LevelTools,
+    properties::PropertiesTool,
     ShapesTools,
-    types::TypesTool,
 };
 
 #[derive(Component, Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum ToolsPanelType {
     Project,
     Assets,
+    Properties,
 }
 
 #[derive(Component)]
@@ -25,7 +26,6 @@ impl ToolsPanel {
             KeaExpander::bundle_with_header("File", FileTools::bundle()),
             KeaExpander::bundle_with_header("Camera", CameraTools::bundle()),
             KeaExpander::bundle_with_header("Level", LevelTools::bundle()),
-            KeaExpander::bundle_with_header("Types", TypesTool::bundle()),
         ]),
         ToolsPanelType::Project,
     )}
@@ -35,6 +35,14 @@ impl ToolsPanel {
             KeaExpander::bundle_with_header("Shapes", ShapesTools::bundle()),
         ]),
         ToolsPanelType::Assets,
+        Visibility::Hidden,
+    )}
+
+    pub fn properties_panel() -> impl Bundle {(
+        Self::bundle("Properties", children![
+            PropertiesTool::bundle(),
+        ]),
+        ToolsPanelType::Properties,
         Visibility::Hidden,
     )}
 
