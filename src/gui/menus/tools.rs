@@ -154,6 +154,7 @@ fn on_select(
                 Visibility::Hidden => Visibility::Visible,
                 _ => Visibility::Hidden,
             });
+        commands.kea_panel_focus(panel);
 
         break;
     }
