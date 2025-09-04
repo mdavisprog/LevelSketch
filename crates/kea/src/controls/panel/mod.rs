@@ -1,12 +1,16 @@
 use bevy::prelude::*;
 
+mod commands;
 mod component;
 mod systems;
 
-pub use component::{
-    KeaPanel,
-    KeaPanelCloseBehavior,
-    KeaPanelOptions,
+pub use {
+    commands::KeaPanelCommands,
+    component::{
+        KeaPanel,
+        KeaPanelCloseBehavior,
+        KeaPanelOptions,
+    },
 };
 
 #[derive(Event)]
