@@ -117,7 +117,7 @@ fn setup(
 }
 
 fn sync_camera(
-    controller: Query<&Transform, With<camera::Controller>>,
+    controller: Query<&Transform, (With<camera::Controller>, Changed<Transform>)>,
     mut camera: Query<&mut Transform, (With<ToolsCamera>, Without<camera::Controller>)>,
 ) {
     let Ok(controller) = controller.single() else {

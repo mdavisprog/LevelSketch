@@ -133,7 +133,11 @@ impl Controller {
 
         let delta = direction * camera_controller.speed * time.delta_secs();
         camera_controller.velocity = (camera_controller.velocity + delta).clamp_length(0.0, camera_controller.max_speed);
-    
+
+        if camera_controller.velocity.length_squared() <= 0.001 {
+            return;
+        }
+
         transform.translation += camera_controller.velocity * time.delta_secs();
         camera_controller.velocity = camera_controller.velocity * (1.0 - camera_controller.friction);
     }

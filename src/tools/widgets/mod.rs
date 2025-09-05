@@ -387,9 +387,8 @@ fn handle_drag(
         }
 
         state.last_position = position;
+        scale_events.write(Scale);
     }
-
-    scale_events.write(Scale);
 }
 
 fn handle_scale(
