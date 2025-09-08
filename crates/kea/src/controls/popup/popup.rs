@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use crate::constants;
 
 pub enum KeaPopupPosition {
     At(IVec2),
@@ -10,6 +11,9 @@ pub enum KeaPopupSize {
 }
 
 #[derive(Component)]
+#[require(
+    ZIndex(constants::POPUP_Z_INDEX),
+)]
 pub(super) struct KeaPopup {
     pub(super) window: Entity,
     pub(super) state: PopupState,
