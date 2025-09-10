@@ -6,8 +6,11 @@ pub mod prelude {
     use super::*;
 
     pub use constructs::{
+        DataType,
+        DataTypeDB,
         Symbol,
         SymbolKind,
+        SymbolPath,
         SymbolTable,
     };
     pub use service::{

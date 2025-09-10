@@ -1,6 +1,7 @@
 use crate::protocol::document;
 use super::{
     data::DataType,
+    path::SymbolPath,
     semantic::{
         SemanticTokenModifiers,
         SemanticTokenType,
@@ -20,9 +21,6 @@ pub struct Symbol {
     /// Describes what the symbol represents in the source code.
     pub(crate) kind: SymbolKind,
 
-    /// List of symbols contained within this scope.
-    pub(crate) symbols: SymbolTable,
-
     /// Describes what programming construct this symbol represents like class, enum, struct,
     /// variable, etc.
     pub(crate) semantic_type: SemanticTokenType,
@@ -32,6 +30,12 @@ pub struct Symbol {
 
     /// Describes how data should be represented for this symbol.
     pub(crate) data_type: DataType,
+
+    /// The fully-qualified path to this symbol.
+    pub(crate) path: SymbolPath,
+
+    /// List of symbols contained within this scope.
+    symbols: SymbolTable,
 }
 
 impl Symbol {
@@ -39,6 +43,7 @@ impl Symbol {
         name: String,
         kind: SymbolKind,
     ) -> Self {
+        let path = SymbolPath::new(name.clone());
         Self {
             name,
             kind,
@@ -46,10 +51,11 @@ impl Symbol {
             semantic_type: SemanticTokenType::Type,
             modifiers: SemanticTokenModifiers::new(),
             data_type: DataType::None,
+            path,
         }
     }
 
-    pub fn name(&self) -> &str {
+    pub fn name(&self) -> &String {
         &self.name
     }
 
@@ -61,7 +67,16 @@ impl Symbol {
         &self.symbols
     }
 
-    pub(crate) fn add(&mut self, symbol: Symbol) -> &mut Self {
+    pub fn data_type(&self) -> DataType {
+        self.data_type
+    }
+
+    pub fn path(&self) -> &SymbolPath {
+        &self.path
+    }
+
+    pub(crate) fn add(&mut self, mut symbol: Symbol) -> &mut Self {
+        symbol.path.prepend(&self.path);
         self.symbols.insert(symbol.name.clone(), symbol);
         self
     }

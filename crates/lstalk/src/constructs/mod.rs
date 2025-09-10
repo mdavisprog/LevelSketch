@@ -1,6 +1,7 @@
 #![expect(unused)]
 
 mod data;
+mod path;
 mod semantic;
 mod symbol;
 mod table;
@@ -10,6 +11,7 @@ pub use {
         DataType,
         DataTypeDB,
     },
+    path::SymbolPath,
     semantic::{
         SemanticTokenModifiers,
         SemanticTokenType,

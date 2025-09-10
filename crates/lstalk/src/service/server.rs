@@ -421,7 +421,7 @@ impl LanguageServerRunner {
                         };
 
                         if let Some(parent) = request.symbols.get_mut(&info.name) {
-                            parent.symbols.insert(name, symbol);
+                            parent.add(symbol);
                         } else {
                             // If the parent wasn't found, then put the symbol back.
                             request.symbols.insert(name, symbol);
