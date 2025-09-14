@@ -1,7 +1,7 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use super::symbol::Symbol;
 
-type Table = HashMap<String, Symbol>;
+type Table = BTreeMap<String, Symbol>;
 
 pub struct SymbolTable {
     table: Table,

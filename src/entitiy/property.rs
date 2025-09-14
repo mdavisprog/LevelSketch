@@ -1,11 +1,9 @@
-use bevy::{
-    platform::collections::HashMap,
-    prelude::*,
-};
+use bevy::prelude::*;
 use lstalk::prelude::*;
+use std::collections::BTreeMap;
 use super::data::EntityPropertyData;
 
-pub type PropertyMap = HashMap<String, EntityProperty>;
+pub type PropertyMap = BTreeMap<String, EntityProperty>;
 
 pub struct EntityProperty {
     name: String,
