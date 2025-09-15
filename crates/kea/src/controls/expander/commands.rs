@@ -3,12 +3,15 @@ use bevy::{
     prelude::*,
 };
 use super::expander::{
+    Contents,
     Header,
     KeaExpander,
 };
 
 pub trait KeaExpanderCommands {
     fn kea_expander_set_label(&mut self, expander: Entity, label: String) -> &mut Self;
+    fn kea_expander_spawn_contents(&mut self, expander: Entity, contents: impl Bundle) -> &mut Self;
+    fn kea_expander_add_contents(&mut self, expander: Entity, contents: Vec<Entity>) -> &mut Self;
 }
 
 impl<'w, 's> KeaExpanderCommands for Commands<'w, 's> {
@@ -63,6 +66,84 @@ impl<'w, 's> KeaExpanderCommands for Commands<'w, 's> {
             };
 
             text.0 = label;
+
+            system_state.apply(world);
+        });
+        self
+    }
+
+    fn kea_expander_spawn_contents(&mut self, expander: Entity, contents: impl Bundle) -> &mut Self {
+        self.queue(move |world: &mut World| {
+            let mut system_state: SystemState<(
+                Query<&KeaExpander>,
+                Query<&Contents>,
+                Query<&Children>,
+                Commands,
+            )> = SystemState::new(world);
+
+            let (
+                expanders,
+                contents_components,
+                parents,
+                mut commands,
+            ) = system_state.get_mut(world);
+
+            if !expanders.contains(expander) {
+                warn!("Given entity {expander} is not a KeaExpander.");
+                return;
+            }
+
+            for child in parents.iter_descendants(expander) {
+                if !contents_components.contains(child) {
+                    continue;
+                }
+
+                commands
+                    .entity(child)
+                    .despawn_related::<Children>()
+                    .with_child(contents);
+
+                break;
+            }
+
+            system_state.apply(world);
+        });
+        self
+    }
+
+    fn kea_expander_add_contents(&mut self, expander: Entity, contents: Vec<Entity>) -> &mut Self {
+        self.queue(move |world: &mut World| {
+            let mut system_state: SystemState<(
+                Query<&KeaExpander>,
+                Query<&Contents>,
+                Query<&Children>,
+                Commands,
+            )> = SystemState::new(world);
+
+            let (
+                expanders,
+                contents_components,
+                parents,
+                mut commands,
+            ) = system_state.get_mut(world);
+
+            if !expanders.contains(expander) {
+                warn!("Given entity {expander} is not a KeaExpander.");
+                return;
+            }
+
+            for child in parents.iter_descendants(expander) {
+                if !contents_components.contains(child) {
+                    continue;
+                }
+
+                commands
+                    .entity(child)
+                    .despawn_related::<Children>()
+                    .add_children(&contents);
+
+                break;
+            }
 
             system_state.apply(world);
         });
