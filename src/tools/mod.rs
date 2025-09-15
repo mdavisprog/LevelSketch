@@ -8,6 +8,7 @@ use bevy::{
     },
 };
 use crate::gui;
+use kea::prelude::*;
 use super::camera;
 
 mod constants;
@@ -25,6 +26,7 @@ impl bevy::prelude::Plugin for Plugin {
             .add_systems(Update, sync_camera)
             .add_observer(on_over)
             .add_observer(on_out)
+            .add_observer(on_pressed)
             .add_observer(on_pick)
             .add_observer(on_drag_start)
             .add_observer(on_drag_end)
@@ -72,6 +74,7 @@ impl<'a> ScopedFrameGuard<'a> {
 struct State {
     hovered: Option<Entity>,
     is_dragging: bool,
+    ignore_pick: bool,
 }
 
 impl Default for State {
@@ -79,6 +82,7 @@ impl Default for State {
         Self {
             hovered: None,
             is_dragging: false,
+            ignore_pick: false,
         }
     }
 }
@@ -202,15 +206,23 @@ fn on_out(
     }
 }
 
+fn on_pressed(
+    _: Trigger<Pointer<Pressed>>,
+    popup_state: Res<KeaPopupState>,
+    mut state: ResMut<State>,
+) {
+    state.ignore_pick = popup_state.is_open();
+}
+
 fn on_pick(
     trigger: Trigger<Pointer<Click>>,
     frame: Res<FrameCount>,
-    state: Res<State>,
     children: Query<&Children>,
     gui_state: Res<gui::State>,
     widget: Query<&widgets::Widget>,
     mut guard: Local<FrameGuard>,
     mut selection_actions: EventWriter<selection::SelectionAction>,
+    mut state: ResMut<State>,
 ) {
     if trigger.button != PointerButton::Primary || gui_state.is_interacting() {
         return;
@@ -229,6 +241,11 @@ fn on_pick(
             return;
         };
 
+        if state.ignore_pick {
+            state.ignore_pick = false;
+            return;
+        }
+
         selection_actions.write(selection::SelectionAction::Clear);
         return;
     };
@@ -240,6 +257,11 @@ fn on_pick(
     let Ok(_) = ScopedFrameGuard::try_new(&mut guard, frame.0) else {
         return;
     };
+
+    if state.ignore_pick {
+        state.ignore_pick = false;
+        return;
+    }
 
     selection_actions.write(selection::SelectionAction::Clear);
     selection_actions.write(selection::SelectionAction::Push(hovered));

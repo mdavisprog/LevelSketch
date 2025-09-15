@@ -65,6 +65,7 @@ pub mod prelude {
             KeaPopupCommands,
             KeaPopupPosition,
             KeaPopupSize,
+            KeaPopupState,
         },
         property::{
             KeaPropertyCommandsExt,

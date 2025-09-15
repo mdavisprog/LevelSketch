@@ -10,6 +10,7 @@ use bevy::{
 };
 use super::popup::{
     KeaPopup,
+    KeaPopupState,
     PopupState,
 };
 
@@ -37,9 +38,9 @@ pub(super) fn build(app: &mut App) {
         .init_resource::<KeaPopupSettings>()
         .add_systems(Startup, setup)
         .add_systems(PreUpdate, (
-            on_mouse_button,
             update_state,
-        ))
+            on_mouse_button,
+        ).chain())
         .add_systems(Update, (
             on_window_created,
             on_window_moved,
@@ -189,16 +190,21 @@ fn on_mouse_button(
     }
 }
 
-fn update_state(mut popups: Query<&mut KeaPopup>) {
+fn update_state(
+    mut popups: Query<&mut KeaPopup>,
+    mut popup_state: ResMut<KeaPopupState>,
+) {
     for mut popup in &mut popups {
-        popup.state = match popup.state {
+        match popup.state {
             PopupState::Closing => {
-                PopupState::Closed
+                popup_state.is_open = false;
+                popup.state = PopupState::Closed;
             },
             PopupState::Opening => {
-                PopupState::Open
+                popup_state.is_open = true;
+                popup.state = PopupState::Open;
             },
-            _ => popup.state,
+            _ => {},
         }
     }
 }

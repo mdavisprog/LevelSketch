@@ -10,6 +10,17 @@ pub enum KeaPopupSize {
     Fixed(Vec2),
 }
 
+#[derive(Resource, Default)]
+pub struct KeaPopupState {
+    pub(super) is_open: bool,
+}
+
+impl KeaPopupState {
+    pub fn is_open(&self) -> bool {
+        self.is_open
+    }
+}
+
 #[derive(Component)]
 #[require(
     ZIndex(constants::POPUP_Z_INDEX),
