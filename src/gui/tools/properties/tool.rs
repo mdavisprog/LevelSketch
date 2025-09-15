@@ -146,7 +146,10 @@ fn refresh(
         let mut entity_ref = commands.entity(tool_entity);
         entity_ref
             .with_child(PropertiesToolBar::bundle())
-            .with_child(PropertyTransform::bundle(entity, transform))
+            .with_child(KeaExpander::bundle_with_header(
+                "Transform",
+                PropertyTransform::bundle(entity, transform),
+            ))
             .add_children(&property_entities);
     }
 }

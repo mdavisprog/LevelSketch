@@ -20,39 +20,30 @@ pub fn spawn_property(
         }
     }
 
-    let mut entity_commands = commands.spawn(Property {
-        entity,
-    });
+    let id = commands.spawn(Property::bundle(entity, property.name())).id();
+    commands.kea_expander_add_contents(id, children);
 
-    entity_commands
-        .with_child((
-            KeaLabel::bundle(property.name()),
-            Node {
-                align_self: AlignSelf::Center,
-                ..default()
-            },
-        ))
-        .add_children(&children);
-
-    entity_commands.id()
+    id
 }
 
 #[derive(Component)]
-#[require(
-    Node = Self::node(),
-)]
 struct Property {
     entity: Entity,
 }
 
 impl Property {
-    fn node() -> Node {
-        Node {
-            flex_direction: FlexDirection::Column,
-            row_gap: Val::Px(kea::style::properties::ROW_GAP),
-            ..default()
-        }
-    }
+    fn bundle(
+        entity: Entity,
+        label: &str,
+    ) -> impl Bundle {(
+        Self {
+            entity,
+        },
+        KeaExpander::bundle_with_header(
+            label,
+            (),
+        ),
+    )}
 }
 
 #[derive(Component)]
