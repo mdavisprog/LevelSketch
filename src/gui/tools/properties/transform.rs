@@ -79,6 +79,7 @@ impl PropertyTransform {
 
     fn node() -> Node {
         Node {
+            width: Val::Percent(100.0),
             flex_direction: FlexDirection::Column,
             row_gap: Val::Px(kea::style::properties::ROW_GAP),
             ..default()

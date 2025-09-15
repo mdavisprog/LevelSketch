@@ -12,16 +12,27 @@ pub fn spawn_property(
     property: &EntityProperty,
     commands: &mut Commands,
 ) -> Entity {
-    let mut children = Vec::<Entity>::new();
+    let parent = commands.spawn(
+        Node {
+            width: Val::Percent(100.0),
+            flex_direction: FlexDirection::Column,
+            row_gap: Val::Px(kea::style::properties::ROW_GAP),
+            ..default()
+        },
+    )
+    .id();
+
     for (_name, sub_property) in property.properties() {
         let id = spawn_field(sub_property, commands);
         if id != Entity::PLACEHOLDER {
-            children.push(id);
+            commands
+                .entity(parent)
+                .add_child(id);
         }
     }
 
     let id = commands.spawn(Property::bundle(entity, property.name())).id();
-    commands.kea_expander_add_contents(id, children);
+    commands.kea_expander_add_contents(id, [parent].to_vec());
 
     id
 }
