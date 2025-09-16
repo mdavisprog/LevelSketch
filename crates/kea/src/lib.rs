@@ -72,6 +72,7 @@ pub mod prelude {
             KeaPropertyCommandsExt,
             KeaPropertyData,
             KeaPropertyDecimal,
+            KeaPropertyInteger,
             KeaPropertyText,
             KeaPropertyVector3,
             // Events

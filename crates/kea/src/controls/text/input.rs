@@ -8,9 +8,17 @@ use crate::{
 };
 use super::document::Document;
 
+#[derive(Default, PartialEq, Eq)]
+pub enum KeaTextInputFormatNumberType {
+    #[default]
+    Integer,
+    Decimal,
+}
+
 #[derive(Default)]
 pub struct KeaTextInputFormatNumber {
     pub precision: usize,
+    pub number_type: KeaTextInputFormatNumberType,
 }
 
 pub enum KeaTextInputFormat {
@@ -23,13 +31,16 @@ impl KeaTextInputFormat {
         match self {
             Self::Default => text.to_string(),
             Self::Numbers(format) => {
-                let value = if let Ok(value) = text.parse::<f32>() {
-                    value
-                } else {
-                    0.0
-                };
-
-                format!("{:.prec$}", value, prec = format.precision)
+                match format.number_type {
+                    KeaTextInputFormatNumberType::Decimal => {
+                        let value = text.parse::<f32>().unwrap_or(0.0);
+                        format!("{:.prec$}", value, prec = format.precision)
+                    },
+                    KeaTextInputFormatNumberType::Integer => {
+                        let value = text.parse::<i64>().unwrap_or(0);
+                        format!("{:0width$}", value, width = format.precision)
+                    },
+                }
             }
         }
     }

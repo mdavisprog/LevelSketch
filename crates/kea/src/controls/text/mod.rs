@@ -15,6 +15,7 @@ pub use {
         KeaTextInput,
         KeaTextInputFormat,
         KeaTextInputFormatNumber,
+        KeaTextInputFormatNumberType,
     },
     resources::KeaTextInputResource,
 };

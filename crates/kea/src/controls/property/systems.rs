@@ -13,6 +13,7 @@ use super::{
         KeaPropertyChanged,
         KeaPropertyData,
     },
+    integer::KeaPropertyInteger,
     text::KeaPropertyText,
     vector::{
         KeaPropertyVector3,
@@ -126,4 +127,28 @@ pub(super) fn on_checkbox(
     commands.trigger_targets(KeaPropertyChanged {
         data: KeaPropertyData::Boolean(property.value),
     }, trigger.target());
+}
+
+pub(super) fn on_integer_confirm(
+    trigger: Trigger<KeaTextInputConfirm>,
+    children: Query<&ChildOf>,
+    integers: Query<&KeaPropertyInteger>,
+    mut commands: Commands,
+) {
+    let value = match trigger.event().text.parse::<i64>() {
+        Ok(result) => result,
+        Err(error) => panic!("Failed to parse 'i64': {error:?}"),
+    };
+
+    for parent in children.iter_ancestors(trigger.target()) {
+        if !integers.contains(parent) {
+            continue;
+        }
+
+        commands.trigger_targets(KeaPropertyChanged {
+            data: KeaPropertyData::Integer(value),
+        }, parent);
+
+        break;
+    }
 }

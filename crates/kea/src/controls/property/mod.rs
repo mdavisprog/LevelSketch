@@ -2,6 +2,7 @@ mod boolean;
 mod commands;
 mod decimal;
 mod events;
+mod integer;
 mod systems;
 mod text;
 mod vector;
@@ -14,6 +15,7 @@ pub use {
         KeaPropertyChanged,
         KeaPropertyData,
     },
+    integer::KeaPropertyInteger,
     text::KeaPropertyText,
     vector::KeaPropertyVector3,
 };

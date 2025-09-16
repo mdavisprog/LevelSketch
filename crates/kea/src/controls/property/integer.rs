@@ -5,28 +5,32 @@ use crate::controls::text::{
     KeaTextInputFormatNumberType,
 };
 use super::{
-    systems::on_decimal_confirm,
+    systems::on_integer_confirm,
     text::KeaPropertyText,
 };
 
 #[derive(Component)]
-pub struct KeaPropertyDecimal {
-    _private: (),
+pub struct KeaPropertyInteger {
+    value: i64,
 }
 
-impl KeaPropertyDecimal {
-    pub fn bundle(label: &str, value: f64) -> impl Bundle {(
+impl KeaPropertyInteger {
+    pub fn bundle(label: &str, value: i64) -> impl Bundle {(
         Self {
-            _private: (),
+            value,
         },
         KeaPropertyText::bundle_with_format_and_callback(
             label,
             &value.to_string(),
             KeaTextInputFormat::Numbers(KeaTextInputFormatNumber {
-                precision: 4,
-                number_type: KeaTextInputFormatNumberType::Decimal,
+                precision: 0,
+                number_type: KeaTextInputFormatNumberType::Integer,
             }),
-            on_decimal_confirm,
-        )
+            on_integer_confirm,
+        ),
     )}
+
+    pub fn value(&self) -> i64 {
+        self.value
+    }
 }

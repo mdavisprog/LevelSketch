@@ -14,6 +14,7 @@ use super::{
     KeaTextInput,
     KeaTextInputCommands,
     KeaTextInputFormat,
+    KeaTextInputFormatNumberType,
     resources::{
         FocusState,
         KeaTextInputResource,
@@ -143,14 +144,18 @@ fn keyboard_input(
                     };
 
                     let string = pending_text.to_string();
-                    let delta = match text_input.format {
+                    let delta = match &text_input.format {
                         KeaTextInputFormat::Default => string,
-                        KeaTextInputFormat::Numbers(_) => {
+                        KeaTextInputFormat::Numbers(format) => {
                             if pending_text.parse::<f32>().is_ok() {
                                 string
                             } else if pending_text == "." {
-                                if !text.0.contains(".") {
-                                    string
+                                if format.number_type == KeaTextInputFormatNumberType::Decimal {
+                                    if !text.0.contains(".") {
+                                        string
+                                    } else {
+                                        format!("")
+                                    }
                                 } else {
                                     format!("")
                                 }
