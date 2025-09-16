@@ -77,7 +77,7 @@ impl KeaCheckbox {
     fn visibility(&self) -> Visibility {
         match self.state {
             KeaCheckboxState::Unchecked => Visibility::Hidden,
-            KeaCheckboxState::Checked => Visibility::Visible,
+            KeaCheckboxState::Checked => Visibility::Inherited,
         }
     }
 
