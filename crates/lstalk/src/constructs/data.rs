@@ -59,6 +59,10 @@ impl Default for DataTypeDB {
                     format!("float"),
                     format!("double"),
                 ]),
+                (DataType::String, vec![
+                    format!("string"),
+                    format!("std::string"),
+                ]),
             ]),
         };
 

@@ -104,6 +104,17 @@ fn spawn_field(
             .observe(on_changed)
             .id()
         },
+        EntityPropertyData::String(value) => {
+            commands.spawn((
+                KeaPropertyText::bundle(
+                    property.name(),
+                    &value,
+                ),
+                field,
+            ))
+            .observe(on_changed)
+            .id()
+        },
         EntityPropertyData::None => Entity::PLACEHOLDER,
     }
 }
@@ -142,7 +153,8 @@ fn on_changed(
             KeaPropertyData::Decimal(value) => {
                 property.set_decimal(*value);
             },
-            KeaPropertyData::Text(_value) => {
+            KeaPropertyData::Text(value) => {
+                property.set_string(value.clone());
             },
             KeaPropertyData::Vector3(_value) => {
             },

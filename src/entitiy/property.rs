@@ -59,6 +59,16 @@ impl EntityProperty {
         }
     }
 
+    pub fn set_string(&mut self, value: String) -> bool {
+        match self.data {
+            EntityPropertyData::String(_) => {
+                self.data = EntityPropertyData::String(value);
+                true
+            },
+            _ => false,
+        }
+    }
+
     pub fn get_mut_property_from_parts(&mut self, parts: &mut Vec<&str>) -> Option<&mut EntityProperty> {
         if parts.is_empty() {
             Some(self)
