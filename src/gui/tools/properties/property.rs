@@ -82,6 +82,17 @@ fn spawn_field(
             .observe(on_changed)
             .id()
         },
+        EntityPropertyData::Integer(value) => {
+            commands.spawn((
+                KeaPropertyInteger::bundle(
+                    property.name(),
+                    *value,
+                ),
+                field,
+            ))
+            .observe(on_changed)
+            .id()
+        },
         EntityPropertyData::Decimal(value) => {
             commands.spawn((
                 KeaPropertyDecimal::bundle(
@@ -124,6 +135,9 @@ fn on_changed(
         match &trigger.event().data {
             KeaPropertyData::Boolean(value) => {
                 property.set_boolean(*value);
+            },
+            KeaPropertyData::Integer(value) => {
+                property.set_integer(*value);
             },
             KeaPropertyData::Decimal(value) => {
                 property.set_decimal(*value);

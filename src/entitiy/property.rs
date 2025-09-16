@@ -39,6 +39,16 @@ impl EntityProperty {
         }
     }
 
+    pub fn set_integer(&mut self, value: i64) -> bool {
+        match self.data {
+            EntityPropertyData::Integer(_) => {
+                self.data = EntityPropertyData::Integer(value);
+                true
+            },
+            _ => false,
+        }
+    }
+
     pub fn set_decimal(&mut self, value: f64) -> bool {
         match self.data {
             EntityPropertyData::Decimal(_) => {
