@@ -1,3 +1,4 @@
+mod boolean;
 mod commands;
 mod decimal;
 mod events;
@@ -6,6 +7,7 @@ mod text;
 mod vector;
 
 pub use {
+    boolean::KeaPropertyBoolean,
     commands::KeaPropertyCommandsExt,
     decimal::KeaPropertyDecimal,
     events::{

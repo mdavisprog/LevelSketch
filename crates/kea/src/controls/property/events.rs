@@ -2,8 +2,9 @@ use bevy::prelude::*;
 
 #[derive(Debug)]
 pub enum KeaPropertyData {
-    Text(String),
+    Boolean(bool),
     Decimal(f64),
+    Text(String),
     Vector3(Vec3),
 }
 

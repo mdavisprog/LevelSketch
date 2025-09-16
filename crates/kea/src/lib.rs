@@ -68,6 +68,7 @@ pub mod prelude {
             KeaPopupState,
         },
         property::{
+            KeaPropertyBoolean,
             KeaPropertyCommandsExt,
             KeaPropertyData,
             KeaPropertyDecimal,

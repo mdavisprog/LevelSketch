@@ -1,6 +1,13 @@
 use bevy::prelude::*;
-use crate::controls::text::KeaTextInputConfirm;
+use crate::controls::{
+    checkbox::{
+        KeaCheckboxClicked,
+        KeaCheckboxState,
+    },
+    text::KeaTextInputConfirm,
+};
 use super::{
+    boolean::KeaPropertyBoolean,
     decimal::KeaPropertyDecimal,
     events::{
         KeaPropertyChanged,
@@ -100,4 +107,23 @@ pub(super) fn on_confirm_vector3(
     commands.trigger_targets(KeaPropertyChanged {
         data: KeaPropertyData::Vector3(property.value),
     }, child.parent());
+}
+
+pub(super) fn on_checkbox(
+    trigger: Trigger<KeaCheckboxClicked>,
+    mut properties: Query<&mut KeaPropertyBoolean>,
+    mut commands: Commands,
+) {
+    let Ok(mut property) = properties.get_mut(trigger.target()) else {
+        panic!("Failed to get KeaPropertyBoolean component.");
+    };
+
+    property.value = match trigger.event().state {
+        KeaCheckboxState::Checked => true,
+        KeaCheckboxState::Unchecked => false,
+    };
+
+    commands.trigger_targets(KeaPropertyChanged {
+        data: KeaPropertyData::Boolean(property.value),
+    }, trigger.target());
 }
