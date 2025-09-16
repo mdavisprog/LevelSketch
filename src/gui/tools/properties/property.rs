@@ -66,25 +66,38 @@ fn spawn_field(
     property: &EntityProperty,
     commands: &mut Commands,
 ) -> Entity {
+    let field = PropertyField {
+        path: property.path().clone(),
+    };
+
     match property.data() {
+        EntityPropertyData::Boolean(value) => {
+            commands.spawn((
+                KeaPropertyBoolean::bundle(
+                    property.name(),
+                    *value,
+                ),
+                field,
+            ))
+            .observe(on_changed)
+            .id()
+        },
         EntityPropertyData::Decimal(value) => {
             commands.spawn((
                 KeaPropertyDecimal::bundle(
                     property.name(),
                     *value,
                 ),
-                PropertyField {
-                    path: property.path().clone(),
-                },
+                field,
             ))
-            .observe(on_decimal_changed)
+            .observe(on_changed)
             .id()
         },
         EntityPropertyData::None => Entity::PLACEHOLDER,
     }
 }
 
-fn on_decimal_changed(
+fn on_changed(
     trigger: Trigger<KeaPropertyChanged>,
     fields: Query<&PropertyField>,
     children: Query<&ChildOf>,
@@ -93,10 +106,6 @@ fn on_decimal_changed(
 ) {
     let Ok(field) = fields.get(trigger.target()) else {
         panic!("PropertyField component not found on decimal property.");
-    };
-
-    let KeaPropertyData::Decimal(value) = trigger.event().data else {
-        panic!("Incorrect data for decimal property.");
     };
 
     for parent in children.iter_ancestors(trigger.target()) {
@@ -112,6 +121,17 @@ fn on_decimal_changed(
             panic!("Failed to find property for {}.", field.path);
         };
 
-        property.data_mut().set_decimal(value);
+        match &trigger.event().data {
+            KeaPropertyData::Boolean(value) => {
+                property.set_boolean(*value);
+            },
+            KeaPropertyData::Decimal(value) => {
+                property.set_decimal(*value);
+            },
+            KeaPropertyData::Text(_value) => {
+            },
+            KeaPropertyData::Vector3(_value) => {
+            },
+        }
     }
 }

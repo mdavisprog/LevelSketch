@@ -25,12 +25,28 @@ impl EntityProperty {
         &self.data
     }
 
-    pub fn data_mut(&mut self) -> &mut EntityPropertyData {
-        &mut self.data
-    }
-
     pub fn properties(&self) -> &PropertyMap {
         &self.properties
+    }
+
+    pub fn set_boolean(&mut self, value: bool) -> bool {
+        match self.data {
+            EntityPropertyData::Boolean(_) => {
+                self.data = EntityPropertyData::Boolean(value);
+                true
+            },
+            _ => false,
+        }
+    }
+
+    pub fn set_decimal(&mut self, value: f64) -> bool {
+        match self.data {
+            EntityPropertyData::Decimal(_) => {
+                self.data = EntityPropertyData::Decimal(value);
+                true
+            },
+            _ => false,
+        }
     }
 
     pub fn get_mut_property_from_parts(&mut self, parts: &mut Vec<&str>) -> Option<&mut EntityProperty> {
@@ -91,15 +107,10 @@ impl EntityProperties {
             properties.insert(name.clone(), property);
         }
 
-        let data = match symbol.data_type() {
-            DataType::Decimal => EntityPropertyData::Decimal(0.0),
-            _ => EntityPropertyData::None,
-        };
-
         EntityProperty {
             name: symbol.name().to_string(),
             path: symbol.path().clone(),
-            data,
+            data: symbol.data_type().into(),
             properties,
         }
     }
