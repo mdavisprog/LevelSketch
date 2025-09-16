@@ -1,6 +1,9 @@
 use bevy::{
     prelude::*,
-    window::ExitCondition,
+    window::{
+        ExitCondition,
+        PrimaryWindow,
+    },
 };
 use bevy::winit::*;
 use std::f32::consts::*;
@@ -64,6 +67,7 @@ fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut windows: Query<&mut Window, With<PrimaryWindow>>,
 ) {
     commands.spawn((
         camera::Controller::default(),
@@ -87,6 +91,13 @@ fn setup(
             MeshMaterial3d(materials.add(Color::linear_rgba(0.5, 0.5, 0.5, 1.0))),
             Transform::from_xyz(0.0, 0.0, 0.0),
         ));
+
+    let Ok(mut window) = windows.single_mut() else {
+        warn!("Failed to get the primary window component.");
+        return;
+    };
+
+    window.set_maximized(true);
 }
 
 fn check_exit(
