@@ -430,6 +430,13 @@ impl LanguageServerRunner {
                         break;
                     }
                 }
+
+                if let Err(error) = self.messages.semantic_tokens(&request.uri) {
+                    println!("Failed to request semantic tokens for document {}: {}",
+                        request.uri,
+                        error,
+                    );
+                }
             },
             MessageHandlerMessage::SemanticTokens(result) => {
                 let Some(semantic_tokens) = result.data else {

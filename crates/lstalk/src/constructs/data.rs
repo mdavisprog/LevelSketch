@@ -66,9 +66,37 @@ impl Default for DataTypeDB {
             ]),
         };
 
+        let rust = DataTypeLanguage {
+            extensions: vec![
+                format!("rs"),
+            ],
+            map: DataTypeMap::from([
+                (DataType::Boolean, vec![format!("bool")]),
+                (DataType::Number, vec![
+                    format!("u8"),
+                    format!("i8"),
+                    format!("u16"),
+                    format!("i16"),
+                    format!("u32"),
+                    format!("i32"),
+                    format!("u64"),
+                    format!("i64"),
+                ]),
+                (DataType::Decimal, vec![
+                    format!("f32"),
+                    format!("f64"),
+                ]),
+                (DataType::String, vec![
+                    format!("str"),
+                    format!("String"),
+                ]),
+            ]),
+        };
+
         Self {
             languages: vec![
                 cpp,
+                rust,
             ],
         }
     }

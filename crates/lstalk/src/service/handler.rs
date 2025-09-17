@@ -157,7 +157,7 @@ impl MessageHandler {
         let content_end = content_start + length;
         let remaining = self.response_buffer.len() - content_start;
         if remaining < length {
-            println!("Not enough data collected for response. Waiting for more...");
+            //println!("Not enough data collected for response. Waiting for more...");
             return;
         }
 

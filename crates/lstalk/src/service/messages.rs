@@ -58,19 +58,19 @@ impl Messages {
     }
 
     pub fn document_symbol(&mut self, path: &str) -> Result<(), MessageHandlerError> {
-        let result = self.handler.queue_request(
+        self.handler.queue_request(
             "textDocument/documentSymbol",
             DocumentSymbolParams::new(path),
             on_document_symbol,
-        );
+        )
+    }
 
-        let _ = self.handler.queue_request(
+    pub fn semantic_tokens(&mut self, path: &str) -> Result<(), MessageHandlerError> {
+        self.handler.queue_request(
             "textDocument/semanticTokens/full",
             SemanticTokensParams::new(path),
             on_semantic_tokens,
-        );
-
-        result
+        )
     }
 
     pub fn handler(&mut self) -> &mut MessageHandler {
