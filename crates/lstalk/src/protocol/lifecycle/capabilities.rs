@@ -4,6 +4,13 @@ use serde::{
     Serialize,
 };
 
+/// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#clientCapabilities
+#[derive(Serialize, Deserialize, Default)]
+pub struct ClientCapabilities {
+    // Experimental client capabilities.
+    pub experimental: Option<LSPAny>,
+}
+
 /// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#serverCapabilities
 #[derive(Serialize, Deserialize)]
 pub struct ServerCapabilities {

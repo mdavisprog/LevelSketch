@@ -12,7 +12,10 @@ use serde::{
     Serialize,
 };
 use std::path::Path;
-use super::capabilities::ServerCapabilities;
+use super::capabilities::{
+    ClientCapabilities,
+    ServerCapabilities,
+};
 
 /// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initializeParams
 #[derive(Serialize, Deserialize, Default)]
@@ -42,6 +45,9 @@ pub struct InitializeParams {
     #[serde(rename = "rootUri")]
 	pub root_uri: Option<DocumentUri>,
 
+	// The capabilities provided by the client (editor or tool)
+	pub capabilities: ClientCapabilities,
+
 	// The workspace folders configured in the client when the server starts.
 	// This property is only available if the client supports workspace folders.
 	// It can be `null` if the client supports workspace folders but none are
@@ -59,6 +65,7 @@ impl InitializeParams {
             process_id: Some(std::process::id() as Integer),
             root_path: None,
             root_uri: None,
+            capabilities: ClientCapabilities::default(),
             workspace_folders: None,
         }
     }
