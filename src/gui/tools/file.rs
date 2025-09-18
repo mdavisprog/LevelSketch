@@ -5,7 +5,10 @@ use crate::project::{
 };
 use kea::prelude::*;
 use rfd::FileDialog;
-use super::tools::Tools;
+use super::{
+    panel::ToolsPanelType,
+    tools::Tools,
+};
 
 #[derive(Component)]
 #[require(Tools)]
@@ -21,6 +24,9 @@ impl FileTools {
         children![
             (
                 KeaButton::label_bundle( "Open Project", on_open_project),
+            ),
+            (
+                KeaButton::label_bundle("Settings", on_settings),
             ),
             (
                 KeaButton::label_bundle( "Quit", on_quit),
@@ -48,6 +54,22 @@ fn on_open_project(
     }
 
     lsp.start(path);
+}
+
+fn on_settings(
+    _: Trigger<KeaButtonClick>,
+    panel_types: Query<(Entity, &ToolsPanelType)>,
+    mut commands: Commands,
+) {
+    for (entity, panel) in panel_types {
+        if *panel == ToolsPanelType::Settings {
+            commands
+                .kea_panel_focus(entity)
+                .entity(entity)
+                .insert(Visibility::Visible);
+            break;
+        }
+    }
 }
 
 fn on_quit(

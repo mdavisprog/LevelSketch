@@ -20,6 +20,7 @@ mod entitiy;
 mod gui;
 mod level;
 mod project;
+mod settings;
 mod shapes;
 mod tools;
 
@@ -37,6 +38,7 @@ fn main() {
             unfocused_mode: UpdateMode::reactive_low_power(Duration::from_secs(2))
         })
         .add_plugins((
+            settings::Plugin,
             KeaPlugin::default(),
             DefaultPlugins.set(WindowPlugin {
                 primary_window: Some(Window {

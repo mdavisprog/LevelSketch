@@ -5,6 +5,7 @@ use super::{
     FileTools,
     level::LevelTools,
     properties::PropertiesTool,
+    settings::SettingsTools,
     ShapesTools,
 };
 
@@ -13,6 +14,7 @@ pub enum ToolsPanelType {
     Project,
     Assets,
     Properties,
+    Settings,
 }
 
 #[derive(Component)]
@@ -43,6 +45,14 @@ impl ToolsPanel {
             PropertiesTool::bundle(),
         ]),
         ToolsPanelType::Properties,
+        Visibility::Hidden,
+    )}
+
+    pub fn settings_panel() -> impl Bundle {(
+        Self::bundle("Settings", children![
+            SettingsTools::bundle(),
+        ]),
+        ToolsPanelType::Settings,
         Visibility::Hidden,
     )}
 

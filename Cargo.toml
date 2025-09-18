@@ -21,6 +21,8 @@ bevy = "=0.16.1"
 resvg = "=0.45.0"
 bitflags = "=2.9.0"
 rfd = "0.15"
+serde = "1.0"
+serde_json = "1.0"
 kea = { path = "crates/kea" }
 lstalk = { path = "crates/lstalk" }
 
