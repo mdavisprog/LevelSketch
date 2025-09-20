@@ -3,10 +3,10 @@ use bevy::prelude::*;
 mod commands;
 mod component;
 mod events;
-mod extensions;
 mod systems;
 
 pub use {
+    commands::KeaListCommandsExt,
     component::{
         KeaList,
         KeaListBehavior,
@@ -16,7 +16,6 @@ pub use {
         KeaListHover,
         KeaListSelect,
     },
-    extensions::KeaListCommandsExt,
 };
 
 pub(super) struct Plugin;

@@ -4,6 +4,7 @@ use crate::{
     style,
 };
 use super::{
+    commands::KeaListCommandsExt,
     component::{
         KeaList,
         KeaListItem,
@@ -13,7 +14,6 @@ use super::{
         KeaListHover,
         KeaListSelect,
     },
-    extensions::KeaListCommandsExt,
 };
 
 pub(super) fn build(app: &mut App) {
@@ -85,19 +85,25 @@ fn on_list_item_over(
 fn on_list_item_out(
     trigger: Trigger<Pointer<Out>>,
     children: Query<&ChildOf>,
-    lists: Query<&KeaList>,
+    lists: Query<(&KeaList, &Children)>,
     mut background_colors: Query<&mut BackgroundColor>,
 ) {
     let Ok(child) = children.get(trigger.target()) else {
         return;
     };
 
-    let Ok(list) = lists.get(child.parent()) else {
+    let Ok((list, parent)) = lists.get(child.parent()) else {
         return;
     };
 
-    if list.selected.contains(&trigger.target()) {
-        return;
+    for item in &list.selected {
+        let Some(entity) = parent.get(*item) else {
+            continue;
+        };
+
+        if *entity == trigger.target() {
+            return;
+        }
     }
 
     let Ok(mut background_color) = background_colors.get_mut(trigger.target()) else {
@@ -109,29 +115,33 @@ fn on_list_item_out(
 
 fn on_list_item_pressed(
     trigger: Trigger<Pointer<Pressed>>,
-    children: Query<&Children>,
-    parents: Query<&ChildOf>,
+    parents: Query<&Children>,
+    children: Query<&ChildOf>,
     mut commands: Commands,
 ) {
-    let Ok(parent) = parents.get(trigger.target()) else {
+    let Ok(child) = children.get(trigger.target()) else {
         return;
     };
 
-    let Ok(children) = children.get(parent.parent()) else {
+    let Ok(parent) = parents.get(child.parent()) else {
         return;
     };
 
-    let index = children
+    let index = parent
         .iter()
         .position(|element| element == trigger.target())
-        .unwrap_or(0);
+        .unwrap_or(usize::MAX);
+
+    if index >= parent.len() {
+        return;
+    }
 
     commands
-        .kea_list_select(parent.parent(), &[trigger.target()])
+        .kea_list_select(child.parent(), index)
         .trigger_targets(KeaListSelect {
             entity: trigger.target(),
             index,
-        }, parent.parent());
+        }, child.parent());
 }
 
 fn on_add_list_item(

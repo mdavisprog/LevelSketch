@@ -17,7 +17,7 @@ pub enum KeaListBehavior {
 )]
 pub struct KeaList {
     pub behavior: KeaListBehavior,
-    pub(super) selected: Vec<Entity>,
+    pub(super) selected: Vec<usize>,
 }
 
 impl Default for KeaList {

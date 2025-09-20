@@ -1,4 +1,7 @@
-use bevy::prelude::*;
+use bevy::{
+    ecs::system::SystemState,
+    prelude::*,
+};
 use crate::style;
 use super::{
     component::{
@@ -7,66 +10,111 @@ use super::{
     },
 };
 
-pub(super) struct Select {
-    pub(super) list: Entity,
-    pub(super) items: Vec<Entity>,
+pub trait KeaListCommandsExt {
+    fn kea_list_select(&mut self, list: Entity, index: usize) -> &mut Self;
+    fn kea_list_deselect(&mut self, list: Entity, index: usize) -> &mut Self;
 }
 
-impl Command for Select {
-    fn apply(self, world: &mut World) {
-        let mut deselect = None;
+impl<'w, 's> KeaListCommandsExt for Commands<'w, 's> {
+    fn kea_list_select(&mut self, list: Entity, index: usize) -> &mut Self {
+        self.queue(move |world: &mut World| {
+            let mut system_state: SystemState<(
+                Query<&Children>,
+                Query<&mut KeaList>,
+                Commands,
+            )> = SystemState::new(world);
 
-        if let Ok(mut list_entity) = world.get_entity_mut(self.list) {
-            if let Some(mut list) = list_entity.get_mut::<KeaList>() {
-                match list.behavior {
-                    KeaListBehavior::NoSelect => {},
-                    KeaListBehavior::Select => {
-                        deselect = Some(core::mem::take(&mut list.selected));
-                        list.selected.extend_from_slice(&self.items);
-                    },
-                }
+            let (
+                parents,
+                mut lists,
+                mut commands,
+            ) = system_state.get_mut(world);
+
+            let Ok(mut component) = lists.get_mut(list) else {
+                warn!("Entity '{list}' is not a KeaList entity.");
+                return;
+            };
+
+            let Ok(parent) = parents.get(list) else {
+                warn!("KeaList '{list}' does not have any children.");
+                return;
+            };
+
+            if index >= parent.len() {
+                warn!("Given index is out-of-bounds: {index} >= {}.", parent.len());
+                return;
             }
-        }
 
-        if let Some(deselect) = deselect {
-            for item in deselect {
-                set_color(world, item, Color::srgba(0.0, 0.0, 0.0, 0.0));
+            match component.behavior {
+                KeaListBehavior::NoSelect => {},
+                KeaListBehavior::Select => {
+                    for selected in &component.selected {
+                        let Some(entity) = parent.get(*selected) else {
+                            continue;
+                        };
+
+                        commands
+                            .entity(*entity)
+                            .insert(BackgroundColor(Color::NONE));
+                    }
+
+                    component.selected.clear();
+                    component.selected.push(index);
+
+                    let entity = parent[index];
+                    commands
+                        .entity(entity)
+                        .insert(BackgroundColor(style::colors::HIGHLIGHT));
+                },
             }
-        }
 
-        for item in self.items {
-            set_color(world, item, style::colors::HIGHLIGHT);
-        }
+            system_state.apply(world);
+        });
+        self
     }
-}
 
-pub(super) struct Deselect {
-    pub(super) list: Entity,
-    pub(super) items: Vec<Entity>,
-}
+    fn kea_list_deselect(&mut self, list: Entity, index: usize) -> &mut Self {
+        self.queue(move |world: &mut World| {
+            let mut system_state: SystemState<(
+                Query<&Children>,
+                Query<&mut KeaList>,
+                Commands,
+            )> = SystemState::new(world);
 
-impl Command for Deselect {
-    fn apply(self, world: &mut World) {
-        if let Ok(mut list_entity) = world.get_entity_mut(self.list) {
-            if let Some(mut list) = list_entity.get_mut::<KeaList>() {
-                list.selected.retain(|&value| !self.items.contains(&value));
+            let (
+                parents,
+                mut lists,
+                mut commands,
+            ) = system_state.get_mut(world);
+
+            let Ok(mut component) = lists.get_mut(list) else {
+                warn!("Entity '{list}' is not a KeaList entity.");
+                return;
+            };
+
+            let Ok(parent) = parents.get(list) else {
+                warn!("KeaList '{list}' does not have any children.");
+                return;
+            };
+
+            if index >= parent.len() {
+                warn!("Given index is out-of-bounds: {index} >= {}.", parent.len());
+                return;
             }
-        }
 
-        for item in self.items {
-            set_color(world, item, Color::srgba(0.0, 0.0, 0.0, 0.0));
-        }
+            match component.behavior {
+                KeaListBehavior::NoSelect => {},
+                KeaListBehavior::Select => {
+                    component.selected.retain(|element| *element != index);
+                    let entity = parent[index];
+                    commands
+                        .entity(entity)
+                        .insert(BackgroundColor(Color::NONE));
+                },
+            }
+
+            system_state.apply(world);
+        });
+        self
     }
-}
-
-fn set_color(world: &mut World, item: Entity, color: Color) {
-    let Ok(mut list_item) = world.get_entity_mut(item) else {
-        return;
-    };
-
-    let Some(mut background_color) = list_item.get_mut::<BackgroundColor>() else {
-        return;
-    };
-
-    *background_color = color.into();
 }
