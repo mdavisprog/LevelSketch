@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use crate::{
     observers::KeaObservers,
+    ready::KeaOnReady,
     style,
 };
 use super::{
@@ -20,6 +21,35 @@ pub(super) fn build(app: &mut App) {
     app
         .add_systems(Update, on_add_list_item)
         .add_observer(on_add_list_items);
+}
+
+pub(super) fn on_ready(
+    trigger: Trigger<KeaOnReady>,
+    mut lists: Query<(&mut KeaList, &Children)>,
+    mut commands: Commands,
+) {
+    let Ok((mut list, parent)) = lists.get_mut(trigger.target()) else {
+        return;
+    };
+
+    let mut removed_indices = Vec::<usize>::new();
+    for index in &list.selected {
+        if *index >= parent.len() {
+            warn!("KeaList starting selected index '{index}' is not valid.");
+            removed_indices.push(*index);
+            continue;
+        }
+
+        let entity = parent[*index];
+        commands
+            .kea_list_select(trigger.target(), *index)
+            .trigger_targets(KeaListSelect {
+                entity,
+                index: *index,
+            }, trigger.target());
+    }
+
+    list.selected.retain(|element| !removed_indices.contains(element));
 }
 
 fn on_add_list_items(

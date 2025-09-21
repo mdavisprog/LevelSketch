@@ -1,4 +1,9 @@
 use bevy::prelude::*;
+use crate::{
+    observers::KeaObservers,
+    ready::KeaOnReadyComponent,
+};
+use super::systems::on_ready;
 
 pub enum KeaListBehavior {
     NoSelect,
@@ -14,6 +19,8 @@ pub enum KeaListBehavior {
 #[derive(Component)]
 #[require(
     Node = Self::node(),
+    KeaObservers<Self> = Self::observers(),
+    KeaOnReadyComponent,
 )]
 pub struct KeaList {
     pub behavior: KeaListBehavior,
@@ -37,12 +44,27 @@ impl KeaList {
         }
     }
 
+    pub fn new_with_selected(index: usize) -> impl Bundle {
+        Self {
+            behavior: KeaListBehavior::Select,
+            selected: vec![
+                index,
+            ],
+        }
+    }
+
     fn node() -> Node {
         Node {
             flex_direction: FlexDirection::Column,
             width: Val::Percent(100.0),
             ..default()
         }
+    }
+
+    fn observers() -> KeaObservers<Self> {
+        KeaObservers::<Self>::new(vec![
+            Observer::new(on_ready),
+        ])
     }
 }
 
