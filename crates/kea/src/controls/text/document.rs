@@ -11,13 +11,18 @@ pub(super) struct Document {
 }
 
 impl Document {
-    pub fn bundle(text: &str) -> impl Bundle {(
+    pub fn bundle(text: &str) -> impl Bundle {
+        Self::bundle_text_color(text, Color::WHITE)
+    }
+
+    pub fn bundle_text_color(text: &str, color: Color) -> impl Bundle {(
         Self {
             _private: (),
         },
         children![
             (
                 DocumentContents::bundle(text),
+                TextColor(color),
             ),
             (
                 Cursor::default(),

@@ -41,17 +41,20 @@ fn on_click(
     mut resource: ResMut<KeaTextInputResource>,
 ) {
     let target = trigger.target();
+    let Ok(text_input) = text_inputs.get(target) else {
+        return;
+    };
 
     match resource.focus_state {
         FocusState::None => {
-            resource.focus_state = if text_inputs.contains(target) {
+            resource.focus_state = if !text_input.read_only {
                 FocusState::Pending(target)
             } else {
                 FocusState::Pending(Entity::PLACEHOLDER)
             }
         },
         FocusState::Pending(_) => {
-            if text_inputs.contains(target) {
+            if !text_input.read_only {
                 resource.focus_state = FocusState::Pending(target);
             }
         }
