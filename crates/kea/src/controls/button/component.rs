@@ -49,7 +49,7 @@ impl KeaButton {
         )],
     )}
 
-    fn bundle<E: Event, B: Bundle, M>(
+    pub fn bundle<E: Event, B: Bundle, M>(
         callback: impl IntoObserverSystem<E, B, M>,
     ) -> impl Bundle {(
         Self {
