@@ -87,15 +87,13 @@ impl<'w, 's> KeaPopupCommands for Commands<'w, 's> {
                 },
             };
 
-            let window_size = match size {
-                KeaPopupSize::Fixed(size) => {
-                    size
-                },
-            };
-
             if popup.window != Entity::PLACEHOLDER {
                 let Ok((_, mut window)) = windows.get_mut(popup.window) else {
                     return;
+                };
+
+                let KeaPopupSize::Fixed(window_size) = size else {
+                    panic!("Implement handling KeaPopupSize::Auto with separate window for KeaPopup");
                 };
 
                 window.position = WindowPosition::At(popup_position);
@@ -108,9 +106,18 @@ impl<'w, 's> KeaPopupCommands for Commands<'w, 's> {
 
                 node.left = Val::Px(popup_position.x as f32);
                 node.top = Val::Px(popup_position.y as f32);
-                node.width = Val::Px(window_size.x);
-                node.height = Val::Px(window_size.y);
                 *visibility = Visibility::Visible;
+
+                match size {
+                    KeaPopupSize::Auto => {
+                        node.width = Val::Auto;
+                        node.height = Val::Auto;
+                    },
+                    KeaPopupSize::Fixed(window_size) => {
+                        node.width = Val::Px(window_size.x);
+                        node.height = Val::Px(window_size.y);
+                    },
+                }
             }
 
             commands

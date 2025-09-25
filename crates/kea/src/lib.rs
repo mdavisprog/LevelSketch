@@ -34,6 +34,13 @@ pub mod prelude {
             KeaCheckboxCommandsExt,
             KeaCheckboxState,
         },
+        dropdown::{
+            KeaDropdown,
+            KeaDropdownCommands,
+            KeaDropdownItems,
+            // Events
+            KeaDropdownSelect
+        },
         expander::{
             KeaExpander,
             KeaExpanderCommands,

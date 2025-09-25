@@ -7,6 +7,7 @@ pub enum KeaPopupPosition {
 }
 
 pub enum KeaPopupSize {
+    Auto,
     Fixed(Vec2),
 }
 
