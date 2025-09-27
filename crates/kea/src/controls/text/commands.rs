@@ -153,7 +153,7 @@ fn text_input_focus(
     // Show/hide the cursor entity and set its index to the end of the text.
     if let Ok(mut visibility) = cursors.get_mut(cursor) {
         *visibility = if focused {
-            Visibility::Visible
+            Visibility::Inherited
         } else {
             Visibility::Hidden
         };
