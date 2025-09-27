@@ -55,6 +55,7 @@ impl KeaTextInputFormat {
 pub struct KeaTextInput {
     pub(super) format: KeaTextInputFormat,
     pub(super) read_only: bool,
+    pub(super) contents_entity: Entity,
 }
 
 impl KeaTextInput {
@@ -63,20 +64,14 @@ impl KeaTextInput {
     }
 
     pub fn bundle_read_only(text: &str) -> impl Bundle {(
-        Self {
-            format: KeaTextInputFormat::Default,
-            read_only: true,
-        },
+        Self::new(KeaTextInputFormat::Default, true),
         children![
             Document::bundle_text_color(text, style::colors::TEXT_DISABLED),
         ],
     )}
 
     pub fn bundle_with_text(text: &str, format: KeaTextInputFormat) -> impl Bundle {(
-        Self {
-            format,
-            read_only: false,
-        },
+        Self::new(format, false),
         children![
             Document::bundle(text),
         ]
@@ -97,10 +92,7 @@ impl KeaTextInput {
         format: KeaTextInputFormat,
         callback: impl IntoObserverSystem<E, B, M>,
     ) -> impl Bundle {(
-        Self {
-            format,
-            read_only: false,
-        },
+        Self::new(format, false),
         KeaObservers::<Self>::new(vec![
             Observer::new(callback),
         ]),
@@ -110,6 +102,18 @@ impl KeaTextInput {
             ),
         ],
     )}
+
+    pub fn contents_entity(&self) -> Entity {
+        self.contents_entity
+    }
+
+    fn new(format: KeaTextInputFormat, read_only: bool) -> Self {
+        Self {
+            format,
+            read_only,
+            contents_entity: Entity::PLACEHOLDER,
+        }
+    }
 
     fn node() -> Node {
         Node {

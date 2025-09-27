@@ -24,6 +24,7 @@ use super::{
 pub(super) fn build(app: &mut App) {
     app
         .add_observer(on_click)
+        .add_observer(on_add_contents)
         .add_systems(Update,
             (
                 keyboard_input,
@@ -269,5 +270,20 @@ fn blink_cursors(
             }
             cursor.0.set_alpha(alpha);
         }
+    }
+}
+
+fn on_add_contents(
+    trigger: Trigger<OnAdd, DocumentContents>,
+    children: Query<&ChildOf>,
+    mut inputs: Query<&mut KeaTextInput>,
+) {
+    for parent in children.iter_ancestors(trigger.target()) {
+        let Ok(mut input) = inputs.get_mut(parent) else {
+            continue;
+        };
+
+        input.contents_entity = trigger.target();
+        break;
     }
 }
