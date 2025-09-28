@@ -20,6 +20,13 @@ pub trait KeaPopupCommands {
         size: KeaPopupSize,
     ) -> EntityCommands<'_>;
 
+    fn kea_popup_open_with_entity(
+        &mut self,
+        entity: Entity,
+        position: KeaPopupPosition,
+        size: KeaPopupSize,
+    ) -> &mut Self;
+
     fn kea_popup_close(&mut self) -> &mut Self;
 }
 
@@ -32,104 +39,31 @@ impl<'w, 's> KeaPopupCommands for Commands<'w, 's> {
     ) -> EntityCommands<'_> {
         let entity = self.spawn(bundle).id();
         self.queue(move |world: &mut World| {
-            let mut system_state: SystemState<(
-                Res<WindowPositions>,
-                Query<(Entity, &mut KeaPopup)>,
-                Query<(Entity, &mut Window)>,
-                Query<(&mut Node, &mut Visibility)>,
-                Commands,
-            )> = SystemState::new(world);
-
-            let (
-                positions,
-                mut popups,
-                mut windows,
-                mut nodes,
-                mut commands,
-            ) = system_state.get_mut(world);
-
-            let Ok((popup_entity, mut popup)) = popups.single_mut() else {
-                warn!("Failed to get single KeaPopup component.");
-                return;
-            };
-
-            let popup_position = match position {
-                KeaPopupPosition::At(position) => {
-                    position
-                },
-                KeaPopupPosition::AtMouse => {
-                    let mut result = IVec2::ZERO;
-
-                    for (window_entity, window) in &windows {
-                        let Some(cursor_position) = window.cursor_position() else {
-                            continue;
-                        };
-
-                        if popup.window != Entity::PLACEHOLDER {
-                            let window_position = positions
-                                .map
-                                .get(&window_entity)
-                                .unwrap_or(&IVec2::ZERO);
-
-                            // TODO: Get specific size of window title bar.
-                            // May not be needed if a custom title bar is used.
-                            result = window_position
-                                + cursor_position.as_ivec2()
-                                + IVec2::new(12, 36);
-                        } else {
-                            result = cursor_position.as_ivec2();
-                        }
-
-                        break;
-                    }
-
-                    result
-                },
-            };
-
-            if popup.window != Entity::PLACEHOLDER {
-                let Ok((_, mut window)) = windows.get_mut(popup.window) else {
-                    return;
-                };
-
-                let KeaPopupSize::Fixed(window_size) = size else {
-                    panic!("Implement handling KeaPopupSize::Auto with separate window for KeaPopup");
-                };
-
-                window.position = WindowPosition::At(popup_position);
-                window.resolution.set(window_size.x, window_size.y);
-                window.visible = true;
-            } else {
-                let Ok((mut node, mut visibility)) = nodes.get_mut(popup_entity) else {
-                    return;
-                };
-
-                node.left = Val::Px(popup_position.x as f32);
-                node.top = Val::Px(popup_position.y as f32);
-                *visibility = Visibility::Visible;
-
-                match size {
-                    KeaPopupSize::Auto => {
-                        node.width = Val::Auto;
-                        node.height = Val::Auto;
-                    },
-                    KeaPopupSize::Fixed(window_size) => {
-                        node.width = Val::Px(window_size.x);
-                        node.height = Val::Px(window_size.y);
-                    },
-                }
-            }
-
-            commands
-                .entity(popup_entity)
-                .despawn_related::<Children>()
-                .add_child(entity);
-
-            popup.state = PopupState::Opening;
-
-            system_state.apply(world);
+            popup_open(
+                world,
+                entity,
+                position,
+                size,
+            );
         });
         self.entity(entity)
+    }
+
+    fn kea_popup_open_with_entity(
+            &mut self,
+            entity: Entity,
+            position: KeaPopupPosition,
+            size: KeaPopupSize,
+        ) -> &mut Self {
+        self.queue(move |world: &mut World| {
+            popup_open(
+                world,
+                entity,
+                position,
+                size
+            );
+        });
+        self
     }
 
     fn kea_popup_close(&mut self) -> &mut Self {
@@ -171,4 +105,108 @@ impl<'w, 's> KeaPopupCommands for Commands<'w, 's> {
         });
         self
     }
+}
+
+fn popup_open(
+    world: &mut World,
+    entity: Entity,
+    position: KeaPopupPosition,
+    size: KeaPopupSize,
+) {
+    let mut system_state: SystemState<(
+        Res<WindowPositions>,
+        Query<(Entity, &mut KeaPopup)>,
+        Query<(Entity, &mut Window)>,
+        Query<(&mut Node, &mut Visibility)>,
+        Commands,
+    )> = SystemState::new(world);
+
+    let (
+        positions,
+        mut popups,
+        mut windows,
+        mut nodes,
+        mut commands,
+    ) = system_state.get_mut(world);
+
+    let Ok((popup_entity, mut popup)) = popups.single_mut() else {
+        warn!("Failed to get single KeaPopup component.");
+        return;
+    };
+
+    let popup_position = match position {
+        KeaPopupPosition::At(position) => {
+            position
+        },
+        KeaPopupPosition::AtMouse => {
+            let mut result = IVec2::ZERO;
+
+            for (window_entity, window) in &windows {
+                let Some(cursor_position) = window.cursor_position() else {
+                    continue;
+                };
+
+                if popup.window != Entity::PLACEHOLDER {
+                    let window_position = positions
+                        .map
+                        .get(&window_entity)
+                        .unwrap_or(&IVec2::ZERO);
+
+                    // TODO: Get specific size of window title bar.
+                    // May not be needed if a custom title bar is used.
+                    result = window_position
+                        + cursor_position.as_ivec2()
+                        + IVec2::new(12, 36);
+                } else {
+                    result = cursor_position.as_ivec2();
+                }
+
+                break;
+            }
+
+            result
+        },
+    };
+
+    if popup.window != Entity::PLACEHOLDER {
+        let Ok((_, mut window)) = windows.get_mut(popup.window) else {
+            return;
+        };
+
+        let KeaPopupSize::Fixed(window_size) = size else {
+            panic!("Implement handling KeaPopupSize::Auto with separate window for KeaPopup");
+        };
+
+        window.position = WindowPosition::At(popup_position);
+        window.resolution.set(window_size.x, window_size.y);
+        window.visible = true;
+    } else {
+        let Ok((mut node, mut visibility)) = nodes.get_mut(popup_entity) else {
+            return;
+        };
+
+        node.left = Val::Px(popup_position.x as f32);
+        node.top = Val::Px(popup_position.y as f32);
+        *visibility = Visibility::Visible;
+
+        match size {
+            KeaPopupSize::Auto => {
+                node.width = Val::Auto;
+                node.height = Val::Auto;
+            },
+            KeaPopupSize::Fixed(window_size) => {
+                node.width = Val::Px(window_size.x);
+                node.height = Val::Px(window_size.y);
+            },
+        }
+    }
+
+    commands
+        .entity(popup_entity)
+        .despawn_related::<Children>()
+        .add_child(entity);
+
+    popup.state = PopupState::Opening;
+
+    system_state.apply(world);
 }
