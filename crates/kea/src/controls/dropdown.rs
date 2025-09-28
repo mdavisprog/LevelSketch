@@ -1,5 +1,8 @@
 use bevy::{
-    ecs::system::SystemState,
+    ecs::system::{
+        IntoObserverSystem,
+        SystemState,
+    },
     prelude::*,
 };
 use crate::{
@@ -30,28 +33,46 @@ use super::{
     },
 };
 
+/// Determines if the KeaDropdown component should manage its own popup or a custom one
+/// should be provided. Refer to KeaDropdownCustom on more information.
+pub enum KeaDropdownBehavior {
+    Default,
+    Custom,
+}
+
 #[derive(Component)]
 pub struct KeaDropdown {
     selected: usize,
+    behavior: KeaDropdownBehavior,
 }
 
 impl KeaDropdown {
-    pub fn bundle() -> impl Bundle {
-        Self::internal_bundle()
-    }
+    pub fn bundle() -> impl Bundle {(
+        Self::internal_bundle(KeaDropdownBehavior::Default),
+    )}
 
     pub fn bundle_with_items(items: Vec<String>) -> impl Bundle {(
-        Self::internal_bundle(),
+        Self::internal_bundle(KeaDropdownBehavior::Default),
         KeaDropdownItems(items),
+    )}
+
+    pub fn bundle_custom<E: Event, B: Bundle, M>(
+        on_custom: impl IntoObserverSystem<E, B, M>,
+    ) -> impl Bundle {(
+        Self::internal_bundle(KeaDropdownBehavior::Custom),
+        KeaObservers::<Self>::new(vec![
+            Observer::new(on_custom),
+        ]),
     )}
 
     pub fn selected(&self) -> usize {
         self.selected
     }
 
-    fn internal_bundle() -> impl Bundle {(
+    fn internal_bundle(behavior: KeaDropdownBehavior) -> impl Bundle {(
         Self {
             selected: 0,
+            behavior,
         },
         KeaButton::bundle(on_click),
         children![(
@@ -70,7 +91,7 @@ impl KeaDropdown {
                     },
                     Pickable::IGNORE,
                     children![(
-                        KeaLabel::bundle("Item"),
+                        KeaLabel::bundle(""),
                         Pickable::IGNORE,
                         DropdownLabel,
                     )]
@@ -154,6 +175,12 @@ pub struct KeaDropdownSelect {
     pub index: usize,
 }
 
+#[derive(Event)]
+pub struct KeaDropdownCustom {
+    /// Fill in components for this entity in the event listener. The popup is already open.
+    pub entity: Entity,
+}
+
 #[derive(Component)]
 struct DropdownLabel;
 
@@ -215,38 +242,61 @@ fn on_ready(
 fn on_click(
     trigger: Trigger<KeaButtonClick>,
     nodes: Query<(&ComputedNode, &GlobalTransform)>,
-    dropdown_items: Query<&KeaDropdownItems>,
+    dropdowns: Query<(&KeaDropdown, Option<&KeaDropdownItems>)>,
     mut commands: Commands,
 ) {
     let Ok((node, transform)) = nodes.get(trigger.target()) else {
         panic!("Failed to get ComputedNode and GlobalTransform components for KeaDropdown.");
     };
 
-    let Ok(items) = dropdown_items.get(trigger.target()) else {
+    let Ok((dropdown, items)) = dropdowns.get(trigger.target()) else {
         return;
     };
 
     let bounds = Rect::from_center_size(
         transform.translation().truncate(),
-        node.size
+        node.size,
     );
 
-    commands.kea_popup_open(
-        (
-            Node {
-                width: Val::Px(bounds.width()),
-                ..default()
-            },
-            children![(
-                DropdownPopup::bundle(
-                    trigger.target(),
-                    items.0.clone(),
+    let position = KeaPopupPosition::At(Vec2::new(bounds.min.x, bounds.max.y).as_ivec2());
+    let size = KeaPopupSize::Auto;
+    let root_node = Node {
+        width: Val::Px(bounds.width()),
+        ..default()
+    };
+
+    match dropdown.behavior {
+        KeaDropdownBehavior::Custom => {
+            let entity = commands.kea_popup_open(
+                root_node,
+                position,
+                size
+            ).id();
+
+            commands.trigger_targets(KeaDropdownCustom {
+                entity,
+            }, trigger.target());
+        },
+        KeaDropdownBehavior::Default => {
+            let Some(items) = items else {
+                return;
+            };
+
+            commands.kea_popup_open(
+                (
+                    root_node,
+                    children![(
+                        DropdownPopup::bundle(
+                            trigger.target(),
+                            items.0.clone(),
+                        ),
+                    )],
                 ),
-            )],
-        ),
-        KeaPopupPosition::At(Vec2::new(bounds.min.x, bounds.max.y).as_ivec2()),
-        KeaPopupSize::Auto,
-    );
+                position,
+                size,
+            );
+        },
+    }
 }
 
 fn on_select(

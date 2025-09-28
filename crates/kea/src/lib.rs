@@ -39,6 +39,7 @@ pub mod prelude {
             KeaDropdownCommands,
             KeaDropdownItems,
             // Events
+            KeaDropdownCustom,
             KeaDropdownSelect
         },
         expander::{
