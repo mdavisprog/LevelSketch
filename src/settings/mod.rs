@@ -3,13 +3,7 @@ use bevy::prelude::*;
 mod app;
 mod resource;
 
-pub use {
-    app::{
-        AppSettings,
-        LSPSettings,
-    },
-    resource::SettingsResource,
-};
+pub use resource::SettingsResource;
 
 pub(super) struct Plugin;
 

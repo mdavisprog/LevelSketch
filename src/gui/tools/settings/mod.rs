@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+mod lsp;
 mod settings;
 
 pub use settings::SettingsTools;

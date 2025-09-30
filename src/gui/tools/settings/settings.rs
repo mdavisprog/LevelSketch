@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use crate::gui::tools::tools::Tools;
 use kea::prelude::*;
+use super::lsp::LSP;
 
 #[derive(Component)]
 #[require(Tools)]
@@ -63,6 +64,7 @@ impl SettingsTools {
 
     fn app() -> impl Bundle {(
         SettingsType::App,
+        Node::default(),
         children![
             (
                 KeaLabel::bundle("App"),
@@ -72,11 +74,7 @@ impl SettingsTools {
 
     fn lsp() -> impl Bundle {(
         SettingsType::LSP,
-        children![
-            (
-                KeaLabel::bundle("LSP"),
-            ),
-        ],
+        LSP::bundle(),
     )}
 
     fn list_item(label: &str) -> impl Bundle {(
@@ -95,23 +93,9 @@ impl SettingsTools {
 }
 
 #[derive(Component, PartialEq, Eq, Copy, Clone)]
-#[require(
-    Node = Self::node(),
-)]
 enum SettingsType {
     App,
     LSP,
-}
-
-impl SettingsType {
-    fn node() -> Node {
-        Node {
-            display: Display::None,
-            flex_direction: FlexDirection::Column,
-            row_gap: Val::Px(kea::style::properties::ROW_GAP),
-            ..default()
-        }
-    }
 }
 
 fn on_settings_selected(
