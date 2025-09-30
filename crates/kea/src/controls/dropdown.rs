@@ -30,6 +30,7 @@ use super::{
         KeaPopupCommands,
         KeaPopupPosition,
         KeaPopupSize,
+        KeaPopupState,
     },
 };
 
@@ -44,6 +45,7 @@ pub enum KeaDropdownBehavior {
 pub struct KeaDropdown {
     selected: usize,
     behavior: KeaDropdownBehavior,
+    should_open_popup: bool,
 }
 
 impl KeaDropdown {
@@ -60,7 +62,7 @@ impl KeaDropdown {
         on_custom: impl IntoObserverSystem<E, B, M>,
     ) -> impl Bundle {(
         Self::internal_bundle(KeaDropdownBehavior::Custom),
-        KeaObservers::<Self>::new(vec![
+        KeaObservers::<DropdownCustom>::new(vec![
             Observer::new(on_custom),
         ]),
     )}
@@ -73,8 +75,12 @@ impl KeaDropdown {
         Self {
             selected: 0,
             behavior,
+            should_open_popup: false,
         },
         KeaButton::bundle(on_click),
+        KeaObservers::<Self>::new(vec![
+            Observer::new(on_pressed),
+        ]),
         children![(
             Node {
                 width: Val::Percent(100.0),
@@ -184,6 +190,9 @@ pub struct KeaDropdownCustom {
 #[derive(Component)]
 struct DropdownLabel;
 
+/// Used for setting up observers.
+struct DropdownCustom;
+
 #[derive(Component)]
 #[require(
     Node = Self::node(),
@@ -239,6 +248,18 @@ fn on_ready(
     commands.kea_dropdown_set_label(trigger.target(), label);
 }
 
+fn on_pressed(
+    trigger: Trigger<Pointer<Pressed>>,
+    popup: Res<KeaPopupState>,
+    mut dropdowns: Query<&mut KeaDropdown>,
+) {
+    let Ok(mut dropdown) = dropdowns.get_mut(trigger.target()) else {
+        return;
+    };
+
+    dropdown.should_open_popup = !popup.is_open();
+}
+
 fn on_click(
     trigger: Trigger<KeaButtonClick>,
     nodes: Query<(&ComputedNode, &GlobalTransform)>,
@@ -252,6 +273,10 @@ fn on_click(
     let Ok((dropdown, items)) = dropdowns.get(trigger.target()) else {
         return;
     };
+
+    if !dropdown.should_open_popup {
+        return;
+    }
 
     let bounds = Rect::from_center_size(
         transform.translation().truncate(),
