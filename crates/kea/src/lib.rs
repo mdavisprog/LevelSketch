@@ -100,6 +100,7 @@ pub mod prelude {
             KeaTextInputResource,
             // Events
             KeaTextInputConfirm,
+            KeaTextInputUnfocus,
         },
         tree::{
             KeaTree,

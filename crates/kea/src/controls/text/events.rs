@@ -6,6 +6,9 @@ pub struct KeaTextInputConfirm {
 }
 
 #[derive(Event)]
+pub struct KeaTextInputUnfocus;
+
+#[derive(Event)]
 pub(super) struct KeaTextInputSetCursorPosition {
     pub text_input: Entity,
     pub index: usize,

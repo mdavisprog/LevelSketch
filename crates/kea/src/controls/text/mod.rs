@@ -10,7 +10,10 @@ mod systems;
 
 pub use {
     commands::KeaTextInputCommands,
-    events::KeaTextInputConfirm,
+    events::{
+        KeaTextInputConfirm,
+        KeaTextInputUnfocus,
+    },
     input::{
         KeaTextInput,
         KeaTextInputFormat,

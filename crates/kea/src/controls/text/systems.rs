@@ -10,7 +10,11 @@ use bevy::{
 use super::{
     cursor::Cursor,
     document::DocumentContents,
-    events::KeaTextInputSetCursorPosition,
+    events::{
+        KeaTextInputConfirm,
+        KeaTextInputUnfocus,
+        KeaTextInputSetCursorPosition,
+    },
     KeaTextInput,
     KeaTextInputCommands,
     KeaTextInputFormat,
@@ -40,9 +44,19 @@ fn on_click(
     trigger: Trigger<Pointer<Click>>,
     text_inputs: Query<&KeaTextInput>,
     mut resource: ResMut<KeaTextInputResource>,
+    mut commands: Commands,
 ) {
     let target = trigger.target();
     let Ok(text_input) = text_inputs.get(target) else {
+        match resource.focus_state {
+            FocusState::None => {
+                if resource.focused != Entity::PLACEHOLDER {
+                    resource.focus_state = FocusState::Pending(Entity::PLACEHOLDER);
+                    commands.trigger_targets(KeaTextInputUnfocus, resource.focused);
+                }
+            },
+            _ => {},
+        }
         return;
     };
 
@@ -70,6 +84,7 @@ fn keyboard_input(
     mut texts: Query<&mut Text, With<DocumentContents>>,
     mut cursors: Query<&mut Cursor>,
     mut resource: ResMut<KeaTextInputResource>,
+    mut commands: Commands,
 ) {
     let mut text_entity = Entity::PLACEHOLDER;
     let mut cursor_entity = Entity::PLACEHOLDER;
@@ -102,6 +117,9 @@ fn keyboard_input(
             match event.key_code {
                 KeyCode::Enter | KeyCode::NumpadEnter => {
                     resource.focus_state = FocusState::Pending(Entity::PLACEHOLDER);
+                    commands.trigger_targets(KeaTextInputConfirm {
+                        text: text.0.clone(),
+                    }, resource.focused);
                 },
                 KeyCode::Backspace => {
                     if cursor.index < text.0.len() {
