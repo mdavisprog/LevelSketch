@@ -10,7 +10,6 @@ use crate::{
             KeaTextInputFormat,
         },
     },
-    overrides::KeaNodeOverrides,
 };
 use super::systems::on_text_confirm;
 
@@ -51,10 +50,6 @@ impl KeaPropertyText {
                     format,
                     callback,
                 ),
-                KeaNodeOverrides {
-                    flex_grow: Some(1.0),
-                    ..default()
-                },
             ),
         ],
     )}
@@ -64,7 +59,6 @@ impl KeaPropertyText {
             width: Val::Percent(100.0),
             column_gap: Val::Px(6.0),
             align_items: AlignItems::Center,
-            align_content: AlignContent::Stretch,
             ..default()
         }
     }

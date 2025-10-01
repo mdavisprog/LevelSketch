@@ -34,6 +34,8 @@ impl Document {
         Node {
             justify_content: JustifyContent::Center,
             align_items: AlignItems::Center,
+            // Make the position absolute to prevent resizing the parent node.
+            position_type: PositionType::Absolute,
             width: Val::Percent(100.0),
             height: Val::Percent(100.0),
             ..default()

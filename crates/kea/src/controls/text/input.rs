@@ -118,9 +118,8 @@ impl KeaTextInput {
     fn node() -> Node {
         Node {
             overflow: Overflow::clip(),
-            width: Val::Px(75.0),
+            width: Val::Percent(100.0),
             height: Val::Px(style::properties::FONT_SIZE + 6.0),
-            padding: UiRect::horizontal(Val::Px(6.0)),
             justify_content: JustifyContent::Center,
             ..default()
         }
