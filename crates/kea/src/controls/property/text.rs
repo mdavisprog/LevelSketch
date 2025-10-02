@@ -10,15 +10,19 @@ use crate::{
             KeaTextInputFormat,
         },
     },
+    observers::KeaObservers,
 };
-use super::systems::on_text_confirm;
+use super::systems::{
+    on_text_confirm,
+    on_unfocus,
+};
 
 #[derive(Component)]
 #[require(
     Node = Self::node(),
 )]
 pub struct KeaPropertyText {
-    _private: (),
+    pub(super) value: String,
 }
 
 impl KeaPropertyText {
@@ -38,7 +42,7 @@ impl KeaPropertyText {
         callback: impl IntoObserverSystem<E, B, M>,
     ) -> impl Bundle {(
         Self {
-            _private: (),
+            value: format.convert(text),
         },
         children![
             (
@@ -50,6 +54,9 @@ impl KeaPropertyText {
                     format,
                     callback,
                 ),
+                KeaObservers::<Self>::new(vec![
+                    Observer::new(on_unfocus),
+                ]),
             ),
         ],
     )}

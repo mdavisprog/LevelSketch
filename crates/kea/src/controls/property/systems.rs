@@ -4,7 +4,12 @@ use crate::controls::{
         KeaCheckboxClicked,
         KeaCheckboxState,
     },
-    text::KeaTextInputConfirm,
+    text::{
+        KeaTextInputCommands,
+        KeaTextInput,
+        KeaTextInputConfirm,
+        KeaTextInputUnfocus,
+    },
 };
 use super::{
     boolean::KeaPropertyBoolean,
@@ -25,12 +30,22 @@ pub(super) fn on_decimal_confirm(
     trigger: Trigger<KeaTextInputConfirm>,
     children: Query<&ChildOf>,
     decimals: Query<&KeaPropertyDecimal>,
+    mut texts: Query<&mut KeaPropertyText>,
     mut commands: Commands,
 ) {
     let value = match trigger.event().text.parse::<f64>() {
         Ok(result) => result,
         Err(error) => panic!("Failed to parse 'f64': {error:?}"),
     };
+
+    for parent in children.iter_ancestors(trigger.target()) {
+        let Ok(mut text) = texts.get_mut(parent) else {
+            continue;
+        };
+
+        text.value = value.to_string();
+        break;
+    }
 
     for parent in children.iter_ancestors(trigger.target()) {
         if !decimals.contains(parent) {
@@ -48,16 +63,19 @@ pub(super) fn on_decimal_confirm(
 pub(super) fn on_text_confirm(
     trigger: Trigger<KeaTextInputConfirm>,
     children: Query<&ChildOf>,
-    texts: Query<&KeaPropertyText>,
+    mut texts: Query<&mut KeaPropertyText>,
     mut commands: Commands,
 ) {
     for parent in children.iter_ancestors(trigger.target()) {
-        if !texts.contains(parent) {
+        let Ok(mut text) = texts.get_mut(parent) else {
             continue;
         };
 
+        let value = trigger.event().text.clone();
+        text.value = value.clone();
+
         commands.trigger_targets(KeaPropertyChanged {
-            data: KeaPropertyData::Text(trigger.event().text.clone()),
+            data: KeaPropertyData::Text(value),
         }, parent);
 
         break;
@@ -149,6 +167,27 @@ pub(super) fn on_integer_confirm(
             data: KeaPropertyData::Integer(value),
         }, parent);
 
+        break;
+    }
+}
+
+pub(super) fn on_unfocus(
+    trigger: Trigger<KeaTextInputUnfocus>,
+    text_properties: Query<&KeaPropertyText>,
+    text_inputs: Query<&KeaTextInput>,
+    children: Query<&ChildOf>,
+    mut commands: Commands,
+) {
+    if !text_inputs.contains(trigger.target()) {
+        panic!("Receiving a KeaTextInputUnfocus for invalid KeaTextInput component.");
+    };
+
+    for parent in children.iter_ancestors(trigger.target()) {
+        let Ok(property) = text_properties.get(parent) else {
+            continue;
+        };
+
+        commands.kea_text_input_set_text(trigger.target(), property.value.clone());
         break;
     }
 }
