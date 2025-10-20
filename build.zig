@@ -1,9 +1,21 @@
 const std = @import("std");
+const zon = @import("build.zig.zon");
 
 pub fn build(b: *std.Build) void {
+    const version_string = zon.version;
+    const version = std.SemanticVersion.parse(version_string) catch |err| {
+        std.log.err("Failed to parse semantic version from zon.\n{any}", .{err});
+        return;
+    };
+
+    const version_options = b.addOptions();
+    version_options.addOption([]const u8, "full", version_string);
+    version_options.addOption(usize, "major", version.major);
+    version_options.addOption(usize, "minor", version.minor);
+    version_options.addOption(usize, "patch", version.patch);
+
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
-
     const exe = b.addExecutable(.{
         .name = "LevelSketch",
         .root_module = b.createModule(.{
@@ -12,6 +24,7 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
         }),
     });
+    exe.root_module.addOptions("version", version_options);
 
     b.installArtifact(exe);
 
