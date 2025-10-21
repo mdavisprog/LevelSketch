@@ -8,23 +8,36 @@ pub fn build(b: *std.Build) void {
         return;
     };
 
+    const target = b.standardTargetOptions(.{});
+    const optimize = b.standardOptimizeOption(.{});
+
+    const zglfw = b.dependency("zglfw", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
     const version_options = b.addOptions();
     version_options.addOption([]const u8, "full", version_string);
     version_options.addOption(usize, "major", version.major);
     version_options.addOption(usize, "minor", version.minor);
     version_options.addOption(usize, "patch", version.patch);
 
-    const target = b.standardTargetOptions(.{});
-    const optimize = b.standardOptimizeOption(.{});
     const exe = b.addExecutable(.{
         .name = "LevelSketch",
         .root_module = b.createModule(.{
             .root_source_file = b.path("src/main.zig"),
             .target = target,
             .optimize = optimize,
+            .imports = &.{
+                .{ .name = "zglfw", .module = zglfw.module("root") },
+            },
         }),
     });
     exe.root_module.addOptions("version", version_options);
+
+    if (target.result.os.tag != .emscripten) {
+        exe.linkLibrary(zglfw.artifact("glfw"));
+    }
 
     b.installArtifact(exe);
 
