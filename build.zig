@@ -27,6 +27,11 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    const zmath = b.dependency("zmath", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
     const core = b.createModule(.{
         .target = target,
         .optimize = optimize,
@@ -43,6 +48,7 @@ pub fn build(b: *std.Build) void {
                 .{ .name = "core", .module = core },
                 .{ .name = "zglfw", .module = zglfw.module("root") },
                 .{ .name = "zbgfx", .module = zbgfx.module("zbgfx") },
+                .{ .name = "zmath", .module = zmath.module("root") },
             },
         }),
     });
