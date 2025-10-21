@@ -8,6 +8,12 @@ pub fn build(b: *std.Build) void {
         return;
     };
 
+    const version_options = b.addOptions();
+    version_options.addOption([]const u8, "full", version_string);
+    version_options.addOption(usize, "major", version.major);
+    version_options.addOption(usize, "minor", version.minor);
+    version_options.addOption(usize, "patch", version.patch);
+
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
@@ -16,11 +22,10 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const version_options = b.addOptions();
-    version_options.addOption([]const u8, "full", version_string);
-    version_options.addOption(usize, "major", version.major);
-    version_options.addOption(usize, "minor", version.minor);
-    version_options.addOption(usize, "patch", version.patch);
+    const zbgfx = b.dependency("zbgfx", .{
+        .target = target,
+        .optimize = optimize,
+    });
 
     const exe = b.addExecutable(.{
         .name = "LevelSketch",
@@ -30,6 +35,7 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
             .imports = &.{
                 .{ .name = "zglfw", .module = zglfw.module("root") },
+                .{ .name = "zbgfx", .module = zbgfx.module("zbgfx") },
             },
         }),
     });
@@ -38,6 +44,8 @@ pub fn build(b: *std.Build) void {
     if (target.result.os.tag != .emscripten) {
         exe.linkLibrary(zglfw.artifact("glfw"));
     }
+
+    exe.linkLibrary(zbgfx.artifact("bgfx"));
 
     b.installArtifact(exe);
 

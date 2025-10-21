@@ -1,5 +1,6 @@
 const std = @import("std");
 const version = @import("version");
+const zbgfx = @import("zbgfx");
 const zglfw = @import("zglfw");
 
 pub fn main() !void {
@@ -20,12 +21,38 @@ pub fn main() !void {
         zglfw_version.patch,
     });
 
+    zglfw.windowHint(.client_api, .no_api);
     const window = try zglfw.createWindow(960, 540, "Level Sketch", null);
     defer zglfw.destroyWindow(window);
 
-    while (!window.shouldClose()) {
+    var bgfx_init: zbgfx.bgfx.Init = undefined;
+    zbgfx.bgfx.initCtor(&bgfx_init);
+
+    const framebuffer_size = window.getFramebufferSize();
+
+    bgfx_init.resolution.width = @intCast(framebuffer_size[0]);
+    bgfx_init.resolution.height = @intCast(framebuffer_size[1]);
+    bgfx_init.platformData.ndt = null;
+    bgfx_init.debug = true;
+
+    var bgfx_callbacks = zbgfx.callbacks.CCallbackInterfaceT{
+        .vtable = &zbgfx.callbacks.DefaultZigCallbackVTable.toVtbl(),
+    };
+    bgfx_init.callback = &bgfx_callbacks;
+
+    bgfx_init.platformData.nwh = zglfw.getWin32Window(window);
+
+    if (!zbgfx.bgfx.init(&bgfx_init)) {
+        std.log.err("Failed to initialize bgfx.", .{});
+        return;
+    }
+    defer zbgfx.bgfx.shutdown();
+
+    zbgfx.bgfx.setDebug(zbgfx.bgfx.DebugFlags_None);
+
+    while (!window.shouldClose() and window.getKey(.escape) != .press) {
         zglfw.pollEvents();
 
-        window.swapBuffers();
+        _ = zbgfx.bgfx.frame(false);
     }
 }

@@ -62,6 +62,7 @@
         //    .lazy = false,
         //},
         .zglfw = .{ .path = "external/zglfw" },
+        .zbgfx = .{ .path = "external/zbgfx" },
     },
     // Specifies the set of files and directories that are included in this package.
     // Only files and directories listed here are included in the `hash` that
