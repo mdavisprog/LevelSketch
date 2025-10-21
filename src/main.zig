@@ -1,7 +1,10 @@
+const core = @import("core");
 const std = @import("std");
 const version = @import("version");
 const zbgfx = @import("zbgfx");
 const zglfw = @import("zglfw");
+
+const commandline = core.commandline;
 
 pub fn main() !void {
     std.log.info("Welcome to LevelSketch!", .{});
@@ -10,6 +13,14 @@ pub fn main() !void {
         version.minor,
         version.patch,
     });
+
+    var gpa = std.heap.GeneralPurposeAllocator(.{}).init;
+    defer _ = gpa.deinit();
+
+    const allocator = gpa.allocator();
+
+    try commandline.init(allocator);
+    defer commandline.deinit(allocator);
 
     try zglfw.init();
     defer zglfw.terminate();

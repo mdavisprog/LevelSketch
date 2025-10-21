@@ -27,6 +27,12 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    const core = b.createModule(.{
+        .target = target,
+        .optimize = optimize,
+        .root_source_file = b.path("src/core/root.zig"),
+    });
+
     const exe = b.addExecutable(.{
         .name = "LevelSketch",
         .root_module = b.createModule(.{
@@ -34,6 +40,7 @@ pub fn build(b: *std.Build) void {
             .target = target,
             .optimize = optimize,
             .imports = &.{
+                .{ .name = "core", .module = core },
                 .{ .name = "zglfw", .module = zglfw.module("root") },
                 .{ .name = "zbgfx", .module = zbgfx.module("zbgfx") },
             },
