@@ -1,3 +1,4 @@
+const callbacks = @import("callbacks.zig");
 const core = @import("core");
 const std = @import("std");
 const version = @import("version");
@@ -47,7 +48,7 @@ pub fn main() !void {
     bgfx_init.debug = true;
 
     var bgfx_callbacks = zbgfx.callbacks.CCallbackInterfaceT{
-        .vtable = &zbgfx.callbacks.DefaultZigCallbackVTable.toVtbl(),
+        .vtable = &callbacks.BGFXCallbacks.toVtbl(),
     };
     bgfx_init.callback = &bgfx_callbacks;
 

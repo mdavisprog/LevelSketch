@@ -168,4 +168,4 @@ pub const DefaultZigCallbackVTable = struct {
     }
 };
 
-extern fn formatTrace(buff: [*]const u8, buff_size: u32, _format: [*:0]const u8, _argList: VaList) i32;
+pub extern fn formatTrace(buff: [*]const u8, buff_size: u32, _format: [*:0]const u8, _argList: VaList) i32;
