@@ -59,6 +59,20 @@ extern fn glfwInit() Bool;
 pub const terminate = glfwTerminate;
 extern fn glfwTerminate() void;
 
+/// `pub fn getVersionString
+pub fn getVersion() std.SemanticVersion {
+    var major: c_int = 0;
+    var minor: c_int = 0;
+    var rev: c_int = 0;
+    glfwGetVersion(&major, &minor, &rev);
+    return std.SemanticVersion{
+        .major = std.math.cast(usize, major) orelse 0,
+        .minor = std.math.cast(usize, minor) orelse 0,
+        .patch = std.math.cast(usize, rev) orelse 0,
+    };
+}
+extern fn glfwGetVersion(major: *c_int, minor: *c_int, rev: *c_int) void;
+
 /// `pub fn pollEvents() void`
 pub const pollEvents = glfwPollEvents;
 extern fn glfwPollEvents() void;

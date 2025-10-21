@@ -13,6 +13,13 @@ pub fn main() !void {
     try zglfw.init();
     defer zglfw.terminate();
 
+    const zglfw_version = zglfw.getVersion();
+    std.log.info("glfw Version is {}.{}.{}", .{
+        zglfw_version.major,
+        zglfw_version.minor,
+        zglfw_version.patch,
+    });
+
     const window = try zglfw.createWindow(960, 540, "Level Sketch", null);
     defer zglfw.destroyWindow(window);
 
