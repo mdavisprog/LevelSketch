@@ -27,7 +27,7 @@ pub fn main() !void {
     defer zglfw.terminate();
 
     const zglfw_version = zglfw.getVersion();
-    std.log.info("glfw Version is {}.{}.{}", .{
+    std.log.info("glfw version is {}.{}.{}", .{
         zglfw_version.major,
         zglfw_version.minor,
         zglfw_version.patch,
@@ -36,6 +36,8 @@ pub fn main() !void {
     zglfw.windowHint(.client_api, .no_api);
     const window = try zglfw.createWindow(960, 540, "Level Sketch", null);
     defer zglfw.destroyWindow(window);
+
+    std.log.info("bgfx version is 1.{}.{}", .{ zbgfx.API_VERSION, zbgfx.REV_VERSION });
 
     var bgfx_init: zbgfx.bgfx.Init = undefined;
     zbgfx.bgfx.initCtor(&bgfx_init);
