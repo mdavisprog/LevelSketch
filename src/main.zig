@@ -68,10 +68,28 @@ pub fn main() !void {
     printBGFXInfo();
 
     zbgfx.bgfx.setDebug(zbgfx.bgfx.DebugFlags_None);
+    zbgfx.bgfx.reset(
+        @intCast(framebuffer_size[0]),
+        @intCast(framebuffer_size[1]),
+        zbgfx.bgfx.ResetFlags_Vsync,
+        bgfx_init.resolution.format,
+    );
+
+    zbgfx.bgfx.setViewClear(
+        0,
+        zbgfx.bgfx.ClearFlags_Color | zbgfx.bgfx.ClearFlags_Depth,
+        0x303030FF,
+        1.0,
+        0,
+    );
 
     while (!window.shouldClose() and window.getKey(.escape) != .press) {
         zglfw.pollEvents();
 
+        const size = window.getFramebufferSize();
+        zbgfx.bgfx.setViewRect(0, 0, 0, @intCast(size[0]), @intCast(size[1]));
+
+        zbgfx.bgfx.touch(0);
         _ = zbgfx.bgfx.frame(false);
     }
 }
