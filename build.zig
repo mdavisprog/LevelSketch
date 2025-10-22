@@ -61,6 +61,14 @@ pub fn build(b: *std.Build) void {
     exe.linkLibrary(zbgfx.artifact("bgfx"));
 
     b.installArtifact(exe);
+    b.installArtifact(zbgfx.artifact("shaderc"));
+
+    const install_shaders = b.addInstallDirectory(.{
+        .install_dir = .header,
+        .install_subdir = "shaders",
+        .source_dir = zbgfx.path("shaders"),
+    });
+    exe.step.dependOn(&install_shaders.step);
 
     const run_step = b.step("run", "Run the app");
     const run_cmd = b.addRunArtifact(exe);
