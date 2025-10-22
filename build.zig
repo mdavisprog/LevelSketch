@@ -64,11 +64,18 @@ pub fn build(b: *std.Build) void {
     b.installArtifact(zbgfx.artifact("shaderc"));
 
     const install_shaders = b.addInstallDirectory(.{
-        .install_dir = .header,
-        .install_subdir = "shaders",
+        .install_dir = .bin,
+        .install_subdir = "shaders/include",
         .source_dir = zbgfx.path("shaders"),
     });
     exe.step.dependOn(&install_shaders.step);
+
+    const app_shaders = b.addInstallDirectory(.{
+        .install_dir = .bin,
+        .install_subdir = "shaders",
+        .source_dir = b.path("assets/shaders"),
+    });
+    exe.step.dependOn(&app_shaders.step);
 
     const run_step = b.step("run", "Run the app");
     const run_cmd = b.addRunArtifact(exe);
