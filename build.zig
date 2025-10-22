@@ -38,6 +38,15 @@ pub fn build(b: *std.Build) void {
         .root_source_file = b.path("src/core/root.zig"),
     });
 
+    const render = b.createModule(.{
+        .target = target,
+        .optimize = optimize,
+        .root_source_file = b.path("src/render/root.zig"),
+        .imports = &.{
+            .{ .name = "zbgfx", .module = zbgfx.module("zbgfx") },
+        },
+    });
+
     const exe = b.addExecutable(.{
         .name = "LevelSketch",
         .root_module = b.createModule(.{
@@ -46,6 +55,7 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
             .imports = &.{
                 .{ .name = "core", .module = core },
+                .{ .name = "render", .module = render },
                 .{ .name = "zglfw", .module = zglfw.module("root") },
                 .{ .name = "zbgfx", .module = zbgfx.module("zbgfx") },
                 .{ .name = "zmath", .module = zmath.module("root") },
@@ -86,12 +96,18 @@ pub fn build(b: *std.Build) void {
         run_cmd.addArgs(args);
     }
 
+    const render_tests = b.addTest(.{
+        .root_module = render,
+    });
+
     const exe_tests = b.addTest(.{
         .root_module = exe.root_module,
     });
 
+    const run_render_tests = b.addRunArtifact(render_tests);
     const run_exe_tests = b.addRunArtifact(exe_tests);
 
     const test_step = b.step("test", "Run tests");
+    test_step.dependOn(&run_render_tests.step);
     test_step.dependOn(&run_exe_tests.step);
 }

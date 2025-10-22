@@ -1,12 +1,15 @@
 const builtin = @import("builtin");
 const callbacks = @import("callbacks.zig");
 const core = @import("core");
+const render = @import("render");
 const std = @import("std");
 const version = @import("version");
 const zbgfx = @import("zbgfx");
 const zglfw = @import("zglfw");
+const zmath = @import("zmath");
 
 const commandline = core.commandline;
+const Vertex = render.Vertex;
 
 pub fn main() !void {
     std.log.info("Welcome to LevelSketch!", .{});
@@ -67,6 +70,41 @@ pub fn main() !void {
 
     printBGFXInfo();
 
+    const vertices: [3]Vertex = .{
+        .init(-0.5, -0.5, 0.5, 0xFF0000FF),
+        .init(0.5, -0.5, 0.5, 0xFF00FF00),
+        .init(0.0, 0.5, 0.5, 0xFFFF0000),
+    };
+
+    const indices: [3]u16 = .{ 0, 1, 2 };
+
+    const layout = Vertex.Layout.init();
+    const vertex_buffer = zbgfx.bgfx.createVertexBuffer(
+        zbgfx.bgfx.makeRef(&vertices, vertices.len * @sizeOf(Vertex)),
+        &layout.data,
+        zbgfx.bgfx.BufferFlags_None,
+    );
+    defer zbgfx.bgfx.destroyVertexBuffer(vertex_buffer);
+
+    const index_buffer = zbgfx.bgfx.createIndexBuffer(
+        zbgfx.bgfx.makeRef(&indices, vertices.len * @sizeOf(u16)),
+        zbgfx.bgfx.BufferFlags_None,
+    );
+    defer zbgfx.bgfx.destroyIndexBuffer(index_buffer);
+
+    const view = zmath.lookAtLh(
+        zmath.f32x4(0.0, 0.0, -5.0, 1.0),
+        zmath.f32x4(0.0, 0.0, 0.0, 1.0),
+        zmath.f32x4(0.0, 1.0, 0.0, 0.0),
+    );
+    const aspect = @as(f32, @floatFromInt(framebuffer_size[0])) / @as(f32, @floatFromInt(framebuffer_size[1]));
+    const projection = zmath.perspectiveFovLh(
+        std.math.degreesToRadians(60.0),
+        aspect,
+        0.1,
+        100.0,
+    );
+
     const shader_program = try buildProgram(allocator);
     defer zbgfx.bgfx.destroyProgram(shader_program);
 
@@ -86,11 +124,24 @@ pub fn main() !void {
         0,
     );
 
+    const state = zbgfx.bgfx.StateFlags_WriteRgb |
+        zbgfx.bgfx.StateFlags_WriteA |
+        zbgfx.bgfx.StateFlags_WriteZ |
+        zbgfx.bgfx.StateFlags_DepthTestLess |
+        zbgfx.bgfx.StateFlags_CullCw |
+        zbgfx.bgfx.StateFlags_Msaa;
+
     while (!window.shouldClose() and window.getKey(.escape) != .press) {
         zglfw.pollEvents();
 
         const size = window.getFramebufferSize();
+        zbgfx.bgfx.setViewTransform(0, &zmath.matToArr(view), &zmath.matToArr(projection));
         zbgfx.bgfx.setViewRect(0, 0, 0, @intCast(size[0]), @intCast(size[1]));
+
+        zbgfx.bgfx.setVertexBuffer(0, vertex_buffer, 0, vertices.len);
+        zbgfx.bgfx.setIndexBuffer(index_buffer, 0, indices.len);
+        zbgfx.bgfx.setState(state, 0);
+        zbgfx.bgfx.submit(0, shader_program, 0, 255);
 
         zbgfx.bgfx.touch(0);
         _ = zbgfx.bgfx.frame(false);
@@ -189,4 +240,14 @@ fn buildProgram(allocator: std.mem.Allocator) !zbgfx.bgfx.ProgramHandle {
         @intCast(vertex_compiled.len),
     ));
     return zbgfx.bgfx.createProgram(vertex_shader, fragment_shader, true);
+}
+
+// The code below will ensure that all referenced files will have their
+// tests run.
+//
+// Seems like this is a temporary hack. More information found in the
+// following thread:
+// https://ziggit.dev/t/how-do-i-get-zig-build-to-run-all-the-tests/4434.
+test "refall" {
+    std.testing.refAllDecls(@This());
 }
