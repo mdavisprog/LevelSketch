@@ -1,3 +1,4 @@
+const builtin = @import("builtin");
 const callbacks = @import("callbacks.zig");
 const core = @import("core");
 const std = @import("std");
@@ -37,8 +38,6 @@ pub fn main() !void {
     const window = try zglfw.createWindow(960, 540, "Level Sketch", null);
     defer zglfw.destroyWindow(window);
 
-    std.log.info("bgfx version is 1.{}.{}", .{ zbgfx.API_VERSION, zbgfx.REV_VERSION });
-
     var bgfx_init: zbgfx.bgfx.Init = undefined;
     zbgfx.bgfx.initCtor(&bgfx_init);
 
@@ -48,6 +47,10 @@ pub fn main() !void {
     bgfx_init.resolution.height = @intCast(framebuffer_size[1]);
     bgfx_init.platformData.ndt = null;
     bgfx_init.debug = true;
+
+    if (builtin.target.os.tag == .windows) {
+        bgfx_init.type = zbgfx.bgfx.RendererType.Direct3D12;
+    }
 
     var bgfx_callbacks = zbgfx.callbacks.CCallbackInterfaceT{
         .vtable = &callbacks.BGFXCallbacks.toVtbl(),
@@ -62,6 +65,8 @@ pub fn main() !void {
     }
     defer zbgfx.bgfx.shutdown();
 
+    printBGFXInfo();
+
     zbgfx.bgfx.setDebug(zbgfx.bgfx.DebugFlags_None);
 
     while (!window.shouldClose() and window.getKey(.escape) != .press) {
@@ -69,4 +74,11 @@ pub fn main() !void {
 
         _ = zbgfx.bgfx.frame(false);
     }
+}
+
+fn printBGFXInfo() void {
+    std.log.info("bgfx version is 1.{}.{}", .{ zbgfx.API_VERSION, zbgfx.REV_VERSION });
+
+    const renderer = zbgfx.bgfx.getRendererType();
+    std.log.info("Renderer type: {s}", .{zbgfx.bgfx.getRendererName(renderer)});
 }
