@@ -9,7 +9,11 @@ const zglfw = @import("zglfw");
 const zmath = @import("zmath");
 
 const commandline = core.commandline;
+
+const Camera = render.Camera;
 const Vertex = render.Vertex;
+
+var camera: Camera = undefined;
 
 pub fn main() !void {
     std.log.info("Welcome to LevelSketch!", .{});
@@ -92,11 +96,10 @@ pub fn main() !void {
     );
     defer zbgfx.bgfx.destroyIndexBuffer(index_buffer);
 
-    const view = zmath.lookAtLh(
-        zmath.f32x4(0.0, 0.0, -5.0, 1.0),
-        zmath.f32x4(0.0, 0.0, 0.0, 1.0),
-        zmath.f32x4(0.0, 1.0, 0.0, 0.0),
-    );
+    camera = .{
+        .position = zmath.f32x4(0.0, 0.0, -3.0, 1.0),
+    };
+
     const aspect = @as(f32, @floatFromInt(framebuffer_size[0])) / @as(f32, @floatFromInt(framebuffer_size[1]));
     const projection = zmath.perspectiveFovLh(
         std.math.degreesToRadians(60.0),
@@ -131,9 +134,19 @@ pub fn main() !void {
         zbgfx.bgfx.StateFlags_CullCw |
         zbgfx.bgfx.StateFlags_Msaa;
 
+    // Timing
+    var last_time: f64 = 0.0;
+
     while (!window.shouldClose() and window.getKey(.escape) != .press) {
+        const current_time = zglfw.getTime();
+        const delta_time: f32 = @floatCast(current_time - last_time);
+        last_time = current_time;
+
         zglfw.pollEvents();
 
+        updateCamera(window, delta_time);
+
+        const view = camera.toLookAt();
         const size = window.getFramebufferSize();
         zbgfx.bgfx.setViewTransform(0, &zmath.matToArr(view), &zmath.matToArr(projection));
         zbgfx.bgfx.setViewRect(0, 0, 0, @intCast(size[0]), @intCast(size[1]));
@@ -240,6 +253,29 @@ fn buildProgram(allocator: std.mem.Allocator) !zbgfx.bgfx.ProgramHandle {
         @intCast(vertex_compiled.len),
     ));
     return zbgfx.bgfx.createProgram(vertex_shader, fragment_shader, true);
+}
+
+fn updateCamera(window: *zglfw.Window, delta_time: f32) void {
+    const forward = window.getKey(zglfw.Key.w);
+    const backward = window.getKey(zglfw.Key.s);
+    const right = window.getKey(zglfw.Key.d);
+    const left = window.getKey(zglfw.Key.a);
+
+    if (forward == zglfw.Action.press) {
+        camera.moveForward(delta_time);
+    }
+
+    if (backward == zglfw.Action.press) {
+        camera.moveBackward(delta_time);
+    }
+
+    if (right == zglfw.Action.press) {
+        camera.moveRight(delta_time);
+    }
+
+    if (left == zglfw.Action.press) {
+        camera.moveLeft(delta_time);
+    }
 }
 
 // The code below will ensure that all referenced files will have their

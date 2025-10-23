@@ -1,3 +1,4 @@
+pub const Camera = @import("Camera.zig");
 pub const Vertex = @import("Vertex.zig");
 
 const std = @import("std");

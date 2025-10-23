@@ -44,6 +44,7 @@ pub fn build(b: *std.Build) void {
         .root_source_file = b.path("src/render/root.zig"),
         .imports = &.{
             .{ .name = "zbgfx", .module = zbgfx.module("zbgfx") },
+            .{ .name = "zmath", .module = zmath.module("root") },
         },
     });
 
