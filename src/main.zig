@@ -15,6 +15,7 @@ const Camera = render.Camera;
 const Vertex = render.Vertex;
 
 var camera: Camera = undefined;
+var camera_rotating = false;
 var cursor: Cursor = .{};
 
 pub fn main() !void {
@@ -155,7 +156,7 @@ pub fn main() !void {
         zglfw.pollEvents();
 
         updateCursor(window, &cursor);
-        updateCamera(window, cursor, delta_time);
+        try updateCamera(window, cursor, delta_time);
 
         const view = camera.toLookAt();
         const size = window.getFramebufferSize();
@@ -209,7 +210,7 @@ fn updateCursorButton(target: *Cursor, button: zglfw.MouseButton, action: zglfw.
     target.buttons[@intFromEnum(cursor_button)] = cursor_action;
 }
 
-fn updateCamera(window: *zglfw.Window, cursor_: Cursor, delta_time: f32) void {
+fn updateCamera(window: *zglfw.Window, cursor_: Cursor, delta_time: f32) !void {
     const forward = window.getKey(zglfw.Key.w);
     const backward = window.getKey(zglfw.Key.s);
     const right = window.getKey(zglfw.Key.d);
@@ -233,13 +234,30 @@ fn updateCamera(window: *zglfw.Window, cursor_: Cursor, delta_time: f32) void {
 
     camera.update(delta_time);
 
-    if (cursor_.pressed(Cursor.Button.right)) {
+    if (cursor_.pressed(.right)) {
         const delta = cursor_.delta();
         if (!delta.isZero()) {
+            if (!camera_rotating) {
+                try toggleCursor(window, false);
+                camera_rotating = true;
+            }
+
             const yaw: f32 = @floatFromInt(delta.x);
             const pitch: f32 = @floatFromInt(delta.y);
             camera.rotate(pitch, yaw);
         }
+    } else if (cursor_.released(.right)) {
+        if (camera_rotating) {
+            try toggleCursor(window, true);
+            camera_rotating = false;
+        }
+    }
+}
+
+fn toggleCursor(window: *zglfw.Window, enabled: bool) !void {
+    try zglfw.setInputMode(window, .cursor, if (enabled) .normal else .disabled);
+    if (zglfw.rawMouseMotionSupported()) {
+        try zglfw.setInputMode(window, .raw_mouse_motion, enabled);
     }
 }
 
