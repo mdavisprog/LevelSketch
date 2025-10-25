@@ -1,6 +1,7 @@
 const builtin = @import("builtin");
 const callbacks = @import("callbacks.zig");
 const core = @import("core");
+const Cursor = @import("Cursor.zig");
 const render = @import("render");
 const std = @import("std");
 const version = @import("version");
@@ -14,6 +15,7 @@ const Camera = render.Camera;
 const Vertex = render.Vertex;
 
 var camera: Camera = undefined;
+var cursor: Cursor = .{};
 
 pub fn main() !void {
     std.log.info("Welcome to LevelSketch!", .{});
@@ -152,7 +154,8 @@ pub fn main() !void {
 
         zglfw.pollEvents();
 
-        updateCamera(window, delta_time);
+        updateCursor(window, &cursor);
+        updateCamera(window, cursor, delta_time);
 
         const view = camera.toLookAt();
         const size = window.getFramebufferSize();
@@ -176,7 +179,37 @@ fn printBGFXInfo() void {
     std.log.info("Renderer type: {s}", .{zbgfx.bgfx.getRendererName(renderer)});
 }
 
-fn updateCamera(window: *zglfw.Window, delta_time: f32) void {
+fn updateCursor(window: *zglfw.Window, target: *Cursor) void {
+    const cursor_pos = window.getCursorPos();
+    target.update(@intFromFloat(cursor_pos[0]), @intFromFloat(cursor_pos[1]));
+
+    const left = zglfw.getMouseButton(window, zglfw.MouseButton.left);
+    const middle = zglfw.getMouseButton(window, zglfw.MouseButton.middle);
+    const right = zglfw.getMouseButton(window, zglfw.MouseButton.right);
+
+    updateCursorButton(target, zglfw.MouseButton.left, left);
+    updateCursorButton(target, zglfw.MouseButton.middle, middle);
+    updateCursorButton(target, zglfw.MouseButton.right, right);
+}
+
+fn updateCursorButton(target: *Cursor, button: zglfw.MouseButton, action: zglfw.Action) void {
+    const cursor_button = switch (button) {
+        zglfw.MouseButton.left => Cursor.Button.left,
+        zglfw.MouseButton.middle => Cursor.Button.middle,
+        zglfw.MouseButton.right => Cursor.Button.right,
+        else => Cursor.Button.unhandled,
+    };
+
+    const cursor_action = switch (action) {
+        zglfw.Action.press => Cursor.Action.press,
+        zglfw.Action.release => Cursor.Action.release,
+        zglfw.Action.repeat => Cursor.Action.repeat,
+    };
+
+    target.buttons[@intFromEnum(cursor_button)] = cursor_action;
+}
+
+fn updateCamera(window: *zglfw.Window, cursor_: Cursor, delta_time: f32) void {
     const forward = window.getKey(zglfw.Key.w);
     const backward = window.getKey(zglfw.Key.s);
     const right = window.getKey(zglfw.Key.d);
@@ -196,6 +229,15 @@ fn updateCamera(window: *zglfw.Window, delta_time: f32) void {
 
     if (left == zglfw.Action.press) {
         camera.moveLeft(delta_time);
+    }
+
+    if (cursor_.pressed(Cursor.Button.right)) {
+        const delta = cursor_.delta();
+        if (!delta.isZero()) {
+            const yaw: f32 = @floatFromInt(delta.x);
+            const pitch: f32 = @floatFromInt(delta.y);
+            camera.rotate(pitch, yaw);
+        }
     }
 }
 
