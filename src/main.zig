@@ -201,25 +201,18 @@ fn updateCursorButton(target: *Cursor, button: zglfw.MouseButton, action: zglfw.
 }
 
 fn updateCamera(window: *zglfw.Window, cursor_: Cursor, delta_time: f32) !void {
-    const forward = window.getKey(zglfw.Key.w);
-    const backward = window.getKey(zglfw.Key.s);
-    const right = window.getKey(zglfw.Key.d);
-    const left = window.getKey(zglfw.Key.a);
-
-    if (forward == zglfw.Action.press) {
-        camera.moveForward();
-    }
-
-    if (backward == zglfw.Action.press) {
-        camera.moveBackward();
-    }
-
-    if (right == zglfw.Action.press) {
-        camera.moveRight();
-    }
-
-    if (left == zglfw.Action.press) {
-        camera.moveLeft();
+    if (isPressed(window, .w)) {
+        camera.move(.forward);
+    } else if (isPressed(window, .s)) {
+        camera.move(.backward);
+    } else if (isPressed(window, .d)) {
+        camera.move(.right);
+    } else if (isPressed(window, .a)) {
+        camera.move(.left);
+    } else if (isPressed(window, .q)) {
+        camera.move(.up);
+    } else if (isPressed(window, .e)) {
+        camera.move(.down);
     }
 
     camera.update(delta_time);
@@ -249,6 +242,11 @@ fn toggleCursor(window: *zglfw.Window, enabled: bool) !void {
     if (zglfw.rawMouseMotionSupported()) {
         try zglfw.setInputMode(window, .raw_mouse_motion, enabled);
     }
+}
+
+fn isPressed(window: *zglfw.Window, key: zglfw.Key) bool {
+    const action = window.getKey(key);
+    return action == .press;
 }
 
 // The code below will ensure that all referenced files will have their

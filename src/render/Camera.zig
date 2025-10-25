@@ -3,6 +3,15 @@ const zmath = @import("zmath");
 
 const Self = @This();
 
+pub const Direction = enum {
+    forward,
+    backward,
+    left,
+    right,
+    up,
+    down,
+};
+
 pub const UP: zmath.Vec = zmath.f32x4(0.0, 1.0, 0.0, 0.0);
 pub const FORWARD: zmath.Vec = zmath.f32x4(0.0, 0.0, 1.0, 0.0);
 
@@ -19,25 +28,17 @@ pub fn toLookAt(self: Self) zmath.Mat {
     return zmath.lookToLh(self.position, self.direction, UP);
 }
 
-pub fn moveForward(self: *Self) void {
-    const delta = self.direction * zmath.f32x4s(self.move_speed);
-    self.velocity += delta;
-}
+pub fn move(self: *Self, where: Direction) void {
+    const direction = switch (where) {
+        .forward => self.direction,
+        .backward => self.direction * zmath.f32x4s(-1.0),
+        .left => zmath.cross3(self.direction, UP),
+        .right => zmath.cross3(self.direction, UP) * zmath.f32x4s(-1.0),
+        .up => UP,
+        .down => UP * zmath.f32x4s(-1.0),
+    };
 
-pub fn moveBackward(self: *Self) void {
-    const delta = self.direction * zmath.f32x4s(self.move_speed);
-    self.velocity -= delta;
-}
-
-pub fn moveRight(self: *Self) void {
-    const right = zmath.cross3(self.direction, UP);
-    const delta = right * zmath.f32x4s(self.move_speed);
-    self.velocity -= delta;
-}
-
-pub fn moveLeft(self: *Self) void {
-    const right = zmath.cross3(self.direction, UP);
-    const delta = right * zmath.f32x4s(self.move_speed);
+    const delta = direction * zmath.f32x4s(self.move_speed);
     self.velocity += delta;
 }
 
