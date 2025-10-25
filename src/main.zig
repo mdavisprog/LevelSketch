@@ -216,20 +216,22 @@ fn updateCamera(window: *zglfw.Window, cursor_: Cursor, delta_time: f32) void {
     const left = window.getKey(zglfw.Key.a);
 
     if (forward == zglfw.Action.press) {
-        camera.moveForward(delta_time);
+        camera.moveForward();
     }
 
     if (backward == zglfw.Action.press) {
-        camera.moveBackward(delta_time);
+        camera.moveBackward();
     }
 
     if (right == zglfw.Action.press) {
-        camera.moveRight(delta_time);
+        camera.moveRight();
     }
 
     if (left == zglfw.Action.press) {
-        camera.moveLeft(delta_time);
+        camera.moveLeft();
     }
+
+    camera.update(delta_time);
 
     if (cursor_.pressed(Cursor.Button.right)) {
         const delta = cursor_.delta();
