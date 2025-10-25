@@ -24,8 +24,8 @@ pub const Layout = struct {
     pub fn init() Layout {
         var data = std.mem.zeroes(zbgfx.bgfx.VertexLayout);
         data.begin(zbgfx.bgfx.RendererType.Noop)
-            .add(zbgfx.bgfx.Attrib.Position, 3, zbgfx.bgfx.AttribType.Float, false, false)
-            .add(zbgfx.bgfx.Attrib.Color0, 4, zbgfx.bgfx.AttribType.Uint8, true, true)
+            .add(.Position, 3, .Float, false, false)
+            .add(.Color0, 4, .Uint8, true, true)
             .end();
 
         return Layout{

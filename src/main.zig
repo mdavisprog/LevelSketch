@@ -59,7 +59,7 @@ pub fn main() !void {
     bgfx_init.debug = true;
 
     if (builtin.target.os.tag == .windows) {
-        bgfx_init.type = zbgfx.bgfx.RendererType.Direct3D12;
+        bgfx_init.type = .Direct3D12;
     }
 
     var bgfx_callbacks = zbgfx.callbacks.CCallbackInterfaceT{
@@ -184,13 +184,13 @@ fn updateCursor(window: *zglfw.Window, target: *Cursor) void {
     const cursor_pos = window.getCursorPos();
     target.update(@intFromFloat(cursor_pos[0]), @intFromFloat(cursor_pos[1]));
 
-    const left = zglfw.getMouseButton(window, zglfw.MouseButton.left);
-    const middle = zglfw.getMouseButton(window, zglfw.MouseButton.middle);
-    const right = zglfw.getMouseButton(window, zglfw.MouseButton.right);
+    const left = zglfw.getMouseButton(window, .left);
+    const middle = zglfw.getMouseButton(window, .middle);
+    const right = zglfw.getMouseButton(window, .right);
 
-    updateCursorButton(target, zglfw.MouseButton.left, left);
-    updateCursorButton(target, zglfw.MouseButton.middle, middle);
-    updateCursorButton(target, zglfw.MouseButton.right, right);
+    updateCursorButton(target, .left, left);
+    updateCursorButton(target, .middle, middle);
+    updateCursorButton(target, .right, right);
 }
 
 fn updateCursorButton(target: *Cursor, button: zglfw.MouseButton, action: zglfw.Action) void {
