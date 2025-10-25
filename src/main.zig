@@ -13,10 +13,12 @@ const commandline = core.commandline;
 
 const Camera = render.Camera;
 const Vertex = render.Vertex;
+const View = render.View;
 
 var camera: Camera = undefined;
 var camera_rotating = false;
 var cursor: Cursor = .{};
+var view_world: View = undefined;
 
 pub fn main() !void {
     std.log.info("Welcome to LevelSketch!", .{});
@@ -103,14 +105,6 @@ pub fn main() !void {
         .position = zmath.f32x4(0.0, 0.0, -3.0, 1.0),
     };
 
-    const aspect = @as(f32, @floatFromInt(framebuffer_size[0])) / @as(f32, @floatFromInt(framebuffer_size[1]));
-    const projection = zmath.perspectiveFovLh(
-        std.math.degreesToRadians(60.0),
-        aspect,
-        0.1,
-        100.0,
-    );
-
     var shader_program = render.shaders.Program{};
     _ = try shader_program.build(
         allocator,
@@ -130,13 +124,11 @@ pub fn main() !void {
         bgfx_init.resolution.format,
     );
 
-    zbgfx.bgfx.setViewClear(
-        0,
-        zbgfx.bgfx.ClearFlags_Color | zbgfx.bgfx.ClearFlags_Depth,
-        0x303030FF,
-        1.0,
-        0,
-    );
+    const aspect = @as(f32, @floatFromInt(framebuffer_size[0])) / @as(f32, @floatFromInt(framebuffer_size[1]));
+    view_world = .init(0x303030FF, true);
+    view_world
+        .setPerspective(60.0, aspect)
+        .clear();
 
     const state = zbgfx.bgfx.StateFlags_WriteRgb |
         zbgfx.bgfx.StateFlags_WriteA |
@@ -158,17 +150,15 @@ pub fn main() !void {
         updateCursor(window, &cursor);
         try updateCamera(window, cursor, delta_time);
 
-        const view = camera.toLookAt();
         const size = window.getFramebufferSize();
-        zbgfx.bgfx.setViewTransform(0, &zmath.matToArr(view), &zmath.matToArr(projection));
-        zbgfx.bgfx.setViewRect(0, 0, 0, @intCast(size[0]), @intCast(size[1]));
+        view_world.set(camera, @intCast(size[0]), @intCast(size[1]));
 
         zbgfx.bgfx.setVertexBuffer(0, vertex_buffer, 0, vertices.len);
         zbgfx.bgfx.setIndexBuffer(index_buffer, 0, indices.len);
         zbgfx.bgfx.setState(state, 0);
-        zbgfx.bgfx.submit(0, shader_program.handle, 0, 255);
+        zbgfx.bgfx.submit(view_world.id, shader_program.handle, 0, 255);
 
-        zbgfx.bgfx.touch(0);
+        view_world.touch();
         _ = zbgfx.bgfx.frame(false);
     }
 }
