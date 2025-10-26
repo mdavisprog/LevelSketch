@@ -1,7 +1,7 @@
 const std = @import("std");
 const zon = @import("build.zig.zon");
 
-pub fn build(b: *std.Build) void {
+pub fn build(b: *std.Build) !void {
     const version_string = zon.version;
     const version = std.SemanticVersion.parse(version_string) catch |err| {
         std.log.err("Failed to parse semantic version from zon.\n{any}", .{err});
@@ -14,70 +14,47 @@ pub fn build(b: *std.Build) void {
     version_options.addOption(usize, "minor", version.minor);
     version_options.addOption(usize, "patch", version.patch);
 
-    const target = b.standardTargetOptions(.{});
-    const optimize = b.standardOptimizeOption(.{});
+    var gpa = std.heap.GeneralPurposeAllocator(.{}).init;
+    const allocator = gpa.allocator();
 
-    const zglfw = b.dependency("zglfw", .{
-        .target = target,
-        .optimize = optimize,
-    });
+    var builder = Builder.init(allocator, b);
+    defer builder.deinit();
 
-    const zbgfx = b.dependency("zbgfx", .{
-        .target = target,
-        .optimize = optimize,
-    });
+    try builder.addDependency("zglfw", "root");
+    try builder.addDependency("zbgfx", "zbgfx");
+    try builder.addDependency("zmath", "root");
 
-    const zmath = b.dependency("zmath", .{
-        .target = target,
-        .optimize = optimize,
-    });
-
-    const core = b.createModule(.{
-        .target = target,
-        .optimize = optimize,
-        .root_source_file = b.path("src/core/root.zig"),
-    });
-
-    const render = b.createModule(.{
-        .target = target,
-        .optimize = optimize,
-        .root_source_file = b.path("src/render/root.zig"),
-        .imports = &.{
-            .{ .name = "zbgfx", .module = zbgfx.module("zbgfx") },
-            .{ .name = "zmath", .module = zmath.module("root") },
-        },
+    try builder.addModule("core", "src/core/root.zig", &.{});
+    try builder.addModule("render", "src/render/root.zig", &.{
+        "zbgfx",
+        "zmath",
     });
 
     const exe = b.addExecutable(.{
         .name = "LevelSketch",
         .root_module = b.createModule(.{
             .root_source_file = b.path("src/main.zig"),
-            .target = target,
-            .optimize = optimize,
-            .imports = &.{
-                .{ .name = "core", .module = core },
-                .{ .name = "render", .module = render },
-                .{ .name = "zglfw", .module = zglfw.module("root") },
-                .{ .name = "zbgfx", .module = zbgfx.module("zbgfx") },
-                .{ .name = "zmath", .module = zmath.module("root") },
-            },
+            .target = builder.target,
+            .optimize = builder.optimize,
         }),
     });
+    builder.importAll(exe);
     exe.root_module.addOptions("version", version_options);
+    exe.root_module.addIncludePath(b.path("external"));
 
-    if (target.result.os.tag != .emscripten) {
-        exe.linkLibrary(zglfw.artifact("glfw"));
+    if (builder.target.result.os.tag != .emscripten) {
+        exe.linkLibrary(try builder.dependencyArtifact("zglfw", "glfw"));
     }
 
-    exe.linkLibrary(zbgfx.artifact("bgfx"));
+    exe.linkLibrary(try builder.dependencyArtifact("zbgfx", "bgfx"));
 
     b.installArtifact(exe);
-    b.installArtifact(zbgfx.artifact("shaderc"));
+    b.installArtifact(try builder.dependencyArtifact("zbgfx", "shaderc"));
 
     const install_shaders = b.addInstallDirectory(.{
         .install_dir = .bin,
         .install_subdir = "assets/shaders/include",
-        .source_dir = zbgfx.path("shaders"),
+        .source_dir = try builder.dependencyPath("zbgfx", "shaders"),
     });
     exe.step.dependOn(&install_shaders.step);
 
@@ -98,7 +75,7 @@ pub fn build(b: *std.Build) void {
     }
 
     const render_tests = b.addTest(.{
-        .root_module = render,
+        .root_module = try builder.getModule("render"),
     });
 
     const exe_tests = b.addTest(.{
@@ -112,3 +89,118 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_render_tests.step);
     test_step.dependOn(&run_exe_tests.step);
 }
+
+const Builder = struct {
+    const Self = @This();
+
+    const Error = error{
+        DependencyDoesntExist,
+        ModuleDoesntExist,
+    };
+
+    const Dependency = struct {
+        root: []const u8,
+        dependency: *std.Build.Dependency,
+    };
+
+    const DependencyMap = std.StringHashMap(Dependency);
+    const ModuleMap = std.StringHashMap(*std.Build.Module);
+
+    build: *std.Build,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+    dependencies: DependencyMap,
+    modules: ModuleMap,
+
+    pub fn init(allocator: std.mem.Allocator, build_in: *std.Build) Self {
+        return Self{
+            .build = build_in,
+            .target = build_in.standardTargetOptions(.{}),
+            .optimize = build_in.standardOptimizeOption(.{}),
+            .dependencies = DependencyMap.init(allocator),
+            .modules = ModuleMap.init(allocator),
+        };
+    }
+
+    pub fn deinit(self: *Self) void {
+        self.dependencies.deinit();
+        self.modules.deinit();
+    }
+
+    pub fn addDependency(self: *Self, name: []const u8, root: []const u8) !void {
+        const dependency = self.build.dependency(name, .{
+            .target = self.target,
+            .optimize = self.optimize,
+        });
+        try self.dependencies.put(name, .{
+            .root = root,
+            .dependency = dependency,
+        });
+    }
+
+    pub fn addModule(
+        self: *Self,
+        name: []const u8,
+        root: []const u8,
+        imports: []const []const u8,
+    ) !void {
+        var module = self.build.createModule(.{
+            .target = self.target,
+            .optimize = self.optimize,
+            .root_source_file = self.build.path(root),
+        });
+
+        for (imports) |import| {
+            if (self.dependencies.get(import)) |dep| {
+                module.addImport(import, dep.dependency.module(dep.root));
+            } else if (self.modules.get(import)) |mod| {
+                module.addImport(import, mod);
+            } else {
+                return Error.DependencyDoesntExist;
+            }
+        }
+
+        try self.modules.put(name, module);
+    }
+
+    pub fn getModule(self: Self, name: []const u8) !*std.Build.Module {
+        if (self.modules.get(name)) |module| {
+            return module;
+        }
+
+        return Error.ModuleDoesntExist;
+    }
+
+    pub fn importAll(self: Self, compile: *std.Build.Step.Compile) void {
+        var dependencies = self.dependencies.iterator();
+        while (dependencies.next()) |entry| {
+            const info = entry.value_ptr;
+            compile.root_module.addImport(entry.key_ptr.*, info.dependency.module(info.root));
+        }
+
+        var modules = self.modules.iterator();
+        while (modules.next()) |entry| {
+            compile.root_module.addImport(entry.key_ptr.*, entry.value_ptr.*);
+        }
+    }
+
+    pub fn dependencyArtifact(
+        self: Self,
+        name: []const u8,
+        artifact: []const u8,
+    ) !*std.Build.Step.Compile {
+        if (self.dependencies.get(name)) |dependency| {
+            return dependency.dependency.artifact(artifact);
+        }
+
+        return Error.DependencyDoesntExist;
+    }
+
+    pub fn dependencyPath(self: Self, name: []const u8, path: []const u8) !std.Build.LazyPath {
+        if (self.dependencies.get(name)) |dependency| {
+            return dependency.dependency.path(path);
+        }
+
+        return Error.DependencyDoesntExist;
+    }
+};
