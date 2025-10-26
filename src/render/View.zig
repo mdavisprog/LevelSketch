@@ -42,14 +42,35 @@ pub fn touch(self: Self) void {
     zbgfx.bgfx.touch(self.id);
 }
 
-pub fn setPerspective(self: *Self, fov: f32, aspect: f32) *Self {
+pub fn setPerspective(self: *Self, fov: f32, aspect: f32) void {
     const fov_rad = std.math.degreesToRadians(fov);
     self.projection = zmath.perspectiveFovLh(fov_rad, aspect, 0.1, 100.0);
-    return self;
 }
 
-pub fn set(self: Self, camera: Camera, width: u16, height: u16) void {
-    const view_matrix = camera.toLookAt();
+pub fn setOrthographic(self: *Self, width: f32, height: f32) void {
+    self.projection = zmath.orthographicOffCenterLh(
+        0.0,
+        width,
+        0.0,
+        height,
+        -1.0,
+        1.0,
+    );
+}
+
+pub fn setMode(self: Self, mode: zbgfx.bgfx.ViewMode) void {
+    zbgfx.bgfx.setViewMode(self.id, mode);
+}
+
+pub fn submitPerspective(self: Self, camera: Camera, width: u16, height: u16) void {
+    self.submit(camera.toLookAt(), width, height);
+}
+
+pub fn submitOrthographic(self: Self, width: u16, height: u16) void {
+    self.submit(zmath.identity(), width, height);
+}
+
+fn submit(self: Self, view_matrix: zmath.Mat, width: u16, height: u16) void {
     zbgfx.bgfx.setViewTransform(
         self.id,
         &zmath.matToArr(view_matrix),

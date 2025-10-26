@@ -19,6 +19,7 @@ var camera: Camera = undefined;
 var camera_rotating = false;
 var cursor: Cursor = .{};
 var view_world: View = undefined;
+var view_ui: View = undefined;
 
 pub fn main() !void {
     std.log.info("Welcome to LevelSketch!", .{});
@@ -87,6 +88,15 @@ pub fn main() !void {
 
     const indices: [3]u16 = .{ 0, 1, 2 };
 
+    const ui_vertices: [4]Vertex = .{
+        .init(0.0, 0.0, 0.0, 0xFFFF0000),
+        .init(0.0, 50.0, 0.0, 0xFFFF0000),
+        .init(50.0, 50.0, 0.0, 0xFFFF0000),
+        .init(50.0, 0.0, 0.0, 0xFFFF0000),
+    };
+
+    const ui_indices: [6]u16 = .{ 0, 1, 2, 0, 2, 3 };
+
     const layout = Vertex.Layout.init();
     const vertex_buffer = zbgfx.bgfx.createVertexBuffer(
         zbgfx.bgfx.makeRef(&vertices, vertices.len * @sizeOf(Vertex)),
@@ -100,6 +110,19 @@ pub fn main() !void {
         zbgfx.bgfx.BufferFlags_None,
     );
     defer zbgfx.bgfx.destroyIndexBuffer(index_buffer);
+
+    const ui_vertex_buffer = zbgfx.bgfx.createVertexBuffer(
+        zbgfx.bgfx.makeRef(&ui_vertices, ui_vertices.len * @sizeOf(Vertex)),
+        &layout.data,
+        zbgfx.bgfx.BufferFlags_None,
+    );
+    defer zbgfx.bgfx.destroyVertexBuffer(ui_vertex_buffer);
+
+    const ui_index_buffer = zbgfx.bgfx.createIndexBuffer(
+        zbgfx.bgfx.makeRef(&ui_indices, ui_indices.len * @sizeOf(u16)),
+        zbgfx.bgfx.BufferFlags_None,
+    );
+    defer zbgfx.bgfx.destroyIndexBuffer(ui_index_buffer);
 
     camera = .{
         .position = zmath.f32x4(0.0, 0.0, -3.0, 1.0),
@@ -124,17 +147,28 @@ pub fn main() !void {
         bgfx_init.resolution.format,
     );
 
-    const aspect = @as(f32, @floatFromInt(framebuffer_size[0])) / @as(f32, @floatFromInt(framebuffer_size[1]));
+    const aspect = @as(f32, @floatFromInt(framebuffer_size[0])) /
+        @as(f32, @floatFromInt(framebuffer_size[1]));
     view_world = .init(0x303030FF, true);
-    view_world
-        .setPerspective(60.0, aspect)
-        .clear();
+    view_world.setPerspective(60.0, aspect);
+    view_world.clear();
+
+    view_ui = .init(0x000000FF, false);
+    view_ui.setOrthographic(
+        @floatFromInt(framebuffer_size[0]),
+        @floatFromInt(framebuffer_size[1]),
+    );
+    view_ui.setMode(.Sequential);
 
     const state = zbgfx.bgfx.StateFlags_WriteRgb |
         zbgfx.bgfx.StateFlags_WriteA |
         zbgfx.bgfx.StateFlags_WriteZ |
         zbgfx.bgfx.StateFlags_DepthTestLess |
         zbgfx.bgfx.StateFlags_CullCw |
+        zbgfx.bgfx.StateFlags_Msaa;
+
+    const ui_state = zbgfx.bgfx.StateFlags_WriteRgb |
+        zbgfx.bgfx.StateFlags_WriteA |
         zbgfx.bgfx.StateFlags_Msaa;
 
     // Timing
@@ -151,14 +185,22 @@ pub fn main() !void {
         try updateCamera(window, cursor, delta_time);
 
         const size = window.getFramebufferSize();
-        view_world.set(camera, @intCast(size[0]), @intCast(size[1]));
+        view_world.submitPerspective(camera, @intCast(size[0]), @intCast(size[1]));
 
         zbgfx.bgfx.setVertexBuffer(0, vertex_buffer, 0, vertices.len);
         zbgfx.bgfx.setIndexBuffer(index_buffer, 0, indices.len);
         zbgfx.bgfx.setState(state, 0);
         zbgfx.bgfx.submit(view_world.id, shader_program.handle, 0, 255);
-
         view_world.touch();
+
+        view_ui.submitOrthographic(@intCast(size[0]), @intCast(size[1]));
+
+        zbgfx.bgfx.setVertexBuffer(0, ui_vertex_buffer, 0, ui_vertices.len);
+        zbgfx.bgfx.setIndexBuffer(ui_index_buffer, 0, ui_indices.len);
+        zbgfx.bgfx.setState(ui_state, 0);
+        zbgfx.bgfx.submit(view_ui.id, shader_program.handle, 0, 255);
+        view_ui.touch();
+
         _ = zbgfx.bgfx.frame(false);
     }
 }
