@@ -3,6 +3,7 @@ const std = @import("std");
 const zbgfx = @import("zbgfx");
 
 const Self = @This();
+const SHADER_PATH = "assets/shaders";
 
 pub const Paths = struct {
     varying_file_name: []const u8,
@@ -28,7 +29,7 @@ pub fn build(self: *Self, allocator: std.mem.Allocator, paths: Paths) !zbgfx.bgf
     const exe_dir = try std.fs.selfExeDirPathAlloc(allocator);
     defer allocator.free(exe_dir);
 
-    const path = try std.fs.path.join(allocator, &.{ exe_dir, "shaders", "include" });
+    const path = try std.fs.path.join(allocator, &.{ exe_dir, SHADER_PATH, "include" });
     defer allocator.free(path);
 
     const renderer_type = zbgfx.bgfx.getRendererType();
@@ -80,7 +81,7 @@ fn getContents(filename: []const u8, allocator: std.mem.Allocator) ![]u8 {
     const exe_dir = try std.fs.selfExeDirPathAlloc(allocator);
     defer allocator.free(exe_dir);
 
-    const path = try std.fs.path.join(allocator, &.{ exe_dir, "shaders", filename });
+    const path = try std.fs.path.join(allocator, &.{ exe_dir, SHADER_PATH, filename });
     defer allocator.free(path);
 
     const file = try std.fs.openFileAbsolute(path, .{});

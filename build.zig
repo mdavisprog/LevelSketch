@@ -76,17 +76,17 @@ pub fn build(b: *std.Build) void {
 
     const install_shaders = b.addInstallDirectory(.{
         .install_dir = .bin,
-        .install_subdir = "shaders/include",
+        .install_subdir = "assets/shaders/include",
         .source_dir = zbgfx.path("shaders"),
     });
     exe.step.dependOn(&install_shaders.step);
 
-    const app_shaders = b.addInstallDirectory(.{
+    const app_assets = b.addInstallDirectory(.{
         .install_dir = .bin,
-        .install_subdir = "shaders",
-        .source_dir = b.path("assets/shaders"),
+        .install_subdir = "assets",
+        .source_dir = b.path("assets"),
     });
-    exe.step.dependOn(&app_shaders.step);
+    exe.step.dependOn(&app_assets.step);
 
     const run_step = b.step("run", "Run the app");
     const run_cmd = b.addRunArtifact(exe);
