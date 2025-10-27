@@ -25,7 +25,9 @@ pub fn build(b: *std.Build) !void {
     try builder.addDependency("zmath", "root");
 
     try builder.addModule("core", "src/core/root.zig", &.{});
+    try builder.addModule("io", "src/io/root.zig", &.{});
     try builder.addModule("render", "src/render/root.zig", &.{
+        "io",
         "zbgfx",
         "zmath",
     });

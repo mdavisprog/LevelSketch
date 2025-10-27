@@ -1,4 +1,5 @@
 const builtin = @import("builtin");
+const io = @import("io");
 const std = @import("std");
 const zbgfx = @import("zbgfx");
 
@@ -81,16 +82,10 @@ fn getContents(filename: []const u8, allocator: std.mem.Allocator) ![]u8 {
     const exe_dir = try std.fs.selfExeDirPathAlloc(allocator);
     defer allocator.free(exe_dir);
 
-    const path = try std.fs.path.join(allocator, &.{ exe_dir, SHADER_PATH, filename });
+    const path = try io.exeRelativePath(allocator, &.{ SHADER_PATH, filename });
     defer allocator.free(path);
 
-    const file = try std.fs.openFileAbsolute(path, .{});
-    defer file.close();
-
-    const file_size = try file.getEndPos();
-    var buffer: [1024]u8 = undefined;
-    var reader = file.reader(&buffer);
-    return try reader.interface.readAlloc(allocator, file_size);
+    return try io.getContents(allocator, path);
 }
 
 fn getShaderExePath(allocator: std.mem.Allocator) ![]u8 {
