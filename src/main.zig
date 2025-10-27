@@ -2,7 +2,9 @@ const builtin = @import("builtin");
 const callbacks = @import("callbacks.zig");
 const core = @import("core");
 const Cursor = @import("Cursor.zig");
+const io = @import("io");
 const render = @import("render");
+const stb = @import("stb");
 const std = @import("std");
 const version = @import("version");
 const zbgfx = @import("zbgfx");
@@ -36,6 +38,15 @@ pub fn main() !void {
 
     try commandline.init(allocator);
     defer commandline.deinit(allocator);
+
+    const info_tex_path = try io.exeRelativePath(allocator, &.{"assets/textures/info.png"});
+    defer allocator.free(info_tex_path);
+
+    const info_tex = try io.getContents(allocator, info_tex_path);
+    defer allocator.free(info_tex);
+
+    const info_tex_data = try stb.image.load_from_memory(info_tex);
+    defer stb.image.free(info_tex_data);
 
     try zglfw.init();
     defer zglfw.terminate();
@@ -127,6 +138,21 @@ pub fn main() !void {
     camera = .{
         .position = zmath.f32x4(0.0, 0.0, -3.0, 1.0),
     };
+
+    const mem = zbgfx.bgfx.makeRef(
+        info_tex_data.data,
+        @intCast(info_tex_data.size()),
+    );
+    const info_tex_handle = zbgfx.bgfx.createTexture2D(
+        info_tex_data.width,
+        info_tex_data.height,
+        false,
+        1,
+        zbgfx.bgfx.TextureFormat.RGBA8,
+        zbgfx.bgfx.TextureFlags_None,
+        mem,
+    );
+    defer zbgfx.bgfx.destroyTexture(info_tex_handle);
 
     var shader_program = render.shaders.Program{};
     _ = try shader_program.build(

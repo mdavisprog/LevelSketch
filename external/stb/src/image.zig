@@ -3,6 +3,13 @@ pub const Image = struct {
     width: u16,
     height: u16,
     channels: u8,
+
+    pub fn size(self: Image) usize {
+        const width: usize = @intCast(self.width);
+        const height: usize = @intCast(self.height);
+        const channels: usize = @intCast(self.channels);
+        return width * height * channels;
+    }
 };
 
 pub const Error = error{
