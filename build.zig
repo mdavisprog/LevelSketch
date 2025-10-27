@@ -20,6 +20,7 @@ pub fn build(b: *std.Build) !void {
     var builder = Builder.init(allocator, b);
     defer builder.deinit();
 
+    try builder.addDependency("stb", "root");
     try builder.addDependency("zglfw", "root");
     try builder.addDependency("zbgfx", "zbgfx");
     try builder.addDependency("zmath", "root");

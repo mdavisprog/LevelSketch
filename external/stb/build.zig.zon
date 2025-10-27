@@ -1,0 +1,13 @@
+.{
+    .name = .stb,
+    .version = "0.1.0",
+    .minimum_zig_version = "0.15.2",
+    .fingerprint = 0x4119b39de5e913ae,
+    .dependencies = .{},
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "includes",
+    },
+}
