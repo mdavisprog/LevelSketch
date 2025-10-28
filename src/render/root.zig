@@ -1,4 +1,5 @@
 pub const Camera = @import("Camera.zig");
+pub const RenderBuffer = @import("RenderBuffer.zig");
 pub const shaders = @import("shaders/root.zig");
 pub const Vertex = @import("Vertex.zig");
 pub const View = @import("View.zig");

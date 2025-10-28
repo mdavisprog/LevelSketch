@@ -14,6 +14,7 @@ const zmath = @import("zmath");
 const commandline = core.commandline;
 
 const Camera = render.Camera;
+const RenderBuffer = render.RenderBuffer;
 const Vertex = render.Vertex;
 const View = render.View;
 
@@ -108,32 +109,17 @@ pub fn main() !void {
 
     const ui_indices: [6]u16 = .{ 0, 1, 2, 0, 2, 3 };
 
-    const layout = Vertex.Layout.init();
-    const vertex_buffer = zbgfx.bgfx.createVertexBuffer(
-        zbgfx.bgfx.makeRef(&vertices, vertices.len * @sizeOf(Vertex)),
-        &layout.data,
-        zbgfx.bgfx.BufferFlags_None,
-    );
-    defer zbgfx.bgfx.destroyVertexBuffer(vertex_buffer);
+    var world_buffer: RenderBuffer = .init();
+    defer world_buffer.deinit();
 
-    const index_buffer = zbgfx.bgfx.createIndexBuffer(
-        zbgfx.bgfx.makeRef(&indices, vertices.len * @sizeOf(u16)),
-        zbgfx.bgfx.BufferFlags_None,
-    );
-    defer zbgfx.bgfx.destroyIndexBuffer(index_buffer);
+    world_buffer.setVertices(&vertices);
+    world_buffer.setIndices16(&indices);
 
-    const ui_vertex_buffer = zbgfx.bgfx.createVertexBuffer(
-        zbgfx.bgfx.makeRef(&ui_vertices, ui_vertices.len * @sizeOf(Vertex)),
-        &layout.data,
-        zbgfx.bgfx.BufferFlags_None,
-    );
-    defer zbgfx.bgfx.destroyVertexBuffer(ui_vertex_buffer);
+    var ui_buffer: RenderBuffer = .init();
+    defer ui_buffer.deinit();
 
-    const ui_index_buffer = zbgfx.bgfx.createIndexBuffer(
-        zbgfx.bgfx.makeRef(&ui_indices, ui_indices.len * @sizeOf(u16)),
-        zbgfx.bgfx.BufferFlags_None,
-    );
-    defer zbgfx.bgfx.destroyIndexBuffer(ui_index_buffer);
+    ui_buffer.setVertices(&ui_vertices);
+    ui_buffer.setIndices16(&ui_indices);
 
     camera = .{
         .position = zmath.f32x4(0.0, 0.0, -3.0, 1.0),
@@ -213,17 +199,13 @@ pub fn main() !void {
         const size = window.getFramebufferSize();
         view_world.submitPerspective(camera, @intCast(size[0]), @intCast(size[1]));
 
-        zbgfx.bgfx.setVertexBuffer(0, vertex_buffer, 0, vertices.len);
-        zbgfx.bgfx.setIndexBuffer(index_buffer, 0, indices.len);
-        zbgfx.bgfx.setState(state, 0);
+        world_buffer.bind(state);
         zbgfx.bgfx.submit(view_world.id, shader_program.handle, 0, 255);
         view_world.touch();
 
         view_ui.submitOrthographic(@intCast(size[0]), @intCast(size[1]));
 
-        zbgfx.bgfx.setVertexBuffer(0, ui_vertex_buffer, 0, ui_vertices.len);
-        zbgfx.bgfx.setIndexBuffer(ui_index_buffer, 0, ui_indices.len);
-        zbgfx.bgfx.setState(ui_state, 0);
+        ui_buffer.bind(ui_state);
         zbgfx.bgfx.submit(view_ui.id, shader_program.handle, 0, 255);
         view_ui.touch();
 
