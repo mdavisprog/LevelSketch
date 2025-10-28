@@ -143,6 +143,21 @@ pub fn main() !void {
     );
     defer zbgfx.bgfx.destroyTexture(info_tex_handle);
 
+    const texture_default: [4]u8 = .{ 255, 255, 255, 255 };
+    const texture_default_handle = zbgfx.bgfx.createTexture2D(
+        1,
+        1,
+        false,
+        1,
+        zbgfx.bgfx.TextureFormat.RGBA8,
+        zbgfx.bgfx.TextureFlags_None,
+        zbgfx.bgfx.makeRef(
+            &texture_default,
+            @intCast(texture_default.len),
+        ),
+    );
+    defer zbgfx.bgfx.destroyTexture(texture_default_handle);
+
     var shader_program = render.shaders.Program{};
     _ = try shader_program.build(
         allocator,
@@ -206,7 +221,7 @@ pub fn main() !void {
         const size = window.getFramebufferSize();
         view_world.submitPerspective(camera, @intCast(size[0]), @intCast(size[1]));
 
-        zbgfx.bgfx.setTexture(0, sampler_tex_color, info_tex_handle, 0);
+        zbgfx.bgfx.setTexture(0, sampler_tex_color, texture_default_handle, 0);
         world_buffer.bind(state);
         zbgfx.bgfx.submit(view_world.id, shader_program.handle, 0, 255);
         view_world.touch();
