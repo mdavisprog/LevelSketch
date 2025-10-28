@@ -6,13 +6,17 @@ const Self = @This();
 x: f32 = 0.0,
 y: f32 = 0.0,
 z: f32 = 0.0,
+u: f32 = 0.0,
+v: f32 = 0.0,
 abgr: u32 = 0xFFFFFFFF,
 
-pub fn init(x: f32, y: f32, z: f32, abgr: u32) Self {
+pub fn init(x: f32, y: f32, z: f32, u: f32, v: f32, abgr: u32) Self {
     return Self{
         .x = x,
         .y = y,
         .z = z,
+        .u = u,
+        .v = v,
         .abgr = abgr,
     };
 }
@@ -25,6 +29,7 @@ pub const Layout = struct {
         var data = std.mem.zeroes(zbgfx.bgfx.VertexLayout);
         data.begin(zbgfx.bgfx.RendererType.Noop)
             .add(.Position, 3, .Float, false, false)
+            .add(.TexCoord0, 2, .Float, true, false)
             .add(.Color0, 4, .Uint8, true, true)
             .end();
 

@@ -93,18 +93,18 @@ pub fn main() !void {
     printBGFXInfo();
 
     const vertices: [3]Vertex = .{
-        .init(-0.5, -0.5, 0.5, 0xFF0000FF),
-        .init(0.5, -0.5, 0.5, 0xFF00FF00),
-        .init(0.0, 0.5, 0.5, 0xFFFF0000),
+        .init(-0.5, -0.5, 0.5, 0.0, 1.0, 0xFF0000FF),
+        .init(0.5, -0.5, 0.5, 1.0, 1.0, 0xFF00FF00),
+        .init(0.0, 0.5, 0.5, 0.5, 0.0, 0xFFFF0000),
     };
 
     const indices: [3]u16 = .{ 0, 1, 2 };
 
     const ui_vertices: [4]Vertex = .{
-        .init(0.0, 0.0, 0.0, 0xFFFF0000),
-        .init(0.0, 50.0, 0.0, 0xFFFF0000),
-        .init(50.0, 50.0, 0.0, 0xFFFF0000),
-        .init(50.0, 0.0, 0.0, 0xFFFF0000),
+        .init(0.0, 0.0, 0.0, 0.0, 0.0, 0xFFFFFFFF),
+        .init(0.0, 50.0, 0.0, 0.0, 1.0, 0xFFFFFFFF),
+        .init(50.0, 50.0, 0.0, 1.0, 1.0, 0xFFFFFFFF),
+        .init(50.0, 0.0, 0.0, 1.0, 0.0, 0xFFFFFFFF),
     };
 
     const ui_indices: [6]u16 = .{ 0, 1, 2, 0, 2, 3 };
@@ -120,6 +120,9 @@ pub fn main() !void {
 
     ui_buffer.setVertices(&ui_vertices);
     ui_buffer.setIndices16(&ui_indices);
+
+    const sampler_tex_color = zbgfx.bgfx.createUniform("s_tex_color", .Sampler, 1);
+    defer zbgfx.bgfx.destroyUniform(sampler_tex_color);
 
     camera = .{
         .position = zmath.f32x4(0.0, 0.0, -3.0, 1.0),
@@ -181,7 +184,11 @@ pub fn main() !void {
 
     const ui_state = zbgfx.bgfx.StateFlags_WriteRgb |
         zbgfx.bgfx.StateFlags_WriteA |
-        zbgfx.bgfx.StateFlags_Msaa;
+        zbgfx.bgfx.StateFlags_Msaa |
+        render.stateFlagsBlend(
+            zbgfx.bgfx.StateFlags_BlendSrcAlpha,
+            zbgfx.bgfx.StateFlags_BlendInvSrcAlpha,
+        );
 
     // Timing
     var last_time: f64 = 0.0;
@@ -195,6 +202,8 @@ pub fn main() !void {
 
         updateCursor(window, &cursor);
         try updateCamera(window, cursor, delta_time);
+
+        zbgfx.bgfx.setTexture(0, sampler_tex_color, info_tex_handle, 0);
 
         const size = window.getFramebufferSize();
         view_world.submitPerspective(camera, @intCast(size[0]), @intCast(size[1]));
