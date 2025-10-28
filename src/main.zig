@@ -203,17 +203,17 @@ pub fn main() !void {
         updateCursor(window, &cursor);
         try updateCamera(window, cursor, delta_time);
 
-        zbgfx.bgfx.setTexture(0, sampler_tex_color, info_tex_handle, 0);
-
         const size = window.getFramebufferSize();
         view_world.submitPerspective(camera, @intCast(size[0]), @intCast(size[1]));
 
+        zbgfx.bgfx.setTexture(0, sampler_tex_color, info_tex_handle, 0);
         world_buffer.bind(state);
         zbgfx.bgfx.submit(view_world.id, shader_program.handle, 0, 255);
         view_world.touch();
 
         view_ui.submitOrthographic(@intCast(size[0]), @intCast(size[1]));
 
+        zbgfx.bgfx.setTexture(0, sampler_tex_color, info_tex_handle, 0);
         ui_buffer.bind(ui_state);
         zbgfx.bgfx.submit(view_ui.id, shader_program.handle, 0, 255);
         view_ui.touch();
