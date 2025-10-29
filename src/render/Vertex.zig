@@ -40,5 +40,9 @@ pub const Layout = struct {
 };
 
 test "ensure layout" {
-    try std.testing.expectEqual(16, @sizeOf(Self));
+    // TODO: Try to get this to work. Currently running into a linker error when trying to
+    // reference 'zbgfx' properties.
+    //const layout: Self.Layout = .init();
+    //try std.testing.expectEqual(layout.data.stride, @sizeOf(Self));
+    try std.testing.expectEqual(24, @sizeOf(Self));
 }
