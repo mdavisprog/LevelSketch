@@ -46,6 +46,10 @@ pub fn free(image: Image) void {
     stbi_image_free(image.data);
 }
 
+pub fn free_data(data: []const u8) void {
+    stbi_image_free(data.ptr);
+}
+
 extern fn stbi_load_from_memory(
     buffer: [*]const u8,
     len: c_int,

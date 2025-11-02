@@ -15,6 +15,8 @@ const commandline = core.commandline;
 
 const Camera = render.Camera;
 const RenderBuffer = render.RenderBuffer;
+const Texture = render.Texture;
+const Textures = render.Textures;
 const Vertex = render.Vertex;
 const View = render.View;
 
@@ -43,14 +45,6 @@ pub fn main() !void {
     try stb.init(allocator);
     defer stb.deinit();
 
-    const info_tex_path = try io.exeRelativePath(allocator, &.{"assets/textures/info.png"});
-    defer allocator.free(info_tex_path);
-
-    const info_tex = try io.getContents(allocator, info_tex_path);
-    defer allocator.free(info_tex);
-
-    const info_tex_data = try stb.image.load_from_memory(info_tex);
-    defer stb.image.free(info_tex_data);
 
     try zglfw.init();
     defer zglfw.terminate();
@@ -95,6 +89,9 @@ pub fn main() !void {
 
     printBGFXInfo();
 
+    var textures: Textures = try .init(allocator);
+    defer textures.deinit();
+
     const vertices: [3]Vertex = .{
         .init(-0.5, -0.5, 0.5, 0.0, 1.0, 0xFF0000FF),
         .init(0.5, -0.5, 0.5, 1.0, 1.0, 0xFF00FF00),
@@ -131,35 +128,15 @@ pub fn main() !void {
         .position = zmath.f32x4(0.0, 0.0, -3.0, 1.0),
     };
 
-    const mem = zbgfx.bgfx.makeRef(
-        info_tex_data.data,
-        @intCast(info_tex_data.size()),
-    );
-    const info_tex_handle = zbgfx.bgfx.createTexture2D(
-        info_tex_data.width,
-        info_tex_data.height,
-        false,
-        1,
-        zbgfx.bgfx.TextureFormat.RGBA8,
-        zbgfx.bgfx.TextureFlags_None,
-        mem,
-    );
-    defer zbgfx.bgfx.destroyTexture(info_tex_handle);
+    const info_tex = try textures.load_image(allocator, "assets/textures/info.png");
 
     const texture_default: [4]u8 = .{ 255, 255, 255, 255 };
-    const texture_default_handle = zbgfx.bgfx.createTexture2D(
+    const default_tex = try textures.load_static_buffer(
+        &texture_default,
         1,
         1,
-        false,
-        1,
-        zbgfx.bgfx.TextureFormat.RGBA8,
-        zbgfx.bgfx.TextureFlags_None,
-        zbgfx.bgfx.makeRef(
-            &texture_default,
-            @intCast(texture_default.len),
-        ),
+        .rgba8,
     );
-    defer zbgfx.bgfx.destroyTexture(texture_default_handle);
 
     var shader_program = render.shaders.Program{};
     _ = try shader_program.build(
@@ -217,6 +194,7 @@ pub fn main() !void {
         last_time = current_time;
 
         zglfw.pollEvents();
+        textures.update();
 
         updateCursor(window, &cursor);
         try updateCamera(window, cursor, delta_time);
@@ -224,14 +202,14 @@ pub fn main() !void {
         const size = window.getFramebufferSize();
         view_world.submitPerspective(camera, @intCast(size[0]), @intCast(size[1]));
 
-        zbgfx.bgfx.setTexture(0, sampler_tex_color, texture_default_handle, 0);
+        try default_tex.bind(sampler_tex_color, 0);
         world_buffer.bind(state);
         zbgfx.bgfx.submit(view_world.id, shader_program.handle, 0, 255);
         view_world.touch();
 
         view_ui.submitOrthographic(@intCast(size[0]), @intCast(size[1]));
 
-        zbgfx.bgfx.setTexture(0, sampler_tex_color, info_tex_handle, 0);
+        try info_tex.bind(sampler_tex_color, 0);
         ui_buffer.bind(ui_state);
         zbgfx.bgfx.submit(view_ui.id, shader_program.handle, 0, 255);
         view_ui.touch();

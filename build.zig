@@ -29,6 +29,7 @@ pub fn build(b: *std.Build) !void {
     try builder.addModule("io", "src/io/root.zig", &.{});
     try builder.addModule("render", "src/render/root.zig", &.{
         "io",
+        "stb",
         "zbgfx",
         "zmath",
     });
