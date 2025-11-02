@@ -40,6 +40,9 @@ pub fn main() !void {
     try commandline.init(allocator);
     defer commandline.deinit(allocator);
 
+    try stb.init(allocator);
+    defer stb.deinit();
+
     const info_tex_path = try io.exeRelativePath(allocator, &.{"assets/textures/info.png"});
     defer allocator.free(info_tex_path);
 
