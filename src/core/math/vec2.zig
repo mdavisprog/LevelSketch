@@ -2,6 +2,8 @@ pub fn Vec2(comptime T: type) type {
     return struct {
         const Self = @This();
 
+        pub const ZERO: Self = .{ .x = 0, .y = 0 };
+
         x: T = 0,
         y: T = 0,
 

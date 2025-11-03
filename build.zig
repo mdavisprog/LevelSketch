@@ -21,6 +21,7 @@ pub fn build(b: *std.Build) !void {
     defer builder.deinit();
 
     try builder.addDependency("stb", "root");
+    try builder.addDependency("TrueType", "TrueType");
     try builder.addDependency("zglfw", "root");
     try builder.addDependency("zbgfx", "zbgfx");
     try builder.addDependency("zmath", "root");
@@ -28,8 +29,10 @@ pub fn build(b: *std.Build) !void {
     try builder.addModule("core", "src/core/root.zig", &.{});
     try builder.addModule("io", "src/io/root.zig", &.{});
     try builder.addModule("render", "src/render/root.zig", &.{
+        "core",
         "io",
         "stb",
+        "TrueType",
         "zbgfx",
         "zmath",
     });

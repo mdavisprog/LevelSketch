@@ -11,12 +11,3 @@ void (*zFreePtr)(void* ptr) = NULL;
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_NO_STDIO
 #include "stb_image.h"
-
-#define STBTT_malloc(x, u) zMallocPtr(x)
-#define STBTT_free(x, u) zFreePtr(x)
-
-#define STB_RECT_PACK_IMPLEMENTATION
-#include "stb_rect_pack.h"
-
-#define STB_TRUETYPE_IMPLEMENTATION
-#include "stb_truetype.h"
