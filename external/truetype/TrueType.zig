@@ -743,8 +743,8 @@ fn glyfOffset(tt: *const TrueType, glyph: GlyphIndex) error{GlyphNotFound}!u32 {
     const glyf = tt.table_offsets[@intFromEnum(TableId.glyf)];
     const loca = tt.table_offsets[@intFromEnum(TableId.loca)];
     const g1, const g2 = if (tt.index_to_loc_format == 0) .{
-        glyf + readInt(u16, bytes[loca + glyph_index * 2 ..][0..2], .big) * 2,
-        glyf + readInt(u16, bytes[loca + glyph_index * 2 + 2 ..][0..2], .big) * 2,
+        glyf + @as(u32, @intCast(readInt(u16, bytes[loca + glyph_index * 2 ..][0..2], .big))) * 2,
+        glyf + @as(u32, @intCast(readInt(u16, bytes[loca + glyph_index * 2 + 2 ..][0..2], .big))) * 2,
     } else .{
         glyf + readInt(u32, bytes[loca + glyph_index * 4 ..][0..4], .big),
         glyf + readInt(u32, bytes[loca + glyph_index * 4 + 4 ..][0..4], .big),
