@@ -1,5 +1,9 @@
+const core = @import("core");
 const std = @import("std");
 const zbgfx = @import("zbgfx");
+
+const Vec2f = core.math.Vec2f;
+const Vec3f = core.math.Vec3f;
 
 const Self = @This();
 
@@ -19,6 +23,44 @@ pub fn init(x: f32, y: f32, z: f32, u: f32, v: f32, abgr: u32) Self {
         .v = v,
         .abgr = abgr,
     };
+}
+
+pub fn setPosition(self: *Self, x: f32, y: f32, z: f32) *Self {
+    self.*.x = x;
+    self.*.y = y;
+    self.*.z = z;
+    return self;
+}
+
+pub fn setPositionVec3(self: *Self, position: Vec3f) *Self {
+    self.*.x = position.x;
+    self.*.y = position.y;
+    self.*.z = position.z;
+    return self;
+}
+
+pub fn setPositionVec2(self: *Self, position: Vec2f) *Self {
+    self.*.x = position.x;
+    self.*.y = position.y;
+    self.*.z = 0.0;
+    return self;
+}
+
+pub fn setUV(self: *Self, u: f32, v: f32) *Self {
+    self.*.u = u;
+    self.*.v = v;
+    return self;
+}
+
+pub fn setUVVec2(self: *Self, uv: Vec2f) *Self {
+    self.*.u = uv.x;
+    self.*.v = uv.y;
+    return self;
+}
+
+pub fn setColor(self: *Self, r: u32, g: u32, b: u32, a: u32) *Self {
+    self.abgr = r | std.math.shl(u32, g, 8) | std.math.shl(u32, b, 16) | std.math.shl(u32, a, 24);
+    return self;
 }
 
 /// Only a single instance of this is needed when creating the vertex buffer.

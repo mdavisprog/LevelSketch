@@ -13,5 +13,56 @@ pub fn Vec2(comptime T: type) type {
                 .y = y,
             };
         }
+
+        pub fn add(self: Self, other: Self) Self {
+            return Self{
+                .x = self.x + other.x,
+                .y = self.y + other.y,
+            };
+        }
+
+        pub fn addMut(self: *Self, other: Self) *Self {
+            self.x += other.x;
+            self.y += other.y;
+            return self;
+        }
+
+        pub fn sub(self: Self, other: Self) Self {
+            return Self{
+                .x = self.x - other.x,
+                .y = self.y - other.y,
+            };
+        }
+
+        pub fn subMut(self: *Self, other: Self) *Self {
+            self.x -= other.x;
+            self.y -= other.y;
+            return self;
+        }
+
+        pub fn mul(self: Self, other: Self) Self {
+            return Self{
+                .x = self.x * other.x,
+                .y = self.y * other.y,
+            };
+        }
+        pub fn mulMut(self: *Self, other: Self) *Self {
+            self.x *= other.x;
+            self.y *= other.y;
+            return self;
+        }
+
+        pub fn div(self: Self, other: Self) Self {
+            return Self{
+                .x = self.x / other.x,
+                .y = self.y / other.y,
+            };
+        }
+
+        pub fn divMut(self: *Self, other: Self) *Self {
+            self.x /= other.x;
+            self.y /= other.y;
+            return self;
+        }
     };
 }
