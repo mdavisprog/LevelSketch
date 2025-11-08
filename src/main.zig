@@ -15,6 +15,7 @@ const commandline = core.commandline;
 
 const Camera = render.Camera;
 const Font = render.Font;
+const MemFactory = render.MemFactory;
 const RenderBuffer = render.RenderBuffer;
 const Texture = render.Texture;
 const Textures = render.Textures;
@@ -60,6 +61,9 @@ pub fn main() !void {
     const window = try zglfw.createWindow(960, 540, "Level Sketch", null);
     defer zglfw.destroyWindow(window);
 
+    var mem_factory: MemFactory = try .init(allocator);
+    defer mem_factory.deinit();
+
     var bgfx_init: zbgfx.bgfx.Init = undefined;
     zbgfx.bgfx.initCtor(&bgfx_init);
 
@@ -90,10 +94,10 @@ pub fn main() !void {
     printBGFXInfo();
 
     var textures: Textures = try .init(allocator);
-    defer textures.deinit();
+    defer textures.deinit(allocator);
 
     var font = Font.init(
-        allocator,
+        &mem_factory,
         "assets/fonts/Roboto-Regular.ttf",
         36.0,
         &textures,
@@ -147,10 +151,11 @@ pub fn main() !void {
         .position = zmath.f32x4(0.0, 0.0, -3.0, 1.0),
     };
 
-    const info_tex = try textures.load_image(allocator, "assets/textures/info.png");
+    const info_tex = try textures.load_image(&mem_factory, "assets/textures/info.png");
 
     const texture_default: [4]u8 = .{ 255, 255, 255, 255 };
     const default_tex = try textures.load_static_buffer(
+        &mem_factory,
         &texture_default,
         1,
         1,
@@ -224,7 +229,7 @@ pub fn main() !void {
         last_time = current_time;
 
         zglfw.pollEvents();
-        textures.update();
+        mem_factory.update();
 
         updateCursor(window, &cursor);
         try updateCamera(window, cursor, delta_time);

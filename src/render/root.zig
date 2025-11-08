@@ -1,6 +1,7 @@
 pub const Atlas = @import("Atlas.zig");
 pub const Camera = @import("Camera.zig");
 pub const Font = @import("Font.zig");
+pub const MemFactory = @import("MemFactory.zig");
 pub const RenderBuffer = @import("RenderBuffer.zig");
 pub const shaders = @import("shaders/root.zig");
 pub const Texture = @import("Texture.zig");

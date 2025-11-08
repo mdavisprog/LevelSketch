@@ -1,6 +1,7 @@
 const Atlas = @import("Atlas.zig");
 const core = @import("core");
 const io = @import("io");
+const MemFactory = @import("MemFactory.zig");
 const root = @import("root.zig");
 const std = @import("std");
 const Texture = @import("Texture.zig");
@@ -47,11 +48,13 @@ texture: Texture,
 _truetype: TrueType,
 
 pub fn init(
-    allocator: std.mem.Allocator,
+    mem_factory: *MemFactory,
     path: []const u8,
     size: f32,
     textures: *Textures,
 ) !Self {
+    const allocator = mem_factory.allocator;
+
     const font_path = try io.exeRelativePath(allocator, &.{path});
 
     // The TrueType object will hold the slice.
@@ -133,6 +136,7 @@ pub fn init(
 
     var owned = try atlas.buffer.release();
     const texture = try textures.load_buffer(
+        mem_factory,
         try owned.data.toOwnedSlice(allocator),
         @intCast(owned.width),
         @intCast(owned.height),
