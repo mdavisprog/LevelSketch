@@ -131,7 +131,8 @@ fn load(
     );
 
     const fmt: zbgfx.bgfx.TextureFormat = switch (format) {
-        .grayscale, .rgba8 => .RGBA8,
+        .grayscale => .R8,
+        .rgba8 => .RGBA8,
     };
 
     const handle = zbgfx.bgfx.createTexture2D(

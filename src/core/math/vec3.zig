@@ -19,5 +19,13 @@ pub fn Vec3(comptime T: type) type {
                 .z = z,
             };
         }
+
+        pub fn splat(value: T) Self {
+            return Self{
+                .x = value,
+                .y = value,
+                .z = value,
+            };
+        }
     };
 }

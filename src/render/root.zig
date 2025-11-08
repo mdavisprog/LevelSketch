@@ -1,4 +1,6 @@
+pub const Atlas = @import("Atlas.zig");
 pub const Camera = @import("Camera.zig");
+pub const Font = @import("Font.zig");
 pub const RenderBuffer = @import("RenderBuffer.zig");
 pub const shaders = @import("shaders/root.zig");
 pub const Texture = @import("Texture.zig");
@@ -7,6 +9,10 @@ pub const Vertex = @import("Vertex.zig");
 pub const View = @import("View.zig");
 
 const std = @import("std");
+const vertex_buffer = @import("vertex_buffer.zig");
+
+pub const VertexBuffer16 = vertex_buffer.VertexBuffer(u16);
+pub const VertexBuffer32 = vertex_buffer.VertexBuffer(u32);
 
 pub fn stateFlagsBlend(src: u64, dst: u64) u64 {
     return (src | (dst << 4)) | ((src | (dst << 4)) << 8);

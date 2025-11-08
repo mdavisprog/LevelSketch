@@ -14,6 +14,7 @@ const zmath = @import("zmath");
 const commandline = core.commandline;
 
 const Camera = render.Camera;
+const Font = render.Font;
 const RenderBuffer = render.RenderBuffer;
 const Texture = render.Texture;
 const Textures = render.Textures;
@@ -44,7 +45,6 @@ pub fn main() !void {
 
     try stb.init(allocator);
     defer stb.deinit();
-
 
     try zglfw.init();
     defer zglfw.terminate();
@@ -92,6 +92,16 @@ pub fn main() !void {
     var textures: Textures = try .init(allocator);
     defer textures.deinit();
 
+    var font = Font.init(
+        allocator,
+        "assets/fonts/Roboto-Regular.ttf",
+        36.0,
+        &textures,
+    ) catch |err| {
+        std.debug.panic("Failed to initialize font: {}", .{err});
+    };
+    defer font.deinit(allocator);
+
     const vertices: [3]Vertex = .{
         .init(-0.5, -0.5, 0.5, 0.0, 1.0, 0xFF0000FF),
         .init(0.5, -0.5, 0.5, 1.0, 1.0, 0xFF00FF00),
@@ -100,14 +110,23 @@ pub fn main() !void {
 
     const indices: [3]u16 = .{ 0, 1, 2 };
 
+    const ui_size = 50.0;
     const ui_vertices: [4]Vertex = .{
         .init(0.0, 0.0, 0.0, 0.0, 0.0, 0xFFFFFFFF),
-        .init(0.0, 50.0, 0.0, 0.0, 1.0, 0xFFFFFFFF),
-        .init(50.0, 50.0, 0.0, 1.0, 1.0, 0xFFFFFFFF),
-        .init(50.0, 0.0, 0.0, 1.0, 0.0, 0xFFFFFFFF),
+        .init(0.0, ui_size, 0.0, 0.0, 1.0, 0xFFFFFFFF),
+        .init(ui_size, ui_size, 0.0, 1.0, 1.0, 0xFFFFFFFF),
+        .init(ui_size, 0.0, 0.0, 1.0, 0.0, 0xFFFFFFFF),
     };
 
     const ui_indices: [6]u16 = .{ 0, 1, 2, 0, 2, 3 };
+
+    var text_vertex_buffer = try font.getVertices(allocator, "Hello World", .init(50.0, 50.0));
+    defer text_vertex_buffer.deinit(allocator);
+
+    var text_buffer: RenderBuffer = .init();
+    defer text_buffer.deinit();
+    text_buffer.setVertices(text_vertex_buffer.vertices);
+    text_buffer.setIndices16(text_vertex_buffer.indices);
 
     var world_buffer: RenderBuffer = .init();
     defer world_buffer.deinit();
@@ -148,6 +167,17 @@ pub fn main() !void {
         },
     );
     defer shader_program.clean();
+
+    var text_shader_program = render.shaders.Program{};
+    _ = try text_shader_program.build(
+        allocator,
+        .{
+            .varying_file_name = "common.def.sc",
+            .fragment_file_name = "text_fragment.sc",
+            .vertex_file_name = "common_vertex.sc",
+        },
+    );
+    defer text_shader_program.clean();
 
     zbgfx.bgfx.setDebug(zbgfx.bgfx.DebugFlags_None);
     zbgfx.bgfx.reset(
@@ -212,6 +242,10 @@ pub fn main() !void {
         try info_tex.bind(sampler_tex_color, 0);
         ui_buffer.bind(ui_state);
         zbgfx.bgfx.submit(view_ui.id, shader_program.handle, 0, 255);
+
+        try font.texture.bind(sampler_tex_color, zbgfx.bgfx.SamplerFlags_UBorder | zbgfx.bgfx.SamplerFlags_VBorder);
+        text_buffer.bind(ui_state);
+        zbgfx.bgfx.submit(view_ui.id, text_shader_program.handle, 0, 255);
         view_ui.touch();
 
         _ = zbgfx.bgfx.frame(false);
