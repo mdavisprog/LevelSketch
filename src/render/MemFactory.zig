@@ -34,6 +34,18 @@ pub fn deinit(self: *Self) void {
     self._allocations.deinit(self.allocator);
 }
 
+pub fn createT(
+    self: *Self,
+    comptime T: type,
+    data: []const T,
+    context: Context,
+) ![*c]const zbgfx.bgfx.Memory {
+    return self.create(
+        @ptrCast(data),
+        context,
+    );
+}
+
 pub fn create(self: *Self, data: []const u8, context: Context) ![*c]const zbgfx.bgfx.Memory {
     switch (context) {
         .stb_image, .buffer => {

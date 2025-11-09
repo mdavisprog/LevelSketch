@@ -129,20 +129,27 @@ pub fn main() !void {
 
     var text_buffer: RenderBuffer = .init();
     defer text_buffer.deinit();
-    text_buffer.setVertices(text_vertex_buffer.vertices);
-    text_buffer.setIndices16(text_vertex_buffer.indices);
+
+    const text_vertex_mem_v = try mem_factory.createT(Vertex, text_vertex_buffer.vertices, .static_buffer);
+    const text_vertex_mem_i = try mem_factory.createT(u16, text_vertex_buffer.indices, .static_buffer);
+    try text_buffer.setDynamicVertices(text_vertex_mem_v, text_vertex_buffer.vertices.len);
+    try text_buffer.setDynamicIndices(text_vertex_mem_i, text_vertex_buffer.indices.len);
 
     var world_buffer: RenderBuffer = .init();
     defer world_buffer.deinit();
 
-    world_buffer.setVertices(&vertices);
-    world_buffer.setIndices16(&indices);
+    const world_buffer_mem_v = try mem_factory.createT(Vertex, &vertices, .static_buffer);
+    const world_buffer_mem_i = try mem_factory.createT(u16, &indices, .static_buffer);
+    try world_buffer.setStaticVertices(world_buffer_mem_v, vertices.len);
+    try world_buffer.setStaticIndices(world_buffer_mem_i, indices.len);
 
     var ui_buffer: RenderBuffer = .init();
     defer ui_buffer.deinit();
 
-    ui_buffer.setVertices(&ui_vertices);
-    ui_buffer.setIndices16(&ui_indices);
+    const ui_buffer_mem_v = try mem_factory.createT(Vertex, &ui_vertices, .static_buffer);
+    const ui_buffer_mem_i = try mem_factory.createT(u16, &ui_indices, .static_buffer);
+    try ui_buffer.setStaticVertices(ui_buffer_mem_v, ui_vertices.len);
+    try ui_buffer.setStaticIndices(ui_buffer_mem_i, ui_indices.len);
 
     const sampler_tex_color = zbgfx.bgfx.createUniform("s_tex_color", .Sampler, 1);
     defer zbgfx.bgfx.destroyUniform(sampler_tex_color);
