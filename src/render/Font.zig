@@ -225,10 +225,10 @@ pub fn getVertices(
             _ = buffer.vertices[v_index + 2].setUVVec2(uv_max);
             _ = buffer.vertices[v_index + 3].setUVVec2(.init(uv_max.x, uv_min.y));
 
-            _ = buffer.vertices[v_index + 0].setColor(255, 255, 255, 255);
-            _ = buffer.vertices[v_index + 1].setColor(255, 255, 255, 255);
-            _ = buffer.vertices[v_index + 2].setColor(255, 255, 255, 255);
-            _ = buffer.vertices[v_index + 3].setColor(255, 255, 255, 255);
+            _ = buffer.vertices[v_index + 0].setColor4b(255, 255, 255, 255);
+            _ = buffer.vertices[v_index + 1].setColor4b(255, 255, 255, 255);
+            _ = buffer.vertices[v_index + 2].setColor4b(255, 255, 255, 255);
+            _ = buffer.vertices[v_index + 3].setColor4b(255, 255, 255, 255);
 
             buffer.indices[index + 0] = vertex_offset + 0;
             buffer.indices[index + 1] = vertex_offset + 1;

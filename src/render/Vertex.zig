@@ -58,8 +58,17 @@ pub fn setUVVec2(self: *Self, uv: Vec2f) *Self {
     return self;
 }
 
-pub fn setColor(self: *Self, r: u32, g: u32, b: u32, a: u32) *Self {
-    self.abgr = r | std.math.shl(u32, g, 8) | std.math.shl(u32, b, 16) | std.math.shl(u32, a, 24);
+pub fn setColor(self: *Self, abgr: u32) *Self {
+    self.abgr = abgr;
+    return self;
+}
+
+pub fn setColor4b(self: *Self, r: u8, g: u8, b: u8, a: u8) *Self {
+    const _r: u32 = @intCast(r);
+    const _g: u32 = @intCast(g);
+    const _b: u32 = @intCast(b);
+    const _a: u32 = @intCast(a);
+    self.abgr = _r | std.math.shl(u32, _g, 8) | std.math.shl(u32, _b, 16) | std.math.shl(u32, _a, 24);
     return self;
 }
 
