@@ -10,7 +10,7 @@ pub fn VertexBuffer(comptime IndexType: type) type {
         const Self = @This();
 
         vertices: []Vertex,
-        indices: []u16,
+        indices: []IndexType,
 
         pub fn init(allocator: std.mem.Allocator, vertex_count: usize, index_count: usize) !Self {
             const vertices = try allocator.alloc(Vertex, vertex_count);
