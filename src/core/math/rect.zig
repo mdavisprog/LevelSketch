@@ -8,7 +8,7 @@ pub fn rect(comptime T: type) type {
         min: TVec = TVec.ZERO,
         max: TVec = TVec.ZERO,
 
-        pub fn init(min_x: usize, min_y: usize, max_x: usize, max_y: usize) Self {
+        pub fn init(min_x: T, min_y: T, max_x: T, max_y: T) Self {
             return Self{
                 .min = .{ .x = min_x, .y = min_y },
                 .max = .{ .x = max_x, .y = max_y },
@@ -21,6 +21,11 @@ pub fn rect(comptime T: type) type {
 
         pub fn height(self: Self) T {
             return self.max.y - self.min.y;
+        }
+
+        pub fn contains(self: Self, point: TVec) bool {
+            return self.min.x <= point.x and point.x <= self.max.x and
+                self.min.y <= point.y and point.y <= self.max.y;
         }
     };
 }
