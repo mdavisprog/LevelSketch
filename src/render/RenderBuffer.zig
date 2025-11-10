@@ -6,22 +6,25 @@ const zbgfx = @import("zbgfx");
 pub const Error = error{
     NotInitialized,
     AlreadyInitialized,
-    CantUpdateStaticBuffer,
+    CantUpdateBuffer,
 };
 
 pub const BufferTypeTag = enum {
     static,
     dynamic,
+    transient,
 };
 
 pub const VertexHandle = union(BufferTypeTag) {
     static: zbgfx.bgfx.VertexBufferHandle,
     dynamic: zbgfx.bgfx.DynamicVertexBufferHandle,
+    transient: zbgfx.bgfx.TransientVertexBuffer,
 };
 
 pub const IndexHandle = union(BufferTypeTag) {
     static: zbgfx.bgfx.IndexBufferHandle,
     dynamic: zbgfx.bgfx.DynamicIndexBufferHandle,
+    transient: zbgfx.bgfx.TransientIndexBuffer,
 };
 
 const Self = @This();
@@ -44,6 +47,7 @@ pub fn deinit(self: *Self) void {
             .dynamic => |handle| {
                 zbgfx.bgfx.destroyDynamicVertexBuffer(handle);
             },
+            .transient => {},
         }
     }
 
@@ -55,6 +59,7 @@ pub fn deinit(self: *Self) void {
             .dynamic => |handle| {
                 zbgfx.bgfx.destroyDynamicIndexBuffer(handle);
             },
+            .transient => {},
         }
     }
 
@@ -90,6 +95,19 @@ pub fn setDynamicVertices(self: *Self, mem: [*c]const zbgfx.bgfx.Memory, length:
     self.vertex_len = @intCast(length);
 }
 
+pub fn setTransientVertices(self: *Self, mem: [*c]const zbgfx.bgfx.Memory, length: usize) !void {
+    if (self.vertex != null) return Error.AlreadyInitialized;
+
+    const layout = Vertex.Layout.init();
+    var handle: zbgfx.bgfx.TransientVertexBuffer = undefined;
+    zbgfx.bgfx.allocTransientVertexBuffer(@ptrCast(&handle), @intCast(length), &layout.data);
+    self.vertex = .{ .transient = handle };
+    self.vertex_len = @intCast(length);
+
+    const dst = handle.data[0..handle.size];
+    @memmove(dst, mem.*.data);
+}
+
 pub fn setStaticIndices(self: *Self, mem: [*c]const zbgfx.bgfx.Memory, length: usize) !void {
     if (self.index != null) return Error.AlreadyInitialized;
 
@@ -112,13 +130,27 @@ pub fn setDynamicIndices(self: *Self, mem: [*c]const zbgfx.bgfx.Memory, length: 
     self.index_len = @intCast(length);
 }
 
+pub fn setTransientIndices(self: *Self, mem: [*c]const zbgfx.bgfx.Memory, length: usize) !void {
+    if (self.index != null) return Error.AlreadyInitialized;
+
+    var handle: zbgfx.bgfx.TransientIndexBuffer = undefined;
+    const alignment = mem.*.size / length;
+    const is_u32 = alignment == @sizeOf(u32);
+    zbgfx.bgfx.allocTransientIndexBuffer(@ptrCast(&handle), @intCast(length), is_u32);
+    self.index = .{ .transient = handle };
+    self.index_len = @intCast(length);
+
+    const dst = handle.data[0..handle.size];
+    @memmove(dst, mem.*.data);
+}
+
 pub fn updateVertices(self: Self, start_vertex: u32, mem: [*c]const zbgfx.bgfx.Memory) !void {
     if (self.vertex == null) return Error.NotInitialized;
 
     if (self.vertex) |vertex| {
         switch (vertex) {
-            .static => |_| {
-                return Error.CantUpdateStaticBuffer;
+            .static, .transient => |_| {
+                return Error.CantUpdateBuffer;
             },
             .dynamic => |handle| {
                 zbgfx.bgfx.updateDynamicVertexBuffer(handle, start_vertex, mem);
@@ -132,8 +164,8 @@ pub fn updateIndices(self: Self, start_index: u32, mem: [*c]const zbgfx.bgfx.Mem
 
     if (self.index) |index| {
         switch (index) {
-            .static => |_| {
-                return Error.CantUpdateStaticBuffer;
+            .static, .transient => |_| {
+                return Error.CantUpdateBuffer;
             },
             .dynamic => |handle| {
                 zbgfx.bgfx.updateDynamicIndexBuffer(handle, start_index, mem);
@@ -154,6 +186,9 @@ pub fn bind(self: Self, state: u64) void {
             .dynamic => |handle| {
                 zbgfx.bgfx.setDynamicVertexBuffer(0, handle, 0, self.vertex_len);
             },
+            .transient => |handle| {
+                zbgfx.bgfx.setTransientVertexBuffer(0, @ptrCast(&handle), 0, self.vertex_len);
+            },
         }
     }
 
@@ -164,6 +199,9 @@ pub fn bind(self: Self, state: u64) void {
             },
             .dynamic => |handle| {
                 zbgfx.bgfx.setDynamicIndexBuffer(handle, 0, self.index_len);
+            },
+            .transient => |handle| {
+                zbgfx.bgfx.setTransientIndexBuffer(@ptrCast(&handle), 0, self.index_len);
             },
         }
     }
