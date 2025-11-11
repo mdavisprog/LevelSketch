@@ -1,16 +1,25 @@
-const stb = @import("stb");
 const std = @import("std");
 const zbgfx = @import("zbgfx");
 
-pub const Context = enum {
-    stb_image,
-    buffer,
-    static_buffer,
+pub const Mem = struct {
+    ptr: [*c]const zbgfx.bgfx.Memory,
 };
 
-/// This object handles freeing memory allocations that have been uploaded to the GPU.
-/// 'bgfx' provides a callback for when the upload is complete, but it is invoked on the
-/// render thread. Need to marshall this info back to the main thread to free the memory.
+pub const OnUploadedResult = struct {
+    allocator: std.mem.Allocator,
+    data: []const u8,
+    user_data: ?*anyopaque,
+
+    pub fn userDataAs(self: OnUploadedResult, comptime T: type) *T {
+        return @ptrCast(@alignCast(self.user_data));
+    }
+};
+
+pub const OnUploaded = *const fn (result: OnUploadedResult) void;
+
+/// This object create bgfx.Memory objects and allows callers to provide a callback to listen
+/// for when the data has been uploaded to the GPU. This object ensures that the callback is
+/// invoked on the main thread. The caller is responsible for the memory after upload.
 const Self = @This();
 
 allocator: std.mem.Allocator,
@@ -34,35 +43,38 @@ pub fn deinit(self: *Self) void {
     self._allocations.deinit(self.allocator);
 }
 
-pub fn createT(
+/// Callback can be null if caller wishes to ignore the upload status. The caller must ensure that
+/// the memory is valid during GPU upload.
+pub fn create(
     self: *Self,
-    comptime T: type,
-    data: []const T,
-    context: Context,
-) ![*c]const zbgfx.bgfx.Memory {
-    return self.create(
-        @ptrCast(data),
-        context,
-    );
-}
+    data: []const u8,
+    callback: ?OnUploaded,
+    user_data: ?*anyopaque,
+) !Mem {
+    const mem = blk: {
+        if (callback == null) {
+            // The user owns the memory and does not care about the upload state.
+            const mem = zbgfx.bgfx.makeRef(data.ptr, @intCast(data.len));
+            break :blk mem;
+        } else {
+            const allocation = try self.addAllocation(data);
+            allocation.*.callback = callback;
+            allocation.*.user_data = user_data;
 
-pub fn create(self: *Self, data: []const u8, context: Context) ![*c]const zbgfx.bgfx.Memory {
-    switch (context) {
-        .stb_image, .buffer => {
-            const allocation = try self.addAllocation(data, context);
             const mem = zbgfx.bgfx.makeRefRelease(
                 data.ptr,
                 @intCast(data.len),
                 @ptrCast(@constCast(&onReleaseRef)),
                 @ptrCast(allocation),
             );
-            return mem;
-        },
-        .static_buffer => {
-            const mem = zbgfx.bgfx.makeRef(data.ptr, @intCast(data.len));
-            return mem;
-        },
-    }
+
+            break :blk mem;
+        }
+    };
+
+    return Mem{
+        .ptr = mem,
+    };
 }
 
 pub fn update(self: *Self) void {
@@ -88,14 +100,13 @@ pub fn update(self: *Self) void {
     }
 }
 
-fn addAllocation(self: *Self, data: []const u8, context: Context) !*Allocation {
+fn addAllocation(self: *Self, data: []const u8) !*Allocation {
     self._mutex.lock();
     defer self._mutex.unlock();
 
     const item = try self.allocator.create(Allocation);
     item.*.id = self._id;
     item.*.data = data;
-    item.*.context = context;
     self._id += 1;
 
     try self._allocations.append(self.allocator, item);
@@ -116,19 +127,18 @@ const Allocation = struct {
     };
 
     id: u32,
-    context: Context,
     data: []const u8,
     state: State = .loading,
+    callback: ?OnUploaded = null,
+    user_data: ?*anyopaque = null,
 
     fn free(self: Allocation, allocator: std.mem.Allocator) void {
-        switch (self.context) {
-            .stb_image => {
-                stb.image.free_data(self.data);
-            },
-            .buffer => {
-                allocator.free(self.data);
-            },
-            .static_buffer => {},
+        if (self.callback) |callback| {
+            callback(.{
+                .allocator = allocator,
+                .data = self.data,
+                .user_data = self.user_data,
+            });
         }
     }
 };

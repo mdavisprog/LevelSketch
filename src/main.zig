@@ -2,7 +2,6 @@ const builtin = @import("builtin");
 const callbacks = @import("callbacks.zig");
 const core = @import("core");
 const Cursor = @import("Cursor.zig");
-const io = @import("io");
 const render = @import("render");
 const stb = @import("stb");
 const std = @import("std");
@@ -17,10 +16,12 @@ const Camera = render.Camera;
 const Font = render.Font;
 const MemFactory = render.MemFactory;
 const RenderBuffer = render.RenderBuffer;
-const Texture = render.Texture;
 const Textures = render.Textures;
 const Vertex = render.Vertex;
+const VertexBuffer16 = render.VertexBuffer16;
 const View = render.View;
+
+const Rectf = core.math.Rectf;
 
 var camera: Camera = undefined;
 var camera_rotating = false;
@@ -106,13 +107,11 @@ pub fn main() !void {
     };
     defer font.deinit(allocator);
 
-    const vertices: [3]Vertex = .{
-        .init(-0.5, -0.5, 0.5, 0.0, 1.0, 0xFF0000FF),
-        .init(0.5, -0.5, 0.5, 1.0, 1.0, 0xFF00FF00),
-        .init(0.0, 0.5, 0.5, 0.5, 0.0, 0xFFFF0000),
-    };
+    var quad = try getVertices(allocator, .init(-1.0, 1.0, 1.0, -1.0), 0xFF227722);
+    defer quad.deinit(allocator);
 
-    const indices: [3]u16 = .{ 0, 1, 2 };
+    var quad_render = try createRenderBuffer(&mem_factory, &quad);
+    defer quad_render.deinit();
 
     const ui_size = 50.0;
     const ui_vertices: [4]Vertex = .{
@@ -130,26 +129,18 @@ pub fn main() !void {
     var text_buffer: RenderBuffer = .init();
     defer text_buffer.deinit();
 
-    const text_vertex_mem_v = try mem_factory.createT(Vertex, text_vertex_buffer.vertices, .static_buffer);
-    const text_vertex_mem_i = try mem_factory.createT(u16, text_vertex_buffer.indices, .static_buffer);
-    try text_buffer.setDynamicVertices(text_vertex_mem_v, text_vertex_buffer.vertices.len);
-    try text_buffer.setDynamicIndices(text_vertex_mem_i, text_vertex_buffer.indices.len);
-
-    var world_buffer: RenderBuffer = .init();
-    defer world_buffer.deinit();
-
-    const world_buffer_mem_v = try mem_factory.createT(Vertex, &vertices, .static_buffer);
-    const world_buffer_mem_i = try mem_factory.createT(u16, &indices, .static_buffer);
-    try world_buffer.setStaticVertices(world_buffer_mem_v, vertices.len);
-    try world_buffer.setStaticIndices(world_buffer_mem_i, indices.len);
+    const text_vertex_mem_v = try mem_factory.create(@ptrCast(text_vertex_buffer.vertices), null, null);
+    const text_vertex_mem_i = try mem_factory.create(@ptrCast(text_vertex_buffer.indices), null, null);
+    try text_buffer.setDynamicVertices(text_vertex_mem_v.ptr, text_vertex_buffer.vertices.len);
+    try text_buffer.setDynamicIndices(text_vertex_mem_i.ptr, text_vertex_buffer.indices.len);
 
     var ui_buffer: RenderBuffer = .init();
     defer ui_buffer.deinit();
 
-    const ui_buffer_mem_v = try mem_factory.createT(Vertex, &ui_vertices, .static_buffer);
-    const ui_buffer_mem_i = try mem_factory.createT(u16, &ui_indices, .static_buffer);
-    try ui_buffer.setStaticVertices(ui_buffer_mem_v, ui_vertices.len);
-    try ui_buffer.setStaticIndices(ui_buffer_mem_i, ui_indices.len);
+    const ui_buffer_mem_v = try mem_factory.create(@ptrCast(&ui_vertices), null, null);
+    const ui_buffer_mem_i = try mem_factory.create(@ptrCast(&ui_indices), null, null);
+    try ui_buffer.setStaticVertices(ui_buffer_mem_v.ptr, ui_vertices.len);
+    try ui_buffer.setStaticIndices(ui_buffer_mem_i.ptr, ui_indices.len);
 
     const sampler_tex_color = zbgfx.bgfx.createUniform("s_tex_color", .Sampler, 1);
     defer zbgfx.bgfx.destroyUniform(sampler_tex_color);
@@ -245,7 +236,7 @@ pub fn main() !void {
         view_world.submitPerspective(camera, @intCast(size[0]), @intCast(size[1]));
 
         try default_tex.bind(sampler_tex_color, 0);
-        world_buffer.bind(state);
+        quad_render.bind(state);
         zbgfx.bgfx.submit(view_world.id, shader_program.handle, 0, 255);
         view_world.touch();
 
@@ -269,6 +260,10 @@ fn printBGFXInfo() void {
 
     const renderer = zbgfx.bgfx.getRendererType();
     std.log.info("Renderer type: {s}", .{zbgfx.bgfx.getRendererName(renderer)});
+
+    const caps = zbgfx.bgfx.getCaps();
+    std.log.info("Transient Max Vertex Size: {}", .{caps.*.limits.transientVbSize});
+    std.log.info("Transient Max Index Size: {}", .{caps.*.limits.transientIbSize});
 }
 
 fn updateCursor(window: *zglfw.Window, target: *Cursor) void {
@@ -348,6 +343,46 @@ fn toggleCursor(window: *zglfw.Window, enabled: bool) !void {
 fn isPressed(window: *zglfw.Window, key: zglfw.Key) bool {
     const action = window.getKey(key);
     return action == .press;
+}
+
+fn getVertices(allocator: std.mem.Allocator, rect: Rectf, color: u32) !VertexBuffer16 {
+    var result: VertexBuffer16 = try .init(allocator, 4, 6);
+
+    _ = result.vertices[0].setPositionVec2(rect.min);
+    _ = result.vertices[1].setPositionVec2(.init(rect.min.x, rect.max.y));
+    _ = result.vertices[2].setPositionVec2(rect.max);
+    _ = result.vertices[3].setPositionVec2(.init(rect.max.x, rect.min.y));
+
+    _ = result.vertices[0].setUV(0.0, 0.0);
+    _ = result.vertices[1].setUV(0.0, 1.0);
+    _ = result.vertices[2].setUV(1.0, 1.0);
+    _ = result.vertices[3].setUV(1.0, 0.0);
+
+    _ = result.vertices[0].setColor(color);
+    _ = result.vertices[1].setColor(color);
+    _ = result.vertices[2].setColor(color);
+    _ = result.vertices[3].setColor(color);
+
+    result.indices[0] = 0;
+    result.indices[1] = 1;
+    result.indices[2] = 2;
+    result.indices[3] = 0;
+    result.indices[4] = 2;
+    result.indices[5] = 3;
+
+    return result;
+}
+
+fn createRenderBuffer(mem_factory: *MemFactory, vertex: *VertexBuffer16) !RenderBuffer {
+    var result: RenderBuffer = .init();
+
+    const v_mem = try vertex.createMemVertex(mem_factory);
+    const i_mem = try vertex.createMemIndex(mem_factory);
+
+    try result.setStaticVertices(v_mem.ptr, vertex.vertices.len);
+    try result.setStaticIndices(i_mem.ptr, vertex.indices.len);
+
+    return result;
 }
 
 // The code below will ensure that all referenced files will have their

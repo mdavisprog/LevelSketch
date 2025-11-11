@@ -12,11 +12,13 @@ pub const Error = error{
 };
 
 collection: std.ArrayList(Texture),
-_id: u32 = 1,
+_id: Texture.Id = 1,
+_uploads: std.ArrayList(*Upload),
 
 pub fn init(allocator: std.mem.Allocator) !Self {
     return Self{
         .collection = try std.ArrayList(Texture).initCapacity(allocator, 0),
+        ._uploads = try std.ArrayList(*Upload).initCapacity(allocator, 0),
     };
 }
 
@@ -27,6 +29,11 @@ pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
         }
     }
     self.collection.deinit(allocator);
+
+    for (self._uploads.items) |item| {
+        allocator.destroy(item);
+    }
+    self._uploads.deinit(allocator);
 }
 
 /// 'path' should be relative
@@ -93,7 +100,7 @@ pub fn load_static_buffer(
 fn load(
     self: *Self,
     mem_factory: *MemFactory,
-    context: MemFactory.Context,
+    buffer_type: BufferType,
     buffer: [*]const u8,
     length: usize,
     width: u16,
@@ -104,7 +111,27 @@ fn load(
     self._id += 1;
 
     const slice = buffer[0..length];
-    const mem = try mem_factory.create(slice, context);
+
+    const mem = blk: {
+        switch (buffer_type) {
+            .stb_image, .buffer => {
+                const upload = try mem_factory.allocator.create(Upload);
+                upload.*.id = id;
+                upload.*.textures = self;
+                upload.*.buffer_type = buffer_type;
+
+                try self._uploads.append(mem_factory.allocator, upload);
+                break :blk try mem_factory.create(
+                    slice,
+                    onUploadedCallback,
+                    @ptrCast(upload),
+                );
+            },
+            .static_buffer => {
+                break :blk try mem_factory.create(slice, null, null);
+            },
+        }
+    };
 
     const fmt: zbgfx.bgfx.TextureFormat = switch (format) {
         .grayscale => .R8,
@@ -118,7 +145,7 @@ fn load(
         1,
         fmt,
         zbgfx.bgfx.TextureFlags_None,
-        mem,
+        mem.ptr,
     );
 
     const result = Texture{
@@ -132,3 +159,42 @@ fn load(
     try self.collection.append(mem_factory.allocator, result);
     return result;
 }
+
+/// Called on the main thread. No need to worry about a mutex.
+fn onUploaded(self: *Self, allocator: std.mem.Allocator, id: Texture.Id) void {
+    for (self._uploads.items, 0..) |upload, i| {
+        if (upload.id == id) {
+            const removed = self._uploads.swapRemove(i);
+            allocator.destroy(removed);
+            break;
+        }
+    }
+}
+
+fn onUploadedCallback(result: MemFactory.OnUploadedResult) void {
+    const upload: *Upload = result.userDataAs(Upload);
+
+    switch (upload.buffer_type) {
+        .stb_image => {
+            stb.image.free_data(result.data);
+        },
+        .buffer => {
+            result.allocator.free(result.data);
+        },
+        .static_buffer => {},
+    }
+
+    upload.textures.onUploaded(result.allocator, upload.id);
+}
+
+const BufferType = enum {
+    stb_image,
+    buffer,
+    static_buffer,
+};
+
+const Upload = struct {
+    textures: *Self,
+    id: Texture.Id,
+    buffer_type: BufferType,
+};
