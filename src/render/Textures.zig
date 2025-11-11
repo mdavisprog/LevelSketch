@@ -12,14 +12,25 @@ pub const Error = error{
 };
 
 collection: std.ArrayList(Texture),
+default: Texture = .{},
 _id: Texture.Id = 1,
 _uploads: std.ArrayList(*Upload),
 
-pub fn init(allocator: std.mem.Allocator) !Self {
-    return Self{
-        .collection = try std.ArrayList(Texture).initCapacity(allocator, 0),
-        ._uploads = try std.ArrayList(*Upload).initCapacity(allocator, 0),
+pub fn init(factory: *MemFactory) !Self {
+    var result = Self{
+        .collection = try std.ArrayList(Texture).initCapacity(factory.allocator, 0),
+        ._uploads = try std.ArrayList(*Upload).initCapacity(factory.allocator, 0),
     };
+
+    result.default = try result.load_static_buffer(
+        factory,
+        &.{ 255, 255, 255, 255 },
+        1,
+        1,
+        .rgba8,
+    );
+
+    return result;
 }
 
 pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {

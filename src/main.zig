@@ -94,7 +94,7 @@ pub fn main() !void {
 
     printBGFXInfo();
 
-    var textures: Textures = try .init(allocator);
+    var textures: Textures = try .init(&mem_factory);
     defer textures.deinit(allocator);
 
     var font = Font.init(
@@ -151,14 +151,6 @@ pub fn main() !void {
 
     const info_tex = try textures.load_image(&mem_factory, "assets/textures/info.png");
 
-    const texture_default: [4]u8 = .{ 255, 255, 255, 255 };
-    const default_tex = try textures.load_static_buffer(
-        &mem_factory,
-        &texture_default,
-        1,
-        1,
-        .rgba8,
-    );
 
     var shader_program = render.shaders.Program{};
     _ = try shader_program.build(
@@ -235,7 +227,7 @@ pub fn main() !void {
         const size = window.getFramebufferSize();
         view_world.submitPerspective(camera, @intCast(size[0]), @intCast(size[1]));
 
-        try default_tex.bind(sampler_tex_color, 0);
+        try textures.default.bind(sampler_tex_color, 0);
         quad_render.bind(state);
         zbgfx.bgfx.submit(view_world.id, shader_program.handle, 0, 255);
         view_world.touch();
