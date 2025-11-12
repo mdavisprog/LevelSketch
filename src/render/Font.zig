@@ -20,9 +20,9 @@ pub const Range = struct {
 };
 
 pub const Glyph = struct {
-    min: Vec2f = .ZERO,
-    max: Vec2f = .ZERO,
-    offset: Vec2f = .ZERO,
+    min: Vec2f = .zero,
+    max: Vec2f = .zero,
+    offset: Vec2f = .zero,
     advance_width: i16 = 0,
     left_side_bearing: i16 = 0,
 

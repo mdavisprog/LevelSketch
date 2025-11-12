@@ -17,7 +17,7 @@ const View = render.View;
 const Self = @This();
 
 view: View,
-size: Vec2f = .ZERO,
+size: Vec2f = .zero,
 font: Font,
 text_shader: Program,
 _buffer: RenderBuffer,

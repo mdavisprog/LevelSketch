@@ -12,9 +12,9 @@ pub const Format = enum {
 };
 
 pub const Id = u32;
-pub const INVALID_ID: u32 = 0;
+pub const invalid_id: u32 = 0;
 
-id: Id = INVALID_ID,
+id: Id = invalid_id,
 handle: ?zbgfx.bgfx.TextureHandle = null,
 width: u16 = 0,
 height: u16 = 0,

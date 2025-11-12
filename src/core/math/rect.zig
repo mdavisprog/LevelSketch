@@ -5,8 +5,10 @@ pub fn rect(comptime T: type) type {
         const Self = @This();
         const TVec = vec2.Vec2(T);
 
-        min: TVec = TVec.ZERO,
-        max: TVec = TVec.ZERO,
+        pub const zero: Self = .init(0, 0, 0, 0);
+
+        min: TVec = TVec.zero,
+        max: TVec = TVec.zero,
 
         pub fn init(min_x: T, min_y: T, max_x: T, max_y: T) Self {
             return Self{

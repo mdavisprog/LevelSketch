@@ -17,8 +17,8 @@ pub const Error = error{
 };
 
 pub const Cursor = struct {
-    pos: Vec2us = .ZERO,
-    size: Vec2us = .ZERO,
+    pos: Vec2us = .zero,
+    size: Vec2us = .zero,
     height: usize = 0,
 
     fn canFit(self: Cursor, size: Vec2us) bool {
@@ -63,7 +63,7 @@ pub const Cursor = struct {
 
 buffer: Buffer2D,
 regions: std.ArrayList(Rectus),
-base_size: Vec2us = Vec2us.ZERO,
+base_size: Vec2us = Vec2us.zero,
 resize_scale: Vec2f = .init(2.0, 2.0),
 _cursor: Cursor = .{},
 _allocator: std.mem.Allocator,

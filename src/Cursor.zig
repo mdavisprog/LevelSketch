@@ -3,7 +3,7 @@ const std = @import("std");
 const Self = @This();
 
 pub const Point = struct {
-    pub const ZERO: Point = .{ .x = 0, .y = 0 };
+    pub const zero: Point = .{ .x = 0, .y = 0 };
 
     x: i64,
     y: i64,
@@ -36,7 +36,7 @@ pub const Button = enum(usize) {
     right,
     unhandled,
 };
-const BUTTON_COUNT = @typeInfo(Button).@"enum".fields.len;
+const button_count = @typeInfo(Button).@"enum".fields.len;
 
 pub const Action = enum {
     press,
@@ -44,9 +44,9 @@ pub const Action = enum {
     repeat,
 };
 
-current: Point = .ZERO,
-last: Point = .ZERO,
-buttons: [BUTTON_COUNT]Action = .{.release} ** BUTTON_COUNT,
+current: Point = .zero,
+last: Point = .zero,
+buttons: [button_count]Action = .{.release} ** button_count,
 
 pub fn update(self: *Self, x: i64, y: i64) void {
     self.last.copy(self.current);
