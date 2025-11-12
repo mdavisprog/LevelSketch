@@ -4,6 +4,7 @@ pub const Font = @import("Font.zig");
 pub const MemFactory = @import("MemFactory.zig");
 pub const RenderBuffer = @import("RenderBuffer.zig");
 pub const shaders = @import("shaders/root.zig");
+pub const shapes = @import("shapes.zig");
 pub const Texture = @import("Texture.zig");
 pub const Textures = @import("Textures.zig");
 pub const Vertex = @import("Vertex.zig");

@@ -50,12 +50,12 @@ pub fn init(factory: *MemFactory, textures: *Textures) !Self {
     var buffer: RenderBuffer = .init();
     try buffer.setTransientVertices(
         try text_buffer.createMemVertexTransient(factory),
-        text_buffer.vertices.len,
+        text_buffer.vertices.items.len,
     );
 
     try buffer.setTransientIndices(
         try text_buffer.createMemIndexTransient(factory),
-        text_buffer.indices.len,
+        text_buffer.indices.items.len,
     );
 
     return Self{

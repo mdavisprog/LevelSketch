@@ -1,7 +1,10 @@
 const MemFactory = @import("MemFactory.zig");
+const render = @import("root.zig");
 const std = @import("std");
 const Vertex = @import("Vertex.zig");
 const zbgfx = @import("zbgfx");
+
+const VertexBuffer16 = render.VertexBuffer16;
 
 pub const Error = error{
     NotInitialized,
@@ -144,6 +147,20 @@ pub fn setTransientIndices(self: *Self, mem: MemFactory.Mem, length: usize) !voi
 
     const dst = handle.data[0..handle.size];
     @memcpy(dst, mem.ptr.*.data);
+}
+
+pub fn setStaticBuffer(self: *Self, factory: *MemFactory, buffer: *VertexBuffer16) !void {
+    const v_mem = try buffer.createMemVertex(factory);
+    const i_mem = try buffer.createMemIndex(factory);
+    try self.setStaticVertices(v_mem, buffer.vertices.items.len);
+    try self.setStaticIndices(i_mem, buffer.indices.items.len);
+}
+
+pub fn setTransientBuffer(self: *Self, factory: *MemFactory, buffer: VertexBuffer16) !void {
+    const v_mem = try buffer.createMemVertexTransient(factory);
+    const i_mem = try buffer.createMemIndexTransient(factory);
+    try self.setTransientVertices(v_mem, buffer.vertices.items.len);
+    try self.setTransientVertices(i_mem, buffer.indices.items.len);
 }
 
 pub fn updateVertices(self: Self, start_vertex: u32, mem: MemFactory.Mem) !void {

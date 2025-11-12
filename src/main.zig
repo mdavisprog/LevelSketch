@@ -107,11 +107,13 @@ pub fn main() !void {
     };
     defer font.deinit(allocator);
 
-    var quad = try getVertices(allocator, .init(-1.0, 1.0, 1.0, -1.0), 0xFF227722);
+    var quad = try render.shapes.quad(allocator, .init(-1.0, 1.0, 1.0, -1.0), 0xFF227722);
     defer quad.deinit(allocator);
 
-    var quad_render = try createRenderBuffer(&mem_factory, &quad);
+    var quad_render: RenderBuffer = .init();
     defer quad_render.deinit();
+
+    try quad_render.setStaticBuffer(&mem_factory, &quad);
 
     const ui_size = 50.0;
     const ui_vertices: [4]Vertex = .{
@@ -294,46 +296,6 @@ fn toggleCursor(window: *zglfw.Window, enabled: bool) !void {
 fn isPressed(window: *zglfw.Window, key: zglfw.Key) bool {
     const action = window.getKey(key);
     return action == .press;
-}
-
-fn getVertices(allocator: std.mem.Allocator, rect: Rectf, color: u32) !VertexBuffer16 {
-    var result: VertexBuffer16 = try .init(allocator, 4, 6);
-
-    _ = result.vertices[0].setPositionVec2(rect.min);
-    _ = result.vertices[1].setPositionVec2(.init(rect.min.x, rect.max.y));
-    _ = result.vertices[2].setPositionVec2(rect.max);
-    _ = result.vertices[3].setPositionVec2(.init(rect.max.x, rect.min.y));
-
-    _ = result.vertices[0].setUV(0.0, 0.0);
-    _ = result.vertices[1].setUV(0.0, 1.0);
-    _ = result.vertices[2].setUV(1.0, 1.0);
-    _ = result.vertices[3].setUV(1.0, 0.0);
-
-    _ = result.vertices[0].setColor(color);
-    _ = result.vertices[1].setColor(color);
-    _ = result.vertices[2].setColor(color);
-    _ = result.vertices[3].setColor(color);
-
-    result.indices[0] = 0;
-    result.indices[1] = 1;
-    result.indices[2] = 2;
-    result.indices[3] = 0;
-    result.indices[4] = 2;
-    result.indices[5] = 3;
-
-    return result;
-}
-
-fn createRenderBuffer(mem_factory: *MemFactory, vertex: *VertexBuffer16) !RenderBuffer {
-    var result: RenderBuffer = .init();
-
-    const v_mem = try vertex.createMemVertex(mem_factory);
-    const i_mem = try vertex.createMemIndex(mem_factory);
-
-    try result.setStaticVertices(v_mem, vertex.vertices.len);
-    try result.setStaticIndices(i_mem, vertex.indices.len);
-
-    return result;
 }
 
 // The code below will ensure that all referenced files will have their

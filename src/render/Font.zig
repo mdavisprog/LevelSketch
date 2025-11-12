@@ -212,30 +212,30 @@ pub fn getVertices(
             max.x = @floor(max.x);
             max.y = @floor(max.y);
 
-            _ = buffer.vertices[v_index + 0].setPositionVec2(min);
-            _ = buffer.vertices[v_index + 1].setPositionVec2(.init(min.x, max.y));
-            _ = buffer.vertices[v_index + 2].setPositionVec2(max);
-            _ = buffer.vertices[v_index + 3].setPositionVec2(.init(max.x, min.y));
+            _ = buffer.vertices.items[v_index + 0].setPositionVec2(min);
+            _ = buffer.vertices.items[v_index + 1].setPositionVec2(.init(min.x, max.y));
+            _ = buffer.vertices.items[v_index + 2].setPositionVec2(max);
+            _ = buffer.vertices.items[v_index + 3].setPositionVec2(.init(max.x, min.y));
 
             const uv_min = glyph.min.div(tex_size);
             const uv_max = glyph.max.div(tex_size);
 
-            _ = buffer.vertices[v_index + 0].setUVVec2(uv_min);
-            _ = buffer.vertices[v_index + 1].setUVVec2(.init(uv_min.x, uv_max.y));
-            _ = buffer.vertices[v_index + 2].setUVVec2(uv_max);
-            _ = buffer.vertices[v_index + 3].setUVVec2(.init(uv_max.x, uv_min.y));
+            _ = buffer.vertices.items[v_index + 0].setUVVec2(uv_min);
+            _ = buffer.vertices.items[v_index + 1].setUVVec2(.init(uv_min.x, uv_max.y));
+            _ = buffer.vertices.items[v_index + 2].setUVVec2(uv_max);
+            _ = buffer.vertices.items[v_index + 3].setUVVec2(.init(uv_max.x, uv_min.y));
 
-            _ = buffer.vertices[v_index + 0].setColor4b(255, 255, 255, 255);
-            _ = buffer.vertices[v_index + 1].setColor4b(255, 255, 255, 255);
-            _ = buffer.vertices[v_index + 2].setColor4b(255, 255, 255, 255);
-            _ = buffer.vertices[v_index + 3].setColor4b(255, 255, 255, 255);
+            _ = buffer.vertices.items[v_index + 0].setColor4b(255, 255, 255, 255);
+            _ = buffer.vertices.items[v_index + 1].setColor4b(255, 255, 255, 255);
+            _ = buffer.vertices.items[v_index + 2].setColor4b(255, 255, 255, 255);
+            _ = buffer.vertices.items[v_index + 3].setColor4b(255, 255, 255, 255);
 
-            buffer.indices[index + 0] = vertex_offset + 0;
-            buffer.indices[index + 1] = vertex_offset + 1;
-            buffer.indices[index + 2] = vertex_offset + 2;
-            buffer.indices[index + 3] = vertex_offset + 0;
-            buffer.indices[index + 4] = vertex_offset + 2;
-            buffer.indices[index + 5] = vertex_offset + 3;
+            buffer.indices.items[index + 0] = vertex_offset + 0;
+            buffer.indices.items[index + 1] = vertex_offset + 1;
+            buffer.indices.items[index + 2] = vertex_offset + 2;
+            buffer.indices.items[index + 3] = vertex_offset + 0;
+            buffer.indices.items[index + 4] = vertex_offset + 2;
+            buffer.indices.items[index + 5] = vertex_offset + 3;
 
             v_index += 4;
             vertex_offset += 4;
