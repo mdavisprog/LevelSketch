@@ -48,12 +48,22 @@ pub fn VertexBuffer(comptime IndexType: type) type {
             );
         }
 
+        /// Don't track the memory allocation. Caller is responsible for freeing the memory.
+        pub fn createMemVertexTransient(self: *Self, factory: *MemFactory) !MemFactory.Mem {
+            return try factory.create(@ptrCast(self.vertices), null, null);
+        }
+
         pub fn createMemIndex(self: *Self, factory: *MemFactory) !MemFactory.Mem {
             return try factory.create(
                 @ptrCast(self.indices),
                 onUploadedIndex,
                 @ptrCast(self),
             );
+        }
+
+        /// Don't track the memory allocation. Caller is responsible for freeing the memory.
+        pub fn createMemIndexTransient(self: *Self, factory: *MemFactory) !MemFactory.Mem {
+            return try factory.create(@ptrCast(self.indices), null, null);
         }
 
         fn onUploadedVertex(result: MemFactory.OnUploadedResult) void {

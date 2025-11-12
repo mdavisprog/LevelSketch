@@ -2,6 +2,7 @@ const builtin = @import("builtin");
 const callbacks = @import("callbacks.zig");
 const core = @import("core");
 const Cursor = @import("Cursor.zig");
+const GUI = @import("GUI.zig");
 const render = @import("render");
 const stb = @import("stb");
 const std = @import("std");
@@ -27,7 +28,6 @@ var camera: Camera = undefined;
 var camera_rotating = false;
 var cursor: Cursor = .{};
 var view_world: View = undefined;
-var view_ui: View = undefined;
 
 pub fn main() !void {
     std.log.info("Welcome to LevelSketch!", .{});
@@ -123,24 +123,13 @@ pub fn main() !void {
 
     const ui_indices: [6]u16 = .{ 0, 1, 2, 0, 2, 3 };
 
-    var text_vertex_buffer = try font.getVertices(allocator, "Hello World", .init(50.0, 50.0));
-    defer text_vertex_buffer.deinit(allocator);
-
-    var text_buffer: RenderBuffer = .init();
-    defer text_buffer.deinit();
-
-    const text_vertex_mem_v = try mem_factory.create(@ptrCast(text_vertex_buffer.vertices), null, null);
-    const text_vertex_mem_i = try mem_factory.create(@ptrCast(text_vertex_buffer.indices), null, null);
-    try text_buffer.setDynamicVertices(text_vertex_mem_v.ptr, text_vertex_buffer.vertices.len);
-    try text_buffer.setDynamicIndices(text_vertex_mem_i.ptr, text_vertex_buffer.indices.len);
-
     var ui_buffer: RenderBuffer = .init();
     defer ui_buffer.deinit();
 
     const ui_buffer_mem_v = try mem_factory.create(@ptrCast(&ui_vertices), null, null);
     const ui_buffer_mem_i = try mem_factory.create(@ptrCast(&ui_indices), null, null);
-    try ui_buffer.setStaticVertices(ui_buffer_mem_v.ptr, ui_vertices.len);
-    try ui_buffer.setStaticIndices(ui_buffer_mem_i.ptr, ui_indices.len);
+    try ui_buffer.setStaticVertices(ui_buffer_mem_v, ui_vertices.len);
+    try ui_buffer.setStaticIndices(ui_buffer_mem_i, ui_indices.len);
 
     const sampler_tex_color = zbgfx.bgfx.createUniform("s_tex_color", .Sampler, 1);
     defer zbgfx.bgfx.destroyUniform(sampler_tex_color);
@@ -148,9 +137,6 @@ pub fn main() !void {
     camera = .{
         .position = zmath.f32x4(0.0, 0.0, -3.0, 1.0),
     };
-
-    const info_tex = try textures.load_image(&mem_factory, "assets/textures/info.png");
-
 
     var shader_program = render.shaders.Program{};
     _ = try shader_program.build(
@@ -162,17 +148,6 @@ pub fn main() !void {
         },
     );
     defer shader_program.clean();
-
-    var text_shader_program = render.shaders.Program{};
-    _ = try text_shader_program.build(
-        allocator,
-        .{
-            .varying_file_name = "common.def.sc",
-            .fragment_file_name = "text_fragment.sc",
-            .vertex_file_name = "common_vertex.sc",
-        },
-    );
-    defer text_shader_program.clean();
 
     zbgfx.bgfx.setDebug(zbgfx.bgfx.DebugFlags_None);
     zbgfx.bgfx.reset(
@@ -188,12 +163,13 @@ pub fn main() !void {
     view_world.setPerspective(60.0, aspect);
     view_world.clear();
 
-    view_ui = .init(0x000000FF, false);
-    view_ui.setOrthographic(
+    var gui: GUI = try .init(&mem_factory, &textures);
+    defer gui.deinit(allocator);
+
+    gui.setView(
         @floatFromInt(framebuffer_size[0]),
         @floatFromInt(framebuffer_size[1]),
     );
-    view_ui.setMode(.Sequential);
 
     const state = zbgfx.bgfx.StateFlags_WriteRgb |
         zbgfx.bgfx.StateFlags_WriteA |
@@ -201,14 +177,6 @@ pub fn main() !void {
         zbgfx.bgfx.StateFlags_DepthTestLess |
         zbgfx.bgfx.StateFlags_CullCw |
         zbgfx.bgfx.StateFlags_Msaa;
-
-    const ui_state = zbgfx.bgfx.StateFlags_WriteRgb |
-        zbgfx.bgfx.StateFlags_WriteA |
-        zbgfx.bgfx.StateFlags_Msaa |
-        render.stateFlagsBlend(
-            zbgfx.bgfx.StateFlags_BlendSrcAlpha,
-            zbgfx.bgfx.StateFlags_BlendInvSrcAlpha,
-        );
 
     // Timing
     var last_time: f64 = 0.0;
@@ -229,19 +197,10 @@ pub fn main() !void {
 
         try textures.default.bind(sampler_tex_color, 0);
         quad_render.bind(state);
-        zbgfx.bgfx.submit(view_world.id, shader_program.handle, 0, 255);
+        zbgfx.bgfx.submit(view_world.id, shader_program.handle, 255, 0);
         view_world.touch();
 
-        view_ui.submitOrthographic(@intCast(size[0]), @intCast(size[1]));
-
-        try info_tex.bind(sampler_tex_color, 0);
-        ui_buffer.bind(ui_state);
-        zbgfx.bgfx.submit(view_ui.id, shader_program.handle, 0, 255);
-
-        try font.texture.bind(sampler_tex_color, zbgfx.bgfx.SamplerFlags_UBorder | zbgfx.bgfx.SamplerFlags_VBorder);
-        text_buffer.bind(ui_state);
-        zbgfx.bgfx.submit(view_ui.id, text_shader_program.handle, 0, 255);
-        view_ui.touch();
+        try gui.draw(sampler_tex_color, shader_program);
 
         _ = zbgfx.bgfx.frame(false);
     }
@@ -371,8 +330,8 @@ fn createRenderBuffer(mem_factory: *MemFactory, vertex: *VertexBuffer16) !Render
     const v_mem = try vertex.createMemVertex(mem_factory);
     const i_mem = try vertex.createMemIndex(mem_factory);
 
-    try result.setStaticVertices(v_mem.ptr, vertex.vertices.len);
-    try result.setStaticIndices(i_mem.ptr, vertex.indices.len);
+    try result.setStaticVertices(v_mem, vertex.vertices.len);
+    try result.setStaticIndices(i_mem, vertex.indices.len);
 
     return result;
 }
