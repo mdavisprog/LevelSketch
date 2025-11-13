@@ -1,10 +1,14 @@
 const builtin = @import("builtin");
 const io = @import("io");
 const std = @import("std");
+const shaders = @import("root.zig");
 const zbgfx = @import("zbgfx");
 
+const Uniform = shaders.Uniform;
+
 const Self = @This();
-const SHADER_PATH = "assets/shaders";
+
+pub const UniformMap = std.StringHashMap(Uniform);
 
 pub const Paths = struct {
     varying_file_name: []const u8,
@@ -12,9 +16,38 @@ pub const Paths = struct {
     vertex_file_name: []const u8,
 };
 
-handle: zbgfx.bgfx.ProgramHandle = .{ .idx = 0 },
+pub const Handle = struct {
+    data: zbgfx.bgfx.ProgramHandle = .{ .idx = 0 },
+};
 
-pub fn build(self: *Self, allocator: std.mem.Allocator, paths: Paths) !zbgfx.bgfx.ProgramHandle {
+pub const Error = error{
+    UniformNotFound,
+};
+
+const SHADER_PATH = "assets/shaders";
+
+handle: Handle = .{},
+uniforms: UniformMap,
+
+pub fn init(gpa: std.mem.Allocator) Self {
+    return Self{
+        .uniforms = UniformMap.init(gpa),
+    };
+}
+
+pub fn deinit(self: *Self) void {
+    var keys = self.uniforms.keyIterator();
+    while (keys.next()) |key| {
+        self.uniforms.allocator.free(key.*);
+    }
+
+    self.uniforms.deinit();
+    zbgfx.bgfx.destroyProgram(self.handle.data);
+}
+
+pub fn build(self: *Self, paths: Paths) !void {
+    const allocator = self.uniforms.allocator;
+
     const shader_exe = try getShaderExePath(allocator);
     defer allocator.free(shader_exe);
 
@@ -70,12 +103,21 @@ pub fn build(self: *Self, allocator: std.mem.Allocator, paths: Paths) !zbgfx.bgf
         @intCast(vertex_compiled.len),
     ));
 
-    self.handle = zbgfx.bgfx.createProgram(vertex_shader, fragment_shader, true);
-    return self.handle;
+    self.handle.data = zbgfx.bgfx.createProgram(vertex_shader, fragment_shader, false);
+
+    try getUniforms(&self.uniforms, fragment_shader);
+    try getUniforms(&self.uniforms, vertex_shader);
+
+    zbgfx.bgfx.destroyShader(fragment_shader);
+    zbgfx.bgfx.destroyShader(vertex_shader);
 }
 
-pub fn clean(self: *Self) void {
-    zbgfx.bgfx.destroyProgram(self.handle);
+pub fn getUniform(self: Self, name: []const u8) !Uniform {
+    if (self.uniforms.get(name)) |uniform| {
+        return uniform;
+    }
+
+    return Error.UniformNotFound;
 }
 
 fn getContents(filename: []const u8, allocator: std.mem.Allocator) ![]u8 {
@@ -100,4 +142,43 @@ fn getShaderExePath(allocator: std.mem.Allocator) ![]u8 {
     }
 
     return path;
+}
+
+fn getUniforms(map: *UniformMap, shader: zbgfx.bgfx.ShaderHandle) !void {
+    const count = zbgfx.bgfx.getShaderUniforms(shader, null, 32);
+
+    if (count == 0) {
+        return;
+    }
+
+    var uniforms = try map.allocator.alloc(zbgfx.bgfx.UniformHandle, count);
+    defer map.allocator.free(uniforms);
+
+    _ = zbgfx.bgfx.getShaderUniforms(shader, @ptrCast(&uniforms[0]), count);
+
+    for (0..count) |i| {
+        const uniform = uniforms[i];
+
+        var info = std.mem.zeroes(zbgfx.bgfx.UniformInfo);
+        zbgfx.bgfx.getUniformInfo(uniform, @ptrCast(&info));
+
+        // Find the sentinel terminator.
+        var len: usize = 0;
+        for (0..info.name.len) |j| {
+            if (info.name[j] == 0) {
+                break;
+            }
+
+            len += 1;
+        }
+
+        const name: []const u8 = info.name[0..len];
+
+        if (map.contains(name)) {
+            try map.put(name, .{ .handle = uniform });
+        } else {
+            const key = try map.allocator.dupe(u8, name);
+            try map.put(key, .{ .handle = uniform });
+        }
+    }
 }

@@ -11,6 +11,7 @@ const MemFactory = render.MemFactory;
 const Program = render.shaders.Program;
 const RenderBuffer = render.RenderBuffer;
 const Textures = render.Textures;
+const Uniform = render.shaders.Uniform;
 const VertexBuffer16 = render.VertexBuffer16;
 const View = render.View;
 
@@ -34,9 +35,8 @@ pub fn init(factory: *MemFactory, textures: *Textures) !Self {
         textures,
     );
 
-    var text_shader: Program = .{};
-    _ = try text_shader.build(
-        factory.allocator,
+    var text_shader: Program = .init(factory.allocator);
+    try text_shader.build(
         .{
             .varying_file_name = "common.def.sc",
             .fragment_file_name = "text_fragment.sc",
@@ -67,7 +67,7 @@ pub fn init(factory: *MemFactory, textures: *Textures) !Self {
 }
 
 pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
-    self.text_shader.clean();
+    self.text_shader.deinit();
     self.font.deinit(allocator);
     self._buffer.deinit();
 }
@@ -84,7 +84,7 @@ pub fn update(self: *Self, delta_time: f32) void {
 
 pub fn draw(
     self: Self,
-    sampler: zbgfx.bgfx.UniformHandle,
+    sampler: Uniform,
     default_shader: Program,
 ) !void {
     if (!self._buffer.isValid()) {
@@ -106,10 +106,10 @@ pub fn draw(
     self.view.submitOrthographic(width, height);
 
     try self.font.texture.bind(
-        sampler,
+        sampler.handle,
         zbgfx.bgfx.SamplerFlags_UBorder | zbgfx.bgfx.SamplerFlags_VBorder,
     );
     self._buffer.bind(state);
-    zbgfx.bgfx.submit(self.view.id, self.text_shader.handle, 255, 0);
+    zbgfx.bgfx.submit(self.view.id, self.text_shader.handle.data, 255, 0);
     self.view.touch();
 }

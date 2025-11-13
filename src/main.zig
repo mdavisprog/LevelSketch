@@ -16,6 +16,7 @@ const commandline = core.commandline;
 const Camera = render.Camera;
 const Font = render.Font;
 const MemFactory = render.MemFactory;
+const Program = render.shaders.Program;
 const RenderBuffer = render.RenderBuffer;
 const Textures = render.Textures;
 const Vertex = render.Vertex;
@@ -133,23 +134,21 @@ pub fn main() !void {
     try ui_buffer.setStaticVertices(ui_buffer_mem_v, ui_vertices.len);
     try ui_buffer.setStaticIndices(ui_buffer_mem_i, ui_indices.len);
 
-    const sampler_tex_color = zbgfx.bgfx.createUniform("s_tex_color", .Sampler, 1);
-    defer zbgfx.bgfx.destroyUniform(sampler_tex_color);
-
     camera = .{
         .position = zmath.f32x4(0.0, 0.0, -3.0, 1.0),
     };
 
-    var shader_program = render.shaders.Program{};
-    _ = try shader_program.build(
-        allocator,
+    var shader_program: Program = .init(allocator);
+    try shader_program.build(
         .{
             .varying_file_name = "common.def.sc",
             .fragment_file_name = "common_fragment.sc",
             .vertex_file_name = "common_vertex.sc",
         },
     );
-    defer shader_program.clean();
+    defer shader_program.deinit();
+
+    const sampler_tex_color = try shader_program.getUniform("s_tex_color");
 
     zbgfx.bgfx.setDebug(zbgfx.bgfx.DebugFlags_None);
     zbgfx.bgfx.reset(
@@ -197,9 +196,9 @@ pub fn main() !void {
         const size = window.getFramebufferSize();
         view_world.submitPerspective(camera, @intCast(size[0]), @intCast(size[1]));
 
-        try textures.default.bind(sampler_tex_color, 0);
+        try textures.default.bind(sampler_tex_color.handle, 0);
         quad_render.bind(state);
-        zbgfx.bgfx.submit(view_world.id, shader_program.handle, 255, 0);
+        zbgfx.bgfx.submit(view_world.id, shader_program.handle.data, 255, 0);
         view_world.touch();
 
         try gui.draw(sampler_tex_color, shader_program);
