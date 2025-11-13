@@ -201,7 +201,7 @@ pub fn main() !void {
         zbgfx.bgfx.submit(view_world.id, shader_program.handle.data, 255, 0);
         view_world.touch();
 
-        try gui.draw(sampler_tex_color, shader_program);
+        try gui.draw();
 
         _ = zbgfx.bgfx.frame(false);
     }

@@ -160,7 +160,7 @@ pub fn setTransientBuffer(self: *Self, factory: *MemFactory, buffer: VertexBuffe
     const v_mem = try buffer.createMemVertexTransient(factory);
     const i_mem = try buffer.createMemIndexTransient(factory);
     try self.setTransientVertices(v_mem, buffer.vertices.items.len);
-    try self.setTransientVertices(i_mem, buffer.indices.items.len);
+    try self.setTransientIndices(i_mem, buffer.indices.items.len);
 }
 
 pub fn updateVertices(self: Self, start_vertex: u32, mem: MemFactory.Mem) !void {

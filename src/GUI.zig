@@ -6,10 +6,12 @@ const zbgfx = @import("zbgfx");
 const Rectf = core.math.Rectf;
 const Vec2f = core.math.Vec2f;
 
+const Commands = render.Commands;
 const Font = render.Font;
 const MemFactory = render.MemFactory;
 const Program = render.shaders.Program;
 const RenderBuffer = render.RenderBuffer;
+const Texture = render.Texture;
 const Textures = render.Textures;
 const Uniform = render.shaders.Uniform;
 const VertexBuffer16 = render.VertexBuffer16;
@@ -21,7 +23,8 @@ view: View,
 size: Vec2f = .zero,
 font: Font,
 text_shader: Program,
-_buffer: RenderBuffer,
+_commands: Commands,
+_default_texture: Texture,
 
 /// Must be initialized after bgfx has been initialized.
 pub fn init(factory: *MemFactory, textures: *Textures) !Self {
@@ -44,32 +47,23 @@ pub fn init(factory: *MemFactory, textures: *Textures) !Self {
         },
     );
 
-    var text_buffer = try font.getVertices(factory.allocator, "Hello World", .init(50.0, 50.0));
-    defer text_buffer.deinit(factory.allocator);
-
-    var buffer: RenderBuffer = .init();
-    try buffer.setTransientVertices(
-        try text_buffer.createMemVertexTransient(factory),
-        text_buffer.vertices.items.len,
-    );
-
-    try buffer.setTransientIndices(
-        try text_buffer.createMemIndexTransient(factory),
-        text_buffer.indices.items.len,
-    );
-
-    return Self{
+    var result = Self{
         .view = view,
         .font = font,
         .text_shader = text_shader,
-        ._buffer = buffer,
+        ._commands = try Commands.init(factory.allocator),
+        ._default_texture = textures.default,
     };
+
+    try result.buildCommands(factory);
+
+    return result;
 }
 
 pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
     self.text_shader.deinit();
     self.font.deinit(allocator);
-    self._buffer.deinit();
+    self._commands.deinit();
 }
 
 pub fn setView(self: *Self, width: f32, height: f32) void {
@@ -82,14 +76,18 @@ pub fn update(self: *Self, delta_time: f32) void {
     _ = delta_time;
 }
 
-pub fn draw(
-    self: Self,
-    sampler: Uniform,
-    default_shader: Program,
-) !void {
-    if (!self._buffer.isValid()) {
-        return;
-    }
+pub fn draw(self: *Self) !void {
+    const width: u16 = @intFromFloat(self.size.x);
+    const height: u16 = @intFromFloat(self.size.y);
+    self.view.submitOrthographic(width, height);
+
+    try self._commands.run(self.view);
+}
+
+fn buildCommands(self: *Self, factory: *MemFactory) !void {
+    const allocator = factory.allocator;
+
+    self._commands.clear();
 
     const state = zbgfx.bgfx.StateFlags_WriteRgb |
         zbgfx.bgfx.StateFlags_WriteA |
@@ -99,17 +97,18 @@ pub fn draw(
             zbgfx.bgfx.StateFlags_BlendInvSrcAlpha,
         );
 
-    _ = default_shader;
+    var text_buffer = try self.font.getVertices(allocator, "Hello World", .init(50.0, 50.0));
+    defer text_buffer.deinit(allocator);
 
-    const width: u16 = @intFromFloat(self.size.x);
-    const height: u16 = @intFromFloat(self.size.y);
-    self.view.submitOrthographic(width, height);
+    var buffer: RenderBuffer = .init();
+    try buffer.setTransientBuffer(factory, text_buffer);
 
-    try self.font.texture.bind(
-        sampler.handle,
-        zbgfx.bgfx.SamplerFlags_UBorder | zbgfx.bgfx.SamplerFlags_VBorder,
-    );
-    self._buffer.bind(state);
-    zbgfx.bgfx.submit(self.view.id, self.text_shader.handle.data, 255, 0);
-    self.view.touch();
+    try self._commands.addCommand(.{
+        .buffer = buffer,
+        .texture = self.font.texture,
+        .texture_flags = zbgfx.bgfx.SamplerFlags_UBorder | zbgfx.bgfx.SamplerFlags_VBorder,
+        .shader = self.text_shader,
+        .sampler = try self.text_shader.getUniform("s_tex_color"),
+        .state = state,
+    });
 }
