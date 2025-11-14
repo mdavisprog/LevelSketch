@@ -1,4 +1,5 @@
 const core = @import("core");
+const Cursor = @import("Cursor.zig");
 const render = @import("render");
 const std = @import("std");
 const zbgfx = @import("zbgfx");
@@ -20,6 +21,9 @@ const View = render.View;
 
 const Self = @This();
 
+const hover_color: u32 = 0xFF00FF00;
+const unhover_color: u32 = 0xFF0000FF;
+
 view: View,
 size: Vec2f = .zero,
 font: Font,
@@ -27,6 +31,8 @@ text_shader: *Program,
 common_shader: *Program,
 _commands: Commands,
 _default_texture: Texture,
+_test_rect: Rectf = .init(400.0, 50.0, 500.0, 100.0),
+_test_rect_hovered: bool = false,
 
 /// Must be initialized after bgfx has been initialized.
 pub fn init(renderer: *Renderer) !Self {
@@ -58,7 +64,7 @@ pub fn init(renderer: *Renderer) !Self {
         ._default_texture = renderer.textures.default,
     };
 
-    try result.buildCommands(&renderer.mem_factory);
+    try result.buildCommands(&renderer.mem_factory, unhover_color);
 
     return result;
 }
@@ -73,9 +79,21 @@ pub fn setView(self: *Self, width: f32, height: f32) void {
     self.size = .init(width, height);
 }
 
-pub fn update(self: *Self, delta_time: f32) void {
-    _ = self;
+pub fn update(self: *Self, renderer: *Renderer, delta_time: f32, cursor: Cursor) !void {
     _ = delta_time;
+
+    const cursor_pos = cursor.current.toVec2f();
+    if (self._test_rect.contains(cursor_pos)) {
+        if (!self._test_rect_hovered) {
+            self._test_rect_hovered = true;
+            try self.buildCommands(&renderer.mem_factory, hover_color);
+        }
+    } else {
+        if (self._test_rect_hovered) {
+            self._test_rect_hovered = false;
+            try self.buildCommands(&renderer.mem_factory, unhover_color);
+        }
+    }
 }
 
 pub fn draw(self: *Self) !void {
@@ -86,18 +104,10 @@ pub fn draw(self: *Self) !void {
     try self._commands.run(self.view);
 }
 
-fn buildCommands(self: *Self, factory: *MemFactory) !void {
+fn buildCommands(self: *Self, factory: *MemFactory, color: u32) !void {
     const allocator = factory.allocator;
 
     self._commands.clear();
-
-    const state = zbgfx.bgfx.StateFlags_WriteRgb |
-        zbgfx.bgfx.StateFlags_WriteA |
-        zbgfx.bgfx.StateFlags_Msaa |
-        render.stateFlagsBlend(
-            zbgfx.bgfx.StateFlags_BlendSrcAlpha,
-            zbgfx.bgfx.StateFlags_BlendInvSrcAlpha,
-        );
 
     var text_buffer = try self.font.getVertices(allocator, "Hello World", .init(50.0, 50.0));
     defer text_buffer.deinit(allocator);
@@ -111,6 +121,21 @@ fn buildCommands(self: *Self, factory: *MemFactory) !void {
         .texture_flags = zbgfx.bgfx.SamplerFlags_UBorder | zbgfx.bgfx.SamplerFlags_VBorder,
         .shader = self.text_shader,
         .sampler = try self.text_shader.getUniform("s_tex_color"),
-        .state = state,
+        .state = Renderer.ui_state,
+    });
+
+    var quad = try render.shapes.quad(allocator, self._test_rect, color);
+    defer quad.deinit(allocator);
+
+    var quad_buffer: RenderBuffer = .init();
+    try quad_buffer.setTransientBuffer(factory, quad);
+
+    try self._commands.addCommand(.{
+        .buffer = quad_buffer,
+        .texture = self._default_texture,
+        .texture_flags = 0,
+        .shader = self.common_shader,
+        .sampler = try self.common_shader.getUniform("s_tex_color"),
+        .state = Renderer.world_state,
     });
 }

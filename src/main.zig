@@ -169,13 +169,6 @@ pub fn main() !void {
         @floatFromInt(framebuffer_size[1]),
     );
 
-    const state = zbgfx.bgfx.StateFlags_WriteRgb |
-        zbgfx.bgfx.StateFlags_WriteA |
-        zbgfx.bgfx.StateFlags_WriteZ |
-        zbgfx.bgfx.StateFlags_DepthTestLess |
-        zbgfx.bgfx.StateFlags_CullCw |
-        zbgfx.bgfx.StateFlags_Msaa;
-
     // Timing
     var last_time: f64 = 0.0;
 
@@ -186,6 +179,7 @@ pub fn main() !void {
 
         zglfw.pollEvents();
         renderer.update();
+        try gui.update(&renderer, delta_time, cursor);
 
         updateCursor(window, &cursor);
         try updateCamera(window, cursor, delta_time);
@@ -194,7 +188,7 @@ pub fn main() !void {
         view_world.submitPerspective(camera, @intCast(size[0]), @intCast(size[1]));
 
         try renderer.textures.default.bind(sampler_tex_color.handle, 0);
-        quad_render.bind(state);
+        quad_render.bind(Renderer.world_state);
         zbgfx.bgfx.submit(view_world.id, shader_program.handle.data, 255, 0);
         view_world.touch();
 

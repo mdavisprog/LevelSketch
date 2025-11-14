@@ -1,4 +1,7 @@
+const core = @import("core");
 const std = @import("std");
+
+const Vec2f = core.math.Vec2f;
 
 const Self = @This();
 
@@ -27,6 +30,13 @@ pub const Point = struct {
 
     pub fn isZero(self: Point) bool {
         return self.x == 0 and self.y == 0;
+    }
+
+    pub fn toVec2f(self: Point) Vec2f {
+        return .init(
+            @floatFromInt(self.x),
+            @floatFromInt(self.y),
+        );
     }
 };
 

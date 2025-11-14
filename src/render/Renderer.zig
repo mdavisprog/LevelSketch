@@ -1,11 +1,27 @@
 const render = @import("root.zig");
 const std = @import("std");
+const zbgfx = @import("zbgfx");
 
 const Programs = render.shaders.Programs;
 const MemFactory = render.MemFactory;
 const Textures = render.Textures;
 
 const Self = @This();
+
+pub const world_state = zbgfx.bgfx.StateFlags_WriteRgb |
+    zbgfx.bgfx.StateFlags_WriteA |
+    zbgfx.bgfx.StateFlags_WriteZ |
+    zbgfx.bgfx.StateFlags_DepthTestLess |
+    zbgfx.bgfx.StateFlags_CullCw |
+    zbgfx.bgfx.StateFlags_Msaa;
+
+pub const ui_state = zbgfx.bgfx.StateFlags_WriteRgb |
+    zbgfx.bgfx.StateFlags_WriteA |
+    zbgfx.bgfx.StateFlags_Msaa |
+    render.stateFlagsBlend(
+        zbgfx.bgfx.StateFlags_BlendSrcAlpha,
+        zbgfx.bgfx.StateFlags_BlendInvSrcAlpha,
+    );
 
 mem_factory: MemFactory,
 textures: Textures,
