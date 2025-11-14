@@ -2,15 +2,16 @@ const Atlas = @import("Atlas.zig");
 const core = @import("core");
 const io = @import("io");
 const MemFactory = @import("MemFactory.zig");
-const root = @import("root.zig");
+const render = @import("root.zig");
 const std = @import("std");
 const Texture = @import("Texture.zig");
 const Textures = @import("Textures.zig");
 const TrueType = @import("TrueType");
 const Vertex = @import("Vertex.zig");
 
+const Renderer = render.Renderer;
 const Vec2f = core.math.Vec2f;
-const VertexBuffer16 = root.VertexBuffer16;
+const VertexBuffer16 = render.VertexBuffer16;
 
 const Self = @This();
 
@@ -48,12 +49,11 @@ texture: Texture,
 _truetype: TrueType,
 
 pub fn init(
-    mem_factory: *MemFactory,
+    renderer: *Renderer,
     path: []const u8,
     size: f32,
-    textures: *Textures,
 ) !Self {
-    const allocator = mem_factory.allocator;
+    const allocator = renderer.mem_factory.allocator;
 
     const font_path = try io.exeRelativePath(allocator, &.{path});
 
@@ -135,8 +135,8 @@ pub fn init(
         1;
 
     var owned = try atlas.buffer.release();
-    const texture = try textures.load_buffer(
-        mem_factory,
+    const texture = try renderer.textures.load_buffer(
+        &renderer.mem_factory,
         try owned.data.toOwnedSlice(allocator),
         @intCast(owned.width),
         @intCast(owned.height),

@@ -18,6 +18,7 @@ const Font = render.Font;
 const MemFactory = render.MemFactory;
 const Program = render.shaders.Program;
 const RenderBuffer = render.RenderBuffer;
+const Renderer = render.Renderer;
 const Textures = render.Textures;
 const Vertex = render.Vertex;
 const VertexBuffer16 = render.VertexBuffer16;
@@ -63,9 +64,6 @@ pub fn main() !void {
     const window = try zglfw.createWindow(960, 540, "Level Sketch", null);
     defer zglfw.destroyWindow(window);
 
-    var mem_factory: MemFactory = try .init(allocator);
-    defer mem_factory.deinit();
-
     var bgfx_init: zbgfx.bgfx.Init = undefined;
     zbgfx.bgfx.initCtor(&bgfx_init);
 
@@ -95,14 +93,13 @@ pub fn main() !void {
 
     printBGFXInfo();
 
-    var textures: Textures = try .init(&mem_factory);
-    defer textures.deinit(allocator);
+    var renderer: Renderer = try .init(allocator);
+    defer renderer.deinit();
 
     var font = Font.init(
-        &mem_factory,
+        &renderer,
         "assets/fonts/Roboto-Regular.ttf",
         36.0,
-        &textures,
     ) catch |err| {
         std.debug.panic("Failed to initialize font: {}", .{err});
     };
@@ -114,7 +111,7 @@ pub fn main() !void {
     var quad_render: RenderBuffer = .init();
     defer quad_render.deinit();
 
-    try quad_render.setStaticBuffer(&mem_factory, &quad);
+    try quad_render.setStaticBuffer(&renderer.mem_factory, &quad);
 
     const ui_size = 50.0;
     const ui_vertices: [4]Vertex = .{
@@ -129,8 +126,8 @@ pub fn main() !void {
     var ui_buffer: RenderBuffer = .init();
     defer ui_buffer.deinit();
 
-    const ui_buffer_mem_v = try mem_factory.create(@ptrCast(&ui_vertices), null, null);
-    const ui_buffer_mem_i = try mem_factory.create(@ptrCast(&ui_indices), null, null);
+    const ui_buffer_mem_v = try renderer.mem_factory.create(@ptrCast(&ui_vertices), null, null);
+    const ui_buffer_mem_i = try renderer.mem_factory.create(@ptrCast(&ui_indices), null, null);
     try ui_buffer.setStaticVertices(ui_buffer_mem_v, ui_vertices.len);
     try ui_buffer.setStaticIndices(ui_buffer_mem_i, ui_indices.len);
 
@@ -164,7 +161,7 @@ pub fn main() !void {
     view_world.setPerspective(60.0, aspect);
     view_world.clear();
 
-    var gui: GUI = try .init(&mem_factory, &textures);
+    var gui: GUI = try .init(&renderer);
     defer gui.deinit(allocator);
 
     gui.setView(
@@ -188,7 +185,7 @@ pub fn main() !void {
         last_time = current_time;
 
         zglfw.pollEvents();
-        mem_factory.update();
+        renderer.update();
 
         updateCursor(window, &cursor);
         try updateCamera(window, cursor, delta_time);
@@ -196,7 +193,7 @@ pub fn main() !void {
         const size = window.getFramebufferSize();
         view_world.submitPerspective(camera, @intCast(size[0]), @intCast(size[1]));
 
-        try textures.default.bind(sampler_tex_color.handle, 0);
+        try renderer.textures.default.bind(sampler_tex_color.handle, 0);
         quad_render.bind(state);
         zbgfx.bgfx.submit(view_world.id, shader_program.handle.data, 255, 0);
         view_world.touch();

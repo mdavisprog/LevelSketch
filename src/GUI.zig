@@ -11,6 +11,7 @@ const Font = render.Font;
 const MemFactory = render.MemFactory;
 const Program = render.shaders.Program;
 const RenderBuffer = render.RenderBuffer;
+const Renderer = render.Renderer;
 const Texture = render.Texture;
 const Textures = render.Textures;
 const Uniform = render.shaders.Uniform;
@@ -27,18 +28,17 @@ _commands: Commands,
 _default_texture: Texture,
 
 /// Must be initialized after bgfx has been initialized.
-pub fn init(factory: *MemFactory, textures: *Textures) !Self {
+pub fn init(renderer: *Renderer) !Self {
     var view: View = .init(0x000000FF, false);
     view.setMode(.Sequential);
 
     const font: Font = try .init(
-        factory,
+        renderer,
         "assets/fonts/Roboto-Regular.ttf",
         32.0,
-        textures,
     );
 
-    var text_shader: Program = .init(factory.allocator);
+    var text_shader: Program = .init(renderer.mem_factory.allocator);
     try text_shader.build(
         .{
             .varying_file_name = "common.def.sc",
@@ -51,11 +51,11 @@ pub fn init(factory: *MemFactory, textures: *Textures) !Self {
         .view = view,
         .font = font,
         .text_shader = text_shader,
-        ._commands = try Commands.init(factory.allocator),
-        ._default_texture = textures.default,
+        ._commands = try Commands.init(renderer.mem_factory.allocator),
+        ._default_texture = renderer.textures.default,
     };
 
-    try result.buildCommands(factory);
+    try result.buildCommands(&renderer.mem_factory);
 
     return result;
 }
