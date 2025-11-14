@@ -61,11 +61,12 @@
         //    // actually used.
         //    .lazy = false,
         //},
+        .clay = .{ .path = "external/clay" },
+        .stb = .{ .path = "external/stb" },
         .TrueType = .{ .path = "external/truetype" },
         .zglfw = .{ .path = "external/zglfw" },
         .zbgfx = .{ .path = "external/zbgfx" },
         .zmath = .{ .path = "external/zmath" },
-        .stb = .{ .path = "external/stb" },
     },
     // Specifies the set of files and directories that are included in this package.
     // Only files and directories listed here are included in the `hash` that

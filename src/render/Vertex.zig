@@ -2,6 +2,7 @@ const core = @import("core");
 const std = @import("std");
 const zbgfx = @import("zbgfx");
 
+const HexColor = core.math.HexColor;
 const Vec2f = core.math.Vec2f;
 const Vec3f = core.math.Vec3f;
 
@@ -64,11 +65,8 @@ pub fn setColor(self: *Self, abgr: u32) *Self {
 }
 
 pub fn setColor4b(self: *Self, r: u8, g: u8, b: u8, a: u8) *Self {
-    const _r: u32 = @intCast(r);
-    const _g: u32 = @intCast(g);
-    const _b: u32 = @intCast(b);
-    const _a: u32 = @intCast(a);
-    self.abgr = _r | std.math.shl(u32, _g, 8) | std.math.shl(u32, _b, 16) | std.math.shl(u32, _a, 24);
+    const hex: HexColor = .init(r, g, b, a, .abgr);
+    self.abgr = hex.data;
     return self;
 }
 

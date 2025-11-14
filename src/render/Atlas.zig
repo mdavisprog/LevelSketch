@@ -218,7 +218,6 @@ test "placeExpand" {
     try std.testing.expectEqual(0, try atlas.buffer.get(2, 3));
     try std.testing.expectEqual(0, try atlas.buffer.get(3, 3));
 
-    std.debug.print("=== atlas2 test ===\n", .{});
     var atlas2: Self = try .init(allocator, 2, 2);
     defer atlas2.deinit();
 

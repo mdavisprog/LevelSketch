@@ -1,0 +1,12 @@
+.{
+    .name = .clay,
+    .version = "0.1.0",
+    .minimum_zig_version = "0.15.2",
+    .fingerprint = 0x1c2526cb3efe4fac,
+    .dependencies = .{},
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src/clay.zig",
+    },
+}
