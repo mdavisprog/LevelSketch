@@ -23,7 +23,8 @@ const Self = @This();
 view: View,
 size: Vec2f = .zero,
 font: Font,
-text_shader: Program,
+text_shader: *Program,
+common_shader: *Program,
 _commands: Commands,
 _default_texture: Texture,
 
@@ -38,8 +39,9 @@ pub fn init(renderer: *Renderer) !Self {
         32.0,
     );
 
-    var text_shader: Program = .init(renderer.mem_factory.allocator);
-    try text_shader.build(
+    const text_shader: *Program = try renderer.programs.build(
+        renderer._gpa,
+        "text",
         .{
             .varying_file_name = "common.def.sc",
             .fragment_file_name = "text_fragment.sc",
@@ -51,6 +53,7 @@ pub fn init(renderer: *Renderer) !Self {
         .view = view,
         .font = font,
         .text_shader = text_shader,
+        .common_shader = try renderer.programs.get("common"),
         ._commands = try Commands.init(renderer.mem_factory.allocator),
         ._default_texture = renderer.textures.default,
     };
@@ -61,7 +64,6 @@ pub fn init(renderer: *Renderer) !Self {
 }
 
 pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
-    self.text_shader.deinit();
     self.font.deinit(allocator);
     self._commands.deinit();
 }

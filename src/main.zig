@@ -135,15 +135,15 @@ pub fn main() !void {
         .position = zmath.f32x4(0.0, 0.0, -3.0, 1.0),
     };
 
-    var shader_program: Program = .init(allocator);
-    try shader_program.build(
+    var shader_program: *Program = try renderer.programs.build(
+        allocator,
+        "common",
         .{
             .varying_file_name = "common.def.sc",
             .fragment_file_name = "common_fragment.sc",
             .vertex_file_name = "common_vertex.sc",
         },
     );
-    defer shader_program.deinit();
 
     const sampler_tex_color = try shader_program.getUniform("s_tex_color");
 

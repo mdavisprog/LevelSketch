@@ -29,10 +29,10 @@ const SHADER_PATH = "assets/shaders";
 handle: Handle = .{},
 uniforms: UniformMap,
 
-pub fn init(gpa: std.mem.Allocator) Self {
-    return Self{
-        .uniforms = UniformMap.init(gpa),
-    };
+pub fn init(gpa: std.mem.Allocator) !*Self {
+    const result = try gpa.create(Self);
+    result.*.uniforms = UniformMap.init(gpa);
+    return result;
 }
 
 pub fn deinit(self: *Self) void {

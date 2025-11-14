@@ -12,7 +12,7 @@ pub const Command = struct {
     buffer: RenderBuffer,
     texture: Texture,
     texture_flags: u32,
-    shader: Program,
+    shader: *Program,
     sampler: Uniform,
     state: u64,
 };
