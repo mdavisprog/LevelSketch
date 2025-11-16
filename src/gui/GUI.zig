@@ -1,6 +1,5 @@
 const clay = @import("clay");
 const core = @import("core");
-const Cursor = @import("Cursor.zig");
 const render = @import("render");
 const std = @import("std");
 const zbgfx = @import("zbgfx");
@@ -91,10 +90,9 @@ pub fn setView(self: *Self, width: f32, height: f32) void {
     self.size = .init(width, height);
 }
 
-pub fn update(self: *Self, renderer: *Renderer, delta_time: f32, cursor: Cursor) !void {
+pub fn update(self: *Self, renderer: *Renderer, delta_time: f32, cursor_pos: Vec2f) !void {
     _ = delta_time;
 
-    const cursor_pos = cursor.current.toVec2f();
     if (self._test_rect.contains(cursor_pos)) {
         if (!self._test_rect_hovered) {
             self._test_rect_hovered = true;

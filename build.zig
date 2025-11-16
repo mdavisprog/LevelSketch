@@ -37,6 +37,12 @@ pub fn build(b: *std.Build) !void {
         "zbgfx",
         "zmath",
     });
+    try builder.addModule("gui", "src/gui/root.zig", &.{
+        "clay",
+        "core",
+        "render",
+        "zbgfx",
+    });
 
     const exe = b.addExecutable(.{
         .name = "LevelSketch",

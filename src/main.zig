@@ -2,7 +2,7 @@ const builtin = @import("builtin");
 const callbacks = @import("callbacks.zig");
 const core = @import("core");
 const Cursor = @import("Cursor.zig");
-const GUI = @import("GUI.zig");
+const gui = @import("gui");
 const render = @import("render");
 const stb = @import("stb");
 const std = @import("std");
@@ -12,6 +12,10 @@ const zglfw = @import("zglfw");
 const zmath = @import("zmath");
 
 const commandline = core.commandline;
+
+const Rectf = core.math.Rectf;
+
+const GUI = gui.GUI;
 
 const Camera = render.Camera;
 const Font = render.Font;
@@ -23,8 +27,6 @@ const Textures = render.Textures;
 const Vertex = render.Vertex;
 const VertexBuffer16 = render.VertexBuffer16;
 const View = render.View;
-
-const Rectf = core.math.Rectf;
 
 var camera: Camera = undefined;
 var camera_rotating = false;
@@ -161,10 +163,10 @@ pub fn main() !void {
     view_world.setPerspective(60.0, aspect);
     view_world.clear();
 
-    var gui: GUI = try .init(&renderer);
-    defer gui.deinit(allocator);
+    var main_gui: GUI = try .init(&renderer);
+    defer main_gui.deinit(allocator);
 
-    gui.setView(
+    main_gui.setView(
         @floatFromInt(framebuffer_size[0]),
         @floatFromInt(framebuffer_size[1]),
     );
@@ -179,7 +181,7 @@ pub fn main() !void {
 
         zglfw.pollEvents();
         renderer.update();
-        try gui.update(&renderer, delta_time, cursor);
+        try main_gui.update(&renderer, delta_time, cursor.current.toVec2f());
 
         updateCursor(window, &cursor);
         try updateCamera(window, cursor, delta_time);
@@ -192,7 +194,7 @@ pub fn main() !void {
         zbgfx.bgfx.submit(view_world.id, shader_program.handle.data, 255, 0);
         view_world.touch();
 
-        try gui.draw();
+        try main_gui.draw();
 
         _ = zbgfx.bgfx.frame(false);
     }
