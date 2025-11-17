@@ -16,6 +16,13 @@ pub const Vector2 = extern struct {
 pub const Dimensions = extern struct {
     width: f32 = 0.0,
     height: f32 = 0.0,
+
+    pub fn init(width: f32, height: f32) Dimensions {
+        return .{
+            .width = width,
+            .height = height,
+        };
+    }
 };
 
 pub const BoundingBox = extern struct {
@@ -61,6 +68,14 @@ pub const String = extern struct {
     is_statically_allocated: bool = true,
     length: i32 = 0,
     chars: [*c]const u8 = null,
+
+    pub fn init(comptime chars: []const u8) String {
+        return .{
+            .is_statically_allocated = true,
+            .length = @intCast(chars.len),
+            .chars = chars.ptr,
+        };
+    }
 
     pub fn str(self: String) []const u8 {
         const len: usize = @intCast(self.length);
@@ -406,6 +421,10 @@ pub fn initialize(arena: Arena, layout_dimensions: Dimensions, error_handler: Er
     return Clay_Initialize(arena, layout_dimensions, error_handler);
 }
 
+pub fn setLayoutDimensions(dimensions: Dimensions) void {
+    Clay_SetLayoutDimensions(dimensions);
+}
+
 pub fn beginLayout() void {
     Clay_BeginLayout();
 }
@@ -471,6 +490,7 @@ fn hashString(comptime key: String, comptime offset: u32, comptime seed: u32) El
 extern fn Clay_MinMemorySize() u32;
 extern fn Clay_CreateArenaWithCapacityAndMemory(capacity: usize, memory: ?*anyopaque) Arena;
 extern fn Clay_Initialize(arena: Arena, layout_dimension: Dimensions, error_handler: ErrorHandler) ?*Context;
+extern fn Clay_SetLayoutDimensions(dimensions: Dimensions) void;
 extern fn Clay_BeginLayout() void;
 extern fn Clay_EndLayout() RenderCommandArray;
 extern fn Clay_RenderCommandArray_Get(array: [*c]RenderCommandArray, index: i32) [*c]RenderCommand;
