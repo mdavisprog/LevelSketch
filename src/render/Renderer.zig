@@ -2,6 +2,7 @@ const render = @import("root.zig");
 const std = @import("std");
 const zbgfx = @import("zbgfx");
 
+const Fonts = render.Fonts;
 const Programs = render.shaders.Programs;
 const MemFactory = render.MemFactory;
 const Textures = render.Textures;
@@ -26,21 +27,27 @@ pub const ui_state = zbgfx.bgfx.StateFlags_WriteRgb |
 mem_factory: MemFactory,
 textures: Textures,
 programs: Programs,
+fonts: *Fonts,
 _gpa: std.mem.Allocator,
 
 pub fn init(gpa: std.mem.Allocator) !Self {
     var mem_factory = try MemFactory.init(gpa);
     const textures = try Textures.init(&mem_factory);
     const programs: Programs = .init(gpa);
+    const fonts: *Fonts = try .init(gpa);
     return Self{
         .mem_factory = mem_factory,
         .textures = textures,
         .programs = programs,
+        .fonts = fonts,
         ._gpa = gpa,
     };
 }
 
 pub fn deinit(self: *Self) void {
+    self.fonts.*.deinit(self._gpa);
+    self._gpa.destroy(self.fonts);
+
     self.programs.deinit(self._gpa);
     self.textures.deinit(self._gpa);
     self.mem_factory.deinit();

@@ -98,15 +98,6 @@ pub fn main() !void {
     var renderer: Renderer = try .init(allocator);
     defer renderer.deinit();
 
-    var font = Font.init(
-        &renderer,
-        "assets/fonts/Roboto-Regular.ttf",
-        36.0,
-    ) catch |err| {
-        std.debug.panic("Failed to initialize font: {}", .{err});
-    };
-    defer font.deinit(allocator);
-
     var quad = try render.shapes.quad(allocator, .init(-1.0, 1.0, 1.0, -1.0), 0xFF227722);
     defer quad.deinit(allocator);
 

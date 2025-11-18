@@ -28,7 +28,7 @@ const unhover_color: u32 = 0xFF0000FF;
 
 view: View,
 size: Vec2f = .zero,
-font: Font,
+font: *Font,
 text_shader: *Program,
 common_shader: *Program,
 clay: Clay = .{},
@@ -42,9 +42,9 @@ pub fn init(renderer: *Renderer) !Self {
     var view: View = .init(0x000000FF, false);
     view.setMode(.Sequential);
 
-    const font: Font = try .init(
+    const font = try renderer.fonts.loadFile(
         renderer,
-        "assets/fonts/Roboto-Regular.ttf",
+        "Roboto-Regular.ttf",
         32.0,
     );
 
@@ -77,7 +77,6 @@ pub fn init(renderer: *Renderer) !Self {
 
 pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
     self.clay.deinit(allocator);
-    self.font.deinit(allocator);
     self._commands.deinit();
 }
 

@@ -13,6 +13,10 @@ pub fn exeRelativePath(allocator: std.mem.Allocator, paths: []const []const u8) 
     return try std.fs.path.join(allocator, list.items);
 }
 
+pub fn fontsPath(allocator: std.mem.Allocator, path: []const u8) ![]u8 {
+    return try exeRelativePath(allocator, &.{ "assets/fonts", path });
+}
+
 pub fn getContents(allocator: std.mem.Allocator, path: []const u8) ![]u8 {
     const file = try std.fs.openFileAbsolute(path, .{});
     defer file.close();

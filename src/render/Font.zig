@@ -48,17 +48,17 @@ glyphs: GlyphMap,
 texture: Texture,
 _truetype: TrueType,
 
+/// 'path' must be the full path. Font takes ownership of the path memory. Caller does
+/// not need to free memory.
 pub fn init(
     renderer: *Renderer,
     path: []const u8,
     size: f32,
-) !Self {
+) !*Self {
     const allocator = renderer.mem_factory.allocator;
 
-    const font_path = try io.exeRelativePath(allocator, &.{path});
-
     // The TrueType object will hold the slice.
-    const contents = try io.getContents(allocator, font_path);
+    const contents = try io.getContents(allocator, path);
 
     const truetype = try TrueType.load(contents);
     const scale = truetype.scaleForPixelHeight(size);
@@ -143,14 +143,17 @@ pub fn init(
         .grayscale,
     );
 
-    return Self{
-        .path = font_path,
+    const result = try allocator.create(Self);
+    result.* = .{
+        .path = path,
         .size = size,
         .space_advance_width = space_advance_width,
         .glyphs = glyphs,
         .texture = texture,
         ._truetype = truetype,
     };
+
+    return result;
 }
 
 pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
