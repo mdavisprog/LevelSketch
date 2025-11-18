@@ -15,6 +15,8 @@ const VertexBuffer16 = render.VertexBuffer16;
 
 const Self = @This();
 
+pub const Id = u16;
+
 pub const Range = struct {
     min: u32,
     max: u32,
@@ -41,6 +43,9 @@ pub const Glyph = struct {
 };
 pub const GlyphMap = std.AutoHashMap(u32, Glyph);
 
+pub const invalid_id: Id = 0;
+
+id: Id = invalid_id,
 path: []const u8,
 size: f32,
 space_advance_width: i16,
@@ -250,6 +255,27 @@ pub fn getVertices(
     }
 
     return buffer;
+}
+
+pub fn measure(self: Self, text: []const u8) Vec2f {
+    const scale = self._truetype.scaleForPixelHeight(self.size);
+
+    var result: Vec2f = .zero;
+    var prev_ch: u32 = 0;
+    for (text) |ch| {
+        if (ch == ' ') {
+            result.x += @as(f32, @floatFromInt(self.space_advance_width)) * scale;
+            prev_ch = 0;
+            continue;
+        }
+
+        if (self.glyphs.get(ch)) |glyph| {
+            result.x += @as(f32, @floatFromInt(glyph.advance_width)) * scale;
+            result.y = @max(result.y, glyph.height());
+        }
+    }
+
+    return result;
 }
 
 fn getKernAdvance(self: Self, a: u32, b: u32) ?i16 {
