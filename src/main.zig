@@ -95,10 +95,14 @@ pub fn main() !void {
 
     printBGFXInfo();
 
-    var renderer: Renderer = try .init(allocator);
-    defer renderer.deinit();
+    var renderer = try allocator.create(Renderer);
+    renderer.* = try .init(allocator);
+    defer {
+        renderer.*.deinit();
+        allocator.destroy(renderer);
+    }
 
-    renderer.framebuffer_size = .init(
+    renderer.*.framebuffer_size = .init(
         @floatFromInt(framebuffer_size[0]),
         @floatFromInt(framebuffer_size[1]),
     );
@@ -159,7 +163,7 @@ pub fn main() !void {
     view_world.setPerspective(60.0, aspect);
     view_world.clear();
 
-    var main_gui: GUI = try .init(&renderer);
+    var main_gui: GUI = try .init(renderer);
     defer main_gui.deinit(allocator);
 
     // Timing
@@ -171,8 +175,8 @@ pub fn main() !void {
         last_time = current_time;
 
         zglfw.pollEvents();
-        renderer.update();
-        try main_gui.update(&renderer, delta_time, cursor.current.toVec2f());
+        renderer.*.update();
+        try main_gui.update(renderer, delta_time, cursor.current.toVec2f());
 
         updateCursor(window, &cursor);
         try updateCamera(window, cursor, delta_time);
@@ -185,7 +189,7 @@ pub fn main() !void {
         zbgfx.bgfx.submit(view_world.id, shader_program.handle.data, 255, 0);
         view_world.touch();
 
-        try main_gui.draw(&renderer);
+        try main_gui.draw(renderer);
 
         _ = zbgfx.bgfx.frame(false);
     }
