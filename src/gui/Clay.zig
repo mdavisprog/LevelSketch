@@ -2,12 +2,15 @@ const clay = @import("clay");
 const core = @import("core");
 const render = @import("render");
 const std = @import("std");
+const zbgfx = @import("zbgfx");
 
 const HexColor = core.math.HexColor;
 const Rectf = core.math.Rectf;
 const Vec2f = core.math.Vec2f;
 
 const Commands = render.Commands;
+const Font = render.Font;
+const Fonts = render.Fonts;
 const RenderBuffer = render.RenderBuffer;
 const Renderer = render.Renderer;
 const VertexBuffer16 = render.VertexBuffer16;
@@ -18,9 +21,9 @@ _memory: ?[]const u8 = null,
 _arena: clay.Arena = .{},
 _context: ?*clay.Context = null,
 
-pub fn init(gpa: std.mem.Allocator) !Self {
+pub fn init(renderer: *const Renderer) !Self {
     const min_size = clay.minMemorySize();
-    const memory = try gpa.alloc(u8, min_size);
+    const memory = try renderer._gpa.alloc(u8, min_size);
 
     const bytes: f32 = @floatFromInt(min_size);
     const mb: f32 = bytes / 1024.0 / 1024.0;
@@ -32,10 +35,12 @@ pub fn init(gpa: std.mem.Allocator) !Self {
 
     std.log.info("Clay arena memory size: {d:.2}MB", .{mb});
 
-    const dimensions: clay.Dimensions = .{ .width = 0, .height = 0 };
+    const dimensions = toDimensions(renderer.framebuffer_size);
     const context = clay.initialize(arena, dimensions, .{
         .error_handler_function = onError,
     });
+
+    clay.setMeasureTextFunction(onMeasureText, @ptrCast(renderer.fonts));
 
     return Self{
         ._memory = memory,
@@ -51,15 +56,8 @@ pub fn deinit(self: *Self, gpa: std.mem.Allocator) void {
     }
 }
 
-pub fn build(renderer: *Renderer, view_size: Vec2f, commands: *Commands) !void {
-    const common_shader = try renderer.programs.get("common");
-    const default_texture = renderer.textures.default;
-    const sampler = try common_shader.getUniform("s_tex_color");
-
-    clay.setLayoutDimensions(.init(
-        view_size.x,
-        view_size.y,
-    ));
+pub fn build(renderer: *Renderer, commands: *Commands) !void {
+    clay.setLayoutDimensions(toDimensions(renderer.framebuffer_size));
 
     const layout: clay.LayoutConfig = .{ .padding = .splat(5), .sizing = .fixed(50, 50) };
 
@@ -84,32 +82,22 @@ pub fn build(renderer: *Renderer, view_size: Vec2f, commands: *Commands) !void {
         .layout = inner,
         .background_color = .initu8(200, 50, 50, 255),
     });
+
+    const default_font = renderer.fonts.getById(renderer.fonts.default);
+    const font_size = if (default_font) |font| font.size else 16.0;
+    const text_config: clay.TextElementConfig = .{
+        .font_id = renderer.fonts.default,
+        .font_size = @intFromFloat(font_size),
+    };
+    const element = clay.storeTextElementConfig(text_config);
+    clay.openTextElement("Hello", element);
+
     clay.closeElement();
 
     clay.closeElement();
     const render_commands = clay.endLayout();
 
-    const clay_buffers = try renderCommands(renderer._gpa, render_commands.slice());
-    defer {
-        for (clay_buffers) |*clay_buffer| {
-            clay_buffer.deinit(renderer._gpa);
-        }
-        renderer._gpa.free(clay_buffers);
-    }
-
-    for (clay_buffers) |clay_buffer| {
-        var render_buffer: RenderBuffer = .init();
-        try render_buffer.setTransientBuffer(&renderer.mem_factory, clay_buffer);
-
-        try commands.addCommand(.{
-            .buffer = render_buffer,
-            .texture = default_texture,
-            .texture_flags = 0,
-            .shader = common_shader,
-            .sampler = sampler,
-            .state = Renderer.ui_state,
-        });
-    }
+    try renderCommands(renderer, render_commands.slice(), commands);
 }
 
 fn onError(error_data: clay.ErrorData) callconv(.c) void {
@@ -119,35 +107,86 @@ fn onError(error_data: clay.ErrorData) callconv(.c) void {
     );
 }
 
+fn onMeasureText(
+    text: clay.StringSlice,
+    config: [*c]clay.TextElementConfig,
+    user_data: ?*anyopaque,
+) callconv(.c) clay.Dimensions {
+    const fonts: *Fonts = @ptrCast(@alignCast(user_data.?));
+    const font = fonts.getById(config.*.font_id);
+    const size: Vec2f = if (font) |f| f.measure(text.str()) else .zero;
+
+    return toDimensions(size);
+}
+
 fn renderCommands(
-    gpa: std.mem.Allocator,
-    commands: []const clay.RenderCommand,
-) ![]VertexBuffer16 {
-    var buffers = try std.ArrayList(VertexBuffer16).initCapacity(gpa, commands.len);
-
-    for (commands) |command| {
-        const buffer = try renderCommand(gpa, command);
-
-        if (buffer) |buf| {
-            try buffers.append(gpa, buf);
-        }
+    renderer: *Renderer,
+    render_commands: []const clay.RenderCommand,
+    commands: *Commands,
+) !void {
+    for (render_commands) |command| {
+        try renderCommand(renderer, command, commands);
     }
-
-    return try buffers.toOwnedSlice(gpa);
 }
 
 fn renderCommand(
-    gpa: std.mem.Allocator,
-    command: clay.RenderCommand,
-) !?VertexBuffer16 {
-    switch (command.command_type) {
+    renderer: *Renderer,
+    render_command: clay.RenderCommand,
+    commands: *Commands,
+) !void {
+    const rect = rectFromBoundingBox(render_command.bounding_box);
+    switch (render_command.command_type) {
         .rectangle => {
-            const rect = rectFromBoundingBox(command.bounding_box);
-            const color = hexColor(command.render_data.rectangle.background_color);
-            return try render.shapes.quad(gpa, rect, color.data);
+            const color = hexColor(render_command.render_data.rectangle.background_color);
+            var quad = try render.shapes.quad(renderer._gpa, rect, color.data);
+            defer quad.deinit(renderer._gpa);
+
+            var render_buffer: RenderBuffer = .init();
+            try render_buffer.setTransientBuffer(&renderer.mem_factory, quad);
+
+            const shader = try renderer.programs.get("common");
+            try commands.addCommand(.{
+                .buffer = render_buffer,
+                .texture = renderer.textures.default,
+                .texture_flags = 0,
+                .shader = shader,
+                .sampler = try shader.getUniform("s_tex_color"),
+                .state = Renderer.ui_state,
+            });
+        },
+        .text => {
+            const text_data = render_command.render_data.text;
+            const color = hexColor(text_data.text_color);
+            const maybe_font = renderer.fonts.getById(text_data.font_id);
+
+            var buffer: VertexBuffer16 = blk: {
+                if (maybe_font) |font| {
+                    break :blk try font.getVertices(
+                        renderer._gpa,
+                        text_data.string_contents.str(),
+                        rect.min,
+                    );
+                } else {
+                    break :blk try render.shapes.quad(renderer._gpa, rect, color.data);
+                }
+            };
+            defer buffer.deinit(renderer._gpa);
+
+            var render_buffer: RenderBuffer = .init();
+            try render_buffer.setTransientBuffer(&renderer.mem_factory, buffer);
+
+            const shader = try renderer.programs.get("text");
+            try commands.addCommand(.{
+                .buffer = render_buffer,
+                .texture = if (maybe_font) |font| font.texture else .{},
+                .texture_flags = zbgfx.bgfx.SamplerFlags_UBorder | zbgfx.bgfx.SamplerFlags_VBorder,
+                .shader = shader,
+                .sampler = try shader.getUniform("s_tex_color"),
+                .state = Renderer.ui_state,
+            });
         },
         else => {
-            return null;
+            std.debug.print("Unhandled clay render command type: {}\n", .{render_command.command_type});
         },
     }
 }
@@ -169,4 +208,8 @@ fn hexColor(color: clay.Color) HexColor {
         @intFromFloat(color.a),
         HexColor.Format.abgr,
     );
+}
+
+fn toDimensions(value: Vec2f) clay.Dimensions {
+    return .init(value.x, value.y);
 }

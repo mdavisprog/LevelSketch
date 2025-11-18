@@ -1,6 +1,9 @@
+const core = @import("core");
 const render = @import("root.zig");
 const std = @import("std");
 const zbgfx = @import("zbgfx");
+
+const Vec2f = core.math.Vec2f;
 
 const Fonts = render.Fonts;
 const Programs = render.shaders.Programs;
@@ -28,6 +31,7 @@ mem_factory: MemFactory,
 textures: Textures,
 programs: Programs,
 fonts: *Fonts,
+framebuffer_size: Vec2f = .zero,
 _gpa: std.mem.Allocator,
 
 pub fn init(gpa: std.mem.Allocator) !Self {

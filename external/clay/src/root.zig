@@ -87,6 +87,11 @@ pub const StringSlice = extern struct {
     length: i32 = 0,
     chars: [*c]const u8 = null,
     base_chars: [*c]const u8 = null,
+
+    pub fn str(self: StringSlice) []const u8 {
+        const len: usize = @intCast(self.length);
+        return self.chars[0..len];
+    }
 };
 
 pub const ElementId = extern struct {
@@ -210,6 +215,29 @@ pub const LayoutConfig = extern struct {
     child_gap: u16 = 0,
     child_alignment: ChildAlignment = .{},
     layout_direction: LayoutDirection = .left_to_right,
+};
+
+pub const TextElementConfigWrapMode = enum(u8) {
+    words,
+    newlines,
+    none,
+};
+
+pub const TextAlignment = enum(u8) {
+    left,
+    center,
+    right,
+};
+
+pub const TextElementConfig = extern struct {
+    user_data: ?*anyopaque = null,
+    text_color: Color = .{},
+    font_id: u16 = 0,
+    font_size: u16 = 0,
+    letter_spacing: u16 = 0,
+    line_height: u16 = 0,
+    wrap_mode: TextElementConfigWrapMode = .words,
+    text_alignment: TextAlignment = .left,
 };
 
 pub const AspectRatioElementConfig = extern struct {
@@ -409,6 +437,12 @@ pub const ErrorHandler = extern struct {
     user_data: ?*anyopaque = null,
 };
 
+pub const MeasureTextFunction = *const fn (
+    text: StringSlice,
+    config: [*c]TextElementConfig,
+    user_data: ?*anyopaque,
+) callconv(.c) Dimensions;
+
 pub fn minMemorySize() u32 {
     return Clay_MinMemorySize();
 }
@@ -433,6 +467,10 @@ pub fn endLayout() RenderCommandArray {
     return Clay_EndLayout();
 }
 
+pub fn setMeasureTextFunction(on_measure_text: ?MeasureTextFunction, user_data: ?*anyopaque) void {
+    Clay_SetMeasureTextFunction(on_measure_text, user_data);
+}
+
 pub fn openElement() void {
     Clay__OpenElement();
 }
@@ -443,6 +481,14 @@ pub fn closeElement() void {
 
 pub fn configureOpenElement(config: ElementDeclaration) void {
     Clay__ConfigureOpenElement(config);
+}
+
+pub fn openTextElement(comptime text: []const u8, text_config: *TextElementConfig) void {
+    Clay__OpenTextElement(.init(text), @ptrCast(text_config));
+}
+
+pub fn storeTextElementConfig(text_config: TextElementConfig) [*c]TextElementConfig {
+    return Clay__StoreTextElementConfig(text_config);
 }
 
 pub fn RenderCommandArray_Get(array: [*c]RenderCommandArray, index: i32) [*c]RenderCommand {
@@ -493,7 +539,10 @@ extern fn Clay_Initialize(arena: Arena, layout_dimension: Dimensions, error_hand
 extern fn Clay_SetLayoutDimensions(dimensions: Dimensions) void;
 extern fn Clay_BeginLayout() void;
 extern fn Clay_EndLayout() RenderCommandArray;
+extern fn Clay_SetMeasureTextFunction(on_measure_text: ?MeasureTextFunction, user_data: ?*anyopaque) void;
 extern fn Clay_RenderCommandArray_Get(array: [*c]RenderCommandArray, index: i32) [*c]RenderCommand;
 extern fn Clay__OpenElement() void;
 extern fn Clay__CloseElement() void;
 extern fn Clay__ConfigureOpenElement(config: ElementDeclaration) void;
+extern fn Clay__OpenTextElement(text: String, text_config: [*c]TextElementConfig) void;
+extern fn Clay__StoreTextElementConfig(config: TextElementConfig) [*c]TextElementConfig;

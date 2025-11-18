@@ -98,6 +98,11 @@ pub fn main() !void {
     var renderer: Renderer = try .init(allocator);
     defer renderer.deinit();
 
+    renderer.framebuffer_size = .init(
+        @floatFromInt(framebuffer_size[0]),
+        @floatFromInt(framebuffer_size[1]),
+    );
+
     var quad = try render.shapes.quad(allocator, .init(-1.0, 1.0, 1.0, -1.0), 0xFF227722);
     defer quad.deinit(allocator);
 
@@ -157,11 +162,6 @@ pub fn main() !void {
     var main_gui: GUI = try .init(&renderer);
     defer main_gui.deinit(allocator);
 
-    main_gui.setView(
-        @floatFromInt(framebuffer_size[0]),
-        @floatFromInt(framebuffer_size[1]),
-    );
-
     // Timing
     var last_time: f64 = 0.0;
 
@@ -185,7 +185,7 @@ pub fn main() !void {
         zbgfx.bgfx.submit(view_world.id, shader_program.handle.data, 255, 0);
         view_world.touch();
 
-        try main_gui.draw();
+        try main_gui.draw(&renderer);
 
         _ = zbgfx.bgfx.frame(false);
     }

@@ -27,7 +27,6 @@ const hover_color: u32 = 0xFF00FF00;
 const unhover_color: u32 = 0xFF0000FF;
 
 view: View,
-size: Vec2f = .zero,
 font: *Font,
 text_shader: *Program,
 common_shader: *Program,
@@ -39,8 +38,11 @@ _test_rect_hovered: bool = false,
 
 /// Must be initialized after bgfx has been initialized.
 pub fn init(renderer: *Renderer) !Self {
+    const framebuffer_size = renderer.framebuffer_size;
+
     var view: View = .init(0x000000FF, false);
     view.setMode(.Sequential);
+    view.setOrthographic(framebuffer_size.x, framebuffer_size.y);
 
     const font = try renderer.fonts.loadFile(
         renderer,
@@ -58,7 +60,7 @@ pub fn init(renderer: *Renderer) !Self {
         },
     );
 
-    const clay: Clay = try .init(renderer._gpa);
+    const clay: Clay = try .init(renderer);
 
     var result = Self{
         .view = view,
@@ -80,11 +82,6 @@ pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
     self._commands.deinit();
 }
 
-pub fn setView(self: *Self, width: f32, height: f32) void {
-    self.view.setOrthographic(width, height);
-    self.size = .init(width, height);
-}
-
 pub fn update(self: *Self, renderer: *Renderer, delta_time: f32, cursor_pos: Vec2f) !void {
     _ = delta_time;
 
@@ -101,9 +98,9 @@ pub fn update(self: *Self, renderer: *Renderer, delta_time: f32, cursor_pos: Vec
     }
 }
 
-pub fn draw(self: *Self) !void {
-    const width: u16 = @intFromFloat(self.size.x);
-    const height: u16 = @intFromFloat(self.size.y);
+pub fn draw(self: *Self, renderer: *const Renderer) !void {
+    const width: u16 = @intFromFloat(renderer.framebuffer_size.x);
+    const height: u16 = @intFromFloat(renderer.framebuffer_size.y);
     self.view.submitOrthographic(width, height);
 
     try self._commands.run(self.view);
@@ -144,5 +141,5 @@ fn buildCommands(self: *Self, renderer: *Renderer, color: u32) !void {
         .state = Renderer.ui_state,
     });
 
-    try Clay.build(renderer, self.size, &self._commands);
+    try Clay.build(renderer, &self._commands);
 }
