@@ -1,6 +1,10 @@
+const core = @import("core");
 const MemFactory = @import("MemFactory.zig");
 const std = @import("std");
 const Vertex = @import("Vertex.zig");
+
+const Rectf = core.math.Rectf;
+const Vec2f = core.math.Vec2f;
 
 pub fn VertexBuffer(comptime IndexType: type) type {
     if (IndexType != u16 and IndexType != u32) {
@@ -34,6 +38,16 @@ pub fn VertexBuffer(comptime IndexType: type) type {
         pub fn append(self: *Self, allocator: std.mem.Allocator, from: Self) !void {
             try self.vertices.appendSlice(allocator, from.vertices.items);
             try self.indices.appendSlice(allocator, from.indices.items);
+        }
+
+        pub fn addZeroed(
+            self: *Self,
+            allocator: std.mem.Allocator,
+            vertices: usize,
+            indices: usize,
+        ) !void {
+            try self.vertices.appendNTimes(allocator, .{}, vertices);
+            try self.indices.appendNTimes(allocator, 0, indices);
         }
 
         pub fn createMemVertex(self: *Self, factory: *MemFactory) !MemFactory.Mem {
@@ -70,6 +84,120 @@ pub fn VertexBuffer(comptime IndexType: type) type {
         fn onUploadedIndex(result: MemFactory.OnUploadedResult) void {
             const self: *Self = @ptrCast(@alignCast(result.user_data.?));
             self.indices.clearAndFree(result.allocator);
+        }
+    };
+}
+
+pub fn VertexBufferBuilder(comptime T: type) type {
+    return struct {
+        const Self = @This();
+        const TVertexBuffer = VertexBuffer(T);
+
+        pub const num_circle_segments: usize = 16;
+
+        buffer: TVertexBuffer,
+        _vertex_index: T,
+        _allocator: std.mem.Allocator,
+
+        pub fn init(allocator: std.mem.Allocator) !Self {
+            return .{
+                .buffer = try .init(allocator, 0, 0),
+                ._vertex_index = 0,
+                ._allocator = allocator,
+            };
+        }
+
+        pub fn deinit(self: *Self) void {
+            self.buffer.deinit(self._allocator);
+        }
+
+        pub fn addQuad(self: *Self, rect: Rectf, abgr: u32) !void {
+            const v_index = self.buffer.vertices.items.len;
+            const i_index = self.buffer.indices.items.len;
+            try self.buffer.addZeroed(self._allocator, 4, 6);
+
+            _ = self.buffer.vertices.items[v_index + 0].setPositionVec2(rect.min);
+            _ = self.buffer.vertices.items[v_index + 1].setPositionVec2(.init(rect.min.x, rect.max.y));
+            _ = self.buffer.vertices.items[v_index + 2].setPositionVec2(rect.max);
+            _ = self.buffer.vertices.items[v_index + 3].setPositionVec2(.init(rect.max.x, rect.min.y));
+
+            _ = self.buffer.vertices.items[v_index + 0].setUV(0.0, 0.0);
+            _ = self.buffer.vertices.items[v_index + 1].setUV(0.0, 1.0);
+            _ = self.buffer.vertices.items[v_index + 2].setUV(1.0, 1.0);
+            _ = self.buffer.vertices.items[v_index + 3].setUV(1.0, 0.0);
+
+            _ = self.buffer.vertices.items[v_index + 0].setColor(abgr);
+            _ = self.buffer.vertices.items[v_index + 1].setColor(abgr);
+            _ = self.buffer.vertices.items[v_index + 2].setColor(abgr);
+            _ = self.buffer.vertices.items[v_index + 3].setColor(abgr);
+
+            self.buffer.indices.items[i_index + 0] = self._vertex_index + 0;
+            self.buffer.indices.items[i_index + 1] = self._vertex_index + 1;
+            self.buffer.indices.items[i_index + 2] = self._vertex_index + 2;
+            self.buffer.indices.items[i_index + 3] = self._vertex_index + 0;
+            self.buffer.indices.items[i_index + 4] = self._vertex_index + 2;
+            self.buffer.indices.items[i_index + 5] = self._vertex_index + 3;
+
+            self.*._vertex_index += 4;
+        }
+
+        pub fn addQuarterArc(self: *Self, center: Vec2f, radius: f32, angle: f32, color: u32) !void {
+            var v_index: usize = self.buffer.vertices.items.len;
+            var i_index: usize = self.buffer.indices.items.len;
+
+            const center_vertex_index = self._vertex_index;
+            self.*._vertex_index += 1;
+
+            try self.buffer.addZeroed(self._allocator, 1, 0);
+            self.buffer.vertices.items[v_index] = .init(
+                center.x,
+                center.y,
+                0.0,
+                1.0,
+                1.0,
+                color,
+            );
+
+            const segments: f32 = @floatFromInt(num_circle_segments);
+            const step: f32 = std.math.degreesToRadians(90.0 / segments);
+            const angle_rad: f32 = std.math.degreesToRadians(angle);
+
+            v_index += 1;
+            var i: usize = 0;
+            while (i < num_circle_segments) {
+                defer i += 1;
+
+                const angle_1: f32 = @as(f32, @floatFromInt(i)) * step + angle_rad;
+                const angle_2: f32 = @as(f32, @floatFromInt(i + 1)) * step + angle_rad;
+
+                const p1 = center.add(.init(
+                    std.math.cos(angle_1) * radius,
+                    std.math.sin(angle_1) * radius,
+                ));
+                const p2 = center.add(.init(
+                    std.math.cos(angle_2) * radius,
+                    std.math.sin(angle_2) * radius,
+                ));
+
+                try self.buffer.addZeroed(self._allocator, 2, 3);
+
+                _ = self.buffer.vertices.items[v_index + 0].setPositionVec2(p1);
+                _ = self.buffer.vertices.items[v_index + 1].setPositionVec2(p2);
+
+                _ = self.buffer.vertices.items[v_index + 0].setColor(color);
+                _ = self.buffer.vertices.items[v_index + 1].setColor(color);
+
+                _ = self.buffer.vertices.items[v_index + 0].setUV(0.0, 0.0);
+                _ = self.buffer.vertices.items[v_index + 1].setUV(1.0, 1.0);
+
+                self.buffer.indices.items[i_index + 0] = center_vertex_index;
+                self.buffer.indices.items[i_index + 1] = self._vertex_index + 0;
+                self.buffer.indices.items[i_index + 2] = self._vertex_index + 1;
+
+                v_index += 2;
+                i_index += 3;
+                self.*._vertex_index += 2;
+            }
         }
     };
 }

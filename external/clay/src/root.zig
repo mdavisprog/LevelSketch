@@ -62,6 +62,31 @@ pub const CornerRadius = extern struct {
     top_right: f32 = 0.0,
     bottom_left: f32 = 0.0,
     bottom_right: f32 = 0.0,
+
+    pub fn all(value: f32) CornerRadius {
+        return .{
+            .top_left = value,
+            .top_right = value,
+            .bottom_left = value,
+            .bottom_right = value,
+        };
+    }
+
+    pub fn isZero(self: CornerRadius) bool {
+        return self.top_left == 0.0 and
+            self.top_right == 0.0 and
+            self.bottom_left == 0.0 and
+            self.bottom_right == 0.0;
+    }
+
+    pub fn toArray(self: CornerRadius) [4]f32 {
+        return [4]f32{
+            self.top_left,
+            self.top_right,
+            self.bottom_left,
+            self.bottom_right,
+        };
+    }
 };
 
 pub const String = extern struct {

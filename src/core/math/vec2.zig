@@ -1,3 +1,5 @@
+const std = @import("std");
+
 pub fn Vec2(comptime T: type) type {
     return struct {
         const Self = @This();
@@ -78,6 +80,23 @@ pub fn Vec2(comptime T: type) type {
             self.x /= other.x;
             self.y /= other.y;
             return self;
+        }
+
+        pub fn length(self: Self) T {
+            return std.math.sqrt(self.x * self.x + self.y * self.y);
+        }
+
+        pub fn lengthSq(self: Self) T {
+            return self.x * self.x + self.y * self.y;
+        }
+
+        pub fn normalized(self: Self) Self {
+            const len = self.length();
+            if (len == 0.0) {
+                return .zero;
+            }
+
+            return self.div(len);
         }
     };
 }

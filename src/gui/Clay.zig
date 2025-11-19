@@ -59,12 +59,12 @@ pub fn deinit(self: *Self, gpa: std.mem.Allocator) void {
 pub fn build(renderer: *Renderer, commands: *Commands) !void {
     clay.setLayoutDimensions(toDimensions(renderer.framebuffer_size));
 
-    const layout: clay.LayoutConfig = .{ .padding = .splat(5), .sizing = .fixed(50, 50) };
+    const layout: clay.LayoutConfig = .{ .padding = .splat(5), .sizing = .fixed(150, 150) };
 
     const inner: clay.LayoutConfig = .{
         .sizing = .{
-            .width = .fixed(20),
-            .height = .fixed(20),
+            .width = .fixed(50),
+            .height = .fixed(50),
         },
     };
 
@@ -74,6 +74,7 @@ pub fn build(renderer: *Renderer, commands: *Commands) !void {
         .id = clay.id("Test"),
         .layout = layout,
         .background_color = .initu8(0, 255, 0, 255),
+        .corner_radius = .all(5.0),
     });
 
     clay.openElement();
@@ -137,8 +138,18 @@ fn renderCommand(
     const rect = rectFromBoundingBox(render_command.bounding_box);
     switch (render_command.command_type) {
         .rectangle => {
+            const corner_radius = render_command.render_data.rectangle.corner_radius;
             const color = hexColor(render_command.render_data.rectangle.background_color);
-            var quad = try render.shapes.quad(renderer._gpa, rect, color.data);
+
+            var quad = if (corner_radius.isZero())
+                try render.shapes.quad(renderer._gpa, rect, color.data)
+            else
+                try render.shapes.quadRounded(
+                    renderer._gpa,
+                    rect,
+                    color.data,
+                    corner_radius.toArray(),
+                );
             defer quad.deinit(renderer._gpa);
 
             var render_buffer: RenderBuffer = .init();

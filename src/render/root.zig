@@ -19,6 +19,9 @@ const vertex_buffer = @import("vertex_buffer.zig");
 pub const VertexBuffer16 = vertex_buffer.VertexBuffer(u16);
 pub const VertexBuffer32 = vertex_buffer.VertexBuffer(u32);
 
+pub const VertexBufferBuilder16 = vertex_buffer.VertexBufferBuilder(u16);
+pub const VertexBufferBuilder32 = vertex_buffer.VertexBufferBuilder(u32);
+
 pub fn stateFlagsBlend(src: u64, dst: u64) u64 {
     return (src | (dst << 4)) | ((src | (dst << 4)) << 8);
 }
