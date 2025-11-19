@@ -44,17 +44,19 @@ pub fn build(b: *std.Build) !void {
         "zbgfx",
     });
 
+    const root_module = b.createModule(.{
+        .root_source_file = b.path("src/main.zig"),
+        .target = builder.target,
+        .optimize = builder.optimize,
+    });
+    root_module.addOptions("version", version_options);
+    root_module.addIncludePath(b.path("external"));
+
     const exe = b.addExecutable(.{
         .name = "LevelSketch",
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("src/main.zig"),
-            .target = builder.target,
-            .optimize = builder.optimize,
-        }),
+        .root_module = root_module,
     });
     builder.importAll(exe);
-    exe.root_module.addOptions("version", version_options);
-    exe.root_module.addIncludePath(b.path("external"));
 
     if (builder.target.result.os.tag != .emscripten) {
         exe.linkLibrary(try builder.dependencyArtifact("zglfw", "glfw"));
@@ -78,6 +80,24 @@ pub fn build(b: *std.Build) !void {
         .source_dir = b.path("assets"),
     });
     exe.step.dependOn(&app_assets.step);
+
+    // Create the checker for 'zls'.
+    {
+        const exe_check = b.addExecutable(.{
+            .name = "LevelSketch",
+            .root_module = root_module,
+        });
+        builder.importAll(exe_check);
+
+        if (builder.target.result.os.tag != .emscripten) {
+            exe_check.linkLibrary(try builder.dependencyArtifact("zglfw", "glfw"));
+        }
+
+        exe_check.linkLibrary(try builder.dependencyArtifact("zbgfx", "bgfx"));
+
+        const check = b.step("check", "Check compile");
+        check.dependOn(&exe_check.step);
+    }
 
     const run_step = b.step("run", "Run the app");
     const run_cmd = b.addRunArtifact(exe);
