@@ -1,5 +1,6 @@
 const std = @import("std");
 
+pub const builder = @import("builder.zig");
 pub const Context = anyopaque;
 
 pub const Arena = extern struct {
@@ -11,6 +12,13 @@ pub const Arena = extern struct {
 pub const Vector2 = extern struct {
     x: f32 = 0.0,
     y: f32 = 0.0,
+
+    pub fn init(x: f32, y: f32) Vector2 {
+        return .{
+            .x = x,
+            .y = y,
+        };
+    }
 };
 
 pub const Dimensions = extern struct {
@@ -508,8 +516,8 @@ pub fn configureOpenElement(config: ElementDeclaration) void {
     Clay__ConfigureOpenElement(config);
 }
 
-pub fn openTextElement(comptime text: []const u8, text_config: *TextElementConfig) void {
-    Clay__OpenTextElement(.init(text), @ptrCast(text_config));
+pub fn openTextElement(comptime text: []const u8, text_config: [*c]TextElementConfig) void {
+    Clay__OpenTextElement(.init(text), text_config);
 }
 
 pub fn storeTextElementConfig(text_config: TextElementConfig) [*c]TextElementConfig {

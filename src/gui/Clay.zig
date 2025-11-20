@@ -58,45 +58,38 @@ pub fn deinit(self: *Self, gpa: std.mem.Allocator) void {
 
 pub fn build(renderer: *Renderer, commands: *Commands) !void {
     clay.setLayoutDimensions(toDimensions(renderer.framebuffer_size));
-
-    const layout: clay.LayoutConfig = .{ .padding = .splat(5), .sizing = .fixed(150, 150) };
-
-    const inner: clay.LayoutConfig = .{
-        .sizing = .{
-            .width = .fixed(50),
-            .height = .fixed(50),
-        },
-    };
-
-    clay.beginLayout();
-    clay.openElement();
-    clay.configureOpenElement(.{
-        .id = clay.id("Test"),
-        .layout = layout,
-        .background_color = .initu8(0, 255, 0, 255),
-        .corner_radius = .all(5.0),
-    });
-
-    clay.openElement();
-    clay.configureOpenElement(.{
-        .id = clay.id("Inner"),
-        .layout = inner,
-        .background_color = .initu8(200, 50, 50, 255),
-    });
-
-    const default_font = renderer.fonts.getById(renderer.fonts.default);
-    const font_size = if (default_font) |font| font.size else 16.0;
-    const text_config: clay.TextElementConfig = .{
-        .font_id = renderer.fonts.default,
-        .font_size = @intFromFloat(font_size),
-    };
-    const element = clay.storeTextElementConfig(text_config);
-    clay.openTextElement("Hello", element);
-
-    clay.closeElement();
-
-    clay.closeElement();
-    const render_commands = clay.endLayout();
+    clay.builder.begin();
+    {
+        clay.builder.beginElement("Test", .{
+            .layout = .{
+                .padding = .splat(5),
+                .sizing = .fixed(200, 200),
+            },
+            .background_color = .initu8(70, 70, 190, 255),
+            .corner_radius = .all(5.0),
+            .floating = .{
+                .offset = .init(20.0, 20.0),
+                .attach_to = .root,
+            },
+        });
+        defer clay.builder.endElement();
+        {
+            clay.builder.beginElement("Inner", .{
+                .layout = .{
+                    .sizing = .fixed(50, 50),
+                },
+                .background_color = .initu8(180, 70, 70, 255),
+            });
+            defer clay.builder.endElement();
+            {
+                clay.builder.beginTextElement("Hello", .{
+                    .font_id = renderer.fonts.default,
+                });
+                clay.builder.endElement();
+            }
+        }
+    }
+    const render_commands = clay.builder.end();
 
     try renderCommands(renderer, render_commands.slice(), commands);
 }
