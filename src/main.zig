@@ -1,7 +1,6 @@
 const builtin = @import("builtin");
 const callbacks = @import("callbacks.zig");
 const core = @import("core");
-const Cursor = @import("Cursor.zig");
 const gui = @import("gui");
 const render = @import("render");
 const stb = @import("stb");
@@ -15,6 +14,7 @@ const commandline = core.commandline;
 
 const Rectf = core.math.Rectf;
 
+const Cursor = gui.Cursor;
 const GUI = gui.GUI;
 
 const Camera = render.Camera;
