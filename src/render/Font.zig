@@ -187,6 +187,7 @@ pub fn getVertices(
     const metrics = self._truetype.verticalMetrics();
     const scale = self._truetype.scaleForPixelHeight(self.size);
     const ascent: f32 = @as(f32, @floatFromInt(metrics.ascent)) * scale;
+    const descent: f32 = @as(f32, @floatFromInt(metrics.descent)) * scale;
 
     var v_index: usize = 0;
     var vertex_offset: u16 = 0;
@@ -211,7 +212,7 @@ pub fn getVertices(
             }
 
             min.x += left_side_bearing + glyph_offset.x;
-            min.y += ascent + glyph_offset.y;
+            min.y += ascent + glyph_offset.y + descent;
 
             var max: Vec2f = min.add(glyph.size());
 
@@ -276,6 +277,15 @@ pub fn measure(self: Self, text: []const u8) Vec2f {
     }
 
     return result;
+}
+
+pub fn lineHeight(self: Self) f32 {
+    const metrics = self._truetype.verticalMetrics();
+    const scale = self._truetype.scaleForPixelHeight(self.size);
+    const ascent: f32 = @floatFromInt(metrics.ascent);
+    const descent: f32 = @floatFromInt(metrics.descent);
+    const line_gap: f32 = @floatFromInt(metrics.line_gap);
+    return @floor((ascent * scale) - (descent * scale) + (line_gap * scale));
 }
 
 fn getKernAdvance(self: Self, a: u32, b: u32) ?i16 {
