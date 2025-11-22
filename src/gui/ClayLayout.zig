@@ -9,96 +9,33 @@ const Rectf = core.math.Rectf;
 const Vec2f = core.math.Vec2f;
 
 const Commands = render.Commands;
-const Font = render.Font;
 const Fonts = render.Fonts;
 const RenderBuffer = render.RenderBuffer;
 const Renderer = render.Renderer;
 const VertexBuffer16 = render.VertexBuffer16;
 
+/// Object that manages layout setup and translating the clay render commands to the internal
+/// commands.
 const Self = @This();
 
-_memory: ?[]const u8 = null,
-_arena: clay.Arena = .{},
-_context: ?*clay.Context = null,
+// TODO: Should this be injected instead of holding a reference?
+renderer: *Renderer,
 
-pub fn init(renderer: *const Renderer) !Self {
-    const min_size = clay.minMemorySize();
-    const memory = try renderer._gpa.alloc(u8, min_size);
-
-    const bytes: f32 = @floatFromInt(min_size);
-    const mb: f32 = bytes / 1024.0 / 1024.0;
-
-    const arena = clay.createArenaWithCapacityAndMemory(
-        min_size,
-        @ptrCast(memory.ptr),
-    );
-
-    std.log.info("Clay arena memory size: {d:.2}MB", .{mb});
-
-    const dimensions = toDimensions(renderer.framebuffer_size);
-    const context = clay.initialize(arena, dimensions, .{
-        .error_handler_function = onError,
-    });
-
+pub fn init(renderer: *Renderer) Self {
     clay.setMeasureTextFunction(onMeasureText, @ptrCast(renderer.fonts));
-
-    return Self{
-        ._memory = memory,
-        ._arena = arena,
-        ._context = context,
+    return .{
+        .renderer = renderer,
     };
 }
 
-pub fn deinit(self: *Self, gpa: std.mem.Allocator) void {
-    if (self._memory) |memory| {
-        gpa.free(memory);
-        self._memory = null;
-    }
-}
-
-pub fn build(renderer: *Renderer, commands: *Commands) !void {
-    clay.setLayoutDimensions(toDimensions(renderer.framebuffer_size));
+pub fn begin(self: Self) void {
+    clay.setLayoutDimensions(toDimensions(self.renderer.framebuffer_size));
     clay.builder.begin();
-    {
-        clay.builder.beginElement("Test", .{
-            .layout = .{
-                .padding = .splat(5),
-                .sizing = .fixed(200, 200),
-            },
-            .background_color = .initu8(70, 70, 190, 255),
-            .corner_radius = .all(5.0),
-            .floating = .{
-                .offset = .init(20.0, 20.0),
-                .attach_to = .root,
-            },
-        });
-        defer clay.builder.endElement();
-        {
-            clay.builder.beginElement("Inner", .{
-                .layout = .{
-                    .sizing = .fixed(50, 50),
-                },
-                .background_color = .initu8(180, 70, 70, 255),
-            });
-            defer clay.builder.endElement();
-            {
-                clay.builder.beginTextElement("Hello", .{
-                    .font_id = renderer.fonts.default,
-                });
-                clay.builder.endElement();
-            }
-        }
-    }
-    const render_commands = clay.builder.end();
-
-    try renderCommands(renderer, render_commands.slice(), commands);
 }
 
-fn onError(error_data: clay.ErrorData) callconv(.c) void {
-    std.log.warn(
-        "Clay Error: {} Message: {s}",
-        .{ error_data.error_type, error_data.error_text.str() },
-    );
+pub fn end(self: Self, commands: *Commands) !void {
+    const render_commands = clay.builder.end();
+    try renderCommands(self.renderer, render_commands.slice(), commands);
 }
 
 fn onMeasureText(

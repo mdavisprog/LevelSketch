@@ -1,24 +1,17 @@
-const Clay = @import("Clay.zig");
+const clay = @import("clay");
+const ClayContext = @import("ClayContext.zig");
+const ClayLayout = @import("ClayLayout.zig");
 const core = @import("core");
 const render = @import("render");
 const std = @import("std");
-const zbgfx = @import("zbgfx");
 
-const Color4b = core.math.Color4b;
-const HexColor = core.math.HexColor;
-const Rectf = core.math.Rectf;
 const Vec2f = core.math.Vec2f;
 
 const Commands = render.Commands;
 const Font = render.Font;
-const MemFactory = render.MemFactory;
 const Program = render.shaders.Program;
-const RenderBuffer = render.RenderBuffer;
 const Renderer = render.Renderer;
 const Texture = render.Texture;
-const Textures = render.Textures;
-const Uniform = render.shaders.Uniform;
-const VertexBuffer16 = render.VertexBuffer16;
 const View = render.View;
 
 const Self = @This();
@@ -27,7 +20,8 @@ view: View,
 font: *Font,
 text_shader: *Program,
 common_shader: *Program,
-clay: Clay = .{},
+clay_context: ClayContext,
+_clay_layout: ClayLayout,
 _commands: Commands,
 _default_texture: Texture,
 
@@ -55,7 +49,7 @@ pub fn init(renderer: *Renderer) !Self {
         },
     );
 
-    const clay: Clay = try .init(renderer);
+    const clay_context: ClayContext = try .init(renderer._gpa);
 
     var result = Self{
         .view = view,
@@ -64,16 +58,17 @@ pub fn init(renderer: *Renderer) !Self {
         .common_shader = try renderer.programs.get("common"),
         ._commands = try Commands.init(renderer.mem_factory.allocator),
         ._default_texture = renderer.textures.default,
-        .clay = clay,
+        .clay_context = clay_context,
+        ._clay_layout = .init(renderer),
     };
 
-    try result.buildCommands(renderer);
+    try result.layout();
 
     return result;
 }
 
 pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
-    self.clay.deinit(allocator);
+    self.clay_context.deinit(allocator);
     self._commands.deinit();
 }
 
@@ -92,7 +87,39 @@ pub fn draw(self: *Self, renderer: *const Renderer) !void {
     try self._commands.run(self.view);
 }
 
-fn buildCommands(self: *Self, renderer: *Renderer) !void {
+fn layout(self: *Self) !void {
     self._commands.clear();
-    try Clay.build(renderer, &self._commands);
+
+    self._clay_layout.begin();
+    {
+        clay.builder.beginElement("Test", .{
+            .layout = .{
+                .padding = .splat(5),
+                .sizing = .fixed(200, 200),
+            },
+            .background_color = .initu8(70, 70, 190, 255),
+            .corner_radius = .all(5.0),
+            .floating = .{
+                .offset = .init(20.0, 20.0),
+                .attach_to = .root,
+            },
+        });
+        defer clay.builder.endElement();
+        {
+            clay.builder.beginElement("Inner", .{
+                .layout = .{
+                    .sizing = .fixed(50, 50),
+                },
+                .background_color = .initu8(180, 70, 70, 255),
+            });
+            defer clay.builder.endElement();
+            {
+                clay.builder.beginTextElement("Hello", .{
+                    .font_id = self._clay_layout.renderer.fonts.default,
+                });
+                clay.builder.endElement();
+            }
+        }
+    }
+    try self._clay_layout.end(&self._commands);
 }
