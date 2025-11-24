@@ -18,20 +18,21 @@ pub fn end() clay.RenderCommandArray {
     return clay.endLayout();
 }
 
-pub fn beginElement(comptime id: []const u8, element: clay.ElementDeclaration) void {
-    var element_with_id = element;
-    element_with_id.id = clay.id(id);
-
+pub fn beginElement(element: clay.ElementDeclaration) void {
     clay.openElement();
     clay.configureOpenElement(element);
-
     _element_stack_count += 1;
 }
 
-pub fn beginTextElement(comptime text: []const u8, element: clay.TextElementConfig) void {
+pub fn beginElementId(comptime id: []const u8, element: clay.ElementDeclaration) void {
+    var element_with_id = element;
+    element_with_id.id = clay.id(id);
+    beginElement(element_with_id);
+}
+
+pub fn textElement(comptime text: []const u8, element: clay.TextElementConfig) void {
     const config = clay.storeTextElementConfig(element);
     clay.openTextElement(text, config);
-    _element_stack_count += 1;
 }
 
 pub fn endElement() void {

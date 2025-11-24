@@ -92,7 +92,7 @@ fn layout(self: *Self) !void {
 
     self._clay_layout.begin();
     {
-        clay.builder.beginElement("Test", .{
+        clay.builder.beginElementId("Test", .{
             .layout = .{
                 .padding = .splat(5),
                 .sizing = .fixed(200, 200),
@@ -106,7 +106,7 @@ fn layout(self: *Self) !void {
         });
         defer clay.builder.endElement();
         {
-            clay.builder.beginElement("Inner", .{
+            clay.builder.beginElementId("Inner", .{
                 .layout = .{
                     .sizing = .fixed(50, 50),
                 },
@@ -114,10 +114,9 @@ fn layout(self: *Self) !void {
             });
             defer clay.builder.endElement();
             {
-                clay.builder.beginTextElement("Hello", .{
+                clay.builder.textElement("Hello", .{
                     .font_id = self._clay_layout.renderer.fonts.default,
                 });
-                clay.builder.endElement();
             }
         }
     }
