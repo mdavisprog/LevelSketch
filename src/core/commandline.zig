@@ -42,3 +42,26 @@ pub fn hasArg(arg: []const u8) bool {
 
     return false;
 }
+
+/// Caller owns the returned memory
+pub fn getArgValues(allocator: std.mem.Allocator, arg: []const u8) !?[][]const u8 {
+    const _args = args orelse return null;
+
+    var result = try std.ArrayList([]const u8).initCapacity(allocator, 0);
+    var found = false;
+    for (_args.items) |item| {
+        if (!found) {
+            if (std.mem.eql(u8, item, arg)) {
+                found = true;
+            }
+        } else {
+            if (std.mem.startsWith(u8, item, "--")) {
+                break;
+            }
+
+            try result.append(allocator, item);
+        }
+    }
+
+    return try result.toOwnedSlice(allocator);
+}

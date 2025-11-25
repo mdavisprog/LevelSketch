@@ -52,6 +52,13 @@ pub fn main() !void {
     try stb.init(allocator);
     defer stb.deinit();
 
+    const model_files = try commandline.getArgValues(allocator, "--model");
+    if (model_files) |files| {
+        for (files) |_| {}
+
+        allocator.free(files);
+    }
+
     try zglfw.init();
     defer zglfw.terminate();
 
