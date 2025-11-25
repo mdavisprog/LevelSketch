@@ -28,7 +28,9 @@ pub fn build(b: *std.Build) !void {
     try builder.addDependency("zmath", "root");
 
     try builder.addModule("core", "src/core/root.zig", &.{});
-    try builder.addModule("io", "src/io/root.zig", &.{});
+    try builder.addModule("io", "src/io/root.zig", &.{
+        "core",
+    });
     try builder.addModule("render", "src/render/root.zig", &.{
         "core",
         "io",
@@ -108,26 +110,7 @@ pub fn build(b: *std.Build) !void {
         run_cmd.addArgs(args);
     }
 
-    const core_tests = b.addTest(.{
-        .root_module = try builder.getModule("core"),
-    });
-
-    const render_tests = b.addTest(.{
-        .root_module = try builder.getModule("render"),
-    });
-
-    const exe_tests = b.addTest(.{
-        .root_module = exe.root_module,
-    });
-
-    const run_core_tests = b.addRunArtifact(core_tests);
-    const run_render_tests = b.addRunArtifact(render_tests);
-    const run_exe_tests = b.addRunArtifact(exe_tests);
-
-    const test_step = b.step("test", "Run tests");
-    test_step.dependOn(&run_core_tests.step);
-    test_step.dependOn(&run_render_tests.step);
-    test_step.dependOn(&run_exe_tests.step);
+    try builder.addTests(b, exe, &.{ "core", "io", "render" });
 }
 
 const Builder = struct {
@@ -242,5 +225,32 @@ const Builder = struct {
         }
 
         return Error.DependencyDoesntExist;
+    }
+
+    pub fn addTests(
+        self: Self,
+        b: *std.Build,
+        exe: *std.Build.Step.Compile,
+        modules: []const []const u8,
+    ) !void {
+        const step = b.step("test", "Run tests");
+
+        const exe_test = b.addTest(.{
+            .root_module = exe.root_module,
+        });
+        const exe_run = b.addRunArtifact(exe_test);
+        step.dependOn(&exe_run.step);
+
+        for (modules) |name| {
+            const module = try self.getModule(name);
+
+            const module_test = b.addTest(.{
+                .root_module = module,
+            });
+
+            const run = b.addRunArtifact(module_test);
+
+            step.dependOn(&run.step);
+        }
     }
 };
