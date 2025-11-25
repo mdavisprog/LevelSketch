@@ -31,5 +31,12 @@ pub fn Vec4(comptime T: type) type {
                 .w = value,
             };
         }
+
+        pub fn eql(self: Self, other: Self) bool {
+            return self.x == other.x and
+                self.y == other.y and
+                self.z == other.z and
+                self.w == other.w;
+        }
     };
 }

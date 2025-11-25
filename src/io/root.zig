@@ -1,5 +1,7 @@
 const std = @import("std");
 
+pub const obj = @import("obj.zig");
+
 pub fn exeRelativePath(allocator: std.mem.Allocator, paths: []const []const u8) ![]u8 {
     const exe_dir = try std.fs.selfExeDirPathAlloc(allocator);
     defer allocator.free(exe_dir);
@@ -25,4 +27,8 @@ pub fn getContents(allocator: std.mem.Allocator, path: []const u8) ![]u8 {
     var buffer: [1024]u8 = undefined;
     var reader = file.reader(&buffer);
     return try reader.interface.readAlloc(allocator, file_size);
+}
+
+test "refall" {
+    std.testing.refAllDecls(@This());
 }

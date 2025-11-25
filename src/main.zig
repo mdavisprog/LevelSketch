@@ -2,6 +2,7 @@ const builtin = @import("builtin");
 const callbacks = @import("callbacks.zig");
 const core = @import("core");
 const gui = @import("gui");
+const io = @import("io");
 const render = @import("render");
 const stb = @import("stb");
 const std = @import("std");
@@ -54,7 +55,12 @@ pub fn main() !void {
 
     const model_files = try commandline.getArgValues(allocator, "--model");
     if (model_files) |files| {
-        for (files) |_| {}
+        for (files) |file| {
+            const path = try std.fs.cwd().realpathAlloc(allocator, file);
+            defer allocator.free(path);
+
+            _ = try io.obj.loadFile(allocator, path);
+        }
 
         allocator.free(files);
     }

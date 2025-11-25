@@ -30,6 +30,12 @@ pub fn Vec3(comptime T: type) type {
             };
         }
 
+        pub fn eql(self: Self, other: Self) bool {
+            return self.x == other.x and
+                self.y == other.y and
+                self.z == other.z;
+        }
+
         pub fn add(self: Self, other: Self) Self {
             return .{
                 .x = self.x + other.x,
