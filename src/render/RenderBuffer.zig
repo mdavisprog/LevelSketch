@@ -5,6 +5,7 @@ const Vertex = @import("Vertex.zig");
 const zbgfx = @import("zbgfx");
 
 const VertexBuffer16 = render.VertexBuffer16;
+const VertexBuffer32 = render.VertexBuffer32;
 
 pub const Error = error{
     NotInitialized,
@@ -149,14 +150,33 @@ pub fn setTransientIndices(self: *Self, mem: MemFactory.Mem, length: usize) !voi
     @memcpy(dst, mem.ptr.*.data);
 }
 
-pub fn setStaticBuffer(self: *Self, factory: *MemFactory, buffer: *VertexBuffer16) !void {
+pub fn setStaticBuffer(
+    self: *Self,
+    factory: *MemFactory,
+    buffer: anytype,
+) !void {
+    if (@TypeOf(buffer) != *VertexBuffer16 and @TypeOf(buffer) != *VertexBuffer32) {
+        @compileError(std.fmt.comptimePrint(
+            "Given buffer type is not a VertexBuffer16 or VertexBuffer32. Given buffer is {s}",
+            .{@typeName(buffer)},
+        ));
+    }
+
     const v_mem = try buffer.createMemVertex(factory);
     const i_mem = try buffer.createMemIndex(factory);
     try self.setStaticVertices(v_mem, buffer.vertices.items.len);
     try self.setStaticIndices(i_mem, buffer.indices.items.len);
 }
 
-pub fn setTransientBuffer(self: *Self, factory: *MemFactory, buffer: VertexBuffer16) !void {
+pub fn setTransientBuffer(
+    self: *Self,
+    factory: *MemFactory,
+    buffer: anytype,
+) !void {
+    if (@TypeOf(buffer) != VertexBuffer16 and @TypeOf(buffer) != VertexBuffer32) {
+        @compileError("Given buffer type is not a VertexBuffer16 or VertexBuffer32.");
+    }
+
     const v_mem = try buffer.createMemVertexTransient(factory);
     const i_mem = try buffer.createMemIndexTransient(factory);
     try self.setTransientVertices(v_mem, buffer.vertices.items.len);
