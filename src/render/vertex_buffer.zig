@@ -21,7 +21,7 @@ pub fn VertexBuffer(comptime IndexType: type) type {
             var vertices = try std.ArrayList(Vertex).initCapacity(allocator, vertex_count);
             try vertices.appendNTimes(allocator, .{}, vertex_count);
 
-            var indices = try std.ArrayList(u16).initCapacity(allocator, index_count);
+            var indices = try std.ArrayList(IndexType).initCapacity(allocator, index_count);
             try indices.appendNTimes(allocator, 0, index_count);
 
             return Self{
@@ -76,6 +76,18 @@ pub fn VertexBuffer(comptime IndexType: type) type {
             return try factory.create(@ptrCast(self.indices.items), null, null);
         }
 
+        pub fn release(self: *Self, allocator: std.mem.Allocator) !Self {
+            const vertices: std.ArrayList(Vertex) =
+                .fromOwnedSlice(try self.vertices.toOwnedSlice(allocator));
+            const indices: std.ArrayList(IndexType) =
+                .fromOwnedSlice(try self.indices.toOwnedSlice(allocator));
+
+            return .{
+                .vertices = vertices,
+                .indices = indices,
+            };
+        }
+
         fn onUploadedVertex(result: MemFactory.OnUploadedResult) void {
             const self: *Self = @ptrCast(@alignCast(result.user_data.?));
             self.vertices.clearAndFree(result.allocator);
@@ -96,19 +108,38 @@ pub fn VertexBufferBuilder(comptime T: type) type {
         pub const num_circle_segments: usize = 16;
 
         buffer: TVertexBuffer,
-        _vertex_index: T,
+        vertex_index: T,
         _allocator: std.mem.Allocator,
 
         pub fn init(allocator: std.mem.Allocator) !Self {
             return .{
                 .buffer = try .init(allocator, 0, 0),
-                ._vertex_index = 0,
+                .vertex_index = 0,
                 ._allocator = allocator,
             };
         }
 
         pub fn deinit(self: *Self) void {
             self.buffer.deinit(self._allocator);
+        }
+
+        pub fn take(self: *Self) !TVertexBuffer {
+            return self.buffer.release(self._allocator);
+        }
+
+        pub fn addTri(self: *Self, points: [3]Vertex) !void {
+            const v_index = self.buffer.vertices.items.len;
+            const i_index = self.buffer.indices.items.len;
+            const vertex_index = self.vertex_index;
+            try self.buffer.addZeroed(self._allocator, 3, 3);
+            try self.buffer.vertices.replaceRange(self._allocator, v_index, points.len, &points);
+            try self.buffer.indices.replaceRange(self._allocator, i_index, 3, &.{
+                vertex_index + 0,
+                vertex_index + 1,
+                vertex_index + 2,
+            });
+
+            self.*.vertex_index += 3;
         }
 
         pub fn addQuad(self: *Self, rect: Rectf, abgr: u32) !void {
@@ -131,22 +162,22 @@ pub fn VertexBufferBuilder(comptime T: type) type {
             _ = self.buffer.vertices.items[v_index + 2].setColor(abgr);
             _ = self.buffer.vertices.items[v_index + 3].setColor(abgr);
 
-            self.buffer.indices.items[i_index + 0] = self._vertex_index + 0;
-            self.buffer.indices.items[i_index + 1] = self._vertex_index + 1;
-            self.buffer.indices.items[i_index + 2] = self._vertex_index + 2;
-            self.buffer.indices.items[i_index + 3] = self._vertex_index + 0;
-            self.buffer.indices.items[i_index + 4] = self._vertex_index + 2;
-            self.buffer.indices.items[i_index + 5] = self._vertex_index + 3;
+            self.buffer.indices.items[i_index + 0] = self.vertex_index + 0;
+            self.buffer.indices.items[i_index + 1] = self.vertex_index + 1;
+            self.buffer.indices.items[i_index + 2] = self.vertex_index + 2;
+            self.buffer.indices.items[i_index + 3] = self.vertex_index + 0;
+            self.buffer.indices.items[i_index + 4] = self.vertex_index + 2;
+            self.buffer.indices.items[i_index + 5] = self.vertex_index + 3;
 
-            self.*._vertex_index += 4;
+            self.*.vertex_index += 4;
         }
 
         pub fn addQuarterArc(self: *Self, center: Vec2f, radius: f32, angle: f32, color: u32) !void {
             var v_index: usize = self.buffer.vertices.items.len;
             var i_index: usize = self.buffer.indices.items.len;
 
-            const center_vertex_index = self._vertex_index;
-            self.*._vertex_index += 1;
+            const center_vertex_index = self.vertex_index;
+            self.*.vertex_index += 1;
 
             try self.buffer.addZeroed(self._allocator, 1, 0);
             self.buffer.vertices.items[v_index] = .init(
@@ -191,12 +222,12 @@ pub fn VertexBufferBuilder(comptime T: type) type {
                 _ = self.buffer.vertices.items[v_index + 1].setUV(1.0, 1.0);
 
                 self.buffer.indices.items[i_index + 0] = center_vertex_index;
-                self.buffer.indices.items[i_index + 1] = self._vertex_index + 0;
-                self.buffer.indices.items[i_index + 2] = self._vertex_index + 1;
+                self.buffer.indices.items[i_index + 1] = self.vertex_index + 0;
+                self.buffer.indices.items[i_index + 2] = self.vertex_index + 1;
 
                 v_index += 2;
                 i_index += 3;
-                self.*._vertex_index += 2;
+                self.*.vertex_index += 2;
             }
         }
     };
