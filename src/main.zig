@@ -120,31 +120,10 @@ pub fn main() !void {
         @floatFromInt(framebuffer_size[1]),
     );
 
-    var quad = try render.shapes.quad(allocator, .init(-1.0, 1.0, 1.0, -1.0), 0xFF227722);
-    defer quad.deinit(allocator);
-
-    var quad_render: RenderBuffer = .init();
+    var quad_render = try renderer.uploadVertexBuffer(
+        try render.shapes.quad(allocator, .init(-1.0, 1.0, 1.0, -1.0), 0xFF227722),
+    );
     defer quad_render.deinit();
-
-    try quad_render.setStaticBuffer(&renderer.mem_factory, &quad);
-
-    const ui_size = 50.0;
-    const ui_vertices: [4]Vertex = .{
-        .init(0.0, 0.0, 0.0, 0.0, 0.0, 0xFFFFFFFF),
-        .init(0.0, ui_size, 0.0, 0.0, 1.0, 0xFFFFFFFF),
-        .init(ui_size, ui_size, 0.0, 1.0, 1.0, 0xFFFFFFFF),
-        .init(ui_size, 0.0, 0.0, 1.0, 0.0, 0xFFFFFFFF),
-    };
-
-    const ui_indices: [6]u16 = .{ 0, 1, 2, 0, 2, 3 };
-
-    var ui_buffer: RenderBuffer = .init();
-    defer ui_buffer.deinit();
-
-    const ui_buffer_mem_v = try renderer.mem_factory.create(@ptrCast(&ui_vertices), null, null);
-    const ui_buffer_mem_i = try renderer.mem_factory.create(@ptrCast(&ui_indices), null, null);
-    try ui_buffer.setStaticVertices(ui_buffer_mem_v, ui_vertices.len);
-    try ui_buffer.setStaticIndices(ui_buffer_mem_i, ui_indices.len);
 
     camera = .{
         .position = zmath.f32x4(0.0, 0.0, -3.0, 1.0),
@@ -188,7 +167,7 @@ pub fn main() !void {
         last_time = current_time;
 
         zglfw.pollEvents();
-        renderer.*.update();
+        renderer.update();
         try main_gui.update(renderer, delta_time, cursor.current.toVec2f());
 
         updateCursor(window, &cursor);

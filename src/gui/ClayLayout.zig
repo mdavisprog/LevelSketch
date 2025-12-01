@@ -72,15 +72,15 @@ fn renderCommand(
             const color = hexColor(render_command.render_data.rectangle.background_color);
 
             var quad = if (corner_radius.isZero())
-                try render.shapes.quad(renderer._gpa, rect, color.data)
+                try render.shapes.quad(renderer.allocator, rect, color.data)
             else
                 try render.shapes.quadRounded(
-                    renderer._gpa,
+                    renderer.allocator,
                     rect,
                     color.data,
                     corner_radius.toArray(),
                 );
-            defer quad.deinit(renderer._gpa);
+            defer quad.deinit(renderer.allocator);
 
             var render_buffer: RenderBuffer = .init();
             try render_buffer.setTransientBuffer(&renderer.mem_factory, quad);
@@ -103,15 +103,15 @@ fn renderCommand(
             var buffer: VertexBuffer16 = blk: {
                 if (maybe_font) |font| {
                     break :blk try font.getVertices(
-                        renderer._gpa,
+                        renderer.allocator,
                         text_data.string_contents.str(),
                         rect.min,
                     );
                 } else {
-                    break :blk try render.shapes.quad(renderer._gpa, rect, color.data);
+                    break :blk try render.shapes.quad(renderer.allocator, rect, color.data);
                 }
             };
-            defer buffer.deinit(renderer._gpa);
+            defer buffer.deinit(renderer.allocator);
 
             var render_buffer: RenderBuffer = .init();
             try render_buffer.setTransientBuffer(&renderer.mem_factory, buffer);

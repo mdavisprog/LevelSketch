@@ -40,7 +40,7 @@ pub fn init(renderer: *Renderer) !Self {
     );
 
     const text_shader: *Program = try renderer.programs.build(
-        renderer._gpa,
+        renderer.allocator,
         "text",
         .{
             .varying_file_name = "common.def.sc",
@@ -49,7 +49,7 @@ pub fn init(renderer: *Renderer) !Self {
         },
     );
 
-    const clay_context: ClayContext = try .init(renderer._gpa);
+    const clay_context: ClayContext = try .init(renderer.allocator);
 
     var result = Self{
         .view = view,

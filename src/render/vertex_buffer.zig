@@ -1,5 +1,5 @@
 const core = @import("core");
-const MemFactory = @import("MemFactory.zig");
+const render = @import("root.zig");
 const std = @import("std");
 const zbgfx = @import("zbgfx");
 
@@ -7,6 +7,9 @@ const HexColor = core.math.HexColor;
 const Rectf = core.math.Rectf;
 const Vec2f = core.math.Vec2f;
 const Vec3f = core.math.Vec3f;
+
+const MemFactory = render.MemFactory;
+const RenderBuffer = render.RenderBuffer;
 
 pub const Vertex = extern struct {
     const Self = @This();
@@ -313,6 +316,92 @@ pub fn VertexBufferBuilder(comptime T: type) type {
                 i_index += 3;
                 self.*.vertex_index += 2;
             }
+        }
+    };
+}
+
+pub fn VertexBufferUploads(comptime IndexType: type) type {
+    return struct {
+        const Self = @This();
+        const VertexBufferType = VertexBuffer(IndexType);
+
+        const Upload = struct {
+            vertex_complete: bool = false,
+            index_complete: bool = false,
+            buffer: VertexBufferType,
+
+            fn is_complete(self: Upload) bool {
+                return self.vertex_complete and self.index_complete;
+            }
+        };
+
+        uploads: std.ArrayList(*Upload),
+
+        pub fn init(allocator: std.mem.Allocator) !Self {
+            return .{
+                .uploads = try .initCapacity(allocator, 0),
+            };
+        }
+
+        pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
+            for (self.uploads.items) |upload| {
+                upload.buffer.deinit(allocator);
+                allocator.destroy(upload);
+            }
+
+            self.uploads.deinit(allocator);
+        }
+
+        pub fn addUpload(
+            self: *Self,
+            mem_factory: *MemFactory,
+            buffer: VertexBufferType,
+        ) !RenderBuffer {
+            const allocator = mem_factory.allocator;
+
+            const upload: *Upload = try allocator.create(Upload);
+            upload.buffer = buffer;
+            try self.uploads.append(allocator, upload);
+
+            const v_mem = try mem_factory.create(
+                @ptrCast(buffer.vertices.items),
+                onUploadVertices,
+                upload,
+            );
+            const i_mem = try mem_factory.create(
+                @ptrCast(buffer.indices.items),
+                onUploadIndices,
+                upload,
+            );
+
+            var result: RenderBuffer = .init();
+            try result.setStaticVertices(v_mem, buffer.vertices.items.len);
+            try result.setStaticIndices(i_mem, buffer.indices.items.len);
+            return result;
+        }
+
+        pub fn update(self: *Self, allocator: std.mem.Allocator) void {
+            var i: usize = 0;
+            while (i < self.uploads.items.len) {
+                if (self.uploads.items[i].is_complete()) {
+                    const upload = self.uploads.swapRemove(i);
+
+                    upload.buffer.deinit(allocator);
+                    allocator.destroy(upload);
+                } else {
+                    i += 1;
+                }
+            }
+        }
+
+        fn onUploadVertices(result: MemFactory.OnUploadedResult) void {
+            const upload: *Upload = result.userDataAs(Upload);
+            upload.vertex_complete = true;
+        }
+
+        fn onUploadIndices(result: MemFactory.OnUploadedResult) void {
+            const upload: *Upload = result.userDataAs(Upload);
+            upload.index_complete = true;
         }
     };
 }

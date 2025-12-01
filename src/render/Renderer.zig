@@ -8,7 +8,12 @@ const Vec2f = core.math.Vec2f;
 const Fonts = render.Fonts;
 const Programs = render.shaders.Programs;
 const MemFactory = render.MemFactory;
+const RenderBuffer = render.RenderBuffer;
 const Textures = render.Textures;
+const VertexBuffer16 = render.VertexBuffer16;
+const VertexBuffer32 = render.VertexBuffer32;
+const VertexBufferUploads16 = render.VertexBufferUploads16;
+const VertexBufferUploads32 = render.VertexBufferUploads32;
 
 const Self = @This();
 
@@ -32,31 +37,54 @@ textures: Textures,
 programs: Programs,
 fonts: *Fonts,
 framebuffer_size: Vec2f = .zero,
-_gpa: std.mem.Allocator,
+allocator: std.mem.Allocator,
+_uploads16: VertexBufferUploads16,
+_uploads32: VertexBufferUploads32,
 
-pub fn init(gpa: std.mem.Allocator) !Self {
-    var mem_factory = try MemFactory.init(gpa);
+pub fn init(allocator: std.mem.Allocator) !Self {
+    var mem_factory = try MemFactory.init(allocator);
     const textures = try Textures.init(&mem_factory);
-    const programs: Programs = .init(gpa);
-    const fonts: *Fonts = try .init(gpa);
-    return Self{
+    const programs: Programs = .init(allocator);
+    const fonts: *Fonts = try .init(allocator);
+    return .{
         .mem_factory = mem_factory,
         .textures = textures,
         .programs = programs,
         .fonts = fonts,
-        ._gpa = gpa,
+        .allocator = allocator,
+        ._uploads16 = try .init(allocator),
+        ._uploads32 = try .init(allocator),
     };
 }
 
 pub fn deinit(self: *Self) void {
-    self.fonts.*.deinit(self._gpa);
-    self._gpa.destroy(self.fonts);
+    self.fonts.*.deinit(self.allocator);
+    self.allocator.destroy(self.fonts);
 
-    self.programs.deinit(self._gpa);
-    self.textures.deinit(self._gpa);
+    self.programs.deinit(self.allocator);
+    self.textures.deinit(self.allocator);
     self.mem_factory.deinit();
+
+    self._uploads16.deinit(self.allocator);
+    self._uploads32.deinit(self.allocator);
 }
 
 pub fn update(self: *Self) void {
     self.mem_factory.update();
+    self._uploads16.update(self.allocator);
+    self._uploads32.update(self.allocator);
+}
+
+pub fn uploadVertexBuffer(self: *Self, buffer: anytype) !RenderBuffer {
+    const BufferType = @TypeOf(buffer);
+    if (BufferType == VertexBuffer16) {
+        return try self._uploads16.addUpload(&self.mem_factory, buffer);
+    } else if (BufferType == VertexBuffer32) {
+        return try self._uploads32.addUpload(&self.mem_factory, buffer);
+    } else {
+        @compileError(std.fmt.comptimePrint(
+            "Invalid buffer type given: {s}\n",
+            .{@typeName(BufferType)},
+        ));
+    }
 }
