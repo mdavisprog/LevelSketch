@@ -10,12 +10,12 @@ pub const shaders = @import("shaders/root.zig");
 pub const shapes = @import("shapes.zig");
 pub const Texture = @import("Texture.zig");
 pub const Textures = @import("Textures.zig");
-pub const Vertex = @import("Vertex.zig");
 pub const View = @import("View.zig");
 
 const std = @import("std");
 const vertex_buffer = @import("vertex_buffer.zig");
 
+pub const Vertex = vertex_buffer.Vertex;
 pub const VertexBuffer16 = vertex_buffer.VertexBuffer(u16);
 pub const VertexBuffer32 = vertex_buffer.VertexBuffer(u32);
 

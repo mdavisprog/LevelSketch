@@ -1,9 +1,9 @@
 const MemFactory = @import("MemFactory.zig");
 const render = @import("root.zig");
 const std = @import("std");
-const Vertex = @import("Vertex.zig");
 const zbgfx = @import("zbgfx");
 
+const Vertex = render.Vertex;
 const VertexBuffer16 = render.VertexBuffer16;
 const VertexBuffer32 = render.VertexBuffer32;
 

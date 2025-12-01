@@ -1,16 +1,17 @@
-const Atlas = @import("Atlas.zig");
 const core = @import("core");
 const io = @import("io");
-const MemFactory = @import("MemFactory.zig");
 const render = @import("root.zig");
 const std = @import("std");
-const Texture = @import("Texture.zig");
-const Textures = @import("Textures.zig");
 const TrueType = @import("TrueType");
-const Vertex = @import("Vertex.zig");
 
-const Renderer = render.Renderer;
 const Vec2f = core.math.Vec2f;
+
+const Atlas = render.Atlas;
+const MemFactory = render.MemFactory;
+const Renderer = render.Renderer;
+const Texture = render.Texture;
+const Textures = render.Textures;
+const Vertex = render.Vertex;
 const VertexBuffer16 = render.VertexBuffer16;
 
 const Self = @This();
