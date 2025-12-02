@@ -36,6 +36,20 @@ pub const Model = struct {
             return self.elements.items[index];
         }
 
+        /// Returns a face element with the indices subtracted by 1 to match the array
+        /// position.
+        pub fn getTransformed(self: Face, index: usize) ?Element {
+            if (self.get(index)) |element| {
+                return .{
+                    .vertex = element.vertex -% 1,
+                    .texture = element.texture -% 1,
+                    .normal = element.normal -% 1,
+                };
+            }
+
+            return null;
+        }
+
         pub fn getVertex(self: Face, index: usize) ?u32 {
             const element = self.get(index) orelse return null;
             return element.vertex -% 1;

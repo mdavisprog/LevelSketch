@@ -116,9 +116,13 @@ pub fn setTransientVertices(self: *Self, mem: MemFactory.Mem, length: usize) !vo
 pub fn setStaticIndices(self: *Self, mem: MemFactory.Mem, length: usize) !void {
     if (self.index != null) return Error.AlreadyInitialized;
 
+    const alignment = mem.ptr.*.size / length;
+    const is_u32 = alignment == @sizeOf(u32);
+    const flags = if (is_u32) zbgfx.bgfx.BufferFlags_Index32 else zbgfx.bgfx.BufferFlags_None;
+
     const handle = zbgfx.bgfx.createIndexBuffer(
         mem.ptr,
-        zbgfx.bgfx.BufferFlags_None,
+        flags,
     );
     self.index = .{ .static = handle };
     self.index_len = @intCast(length);
@@ -127,9 +131,13 @@ pub fn setStaticIndices(self: *Self, mem: MemFactory.Mem, length: usize) !void {
 pub fn setDynamicIndices(self: *Self, mem: MemFactory.Mem, length: usize) !void {
     if (self.index != null) return Error.AlreadyInitialized;
 
+    const alignment = mem.ptr.*.size / length;
+    const is_u32 = alignment == @sizeOf(u32);
+    const flags = if (is_u32) zbgfx.bgfx.BufferFlags_Index32 else zbgfx.bgfx.BufferFlags_None;
+
     const handle = zbgfx.bgfx.createDynamicIndexBufferMem(
         mem.ptr,
-        zbgfx.bgfx.BufferFlags_None,
+        flags,
     );
     self.index = .{ .dynamic = handle };
     self.index_len = @intCast(length);

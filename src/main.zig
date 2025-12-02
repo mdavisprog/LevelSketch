@@ -13,20 +13,14 @@ const zmath = @import("zmath");
 
 const commandline = core.commandline;
 
-const Rectf = core.math.Rectf;
-
 const Cursor = gui.Cursor;
 const GUI = gui.GUI;
 
+const Model = io.obj.Model;
+
 const Camera = render.Camera;
-const Font = render.Font;
-const MemFactory = render.MemFactory;
-const Program = render.shaders.Program;
-const RenderBuffer = render.RenderBuffer;
+const Mesh = render.Mesh;
 const Renderer = render.Renderer;
-const Textures = render.Textures;
-const Vertex = render.Vertex;
-const VertexBuffer16 = render.VertexBuffer16;
 const View = render.View;
 
 var camera: Camera = undefined;
@@ -52,18 +46,6 @@ pub fn main() !void {
 
     try stb.init(allocator);
     defer stb.deinit();
-
-    const model_files = try commandline.getArgValues(allocator, "--model");
-    if (model_files) |files| {
-        for (files) |file| {
-            const path = try std.fs.cwd().realpathAlloc(allocator, file);
-            defer allocator.free(path);
-
-            _ = try io.obj.loadFile(allocator, path);
-        }
-
-        allocator.free(files);
-    }
 
     try zglfw.init();
     defer zglfw.terminate();
@@ -120,16 +102,19 @@ pub fn main() !void {
         @floatFromInt(framebuffer_size[1]),
     );
 
-    var quad_render = try renderer.uploadVertexBuffer(
-        try render.shapes.quad(allocator, .init(-1.0, 1.0, 1.0, -1.0), 0xFF227722),
-    );
-    defer quad_render.deinit();
+    const meshes = try loadCommandLineModels(renderer);
+    defer {
+        for (meshes) |*mesh| {
+            mesh.deinit();
+        }
+        renderer.allocator.free(meshes);
+    }
 
     camera = .{
         .position = zmath.f32x4(0.0, 0.0, -3.0, 1.0),
     };
 
-    var shader_program: *Program = try renderer.programs.build(
+    var shader_program = try renderer.programs.build(
         allocator,
         "common",
         .{
@@ -177,7 +162,9 @@ pub fn main() !void {
         view_world.submitPerspective(camera, @intCast(size[0]), @intCast(size[1]));
 
         try renderer.textures.default.bind(sampler_tex_color.handle, 0);
-        quad_render.bind(Renderer.world_state);
+        for (meshes) |mesh| {
+            mesh.buffer.bind(Renderer.world_state);
+        }
         zbgfx.bgfx.submit(view_world.id, shader_program.handle.data, 255, 0);
         view_world.touch();
 
@@ -275,6 +262,30 @@ fn toggleCursor(window: *zglfw.Window, enabled: bool) !void {
 fn isPressed(window: *zglfw.Window, key: zglfw.Key) bool {
     const action = window.getKey(key);
     return action == .press;
+}
+
+fn loadCommandLineModels(renderer: *Renderer) ![]Mesh {
+    const allocator = renderer.allocator;
+
+    var meshes = try std.ArrayList(Mesh).initCapacity(allocator, 0);
+    defer meshes.deinit(allocator);
+
+    const file_names = try commandline.getArgValues(allocator, "--model") orelse
+        return try meshes.toOwnedSlice(allocator);
+    defer allocator.free(file_names);
+
+    for (file_names) |file_name| {
+        const path = try std.fs.cwd().realpathAlloc(renderer.allocator, file_name);
+        defer renderer.allocator.free(path);
+
+        var model = try io.obj.loadFile(allocator, path);
+        defer model.deinit(allocator);
+
+        const mesh = try Mesh.init(renderer, model);
+        try meshes.append(allocator, mesh);
+    }
+
+    return try meshes.toOwnedSlice(allocator);
 }
 
 // The code below will ensure that all referenced files will have their

@@ -4,6 +4,7 @@ pub const Commands = @import("Commands.zig");
 pub const Font = @import("Font.zig");
 pub const Fonts = @import("Fonts.zig");
 pub const MemFactory = @import("MemFactory.zig");
+pub const Mesh = @import("Mesh.zig");
 pub const RenderBuffer = @import("RenderBuffer.zig");
 pub const Renderer = @import("Renderer.zig");
 pub const shaders = @import("shaders/root.zig");
