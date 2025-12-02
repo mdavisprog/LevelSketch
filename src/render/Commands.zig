@@ -31,10 +31,6 @@ pub fn init(gpa: std.mem.Allocator) !Self {
 }
 
 pub fn deinit(self: *Self) void {
-    for (self._commands.items) |*command| {
-        command.buffer.deinit();
-    }
-
     self._commands.deinit(self._gpa);
 }
 
