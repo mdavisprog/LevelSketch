@@ -72,9 +72,10 @@ fn renderCommand(
             const color = hexColor(render_command.render_data.rectangle.background_color);
 
             var quad = if (corner_radius.isZero())
-                try render.shapes.quad(renderer.allocator, rect, color.data)
+                try render.shapes.quad(u16, renderer.allocator, rect, color.data)
             else
                 try render.shapes.quadRounded(
+                    u16,
                     renderer.allocator,
                     rect,
                     color.data,
@@ -108,7 +109,7 @@ fn renderCommand(
                         rect.min,
                     );
                 } else {
-                    break :blk try render.shapes.quad(renderer.allocator, rect, color.data);
+                    break :blk try render.shapes.quad(u16, renderer.allocator, rect, color.data);
                 }
             };
             defer buffer.deinit(renderer.allocator);

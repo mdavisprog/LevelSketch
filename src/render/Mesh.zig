@@ -8,7 +8,6 @@ const RenderBuffer = render.RenderBuffer;
 const Renderer = render.Renderer;
 const Vertex = render.Vertex;
 const VertexBuffer32 = render.VertexBuffer32;
-const VertexBufferBuilder32 = render.VertexBufferBuilder32;
 
 const Self = @This();
 const VisitMap = std.AutoHashMap(Model.Face.Element, usize);
@@ -32,8 +31,7 @@ pub fn deinit(self: *Self) void {
 }
 
 fn convert(allocator: std.mem.Allocator, model: Model) !VertexBuffer32 {
-    var builder: VertexBufferBuilder32 = try .init(allocator);
-    defer builder.deinit();
+    var buffer: VertexBuffer32 = try .init(allocator, 0, 0);
 
     var visited: VisitMap = .init(allocator);
     defer visited.deinit();
@@ -43,30 +41,29 @@ fn convert(allocator: std.mem.Allocator, model: Model) !VertexBuffer32 {
         const element2 = face.getTransformed(1) orelse continue;
         const element3 = face.getTransformed(2) orelse continue;
 
-        try addElement(allocator, &builder, &visited, model, element1);
-        try addElement(allocator, &builder, &visited, model, element2);
-        try addElement(allocator, &builder, &visited, model, element3);
+        try addElement(allocator, &buffer, &visited, model, element1);
+        try addElement(allocator, &buffer, &visited, model, element2);
+        try addElement(allocator, &buffer, &visited, model, element3);
     }
 
-    return try builder.take();
+    return buffer;
 }
 
 fn addElement(
     allocator: std.mem.Allocator,
-    builder: *VertexBufferBuilder32,
+    buffer: *VertexBuffer32,
     visited: *VisitMap,
     model: Model,
     element: Model.Face.Element,
 ) !void {
     if (visited.get(element)) |index| {
-        try builder.buffer.indices.append(allocator, @intCast(index));
+        try buffer.indices.append(allocator, @intCast(index));
     } else {
-        const index = builder.vertex_index;
+        const index = buffer.vertices.items.len;
         const vertex = toVertex(element, model) orelse return Error.InvalidModel;
-        try builder.buffer.vertices.append(allocator, vertex);
-        try builder.buffer.indices.append(allocator, @intCast(index));
+        try buffer.vertices.append(allocator, vertex);
+        try buffer.indices.append(allocator, @intCast(index));
         try visited.put(element, index);
-        builder.vertex_index += 1;
     }
 }
 
