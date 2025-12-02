@@ -152,11 +152,11 @@ pub fn main() !void {
         last_time = current_time;
 
         zglfw.pollEvents();
-        renderer.update();
-        try main_gui.update(renderer, delta_time, cursor.current.toVec2f());
-
         updateCursor(window, &cursor);
         try updateCamera(window, cursor, delta_time);
+
+        renderer.update();
+        try main_gui.update(renderer, delta_time, cursor.current.toVec2f());
 
         const size = window.getFramebufferSize();
         view_world.submitPerspective(camera, @intCast(size[0]), @intCast(size[1]));
