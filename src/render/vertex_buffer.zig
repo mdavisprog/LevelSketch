@@ -145,22 +145,12 @@ pub fn VertexBuffer(comptime IndexType: type) type {
             );
         }
 
-        /// Don't track the memory allocation. Caller is responsible for freeing the memory.
-        pub fn createMemVertexTransient(self: Self, factory: *MemFactory) !MemFactory.Mem {
-            return try factory.create(@ptrCast(self.vertices.items), null, null);
-        }
-
         pub fn createMemIndex(self: *Self, factory: *MemFactory) !MemFactory.Mem {
             return try factory.create(
                 @ptrCast(self.indices.items),
                 onUploadedIndex,
                 @ptrCast(self),
             );
-        }
-
-        /// Don't track the memory allocation. Caller is responsible for freeing the memory.
-        pub fn createMemIndexTransient(self: Self, factory: *MemFactory) !MemFactory.Mem {
-            return try factory.create(@ptrCast(self.indices.items), null, null);
         }
 
         pub fn release(self: *Self, allocator: std.mem.Allocator) !Self {

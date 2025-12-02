@@ -100,7 +100,7 @@ pub fn setDynamicVertices(self: *Self, mem: MemFactory.Mem, length: usize) !void
 }
 
 /// Will copy the contents of mem into the transient buffer.
-pub fn setTransientVertices(self: *Self, mem: MemFactory.Mem, length: usize) !void {
+pub fn setTransientVertices(self: *Self, data: []const u8, length: usize) !void {
     if (self.vertex != null) return Error.AlreadyInitialized;
 
     const layout = Vertex.Layout.init();
@@ -110,7 +110,7 @@ pub fn setTransientVertices(self: *Self, mem: MemFactory.Mem, length: usize) !vo
     self.vertex_len = @intCast(length);
 
     const dst = handle.data[0..handle.size];
-    @memcpy(dst, mem.ptr.*.data);
+    @memcpy(dst, data.ptr);
 }
 
 pub fn setStaticIndices(self: *Self, mem: MemFactory.Mem, length: usize) !void {
@@ -144,18 +144,18 @@ pub fn setDynamicIndices(self: *Self, mem: MemFactory.Mem, length: usize) !void 
 }
 
 /// Will copy the contents of mem into the transient buffer.
-pub fn setTransientIndices(self: *Self, mem: MemFactory.Mem, length: usize) !void {
+pub fn setTransientIndices(self: *Self, data: []const u8, length: usize) !void {
     if (self.index != null) return Error.AlreadyInitialized;
 
     var handle: zbgfx.bgfx.TransientIndexBuffer = undefined;
-    const alignment = mem.ptr.*.size / length;
+    const alignment = data.len / length;
     const is_u32 = alignment == @sizeOf(u32);
     zbgfx.bgfx.allocTransientIndexBuffer(@ptrCast(&handle), @intCast(length), is_u32);
     self.index = .{ .transient = handle };
     self.index_len = @intCast(length);
 
     const dst = handle.data[0..handle.size];
-    @memcpy(dst, mem.ptr.*.data);
+    @memcpy(dst, data.ptr);
 }
 
 pub fn setStaticBuffer(
@@ -176,19 +176,13 @@ pub fn setStaticBuffer(
     try self.setStaticIndices(i_mem, buffer.indices.items.len);
 }
 
-pub fn setTransientBuffer(
-    self: *Self,
-    factory: *MemFactory,
-    buffer: anytype,
-) !void {
+pub fn setTransientBuffer(self: *Self, buffer: anytype) !void {
     if (@TypeOf(buffer) != VertexBuffer16 and @TypeOf(buffer) != VertexBuffer32) {
         @compileError("Given buffer type is not a VertexBuffer16 or VertexBuffer32.");
     }
 
-    const v_mem = try buffer.createMemVertexTransient(factory);
-    const i_mem = try buffer.createMemIndexTransient(factory);
-    try self.setTransientVertices(v_mem, buffer.vertices.items.len);
-    try self.setTransientIndices(i_mem, buffer.indices.items.len);
+    try self.setTransientVertices(@ptrCast(buffer.vertices.items), buffer.vertices.items.len);
+    try self.setTransientIndices(@ptrCast(buffer.indices.items), buffer.indices.items.len);
 }
 
 pub fn updateVertices(self: Self, start_vertex: u32, mem: MemFactory.Mem) !void {

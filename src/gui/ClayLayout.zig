@@ -83,7 +83,7 @@ fn renderCommand(
             defer quad.deinit(renderer.allocator);
 
             var render_buffer: RenderBuffer = .init();
-            try render_buffer.setTransientBuffer(&renderer.mem_factory, quad);
+            try render_buffer.setTransientBuffer(quad);
 
             const shader = try renderer.programs.get("common");
             try commands.addCommand(.{
@@ -114,7 +114,7 @@ fn renderCommand(
             defer buffer.deinit(renderer.allocator);
 
             var render_buffer: RenderBuffer = .init();
-            try render_buffer.setTransientBuffer(&renderer.mem_factory, buffer);
+            try render_buffer.setTransientBuffer(buffer);
 
             const shader = try renderer.programs.get("text");
             try commands.addCommand(.{
