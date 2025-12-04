@@ -7,6 +7,7 @@ const Model = io.obj.Model;
 const RenderBuffer = render.RenderBuffer;
 const Renderer = render.Renderer;
 const Vertex = render.Vertex;
+const VertexBuffer16 = render.VertexBuffer16;
 const VertexBuffer32 = render.VertexBuffer32;
 
 const Self = @This();
@@ -23,6 +24,16 @@ pub fn init(renderer: *Renderer, model: Model) !Self {
     const buffer = try renderer.uploadVertexBuffer(vertex_buffer);
     return .{
         .buffer = buffer,
+    };
+}
+
+pub fn initWithBuffer(
+    renderer: *Renderer,
+    buffer: anytype,
+) !Self {
+    const mesh_buffer = try renderer.uploadVertexBuffer(buffer);
+    return .{
+        .buffer = mesh_buffer,
     };
 }
 
@@ -73,7 +84,8 @@ fn addElement(
 
 fn toVertex(element: Model.Face.Element, model: Model) ?Vertex {
     const position = model.getVertex(element.vertex) orelse return null;
+    const normal = model.getNormal(element.normal) orelse return null;
     const texture = model.getTextureCoord(element.texture) orelse return null;
 
-    return .init(position.x, position.y, position.z, texture.x, texture.y, 0xFFFFFFFF);
+    return .init(position.xyz(), normal, texture.xy(), 0xFFFFFFFF);
 }

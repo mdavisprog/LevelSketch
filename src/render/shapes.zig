@@ -7,6 +7,8 @@ const Rectf = core.math.Rectf;
 const Vec2f = core.math.Vec2f;
 const Vec3f = core.math.Vec3f;
 
+const Mesh = render.Mesh;
+const Renderer = render.Renderer;
 const Vertex = render.Vertex;
 const VertexBuffer = vertex_buffer.VertexBuffer;
 
@@ -109,6 +111,80 @@ pub fn quadRounded(
     // TODO: Update UVs
 
     return builder.buffer;
+}
+
+pub fn cube(
+    comptime IndexType: type,
+    renderer: *Renderer,
+    half_size: Vec3f,
+    color: u32,
+) !Mesh {
+    const buffer = try cubeBuffer(IndexType, renderer.allocator, half_size, color);
+    return try Mesh.initWithBuffer(renderer, buffer);
+}
+
+pub fn cubeBuffer(
+    comptime IndexType: type,
+    allocator: std.mem.Allocator,
+    half_size: Vec3f,
+    color: u32,
+) !VertexBuffer(IndexType) {
+    const min = half_size.mulScalar(-1.0);
+    const max = half_size;
+
+    // TODO: Add Normals. Will need 24 verts for this.
+    const vertices = [_]Vertex{
+        // Front face
+        .init(.init(min.x, max.y, min.z), .init(0.0, 0.0, -1.0), .init(0.0, 0.0), color),
+        .init(.init(min.x, min.y, min.z), .init(0.0, 0.0, -1.0), .init(0.0, 0.0), color),
+        .init(.init(max.x, min.y, min.z), .init(0.0, 0.0, -1.0), .init(0.0, 0.0), color),
+        .init(.init(max.x, max.y, min.z), .init(0.0, 0.0, -1.0), .init(0.0, 0.0), color),
+
+        // Back face
+        .init(.init(max.x, max.y, max.z), .init(0.0, 0.0, 1.0), .init(0.0, 0.0), color),
+        .init(.init(max.x, min.y, max.z), .init(0.0, 0.0, 1.0), .init(0.0, 0.0), color),
+        .init(.init(min.x, min.y, max.z), .init(0.0, 0.0, 1.0), .init(0.0, 0.0), color),
+        .init(.init(min.x, max.y, max.z), .init(0.0, 0.0, 1.0), .init(0.0, 0.0), color),
+
+        // Right face
+        .init(.init(max.x, max.y, min.z), .init(1.0, 0.0, 0.0), .init(0.0, 0.0), color),
+        .init(.init(max.x, min.y, min.z), .init(1.0, 0.0, 0.0), .init(0.0, 0.0), color),
+        .init(.init(max.x, min.y, max.z), .init(1.0, 0.0, 0.0), .init(0.0, 0.0), color),
+        .init(.init(max.x, max.y, max.z), .init(1.0, 0.0, 0.0), .init(0.0, 0.0), color),
+
+        // Left face
+        .init(.init(min.x, max.y, max.z), .init(-1.0, 0.0, 0.0), .init(0.0, 0.0), color),
+        .init(.init(min.x, min.y, max.z), .init(-1.0, 0.0, 0.0), .init(0.0, 0.0), color),
+        .init(.init(min.x, min.y, min.z), .init(-1.0, 0.0, 0.0), .init(0.0, 0.0), color),
+        .init(.init(min.x, max.y, min.z), .init(-1.0, 0.0, 0.0), .init(0.0, 0.0), color),
+
+        // Top face
+        .init(.init(min.x, max.y, max.z), .init(0.0, 1.0, 0.0), .init(0.0, 0.0), color),
+        .init(.init(min.x, max.y, min.z), .init(0.0, 1.0, 0.0), .init(0.0, 0.0), color),
+        .init(.init(max.x, max.y, min.z), .init(0.0, 1.0, 0.0), .init(0.0, 0.0), color),
+        .init(.init(max.x, max.y, max.z), .init(0.0, 1.0, 0.0), .init(0.0, 0.0), color),
+
+        // Bottom face
+        .init(.init(min.x, min.y, min.z), .init(0.0, -1.0, 0.0), .init(0.0, 0.0), color),
+        .init(.init(min.x, min.y, max.z), .init(0.0, -1.0, 0.0), .init(0.0, 0.0), color),
+        .init(.init(max.x, min.y, max.z), .init(0.0, -1.0, 0.0), .init(0.0, 0.0), color),
+        .init(.init(max.x, min.y, min.z), .init(0.0, -1.0, 0.0), .init(0.0, 0.0), color),
+    };
+    // 6 points per face, 6 faces
+    const indices = [36]IndexType{
+        0,  1,  2,  0,  2,  3,
+        4,  5,  6,  4,  6,  7,
+        8,  9,  10, 8,  10, 11,
+        12, 13, 14, 12, 14, 15,
+        16, 17, 18, 16, 18, 19,
+        20, 21, 22, 20, 22, 23,
+    };
+
+    const buffer: VertexBuffer(IndexType) = try .init(allocator, vertices.len, indices.len);
+    @memcpy(buffer.vertices.items, &vertices);
+    @memcpy(buffer.indices.items, &indices);
+
+    return buffer;
 }
 
 fn quarterArcPoints(

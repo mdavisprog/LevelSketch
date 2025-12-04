@@ -21,6 +21,7 @@ pub const Vertex = extern struct {
             var data = std.mem.zeroes(zbgfx.bgfx.VertexLayout);
             data.begin(zbgfx.bgfx.RendererType.Noop)
                 .add(.Position, 3, .Float, false, false)
+                .add(.Normal, 3, .Float, false, false)
                 .add(.TexCoord0, 2, .Float, true, false)
                 .add(.Color0, 4, .Uint8, true, true)
                 .end();
@@ -33,17 +34,23 @@ pub const Vertex = extern struct {
     x: f32 = 0.0,
     y: f32 = 0.0,
     z: f32 = 0.0,
+    nx: f32 = 0.0,
+    ny: f32 = 0.0,
+    nz: f32 = 0.0,
     u: f32 = 0.0,
     v: f32 = 0.0,
     abgr: u32 = 0xFFFFFFFF,
 
-    pub fn init(x: f32, y: f32, z: f32, u: f32, v: f32, abgr: u32) Self {
+    pub fn init(position: Vec3f, normal: Vec3f, uv: Vec2f, abgr: u32) Self {
         return .{
-            .x = x,
-            .y = y,
-            .z = z,
-            .u = u,
-            .v = v,
+            .x = position.x,
+            .y = position.y,
+            .z = position.z,
+            .nx = normal.x,
+            .ny = normal.y,
+            .nz = normal.z,
+            .u = uv.x,
+            .v = uv.y,
             .abgr = abgr,
         };
     }
@@ -67,6 +74,17 @@ pub const Vertex = extern struct {
         self.y = position.y;
         self.z = 0.0;
         return self;
+    }
+
+    pub fn setNormal(self: *Self, nx: f32, ny: f32, nz: f32) *Self {
+        self.nx = nx;
+        self.ny = ny;
+        self.nz = nz;
+        return self;
+    }
+
+    pub fn setNormalVec3(self: *Self, normal: Vec3f) *Self {
+        return self.setNormal(normal.x, normal.y, normal.z);
     }
 
     pub fn setUV(self: *Self, u: f32, v: f32) *Self {

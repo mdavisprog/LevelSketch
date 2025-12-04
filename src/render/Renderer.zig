@@ -83,7 +83,7 @@ pub fn uploadVertexBuffer(self: *Self, buffer: anytype) !RenderBuffer {
         return try self._uploads32.addUpload(&self.mem_factory, buffer);
     } else {
         @compileError(std.fmt.comptimePrint(
-            "Invalid buffer type given: {s}\n",
+            "Invalid buffer type given: {s}.",
             .{@typeName(BufferType)},
         ));
     }

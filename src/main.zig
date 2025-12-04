@@ -12,6 +12,7 @@ const zglfw = @import("zglfw");
 const zmath = @import("zmath");
 
 const commandline = core.commandline;
+const Vec4f = core.math.Vec4f;
 
 const Cursor = gui.Cursor;
 const GUI = gui.GUI;
@@ -124,6 +125,28 @@ pub fn main() !void {
         },
     );
 
+    const phong_shader = try renderer.programs.build(
+        allocator,
+        "phong",
+        .{
+            .varying_file_name = "phong.def.sc",
+            .fragment_file_name = "phong_fragment.sc",
+            .vertex_file_name = "phong_vertex.sc",
+        },
+    );
+    const u_light_color = try phong_shader.getUniform("u_light_color");
+    const u_model_color = try phong_shader.getUniform("u_model_color");
+    const u_light_pos = try phong_shader.getUniform("u_light_pos");
+    const u_normal_mat = try phong_shader.getUniform("u_normal_mat");
+    const u_view_pos = try phong_shader.getUniform("u_view_pos");
+
+    const light_color: Vec4f = .splat(1.0);
+    const light_pos: Vec4f = .init(1.2, 1.0, -2.0, 1.0);
+
+    u_light_color.setVec4f(light_color);
+    u_model_color.setVec4f(.init(1.0, 0.5, 0.31, 1.0));
+    u_light_pos.setVec4f(light_pos);
+
     const sampler_tex_color = try shader_program.getUniform("s_tex_color");
 
     zbgfx.bgfx.setDebug(zbgfx.bgfx.DebugFlags_None);
@@ -146,6 +169,11 @@ pub fn main() !void {
     // Timing
     var last_time: f64 = 0.0;
 
+    var cube = try render.shapes.cube(u16, renderer, .splat(0.2), 0xFFFFFFFF);
+    defer cube.deinit();
+    const cube_transform = zmath.translation(light_pos.x, light_pos.y, light_pos.z);
+    const model_transform = zmath.scaling(0.5, 0.5, 0.5);
+
     while (!window.shouldClose() and window.getKey(.escape) != .press) {
         const current_time = zglfw.getTime();
         const delta_time: f32 = @floatCast(current_time - last_time);
@@ -161,13 +189,26 @@ pub fn main() !void {
         const size = window.getFramebufferSize();
         view_world.submitPerspective(camera, @intCast(size[0]), @intCast(size[1]));
 
+        // Render the world
+        u_view_pos.setArray(&zmath.vecToArr4(camera.position));
+
         try renderer.textures.default.bind(sampler_tex_color.handle, 0);
+
+        _ = zbgfx.bgfx.setTransform(&zmath.matToArr(cube_transform), 1);
+        cube.buffer.bind(Renderer.world_state);
+        zbgfx.bgfx.submit(view_world.id, shader_program.handle.data, 0, 0);
+
+        const normal_mat = zmath.transpose(zmath.inverse(model_transform));
+        _ = zbgfx.bgfx.setTransform(&zmath.matToArr(model_transform), 1);
+        u_normal_mat.setMat(normal_mat);
         for (meshes) |mesh| {
             mesh.buffer.bind(Renderer.world_state);
+            zbgfx.bgfx.submit(view_world.id, phong_shader.handle.data, 0, 0);
         }
-        zbgfx.bgfx.submit(view_world.id, shader_program.handle.data, 255, 0);
+
         view_world.touch();
 
+        // Render the GUI
         try main_gui.draw(renderer);
 
         _ = zbgfx.bgfx.frame(false);
