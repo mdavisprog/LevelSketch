@@ -44,6 +44,10 @@ fn convert(allocator: std.mem.Allocator, model: Model) !VertexBuffer32 {
         try addElement(allocator, &buffer, &visited, model, element1);
         try addElement(allocator, &buffer, &visited, model, element2);
         try addElement(allocator, &buffer, &visited, model, element3);
+
+        // Swap the indices to ensure winding order.
+        const len = buffer.indices.items.len;
+        std.mem.swap(u32, &buffer.indices.items[len - 2], &buffer.indices.items[len - 1]);
     }
 
     return buffer;
