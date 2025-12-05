@@ -1,3 +1,7 @@
+const vec3 = @import("vec3.zig");
+
+const Vec3 = vec3.Vec3;
+
 pub fn Vec4(comptime T: type) type {
     return struct {
         const Self = @This();
@@ -118,6 +122,10 @@ pub fn Vec4(comptime T: type) type {
             self.z /= other.z;
             self.w /= other.w;
             return self;
+        }
+
+        pub fn xyz(self: Self) Vec3(T) {
+            return .init(self.x, self.y, self.z);
         }
     };
 }
