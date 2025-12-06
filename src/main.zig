@@ -275,7 +275,10 @@ fn loadCommandLineModels(renderer: *Renderer) ![]Mesh {
     defer allocator.free(file_names);
 
     for (file_names) |file_name| {
-        const path = try std.fs.cwd().realpathAlloc(renderer.allocator, file_name);
+        const path = std.fs.cwd().realpathAlloc(renderer.allocator, file_name) catch |err| {
+            std.log.warn("Failed load model file {s}. Error: {}", .{ file_name, err });
+            continue;
+        };
         defer renderer.allocator.free(path);
 
         var model = try io.obj.loadFile(allocator, path);
