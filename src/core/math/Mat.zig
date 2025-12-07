@@ -37,9 +37,9 @@ pub fn initRotationZ(angle_degrees: f32) Self {
     };
 }
 
-pub fn initScale(scale: Vec) Self {
+pub fn initScale(_scale: Vec) Self {
     return .{
-        .data = zmath.scaling(scale.x(), scale.y(), scale.z()),
+        .data = zmath.scaling(_scale.x(), _scale.y(), _scale.z()),
     };
 }
 
@@ -75,6 +75,18 @@ pub fn mul(self: Self, other: Self) Self {
     };
 }
 
+pub fn translate(self: Self, translation: Vec) Self {
+    return self.mul(.initTranslation(translation));
+}
+
+pub fn rotateY(self: Self, degrees: f32) Self {
+    return self.mul(.initRotationY(degrees));
+}
+
+pub fn scale(self: Self, _scale: Vec) Self {
+    return self.mul(.initScale(_scale));
+}
+
 pub fn inverse(self: Self) Self {
     return .{
         .data = zmath.inverse(self.data),
@@ -89,4 +101,8 @@ pub fn transpose(self: Self) Self {
 
 pub fn toArray(self: Self) [16]f32 {
     return zmath.matToArr(self.data);
+}
+
+pub fn getTranslation(self: Self) Vec {
+    return .init(self.data[3][0], self.data[3][1], self.data[3][2], self.data[3][3]);
 }

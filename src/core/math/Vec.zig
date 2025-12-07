@@ -52,6 +52,22 @@ pub fn w(self: Self) f32 {
     return self.data[3];
 }
 
+pub fn setX(self: *Self, _x: f32) void {
+    self.data[0] = _x;
+}
+
+pub fn setY(self: *Self, _y: f32) void {
+    self.data[1] = _y;
+}
+
+pub fn setZ(self: *Self, _z: f32) void {
+    self.data[2] = _z;
+}
+
+pub fn setW(self: *Self, _w: f32) void {
+    self.data[3] = _w;
+}
+
 pub fn eql(self: Self, other: Self) bool {
     return zmath.isNearEqual(self.data, other.data, std.math.floatEps(f32));
 }

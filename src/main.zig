@@ -141,11 +141,9 @@ pub fn main() !void {
     const u_view_pos = try phong_shader.getUniform("u_view_pos");
 
     const light_color: Vec = .splat(1.0);
-    const light_pos: Vec = .init(1.2, 1.0, -2.0, 1.0);
 
     u_light_color.setVec(light_color);
     u_model_color.setVec(.init(1.0, 0.5, 0.31, 1.0));
-    u_light_pos.setVec(light_pos);
 
     const sampler_tex_color = try shader_program.getUniform("s_tex_color");
 
@@ -169,9 +167,9 @@ pub fn main() !void {
     // Timing
     var last_time: f64 = 0.0;
 
+    var cube_yaw: f32 = 0.0;
     var cube = try render.shapes.cube(u16, renderer, .splat(0.2), 0xFFFFFFFF);
     defer cube.deinit();
-    const cube_transform: Mat = .initTranslation(light_pos);
     const model_transform: Mat = .initScale(.splat(0.5));
 
     while (!window.shouldClose() and window.getKey(.escape) != .press) {
@@ -194,6 +192,16 @@ pub fn main() !void {
 
         try renderer.textures.default.bind(sampler_tex_color.handle, 0);
 
+        // Update light source (cube).
+        cube_yaw = @mod(cube_yaw + delta_time * 20.0, 360.0);
+        const cube_sin = std.math.sin(@as(f32, @floatCast(current_time)));
+        var cube_pos = Mat.initTranslation(.right)
+            .rotateY(cube_yaw)
+            .scale(.splat(2.0))
+            .getTranslation();
+        cube_pos.setY(cube_sin);
+        const cube_transform = Mat.initTranslation(cube_pos);
+        u_light_pos.setVec(cube_pos);
         _ = zbgfx.bgfx.setTransform(&cube_transform.toArray(), 1);
         cube.buffer.bind(Renderer.world_state);
         zbgfx.bgfx.submit(view_world.id, shader_program.handle.data, 0, 0);
