@@ -5,7 +5,7 @@ const vertex_buffer = @import("vertex_buffer.zig");
 
 const Rectf = core.math.Rectf;
 const Vec2f = core.math.Vec2f;
-const Vec3f = core.math.Vec3f;
+const Vec = core.math.Vec;
 
 const Mesh = render.Mesh;
 const Renderer = render.Renderer;
@@ -31,7 +31,7 @@ pub fn quad(
     for (0..uvs.len) |i| {
         _ = vertices[i]
             .setColor(color)
-            .setUVVec2(uvs[i]);
+            .setUVVec2(uvs[i].toVec());
     }
 
     return builder.buffer;
@@ -116,7 +116,7 @@ pub fn quadRounded(
 pub fn cube(
     comptime IndexType: type,
     renderer: *Renderer,
-    half_size: Vec3f,
+    half_size: Vec,
     color: u32,
 ) !Mesh {
     const buffer = try cubeBuffer(IndexType, renderer.allocator, half_size, color);
@@ -126,49 +126,49 @@ pub fn cube(
 pub fn cubeBuffer(
     comptime IndexType: type,
     allocator: std.mem.Allocator,
-    half_size: Vec3f,
+    half_size: Vec,
     color: u32,
 ) !VertexBuffer(IndexType) {
-    const min = half_size.mulScalar(-1.0);
+    const min = half_size.mul(-1.0);
     const max = half_size;
 
     // TODO: Add Normals. Will need 24 verts for this.
     const vertices = [_]Vertex{
         // Front face
-        .init(.init(min.x, max.y, min.z), .init(0.0, 0.0, -1.0), .init(0.0, 0.0), color),
-        .init(.init(min.x, min.y, min.z), .init(0.0, 0.0, -1.0), .init(0.0, 0.0), color),
-        .init(.init(max.x, min.y, min.z), .init(0.0, 0.0, -1.0), .init(0.0, 0.0), color),
-        .init(.init(max.x, max.y, min.z), .init(0.0, 0.0, -1.0), .init(0.0, 0.0), color),
+        .init(.init3(min.x(), max.y(), min.z()), .init3(0.0, 0.0, -1.0), .init2(0.0, 0.0), color),
+        .init(.init3(min.x(), min.y(), min.z()), .init3(0.0, 0.0, -1.0), .init2(0.0, 0.0), color),
+        .init(.init3(max.x(), min.y(), min.z()), .init3(0.0, 0.0, -1.0), .init2(0.0, 0.0), color),
+        .init(.init3(max.x(), max.y(), min.z()), .init3(0.0, 0.0, -1.0), .init2(0.0, 0.0), color),
 
         // Back face
-        .init(.init(max.x, max.y, max.z), .init(0.0, 0.0, 1.0), .init(0.0, 0.0), color),
-        .init(.init(max.x, min.y, max.z), .init(0.0, 0.0, 1.0), .init(0.0, 0.0), color),
-        .init(.init(min.x, min.y, max.z), .init(0.0, 0.0, 1.0), .init(0.0, 0.0), color),
-        .init(.init(min.x, max.y, max.z), .init(0.0, 0.0, 1.0), .init(0.0, 0.0), color),
+        .init(.init3(max.x(), max.y(), max.z()), .init3(0.0, 0.0, 1.0), .init2(0.0, 0.0), color),
+        .init(.init3(max.x(), min.y(), max.z()), .init3(0.0, 0.0, 1.0), .init2(0.0, 0.0), color),
+        .init(.init3(min.x(), min.y(), max.z()), .init3(0.0, 0.0, 1.0), .init2(0.0, 0.0), color),
+        .init(.init3(min.x(), max.y(), max.z()), .init3(0.0, 0.0, 1.0), .init2(0.0, 0.0), color),
 
         // Right face
-        .init(.init(max.x, max.y, min.z), .init(1.0, 0.0, 0.0), .init(0.0, 0.0), color),
-        .init(.init(max.x, min.y, min.z), .init(1.0, 0.0, 0.0), .init(0.0, 0.0), color),
-        .init(.init(max.x, min.y, max.z), .init(1.0, 0.0, 0.0), .init(0.0, 0.0), color),
-        .init(.init(max.x, max.y, max.z), .init(1.0, 0.0, 0.0), .init(0.0, 0.0), color),
+        .init(.init3(max.x(), max.y(), min.z()), .init3(1.0, 0.0, 0.0), .init2(0.0, 0.0), color),
+        .init(.init3(max.x(), min.y(), min.z()), .init3(1.0, 0.0, 0.0), .init2(0.0, 0.0), color),
+        .init(.init3(max.x(), min.y(), max.z()), .init3(1.0, 0.0, 0.0), .init2(0.0, 0.0), color),
+        .init(.init3(max.x(), max.y(), max.z()), .init3(1.0, 0.0, 0.0), .init2(0.0, 0.0), color),
 
         // Left face
-        .init(.init(min.x, max.y, max.z), .init(-1.0, 0.0, 0.0), .init(0.0, 0.0), color),
-        .init(.init(min.x, min.y, max.z), .init(-1.0, 0.0, 0.0), .init(0.0, 0.0), color),
-        .init(.init(min.x, min.y, min.z), .init(-1.0, 0.0, 0.0), .init(0.0, 0.0), color),
-        .init(.init(min.x, max.y, min.z), .init(-1.0, 0.0, 0.0), .init(0.0, 0.0), color),
+        .init(.init3(min.x(), max.y(), max.z()), .init3(-1.0, 0.0, 0.0), .init2(0.0, 0.0), color),
+        .init(.init3(min.x(), min.y(), max.z()), .init3(-1.0, 0.0, 0.0), .init2(0.0, 0.0), color),
+        .init(.init3(min.x(), min.y(), min.z()), .init3(-1.0, 0.0, 0.0), .init2(0.0, 0.0), color),
+        .init(.init3(min.x(), max.y(), min.z()), .init3(-1.0, 0.0, 0.0), .init2(0.0, 0.0), color),
 
         // Top face
-        .init(.init(min.x, max.y, max.z), .init(0.0, 1.0, 0.0), .init(0.0, 0.0), color),
-        .init(.init(min.x, max.y, min.z), .init(0.0, 1.0, 0.0), .init(0.0, 0.0), color),
-        .init(.init(max.x, max.y, min.z), .init(0.0, 1.0, 0.0), .init(0.0, 0.0), color),
-        .init(.init(max.x, max.y, max.z), .init(0.0, 1.0, 0.0), .init(0.0, 0.0), color),
+        .init(.init3(min.x(), max.y(), max.z()), .init3(0.0, 1.0, 0.0), .init2(0.0, 0.0), color),
+        .init(.init3(min.x(), max.y(), min.z()), .init3(0.0, 1.0, 0.0), .init2(0.0, 0.0), color),
+        .init(.init3(max.x(), max.y(), min.z()), .init3(0.0, 1.0, 0.0), .init2(0.0, 0.0), color),
+        .init(.init3(max.x(), max.y(), max.z()), .init3(0.0, 1.0, 0.0), .init2(0.0, 0.0), color),
 
         // Bottom face
-        .init(.init(min.x, min.y, min.z), .init(0.0, -1.0, 0.0), .init(0.0, 0.0), color),
-        .init(.init(min.x, min.y, max.z), .init(0.0, -1.0, 0.0), .init(0.0, 0.0), color),
-        .init(.init(max.x, min.y, max.z), .init(0.0, -1.0, 0.0), .init(0.0, 0.0), color),
-        .init(.init(max.x, min.y, min.z), .init(0.0, -1.0, 0.0), .init(0.0, 0.0), color),
+        .init(.init3(min.x(), min.y(), min.z()), .init3(0.0, -1.0, 0.0), .init2(0.0, 0.0), color),
+        .init(.init3(min.x(), min.y(), max.z()), .init3(0.0, -1.0, 0.0), .init2(0.0, 0.0), color),
+        .init(.init3(max.x(), min.y(), max.z()), .init3(0.0, -1.0, 0.0), .init2(0.0, 0.0), color),
+        .init(.init3(max.x(), min.y(), min.z()), .init3(0.0, -1.0, 0.0), .init2(0.0, 0.0), color),
     };
     // 6 points per face, 6 faces
     const indices = [36]IndexType{
@@ -191,9 +191,9 @@ fn quarterArcPoints(
     center: Vec2f,
     radius: f32,
     angle: f32,
-) [arc_vertex_count]Vec3f {
-    var points = [_]Vec3f{.zero} ** arc_vertex_count;
-    points[0] = center.xyz(0.0);
+) [arc_vertex_count]Vec {
+    var points = [_]Vec{.zero} ** arc_vertex_count;
+    points[0] = center.toVec();
 
     const segments: f32 = @floatFromInt(arc_segments);
     const step: f32 = std.math.degreesToRadians(90.0 / segments);
@@ -217,8 +217,8 @@ fn quarterArcPoints(
             std.math.sin(angle_2) * radius,
         ));
 
-        points[point_index + 0] = p1.xyz(0.0);
-        points[point_index + 1] = p2.xyz(0.0);
+        points[point_index + 0] = p1.toVec();
+        points[point_index + 1] = p2.toVec();
 
         point_index += 2;
     }
@@ -226,12 +226,12 @@ fn quarterArcPoints(
     return points;
 }
 
-pub fn quadPoints(rect: Rectf) [4]Vec3f {
-    var points = [_]Vec3f{.zero} ** 4;
-    points[0] = rect.min.xyz(0.0);
-    points[1] = .init(rect.min.x, rect.max.y, 0.0);
-    points[2] = rect.max.xyz(0.0);
-    points[3] = .init(rect.max.x, rect.min.y, 0.0);
+pub fn quadPoints(rect: Rectf) [4]Vec {
+    var points = [_]Vec{.zero} ** 4;
+    points[0] = rect.min.toVec();
+    points[1] = .init2(rect.min.x, rect.max.y);
+    points[2] = rect.max.toVec();
+    points[3] = .init2(rect.max.x, rect.min.y);
     return points;
 }
 
@@ -281,7 +281,7 @@ fn Builder(comptime IndexType: type) type {
 
         fn addPoints(
             self: *Self,
-            points: []const Vec3f,
+            points: []const Vec,
             indices: []const IndexType,
         ) ![]Vertex {
             const base_v_index = self.buffer.vertices.items.len;

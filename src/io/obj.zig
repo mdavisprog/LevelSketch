@@ -1,8 +1,7 @@
 const core = @import("core");
 const std = @import("std");
 
-const Vec3f = core.math.Vec3f;
-const Vec4f = core.math.Vec4f;
+const Vec = core.math.Vec;
 
 /// Represents a single model defined in an obj file.
 pub const Model = struct {
@@ -66,9 +65,9 @@ pub const Model = struct {
         }
     };
 
-    vertices: std.ArrayList(Vec4f),
-    tex_coords: std.ArrayList(Vec3f),
-    normals: std.ArrayList(Vec3f),
+    vertices: std.ArrayList(Vec),
+    tex_coords: std.ArrayList(Vec),
+    normals: std.ArrayList(Vec),
     faces: std.ArrayList(Face),
 
     pub fn init(allocator: std.mem.Allocator) !Self {
@@ -99,7 +98,7 @@ pub const Model = struct {
         return self.faces.items[face];
     }
 
-    pub fn getVertex(self: Self, index: usize) ?Vec4f {
+    pub fn getVertex(self: Self, index: usize) ?Vec {
         if (self.vertices.items.len == 0 or index >= self.vertices.items.len) {
             return null;
         }
@@ -107,14 +106,14 @@ pub const Model = struct {
         return self.vertices.items[index];
     }
 
-    pub fn getVertexFace(self: Self, face: usize, index: usize) ?Vec4f {
+    pub fn getVertexFace(self: Self, face: usize, index: usize) ?Vec {
         const face_ = self.getFace(face) orelse return null;
         const element = face_.get(index) orelse return null;
         const vertex: usize = @intCast(element.vertex -% 1);
         return self.getVertex(vertex);
     }
 
-    pub fn getTextureCoord(self: Self, index: usize) ?Vec3f {
+    pub fn getTextureCoord(self: Self, index: usize) ?Vec {
         if (self.tex_coords.items.len == 0 or index >= self.tex_coords.items.len) {
             return null;
         }
@@ -122,14 +121,14 @@ pub const Model = struct {
         return self.tex_coords.items[index];
     }
 
-    pub fn getTextureCoordFace(self: Self, face: usize, index: usize) ?Vec3f {
+    pub fn getTextureCoordFace(self: Self, face: usize, index: usize) ?Vec {
         const face_ = self.getFace(face) orelse return null;
         const element = face_.get(index) orelse return null;
         const tex_coord: usize = @intCast(element.texture -% 1);
         return self.getTextureCoord(tex_coord);
     }
 
-    pub fn getNormal(self: Self, index: usize) ?Vec3f {
+    pub fn getNormal(self: Self, index: usize) ?Vec {
         if (self.normals.items.len == 0 or index >= self.tex_coords.items.len) {
             return null;
         }
@@ -137,7 +136,7 @@ pub const Model = struct {
         return self.normals.items[index];
     }
 
-    pub fn getNormalFace(self: Self, face: usize, index: usize) ?Vec3f {
+    pub fn getNormalFace(self: Self, face: usize, index: usize) ?Vec {
         const face_ = self.getFace(face) orelse return null;
         const element = face_.get(index) orelse return null;
         const normal: usize = @intCast(element.normal -% 1);
@@ -197,11 +196,11 @@ fn processLine(
             switch (line[1]) {
                 // Ignore normal and texture coordinates for now.
                 'n' => {
-                    const normal = processVec3f(line);
+                    const normal = processVec3(line);
                     try model.normals.append(allocator, normal);
                 },
                 't' => {
-                    const texture_coord = processVec3f(line);
+                    const texture_coord = processVec3(line);
                     try model.tex_coords.append(allocator, texture_coord);
                 },
                 'p' => {
@@ -224,31 +223,29 @@ fn processLine(
     }
 }
 
-fn processVertex(line: []const u8) Vec4f {
+fn processVertex(line: []const u8) Vec {
     var it = std.mem.tokenizeAny(u8, line, " ");
 
     // Skip the 'v' character.
     _ = it.next();
 
-    var result = Vec4f.zero;
-    result.x = std.fmt.parseFloat(f32, it.next() orelse "") catch 0.0;
-    result.y = std.fmt.parseFloat(f32, it.next() orelse "") catch 0.0;
-    result.z = std.fmt.parseFloat(f32, it.next() orelse "") catch 0.0;
-    result.w = std.fmt.parseFloat(f32, it.next() orelse "") catch 1.0;
-    return result;
+    const x = std.fmt.parseFloat(f32, it.next() orelse "") catch 0.0;
+    const y = std.fmt.parseFloat(f32, it.next() orelse "") catch 0.0;
+    const z = std.fmt.parseFloat(f32, it.next() orelse "") catch 0.0;
+    const w = std.fmt.parseFloat(f32, it.next() orelse "") catch 1.0;
+    return .init(x, y, z, w);
 }
 
-fn processVec3f(line: []const u8) Vec3f {
+fn processVec3(line: []const u8) Vec {
     var it = std.mem.tokenizeAny(u8, line, " ");
 
     // Skip the key character.
     _ = it.next();
 
-    var result = Vec3f.zero;
-    result.x = std.fmt.parseFloat(f32, it.next() orelse "") catch 0.0;
-    result.y = std.fmt.parseFloat(f32, it.next() orelse "") catch 0.0;
-    result.z = std.fmt.parseFloat(f32, it.next() orelse "") catch 0.0;
-    return result;
+    const x = std.fmt.parseFloat(f32, it.next() orelse "") catch 0.0;
+    const y = std.fmt.parseFloat(f32, it.next() orelse "") catch 0.0;
+    const z = std.fmt.parseFloat(f32, it.next() orelse "") catch 0.0;
+    return .init(x, y, z, 0.0);
 }
 
 fn processFace(allocator: std.mem.Allocator, line: []const u8) !Model.Face {

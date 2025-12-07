@@ -1,5 +1,5 @@
 const std = @import("std");
-const vec3 = @import("vec3.zig");
+const Vec = @import("Vec.zig");
 
 pub fn Vec2(comptime T: type) type {
     return struct {
@@ -100,8 +100,12 @@ pub fn Vec2(comptime T: type) type {
             return self.div(len);
         }
 
-        pub fn xyz(self: Self, z: T) vec3.Vec3(T) {
-            return .init(self.x, self.y, z);
+        pub fn toVec(self: Self) Vec {
+            if (T == f32) {
+                return .init2(self.x, self.y);
+            } else {
+                return .init2(@floatFromInt(self.x), @floatFromInt(self.y));
+            }
         }
     };
 }

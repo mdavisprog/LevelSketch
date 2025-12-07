@@ -222,18 +222,18 @@ pub fn getVertices(
             max.x = @floor(max.x);
             max.y = @floor(max.y);
 
-            _ = buffer.vertices.items[v_index + 0].setPositionVec2(min);
-            _ = buffer.vertices.items[v_index + 1].setPositionVec2(.init(min.x, max.y));
-            _ = buffer.vertices.items[v_index + 2].setPositionVec2(max);
-            _ = buffer.vertices.items[v_index + 3].setPositionVec2(.init(max.x, min.y));
+            _ = buffer.vertices.items[v_index + 0].setPositionVec2(min.toVec());
+            _ = buffer.vertices.items[v_index + 1].setPositionVec2(.init2(min.x, max.y));
+            _ = buffer.vertices.items[v_index + 2].setPositionVec2(max.toVec());
+            _ = buffer.vertices.items[v_index + 3].setPositionVec2(.init2(max.x, min.y));
 
             const uv_min = glyph.min.div(tex_size);
             const uv_max = glyph.max.div(tex_size);
 
-            _ = buffer.vertices.items[v_index + 0].setUVVec2(uv_min);
-            _ = buffer.vertices.items[v_index + 1].setUVVec2(.init(uv_min.x, uv_max.y));
-            _ = buffer.vertices.items[v_index + 2].setUVVec2(uv_max);
-            _ = buffer.vertices.items[v_index + 3].setUVVec2(.init(uv_max.x, uv_min.y));
+            _ = buffer.vertices.items[v_index + 0].setUVVec2(uv_min.toVec());
+            _ = buffer.vertices.items[v_index + 1].setUVVec2(.init2(uv_min.x, uv_max.y));
+            _ = buffer.vertices.items[v_index + 2].setUVVec2(uv_max.toVec());
+            _ = buffer.vertices.items[v_index + 3].setUVVec2(.init2(uv_max.x, uv_min.y));
 
             _ = buffer.vertices.items[v_index + 0].setColor4b(255, 255, 255, 255);
             _ = buffer.vertices.items[v_index + 1].setColor4b(255, 255, 255, 255);

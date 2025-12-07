@@ -87,5 +87,5 @@ fn toVertex(element: Model.Face.Element, model: Model) ?Vertex {
     const normal = model.getNormal(element.normal) orelse return null;
     const texture = model.getTextureCoord(element.texture) orelse return null;
 
-    return .init(position.xyz(), normal, texture.xy(), 0xFFFFFFFF);
+    return .init(position, normal, texture, 0xFFFFFFFF);
 }

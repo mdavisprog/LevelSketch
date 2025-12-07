@@ -12,7 +12,7 @@ const zglfw = @import("zglfw");
 const zmath = @import("zmath");
 
 const commandline = core.commandline;
-const Vec4f = core.math.Vec4f;
+const Vec = core.math.Vec;
 
 const Cursor = gui.Cursor;
 const GUI = gui.GUI;
@@ -112,7 +112,7 @@ pub fn main() !void {
     }
 
     camera = .{
-        .position = zmath.f32x4(0.0, 0.0, -3.0, 1.0),
+        .position = .init(0.0, 0.0, -3.0, 1.0),
     };
 
     var shader_program = try renderer.programs.build(
@@ -140,12 +140,12 @@ pub fn main() !void {
     const u_normal_mat = try phong_shader.getUniform("u_normal_mat");
     const u_view_pos = try phong_shader.getUniform("u_view_pos");
 
-    const light_color: Vec4f = .splat(1.0);
-    const light_pos: Vec4f = .init(1.2, 1.0, -2.0, 1.0);
+    const light_color: Vec = .splat(1.0);
+    const light_pos: Vec = .init(1.2, 1.0, -2.0, 1.0);
 
-    u_light_color.setVec4f(light_color);
-    u_model_color.setVec4f(.init(1.0, 0.5, 0.31, 1.0));
-    u_light_pos.setVec4f(light_pos);
+    u_light_color.setVec(light_color);
+    u_model_color.setVec(.init(1.0, 0.5, 0.31, 1.0));
+    u_light_pos.setVec(light_pos);
 
     const sampler_tex_color = try shader_program.getUniform("s_tex_color");
 
@@ -171,7 +171,7 @@ pub fn main() !void {
 
     var cube = try render.shapes.cube(u16, renderer, .splat(0.2), 0xFFFFFFFF);
     defer cube.deinit();
-    const cube_transform = zmath.translation(light_pos.x, light_pos.y, light_pos.z);
+    const cube_transform = zmath.translation(light_pos.x(), light_pos.y(), light_pos.z());
     const model_transform = zmath.scaling(0.5, 0.5, 0.5);
 
     while (!window.shouldClose() and window.getKey(.escape) != .press) {
@@ -190,7 +190,7 @@ pub fn main() !void {
         view_world.submitPerspective(camera, @intCast(size[0]), @intCast(size[1]));
 
         // Render the world
-        u_view_pos.setArray(&zmath.vecToArr4(camera.position));
+        u_view_pos.setArray(&camera.position.toArray());
 
         try renderer.textures.default.bind(sampler_tex_color.handle, 0);
 

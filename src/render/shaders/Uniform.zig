@@ -2,13 +2,13 @@ const core = @import("core");
 const zbgfx = @import("zbgfx");
 const zmath = @import("zmath");
 
-const Vec4f = core.math.Vec4f;
+const Vec = core.math.Vec;
 
 const Self = @This();
 
 handle: zbgfx.bgfx.UniformHandle,
 
-pub fn setVec4f(self: Self, value: Vec4f) void {
+pub fn setVec(self: Self, value: Vec) void {
     zbgfx.bgfx.setUniform(self.handle, @ptrCast(&value.toArray()), 1);
 }
 

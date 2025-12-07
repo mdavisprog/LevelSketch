@@ -5,8 +5,7 @@ const zbgfx = @import("zbgfx");
 
 const HexColor = core.math.HexColor;
 const Rectf = core.math.Rectf;
-const Vec2f = core.math.Vec2f;
-const Vec3f = core.math.Vec3f;
+const Vec = core.math.Vec;
 
 const MemFactory = render.MemFactory;
 const RenderBuffer = render.RenderBuffer;
@@ -41,16 +40,16 @@ pub const Vertex = extern struct {
     v: f32 = 0.0,
     abgr: u32 = 0xFFFFFFFF,
 
-    pub fn init(position: Vec3f, normal: Vec3f, uv: Vec2f, abgr: u32) Self {
+    pub fn init(position: Vec, normal: Vec, uv: Vec, abgr: u32) Self {
         return .{
-            .x = position.x,
-            .y = position.y,
-            .z = position.z,
-            .nx = normal.x,
-            .ny = normal.y,
-            .nz = normal.z,
-            .u = uv.x,
-            .v = uv.y,
+            .x = position.x(),
+            .y = position.y(),
+            .z = position.z(),
+            .nx = normal.x(),
+            .ny = normal.y(),
+            .nz = normal.z(),
+            .u = uv.x(),
+            .v = uv.y(),
             .abgr = abgr,
         };
     }
@@ -62,16 +61,16 @@ pub const Vertex = extern struct {
         return self;
     }
 
-    pub fn setPositionVec3(self: *Self, position: Vec3f) *Self {
-        self.x = position.x;
-        self.y = position.y;
-        self.z = position.z;
+    pub fn setPositionVec3(self: *Self, position: Vec) *Self {
+        self.x = position.x();
+        self.y = position.y();
+        self.z = position.z();
         return self;
     }
 
-    pub fn setPositionVec2(self: *Self, position: Vec2f) *Self {
-        self.x = position.x;
-        self.y = position.y;
+    pub fn setPositionVec2(self: *Self, position: Vec) *Self {
+        self.x = position.x();
+        self.y = position.y();
         self.z = 0.0;
         return self;
     }
@@ -83,8 +82,8 @@ pub const Vertex = extern struct {
         return self;
     }
 
-    pub fn setNormalVec3(self: *Self, normal: Vec3f) *Self {
-        return self.setNormal(normal.x, normal.y, normal.z);
+    pub fn setNormalVec3(self: *Self, normal: Vec) *Self {
+        return self.setNormal(normal.x(), normal.y(), normal.z());
     }
 
     pub fn setUV(self: *Self, u: f32, v: f32) *Self {
@@ -93,9 +92,9 @@ pub const Vertex = extern struct {
         return self;
     }
 
-    pub fn setUVVec2(self: *Self, uv: Vec2f) *Self {
-        self.u = uv.x;
-        self.v = uv.y;
+    pub fn setUVVec2(self: *Self, uv: Vec) *Self {
+        self.u = uv.x();
+        self.v = uv.y();
         return self;
     }
 
