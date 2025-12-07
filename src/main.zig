@@ -9,9 +9,9 @@ const std = @import("std");
 const version = @import("version");
 const zbgfx = @import("zbgfx");
 const zglfw = @import("zglfw");
-const zmath = @import("zmath");
 
 const commandline = core.commandline;
+const Mat = core.math.Mat;
 const Vec = core.math.Vec;
 
 const Cursor = gui.Cursor;
@@ -171,8 +171,8 @@ pub fn main() !void {
 
     var cube = try render.shapes.cube(u16, renderer, .splat(0.2), 0xFFFFFFFF);
     defer cube.deinit();
-    const cube_transform = zmath.translation(light_pos.x(), light_pos.y(), light_pos.z());
-    const model_transform = zmath.scaling(0.5, 0.5, 0.5);
+    const cube_transform: Mat = .initTranslation(light_pos);
+    const model_transform: Mat = .initScale(.splat(0.5));
 
     while (!window.shouldClose() and window.getKey(.escape) != .press) {
         const current_time = zglfw.getTime();
@@ -194,12 +194,12 @@ pub fn main() !void {
 
         try renderer.textures.default.bind(sampler_tex_color.handle, 0);
 
-        _ = zbgfx.bgfx.setTransform(&zmath.matToArr(cube_transform), 1);
+        _ = zbgfx.bgfx.setTransform(&cube_transform.toArray(), 1);
         cube.buffer.bind(Renderer.world_state);
         zbgfx.bgfx.submit(view_world.id, shader_program.handle.data, 0, 0);
 
-        const normal_mat = zmath.transpose(zmath.inverse(model_transform));
-        _ = zbgfx.bgfx.setTransform(&zmath.matToArr(model_transform), 1);
+        const normal_mat = model_transform.inverse().transpose();
+        _ = zbgfx.bgfx.setTransform(&model_transform.toArray(), 1);
         u_normal_mat.setMat(normal_mat);
         for (meshes) |mesh| {
             mesh.buffer.bind(Renderer.world_state);

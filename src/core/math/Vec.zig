@@ -1,7 +1,9 @@
+const math = @import("root.zig");
 const std = @import("std");
 const vec2 = @import("vec2.zig");
 const zmath = @import("zmath");
 
+const Mat = math.Mat;
 const Vec2f = vec2.Vec2(f32);
 
 /// A 4 component vector. All 3D/4D operations should use this struct at it wraps around zmath.
@@ -72,6 +74,12 @@ pub fn mul(self: Self, other: anytype) Self {
 
 pub fn mulMut(self: *Self, other: anytype) void {
     self.data = self.mul(other).data;
+}
+
+pub fn normalize(self: Self) Self {
+    return .{
+        .data = zmath.normalize3(self.data),
+    };
 }
 
 pub fn cross(self: Self, other: Self) Self {
@@ -146,6 +154,21 @@ fn operation(self: Self, other: anytype, op: Operation) Self {
             },
             .div => .{
                 .data = self.data / other.data,
+            },
+        };
+    } else if (OtherType == Mat) {
+        return switch (op) {
+            .add => {
+                std.debug.panic("Cannot add Vec to Mat", .{});
+            },
+            .sub => {
+                std.debug.panic("Cannot sub Vec from Mat", .{});
+            },
+            .mul => .{
+                .data = zmath.mul(self.data, other.data),
+            },
+            .div => {
+                std.debug.panic("Cannot div Vec from Mat", .{});
             },
         };
     } else {

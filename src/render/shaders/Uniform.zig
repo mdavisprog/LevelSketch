@@ -1,7 +1,7 @@
 const core = @import("core");
 const zbgfx = @import("zbgfx");
-const zmath = @import("zmath");
 
+const Mat = core.math.Mat;
 const Vec = core.math.Vec;
 
 const Self = @This();
@@ -16,6 +16,6 @@ pub fn setArray(self: Self, value: []const f32) void {
     zbgfx.bgfx.setUniform(self.handle, @ptrCast(value), 1);
 }
 
-pub fn setMat(self: Self, value: zmath.Mat) void {
-    zbgfx.bgfx.setUniform(self.handle, @ptrCast(&zmath.matToArr(value)), 1);
+pub fn setMat(self: Self, value: Mat) void {
+    zbgfx.bgfx.setUniform(self.handle, @ptrCast(&value.toArray()), 1);
 }

@@ -7,6 +7,8 @@ pub const Color4b = color.Color4(u8);
 pub const Color4f = color.Color4(f32);
 pub const HexColor = @import("HexColor.zig");
 
+pub const Mat = @import("Mat.zig");
+
 pub const Recti = rect.rect(i32);
 pub const Rectf = rect.rect(f32);
 pub const Rectus = rect.rect(usize);

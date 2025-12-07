@@ -1,7 +1,7 @@
 const core = @import("core");
 const std = @import("std");
-const zmath = @import("zmath");
 
+const Mat = core.math.Mat;
 const Vec = core.math.Vec;
 
 const Self = @This();
@@ -24,8 +24,8 @@ move_speed: f32 = 0.5,
 max_speed: f32 = 40.0,
 rotation_speed: f32 = 0.25,
 
-pub fn toLookAt(self: Self) zmath.Mat {
-    return zmath.lookToLh(self.position.data, self.direction.data, Vec.up.data);
+pub fn toLookAt(self: Self) Mat {
+    return .initLookToLh(self.position, self.direction, Vec.up);
 }
 
 pub fn move(self: *Self, where: Direction) void {
@@ -54,9 +54,6 @@ pub fn rotate(self: *Self, pitch: f32, yaw: f32) void {
     self.pitch += pitch * self.rotation_speed;
     self.yaw += yaw * self.rotation_speed;
 
-    const pitch_rad = std.math.degreesToRadians(self.pitch);
-    const yaw_rad = std.math.degreesToRadians(self.yaw);
-
-    const transform = zmath.mul(zmath.rotationX(pitch_rad), zmath.rotationY(yaw_rad));
-    self.direction.data = zmath.normalize3(zmath.mul(Vec.forward.data, transform));
+    const transform = Mat.initRotationX(self.pitch).mul(.initRotationY(self.yaw));
+    self.direction = Vec.forward.mul(transform).normalize();
 }
