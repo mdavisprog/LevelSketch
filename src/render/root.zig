@@ -3,6 +3,7 @@ pub const Camera = @import("Camera.zig");
 pub const Commands = @import("Commands.zig");
 pub const Font = @import("Font.zig");
 pub const Fonts = @import("Fonts.zig");
+pub const materials = @import("materials/root.zig");
 pub const MemFactory = @import("MemFactory.zig");
 pub const Mesh = @import("Mesh.zig");
 pub const RenderBuffer = @import("RenderBuffer.zig");

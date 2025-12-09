@@ -120,6 +120,19 @@ pub fn getUniform(self: Self, name: []const u8) !Uniform {
     return Error.UniformNotFound;
 }
 
+pub fn setUniform(self: Self, name: []const u8, value: anytype) !void {
+    const uniform = try self.getUniform(name);
+    uniform.set(value);
+}
+
+pub fn printUniforms(self: Self) void {
+    var it = self.uniforms.keyIterator();
+    std.log.debug("Uniforms", .{});
+    while (it.next()) |name| {
+        std.log.debug("   {s}", .{name.*});
+    }
+}
+
 fn getContents(filename: []const u8, allocator: std.mem.Allocator) ![]u8 {
     const exe_dir = try std.fs.selfExeDirPathAlloc(allocator);
     defer allocator.free(exe_dir);

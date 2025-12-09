@@ -134,16 +134,15 @@ pub fn main() !void {
             .vertex_file_name = "phong_vertex.sc",
         },
     );
-    const u_light_color = try phong_shader.getUniform("u_light_color");
-    const u_model_color = try phong_shader.getUniform("u_model_color");
-    const u_light_pos = try phong_shader.getUniform("u_light_pos");
     const u_normal_mat = try phong_shader.getUniform("u_normal_mat");
     const u_view_pos = try phong_shader.getUniform("u_view_pos");
 
-    const light_color: Vec = .splat(1.0);
-
-    u_light_color.setVec(light_color);
-    u_model_color.setVec(.init(1.0, 0.5, 0.31, 1.0));
+    var light: render.materials.Light = .{
+        .ambient = .init(0.2, 0.2, 0.2, 1.0),
+        .diffuse = .init(0.5, 0.5, 0.5, 1.0),
+        .specular = .splat(1.0),
+    };
+    try light.bind(phong_shader);
 
     const sampler_tex_color = try shader_program.getUniform("s_tex_color");
 
@@ -172,6 +171,13 @@ pub fn main() !void {
     defer cube.deinit();
     const model_transform: Mat = .initScale(.splat(0.5));
 
+    const material: render.materials.Phong = .{
+        .ambient = .init(1.0, 0.5, 0.31, 1.0),
+        .diffuse = .init(1.0, 0.5, 0.31, 1.0),
+        .specular = .init(0.5, 0.5, 0.5, 1.0),
+    };
+    try material.bind(phong_shader);
+
     while (!window.shouldClose() and window.getKey(.escape) != .press) {
         const current_time = zglfw.getTime();
         const delta_time: f32 = @floatCast(current_time - last_time);
@@ -195,13 +201,13 @@ pub fn main() !void {
         // Update light source (cube).
         cube_yaw = @mod(cube_yaw + delta_time * 20.0, 360.0);
         const cube_sin = std.math.sin(@as(f32, @floatCast(current_time)));
-        var cube_pos = Mat.initTranslation(.right)
+        light.position = Mat.initTranslation(.right)
             .rotateY(cube_yaw)
             .scale(.splat(2.0))
             .getTranslation();
-        cube_pos.setY(cube_sin);
-        const cube_transform = Mat.initTranslation(cube_pos);
-        u_light_pos.setVec(cube_pos);
+        light.position.setY(cube_sin);
+        const cube_transform = Mat.initTranslation(light.position);
+        try light.bindPosition(phong_shader);
         _ = zbgfx.bgfx.setTransform(&cube_transform.toArray(), 1);
         cube.buffer.bind(Renderer.world_state);
         zbgfx.bgfx.submit(view_world.id, shader_program.handle.data, 0, 0);
