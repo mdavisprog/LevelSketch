@@ -336,7 +336,7 @@ fn loadCommandLineModels(renderer: *Renderer) ![]Mesh {
         };
         defer renderer.allocator.free(path);
 
-        var model = try io.obj.loadFile(allocator, path);
+        var model = try io.obj.Model.loadFile(allocator, path);
         defer model.deinit(allocator);
 
         const mesh = try Mesh.init(renderer, model);
