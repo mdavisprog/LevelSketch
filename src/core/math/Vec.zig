@@ -69,7 +69,11 @@ pub fn setW(self: *Self, _w: f32) void {
 }
 
 pub fn eql(self: Self, other: Self) bool {
-    return zmath.isNearEqual(self.data, other.data, std.math.floatEps(f32));
+    const result = zmath.isNearEqual(self.data, other.data, zmath.f32x4s(std.math.floatEps(f32)));
+    return result[0] == true and
+        result[1] == true and
+        result[2] == true and
+        result[3] == true;
 }
 
 pub fn add(self: Self, other: anytype) Self {

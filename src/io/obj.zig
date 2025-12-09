@@ -338,22 +338,22 @@ test "parse obj data" {
     try std.testing.expectEqual(null, v4);
 
     const tc1 = model.getTextureCoordFace(0, 0) orelse unreachable;
-    try std.testing.expect(tc1.eql(.init(0.0, 0.0, 0.0)));
+    try std.testing.expect(tc1.eql(.init3(0.0, 0.0, 0.0)));
 
     const tc2 = model.getTextureCoordFace(0, 1) orelse unreachable;
-    try std.testing.expect(tc2.eql(.init(0.0, 1.0, 0.5)));
+    try std.testing.expect(tc2.eql(.init3(0.0, 1.0, 0.5)));
 
     const tc3 = model.getTextureCoordFace(0, 2) orelse unreachable;
-    try std.testing.expect(tc3.eql(.init(0.5, 1.0, 0.0)));
+    try std.testing.expect(tc3.eql(.init3(0.5, 1.0, 0.0)));
 
     const n1 = model.getNormalFace(0, 0) orelse unreachable;
-    try std.testing.expect(n1.eql(.init(0.0, 0.8, 0.75)));
+    try std.testing.expect(n1.eql(.init3(0.0, 0.8, 0.75)));
 
     const n2 = model.getNormalFace(0, 1) orelse unreachable;
-    try std.testing.expect(n2.eql(.init(2.0, 0.2, 0.333333)));
+    try std.testing.expect(n2.eql(.init3(2.0, 0.2, 0.333333)));
 
     const n3 = model.getNormalFace(0, 2) orelse unreachable;
-    try std.testing.expect(n3.eql(.init(0.123, 0.0, 1.0)));
+    try std.testing.expect(n3.eql(.init3(0.123, 0.0, 1.0)));
 
     const invalid_face = model.getFace(2);
     try std.testing.expectEqual(null, invalid_face);
