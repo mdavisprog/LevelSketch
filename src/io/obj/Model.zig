@@ -1,10 +1,13 @@
 const core = @import("core");
 const io = @import("../root.zig");
+const obj = @import("root.zig");
 const std = @import("std");
 
 const Vec = core.math.Vec;
 
 const LineReader = io.LineReader;
+
+const Material = obj.Material;
 
 /// Represents a single model defined in an obj file.
 const Self = @This();
@@ -71,17 +74,29 @@ vertices: std.ArrayList(Vec),
 tex_coords: std.ArrayList(Vec),
 normals: std.ArrayList(Vec),
 faces: std.ArrayList(Face),
+materials: std.ArrayList(Material),
 
 pub fn loadFile(allocator: std.mem.Allocator, path: []const u8) !Self {
     var reader: LineReader = try .initFile(allocator, path);
     defer reader.deinit(allocator);
 
-    return try process(allocator, &reader);
+    var result = try process(allocator, &reader);
+    defer result.deinit(allocator);
+
+    try result.loadMaterials(allocator, path, &result.model);
+
+    return result.model;
 }
 
 pub fn loadData(allocator: std.mem.Allocator, data: []const u8) !Self {
     var reader: LineReader = .initFixed(data);
-    return try process(allocator, &reader);
+
+    var result = try process(allocator, &reader);
+    defer result.deinit(allocator);
+
+    try result.loadMaterials(allocator, "", &result.model);
+
+    return result.model;
 }
 
 pub fn init(allocator: std.mem.Allocator) !Self {
@@ -90,6 +105,7 @@ pub fn init(allocator: std.mem.Allocator) !Self {
         .tex_coords = try .initCapacity(allocator, 0),
         .normals = try .initCapacity(allocator, 0),
         .faces = try .initCapacity(allocator, 0),
+        .materials = try .initCapacity(allocator, 0),
     };
 }
 
@@ -99,9 +115,14 @@ pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
     self.normals.deinit(allocator);
 
     for (self.faces.items) |*face| {
-        face.*.deinit(allocator);
+        face.deinit(allocator);
     }
     self.faces.deinit(allocator);
+
+    for (self.materials.items) |*material| {
+        material.deinit(allocator);
+    }
+    self.materials.deinit(allocator);
 }
 
 pub fn getFace(self: Self, face: usize) ?Face {
@@ -157,8 +178,8 @@ pub fn getNormalFace(self: Self, face: usize, index: usize) ?Vec {
     return self.getNormal(normal);
 }
 
-fn process(allocator: std.mem.Allocator, reader: *LineReader) !Self {
-    var result: Self = try .init(allocator);
+fn process(allocator: std.mem.Allocator, reader: *LineReader) !ProcessResult {
+    var result: ProcessResult = try .init(allocator);
 
     while (try reader.readLine()) |line| {
         try processLine(allocator, &result, line);
@@ -169,7 +190,7 @@ fn process(allocator: std.mem.Allocator, reader: *LineReader) !Self {
 
 fn processLine(
     allocator: std.mem.Allocator,
-    model: *Self,
+    result: *ProcessResult,
     line: []const u8,
 ) !void {
     if (line.len == 0) {
@@ -184,11 +205,11 @@ fn processLine(
                 // Ignore normal and texture coordinates for now.
                 'n' => {
                     const normal = processVec3(line);
-                    try model.normals.append(allocator, normal);
+                    try result.model.normals.append(allocator, normal);
                 },
                 't' => {
                     const texture_coord = processVec3(line);
-                    try model.tex_coords.append(allocator, texture_coord);
+                    try result.model.tex_coords.append(allocator, texture_coord);
                 },
                 'p' => {
                     // Currently not supported.
@@ -198,15 +219,30 @@ fn processLine(
                 // it is a vertex.
                 else => {
                     const vertex = processVertex(line);
-                    try model.vertices.append(allocator, vertex);
+                    try result.model.vertices.append(allocator, vertex);
                 },
             }
         },
         'f' => {
             const face = try processFace(allocator, line);
-            try model.faces.append(allocator, face);
+            try result.model.faces.append(allocator, face);
         },
-        else => {},
+        else => {
+            if (std.mem.indexOf(u8, line, " ")) |index| {
+                const token = line[0..index];
+
+                if (std.mem.eql(u8, token, "mtllib")) {
+                    var tokens = std.mem.tokenizeAny(u8, line, " ");
+
+                    // Skip the 'mtllib' token
+                    _ = tokens.next();
+
+                    if (tokens.next()) |file| {
+                        try result.material_paths.append(allocator, try allocator.dupe(u8, file));
+                    }
+                }
+            }
+        },
     }
 }
 
@@ -290,6 +326,54 @@ fn processFaceIndices(indices: []const u8) [3]u32 {
     result[2] = parser.next() orelse 0;
     return result;
 }
+
+const ProcessResult = struct {
+    model: Self,
+    material_paths: std.ArrayList([]const u8),
+
+    fn init(allocator: std.mem.Allocator) !ProcessResult {
+        return .{
+            .model = try .init(allocator),
+            .material_paths = try .initCapacity(allocator, 0),
+        };
+    }
+
+    fn deinit(self: *ProcessResult, allocator: std.mem.Allocator) void {
+        for (self.material_paths.items) |path| {
+            allocator.free(path);
+        }
+        self.material_paths.deinit(allocator);
+    }
+
+    fn loadMaterials(
+        self: *ProcessResult,
+        allocator: std.mem.Allocator,
+        model_path: []const u8,
+        model: *Self,
+    ) !void {
+        const directory = if (std.fs.path.dirname(model_path)) |model_dir|
+            try allocator.dupe(u8, model_dir)
+        else
+            try std.fs.cwd().realpathAlloc(allocator, ".");
+        defer allocator.free(directory);
+
+        for (self.material_paths.items) |path| {
+            const materials = blk: {
+                if (std.fs.path.isAbsolute(path)) {
+                    break :blk try Material.loadFile(allocator, path);
+                } else {
+                    const full_path = try std.fs.path.join(allocator, &.{ directory, path });
+                    defer allocator.free(full_path);
+
+                    break :blk try Material.loadFile(allocator, full_path);
+                }
+            };
+            defer allocator.free(materials);
+
+            try model.materials.appendSlice(allocator, materials);
+        }
+    }
+};
 
 test "parse obj data" {
     const data =
