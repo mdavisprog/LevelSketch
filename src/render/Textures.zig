@@ -22,7 +22,7 @@ pub fn init(factory: *MemFactory) !Self {
         ._uploads = try std.ArrayList(*Upload).initCapacity(factory.allocator, 0),
     };
 
-    result.default = try result.load_static_buffer(
+    result.default = try result.loadStaticBuffer(
         factory,
         &.{ 255, 255, 255, 255 },
         1,
@@ -48,13 +48,19 @@ pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
 }
 
 /// 'path' should be relative
-pub fn load_image(self: *Self, mem_factory: *MemFactory, path: []const u8) !Texture {
+pub fn loadImage(self: *Self, mem_factory: *MemFactory, path: []const u8) !Texture {
     const allocator = mem_factory.allocator;
 
     const full_path = try io.exeRelativePath(allocator, &.{path});
     defer allocator.free(full_path);
 
-    const contents = try io.getContents(allocator, full_path);
+    return self.loadImageAbsolute(mem_factory, full_path);
+}
+
+pub fn loadImageAbsolute(self: *Self, mem_factory: *MemFactory, path: []const u8) !Texture {
+    const allocator = mem_factory.allocator;
+
+    const contents = try io.getContents(allocator, path);
     defer allocator.free(contents);
 
     const data = try stb.image.load_from_memory(contents);
@@ -70,7 +76,7 @@ pub fn load_image(self: *Self, mem_factory: *MemFactory, path: []const u8) !Text
     );
 }
 
-pub fn load_buffer(
+pub fn loadBuffer(
     self: *Self,
     mem_factory: *MemFactory,
     buffer: []const u8,
@@ -89,7 +95,7 @@ pub fn load_buffer(
     );
 }
 
-pub fn load_static_buffer(
+pub fn loadStaticBuffer(
     self: *Self,
     mem_factory: *MemFactory,
     buffer: []const u8,

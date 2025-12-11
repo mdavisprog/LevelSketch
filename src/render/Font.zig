@@ -141,7 +141,7 @@ pub fn init(
         1;
 
     var owned = try atlas.buffer.release();
-    const texture = try renderer.textures.load_buffer(
+    const texture = try renderer.textures.loadBuffer(
         &renderer.mem_factory,
         try owned.data.toOwnedSlice(allocator),
         @intCast(owned.width),
