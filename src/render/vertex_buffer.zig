@@ -6,6 +6,7 @@ const zbgfx = @import("zbgfx");
 const HexColor = core.math.HexColor;
 const Rectf = core.math.Rectf;
 const Vec = core.math.Vec;
+const Vec2f = core.math.Vec2f;
 
 const MemFactory = render.MemFactory;
 const RenderBuffer = render.RenderBuffer;
@@ -110,7 +111,49 @@ pub const Vertex = extern struct {
     }
 };
 
-pub fn VertexBuffer(comptime IndexType: type) type {
+pub const UIVertex = extern struct {
+    const Self = @This();
+
+    x: f32 = 0.0,
+    y: f32 = 0.0,
+    z: f32 = 0.0,
+    u: f32 = 0.0,
+    v: f32 = 0.0,
+    abgr: u32 = 0xFFFFFFFF,
+
+    pub const Layout = extern struct {
+        data: zbgfx.bgfx.VertexLayout,
+
+        pub fn init() Layout {
+            var data = std.mem.zeroes(zbgfx.bgfx.VertexLayout);
+            data.begin(zbgfx.bgfx.RendererType.Noop)
+                .add(.Position, 3, .Float, false, false)
+                .add(.TexCoord0, 2, .Float, true, false)
+                .add(.Color0, 4, .Uint8, true, true)
+                .end();
+            return .{
+                .data = data,
+            };
+        }
+    };
+
+    pub fn setPosition(self: *Self, position: Vec) void {
+        self.x = position.x();
+        self.y = position.y();
+        self.z = position.z();
+    }
+
+    pub fn setUV(self: *Self, uv: Vec2f) void {
+        self.u = uv.x;
+        self.v = uv.y;
+    }
+};
+
+pub fn VertexBuffer(comptime VertexType: type, comptime IndexType: type) type {
+    if (VertexType != Vertex and VertexType != UIVertex) {
+        @compileError("VertexBuffer must of of type Vertex or UIVertex.");
+    }
+
     if (IndexType != u16 and IndexType != u32) {
         @compileError("VertexBuffer must be of type u16 or u32.");
     }
@@ -118,11 +161,11 @@ pub fn VertexBuffer(comptime IndexType: type) type {
     return struct {
         const Self = @This();
 
-        vertices: std.ArrayList(Vertex),
+        vertices: std.ArrayList(VertexType),
         indices: std.ArrayList(IndexType),
 
         pub fn init(allocator: std.mem.Allocator, vertex_count: usize, index_count: usize) !Self {
-            var vertices = try std.ArrayList(Vertex).initCapacity(allocator, vertex_count);
+            var vertices = try std.ArrayList(VertexType).initCapacity(allocator, vertex_count);
             try vertices.appendNTimes(allocator, .{}, vertex_count);
 
             var indices = try std.ArrayList(IndexType).initCapacity(allocator, index_count);
@@ -154,22 +197,6 @@ pub fn VertexBuffer(comptime IndexType: type) type {
             try self.indices.appendNTimes(allocator, 0, indices);
         }
 
-        pub fn createMemVertex(self: *Self, factory: *MemFactory) !MemFactory.Mem {
-            return try factory.create(
-                @ptrCast(self.vertices.items),
-                onUploadedVertex,
-                @ptrCast(self),
-            );
-        }
-
-        pub fn createMemIndex(self: *Self, factory: *MemFactory) !MemFactory.Mem {
-            return try factory.create(
-                @ptrCast(self.indices.items),
-                onUploadedIndex,
-                @ptrCast(self),
-            );
-        }
-
         pub fn release(self: *Self, allocator: std.mem.Allocator) !Self {
             const vertices: std.ArrayList(Vertex) =
                 .fromOwnedSlice(try self.vertices.toOwnedSlice(allocator));
@@ -181,23 +208,13 @@ pub fn VertexBuffer(comptime IndexType: type) type {
                 .indices = indices,
             };
         }
-
-        fn onUploadedVertex(result: MemFactory.OnUploadedResult) void {
-            const self: *Self = @ptrCast(@alignCast(result.user_data.?));
-            self.vertices.clearAndFree(result.allocator);
-        }
-
-        fn onUploadedIndex(result: MemFactory.OnUploadedResult) void {
-            const self: *Self = @ptrCast(@alignCast(result.user_data.?));
-            self.indices.clearAndFree(result.allocator);
-        }
     };
 }
 
-pub fn VertexBufferUploads(comptime IndexType: type) type {
+pub fn VertexBufferUploads(comptime VertexType: type, comptime IndexType: type) type {
     return struct {
         const Self = @This();
-        const VertexBufferType = VertexBuffer(IndexType);
+        const VertexBufferType = VertexBuffer(VertexType, IndexType);
 
         const Upload = struct {
             vertex_complete: bool = false,
@@ -237,20 +254,12 @@ pub fn VertexBufferUploads(comptime IndexType: type) type {
             upload.buffer = buffer;
             try self.uploads.append(allocator, upload);
 
-            const v_mem = try mem_factory.create(
-                @ptrCast(buffer.vertices.items),
-                onUploadVertices,
-                upload,
-            );
-            const i_mem = try mem_factory.create(
-                @ptrCast(buffer.indices.items),
-                onUploadIndices,
-                upload,
-            );
-
             var result: RenderBuffer = .init();
-            try result.setStaticVertices(v_mem, buffer.vertices.items.len);
-            try result.setStaticIndices(i_mem, buffer.indices.items.len);
+            try result.setStaticBuffer(mem_factory, buffer, .{
+                .on_upload_vertices = onUploadVertices,
+                .on_upload_indices = onUploadIndices,
+                .user_data = upload,
+            });
             return result;
         }
 

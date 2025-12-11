@@ -12,7 +12,7 @@ const Renderer = render.Renderer;
 const Texture = render.Texture;
 const Textures = render.Textures;
 const Vertex = render.Vertex;
-const VertexBuffer16 = render.VertexBuffer16;
+const UIVertexBuffer16 = render.UIVertexBuffer16;
 
 const Self = @This();
 
@@ -175,7 +175,7 @@ pub fn getVertices(
     allocator: std.mem.Allocator,
     string: []const u8,
     offset: Vec2f,
-) !VertexBuffer16 {
+) !UIVertexBuffer16 {
     const tex_size: Vec2f = .init(
         @floatFromInt(self.texture.width),
         @floatFromInt(self.texture.height),
@@ -183,7 +183,7 @@ pub fn getVertices(
 
     const vertex_count = string.len * 4;
     const index_count = string.len * 6;
-    var buffer = try VertexBuffer16.init(allocator, vertex_count, index_count);
+    var buffer = try UIVertexBuffer16.init(allocator, vertex_count, index_count);
 
     const metrics = self._truetype.verticalMetrics();
     const scale = self._truetype.scaleForPixelHeight(self.size);
@@ -222,23 +222,23 @@ pub fn getVertices(
             max.x = @floor(max.x);
             max.y = @floor(max.y);
 
-            _ = buffer.vertices.items[v_index + 0].setPositionVec2(min.toVec());
-            _ = buffer.vertices.items[v_index + 1].setPositionVec2(.init2(min.x, max.y));
-            _ = buffer.vertices.items[v_index + 2].setPositionVec2(max.toVec());
-            _ = buffer.vertices.items[v_index + 3].setPositionVec2(.init2(max.x, min.y));
+            _ = buffer.vertices.items[v_index + 0].setPosition(min.toVec());
+            _ = buffer.vertices.items[v_index + 1].setPosition(.init2(min.x, max.y));
+            _ = buffer.vertices.items[v_index + 2].setPosition(max.toVec());
+            _ = buffer.vertices.items[v_index + 3].setPosition(.init2(max.x, min.y));
 
             const uv_min = glyph.min.div(tex_size);
             const uv_max = glyph.max.div(tex_size);
 
-            _ = buffer.vertices.items[v_index + 0].setUVVec2(uv_min.toVec());
-            _ = buffer.vertices.items[v_index + 1].setUVVec2(.init2(uv_min.x, uv_max.y));
-            _ = buffer.vertices.items[v_index + 2].setUVVec2(uv_max.toVec());
-            _ = buffer.vertices.items[v_index + 3].setUVVec2(.init2(uv_max.x, uv_min.y));
+            _ = buffer.vertices.items[v_index + 0].setUV(uv_min);
+            _ = buffer.vertices.items[v_index + 1].setUV(.init(uv_min.x, uv_max.y));
+            _ = buffer.vertices.items[v_index + 2].setUV(uv_max);
+            _ = buffer.vertices.items[v_index + 3].setUV(.init(uv_max.x, uv_min.y));
 
-            _ = buffer.vertices.items[v_index + 0].setColor4b(255, 255, 255, 255);
-            _ = buffer.vertices.items[v_index + 1].setColor4b(255, 255, 255, 255);
-            _ = buffer.vertices.items[v_index + 2].setColor4b(255, 255, 255, 255);
-            _ = buffer.vertices.items[v_index + 3].setColor4b(255, 255, 255, 255);
+            buffer.vertices.items[v_index + 0].abgr = 0xFFFFFFFF;
+            buffer.vertices.items[v_index + 1].abgr = 0xFFFFFFFF;
+            buffer.vertices.items[v_index + 2].abgr = 0xFFFFFFFF;
+            buffer.vertices.items[v_index + 3].abgr = 0xFFFFFFFF;
 
             buffer.indices.items[index + 0] = vertex_offset + 0;
             buffer.indices.items[index + 1] = vertex_offset + 1;

@@ -6,6 +6,9 @@ const zbgfx = @import("zbgfx");
 const Vertex = render.Vertex;
 const VertexBuffer16 = render.VertexBuffer16;
 const VertexBuffer32 = render.VertexBuffer32;
+const UIVertex = render.UIVertex;
+const UIVertexBuffer16 = render.UIVertexBuffer16;
+const UIVertexBuffer32 = render.UIVertexBuffer32;
 
 pub const Error = error{
     NotInitialized,
@@ -32,6 +35,12 @@ pub const IndexHandle = union(BufferTypeTag) {
 };
 
 const Self = @This();
+
+pub const Callbacks = struct {
+    on_upload_vertices: ?MemFactory.OnUploaded = null,
+    on_upload_indices: ?MemFactory.OnUploaded = null,
+    user_data: ?*anyopaque = null,
+};
 
 vertex: ?VertexHandle = null,
 vertex_len: u32 = 0,
@@ -73,116 +82,17 @@ pub fn deinit(self: *Self) void {
     self.index_len = 0;
 }
 
-pub fn setStaticVertices(self: *Self, mem: MemFactory.Mem, length: usize) !void {
-    if (self.vertex != null) return Error.AlreadyInitialized;
-
-    const layout = Vertex.Layout.init();
-    const handle = zbgfx.bgfx.createVertexBuffer(
-        mem.ptr,
-        &layout.data,
-        zbgfx.bgfx.BufferFlags_None,
-    );
-    self.vertex = .{ .static = handle };
-    self.vertex_len = @intCast(length);
-}
-
-pub fn setDynamicVertices(self: *Self, mem: MemFactory.Mem, length: usize) !void {
-    if (self.vertex != null) return Error.AlreadyInitialized;
-
-    const layout = Vertex.Layout.init();
-    const handle = zbgfx.bgfx.createDynamicVertexBufferMem(
-        mem.ptr,
-        &layout.data,
-        zbgfx.bgfx.BufferFlags_None,
-    );
-    self.vertex = .{ .dynamic = handle };
-    self.vertex_len = @intCast(length);
-}
-
-/// Will copy the contents of mem into the transient buffer.
-pub fn setTransientVertices(self: *Self, data: []const u8, length: usize) !void {
-    if (self.vertex != null) return Error.AlreadyInitialized;
-
-    const layout = Vertex.Layout.init();
-    var handle: zbgfx.bgfx.TransientVertexBuffer = undefined;
-    zbgfx.bgfx.allocTransientVertexBuffer(@ptrCast(&handle), @intCast(length), &layout.data);
-    self.vertex = .{ .transient = handle };
-    self.vertex_len = @intCast(length);
-
-    const dst = handle.data[0..handle.size];
-    @memcpy(dst, data.ptr);
-}
-
-pub fn setStaticIndices(self: *Self, mem: MemFactory.Mem, length: usize) !void {
-    if (self.index != null) return Error.AlreadyInitialized;
-
-    const alignment = mem.ptr.*.size / length;
-    const is_u32 = alignment == @sizeOf(u32);
-    const flags = if (is_u32) zbgfx.bgfx.BufferFlags_Index32 else zbgfx.bgfx.BufferFlags_None;
-
-    const handle = zbgfx.bgfx.createIndexBuffer(
-        mem.ptr,
-        flags,
-    );
-    self.index = .{ .static = handle };
-    self.index_len = @intCast(length);
-}
-
-pub fn setDynamicIndices(self: *Self, mem: MemFactory.Mem, length: usize) !void {
-    if (self.index != null) return Error.AlreadyInitialized;
-
-    const alignment = mem.ptr.*.size / length;
-    const is_u32 = alignment == @sizeOf(u32);
-    const flags = if (is_u32) zbgfx.bgfx.BufferFlags_Index32 else zbgfx.bgfx.BufferFlags_None;
-
-    const handle = zbgfx.bgfx.createDynamicIndexBufferMem(
-        mem.ptr,
-        flags,
-    );
-    self.index = .{ .dynamic = handle };
-    self.index_len = @intCast(length);
-}
-
-/// Will copy the contents of mem into the transient buffer.
-pub fn setTransientIndices(self: *Self, data: []const u8, length: usize) !void {
-    if (self.index != null) return Error.AlreadyInitialized;
-
-    var handle: zbgfx.bgfx.TransientIndexBuffer = undefined;
-    const alignment = data.len / length;
-    const is_u32 = alignment == @sizeOf(u32);
-    zbgfx.bgfx.allocTransientIndexBuffer(@ptrCast(&handle), @intCast(length), is_u32);
-    self.index = .{ .transient = handle };
-    self.index_len = @intCast(length);
-
-    const dst = handle.data[0..handle.size];
-    @memcpy(dst, data.ptr);
-}
-
 pub fn setStaticBuffer(
     self: *Self,
     factory: *MemFactory,
     buffer: anytype,
+    callbacks: ?Callbacks,
 ) !void {
-    if (@TypeOf(buffer) != *VertexBuffer16 and @TypeOf(buffer) != *VertexBuffer32) {
-        @compileError(std.fmt.comptimePrint(
-            "Given buffer type is not a VertexBuffer16 or VertexBuffer32. Given buffer is {s}",
-            .{@typeName(buffer)},
-        ));
-    }
-
-    const v_mem = try buffer.createMemVertex(factory);
-    const i_mem = try buffer.createMemIndex(factory);
-    try self.setStaticVertices(v_mem, buffer.vertices.items.len);
-    try self.setStaticIndices(i_mem, buffer.indices.items.len);
+    try self.set(factory, .static, buffer, callbacks);
 }
 
 pub fn setTransientBuffer(self: *Self, buffer: anytype) !void {
-    if (@TypeOf(buffer) != VertexBuffer16 and @TypeOf(buffer) != VertexBuffer32) {
-        @compileError("Given buffer type is not a VertexBuffer16 or VertexBuffer32.");
-    }
-
-    try self.setTransientVertices(@ptrCast(buffer.vertices.items), buffer.vertices.items.len);
-    try self.setTransientIndices(@ptrCast(buffer.indices.items), buffer.indices.items.len);
+    try self.set(null, .transient, buffer, null);
 }
 
 pub fn updateVertices(self: Self, start_vertex: u32, mem: MemFactory.Mem) !void {
@@ -252,4 +162,107 @@ pub fn bind(self: Self, state: u64) void {
 
 pub fn isValid(self: Self) bool {
     return self.vertex != null and self.index != null;
+}
+
+fn set(
+    self: *Self,
+    factory: ?*MemFactory,
+    buffer_type: BufferTypeTag,
+    buffer: anytype,
+    callbacks: ?Callbacks,
+) !void {
+    if (self.vertex != null) return Error.AlreadyInitialized;
+    if (self.index != null) return Error.AlreadyInitialized;
+
+    const BufferType = @TypeOf(buffer);
+    const layout: zbgfx.bgfx.VertexLayout = switch (BufferType) {
+        VertexBuffer16, VertexBuffer32 => Vertex.Layout.init().data,
+        UIVertexBuffer16, UIVertexBuffer32 => UIVertex.Layout.init().data,
+        else => emitInvalidTypeError(BufferType),
+    };
+
+    const is_u32 = switch (BufferType) {
+        VertexBuffer16, UIVertexBuffer16 => false,
+        VertexBuffer32, UIVertexBuffer32 => true,
+        else => emitInvalidTypeError(BufferType),
+    };
+    const flags = if (is_u32)
+        zbgfx.bgfx.BufferFlags_Index32
+    else
+        zbgfx.bgfx.BufferFlags_None;
+
+    self.vertex_len = @intCast(buffer.vertices.items.len);
+    self.index_len = @intCast(buffer.indices.items.len);
+
+    const on_upload_vertices = if (callbacks) |callbacks_|
+        callbacks_.on_upload_vertices
+    else
+        null;
+
+    const on_upload_indices = if (callbacks) |callbacks_|
+        callbacks_.on_upload_indices
+    else
+        null;
+
+    const user_data = if (callbacks) |callbacks_| callbacks_.user_data else null;
+
+    const v_data: []const u8 = @ptrCast(buffer.vertices.items);
+    const i_data: []const u8 = @ptrCast(buffer.indices.items);
+
+    switch (buffer_type) {
+        .static => {
+            const v_mem = try factory.?.create(v_data, on_upload_vertices, user_data);
+            const v_handle = zbgfx.bgfx.createVertexBuffer(
+                v_mem.ptr,
+                &layout,
+                zbgfx.bgfx.BufferFlags_None,
+            );
+            self.vertex = .{ .static = v_handle };
+
+            const i_mem = try factory.?.create(i_data, on_upload_indices, user_data);
+            const i_handle = zbgfx.bgfx.createIndexBuffer(
+                i_mem.ptr,
+                flags,
+            );
+            self.index = .{ .static = i_handle };
+        },
+        .dynamic => {
+            const v_mem = try factory.?.create(v_data, on_upload_vertices, user_data);
+            const v_handle = zbgfx.bgfx.createDynamicVertexBufferMem(
+                v_mem.ptr,
+                &layout,
+                zbgfx.bgfx.BufferFlags_None,
+            );
+            self.vertex = .{ .dynamic = v_handle };
+
+            const i_mem = try factory.?.create(i_data, on_upload_indices, user_data);
+            const i_handle = zbgfx.bgfx.createDynamicIndexBufferMem(
+                i_mem.ptr,
+                flags,
+            );
+            self.index = .{ .dynamic = i_handle };
+        },
+        .transient => {
+            var v_handle: zbgfx.bgfx.TransientVertexBuffer = undefined;
+            zbgfx.bgfx.allocTransientVertexBuffer(@ptrCast(&v_handle), self.vertex_len, &layout);
+            self.vertex = .{ .transient = v_handle };
+
+            const v_dst = v_handle.data[0..v_handle.size];
+            @memcpy(v_dst, v_data.ptr);
+
+            var i_handle: zbgfx.bgfx.TransientIndexBuffer = undefined;
+            zbgfx.bgfx.allocTransientIndexBuffer(@ptrCast(&i_handle), self.index_len, is_u32);
+            self.index = .{ .transient = i_handle };
+
+            const i_dst = i_handle.data[0..i_handle.size];
+            @memcpy(i_dst, i_data.ptr);
+        },
+    }
+}
+
+fn emitInvalidTypeError(comptime BufferType: type) void {
+    @compileError(std.fmt.comptimePrint(
+        "Invalid buffer type '{s}'. Must be of type VertexBuffer or UIVertexBuffer.",
+        .{@typeName(BufferType)},
+    ));
 }

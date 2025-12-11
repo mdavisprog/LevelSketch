@@ -101,7 +101,7 @@ fn renderCommand(
             const color = hexColor(text_data.text_color);
             const maybe_font = renderer.fonts.getById(text_data.font_id);
 
-            var buffer: VertexBuffer16 = blk: {
+            var buffer = blk: {
                 if (maybe_font) |font| {
                     break :blk try font.getVertices(
                         renderer.allocator,
@@ -123,7 +123,7 @@ fn renderCommand(
                 .texture = if (maybe_font) |font| font.texture else .{},
                 .texture_flags = zbgfx.bgfx.SamplerFlags_UBorder | zbgfx.bgfx.SamplerFlags_VBorder,
                 .shader = shader,
-                .sampler = try shader.getUniform("s_tex_color"),
+                .sampler = try shader.getUniform("s_font"),
                 .state = Renderer.ui_state,
             });
         },

@@ -18,8 +18,8 @@ const Self = @This();
 
 view: View,
 font: *Font,
+ui_shader: *Program,
 text_shader: *Program,
-common_shader: *Program,
 clay_context: ClayContext,
 _clay_layout: ClayLayout,
 _commands: Commands,
@@ -39,13 +39,23 @@ pub fn init(renderer: *Renderer) !Self {
         32.0,
     );
 
+    const ui_shader: *Program = try renderer.programs.build(
+        renderer.allocator,
+        "ui",
+        .{
+            .varying_file_name = "ui/def.sc",
+            .fragment_file_name = "ui/fragment.sc",
+            .vertex_file_name = "ui/vertex.sc",
+        },
+    );
+
     const text_shader: *Program = try renderer.programs.build(
         renderer.allocator,
         "text",
         .{
-            .varying_file_name = "common.def.sc",
-            .fragment_file_name = "text_fragment.sc",
-            .vertex_file_name = "common_vertex.sc",
+            .varying_file_name = "ui/def.sc",
+            .fragment_file_name = "ui/text.sc",
+            .vertex_file_name = "ui/vertex.sc",
         },
     );
 
@@ -54,8 +64,8 @@ pub fn init(renderer: *Renderer) !Self {
     var result = Self{
         .view = view,
         .font = font,
+        .ui_shader = ui_shader,
         .text_shader = text_shader,
-        .common_shader = try renderer.programs.get("common"),
         ._commands = try Commands.init(renderer.mem_factory.allocator),
         ._default_texture = renderer.textures.default,
         .clay_context = clay_context,

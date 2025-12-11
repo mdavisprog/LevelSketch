@@ -9,6 +9,7 @@ const Vec = core.math.Vec;
 
 const Mesh = render.Mesh;
 const Renderer = render.Renderer;
+const UIVertex = render.UIVertex;
 const Vertex = render.Vertex;
 const VertexBuffer = vertex_buffer.VertexBuffer;
 
@@ -20,8 +21,8 @@ pub fn quad(
     allocator: std.mem.Allocator,
     rect: Rectf,
     color: u32,
-) !VertexBuffer(IndexType) {
-    var builder: Builder(IndexType) = try .init(allocator);
+) !VertexBuffer(UIVertex, IndexType) {
+    var builder: Builder(UIVertex, IndexType) = try .init(allocator);
 
     const points = quadPoints(rect);
     const indices = quadIndices(IndexType);
@@ -29,9 +30,8 @@ pub fn quad(
 
     var vertices = try builder.addPoints(&points, &indices);
     for (0..uvs.len) |i| {
-        _ = vertices[i]
-            .setColor(color)
-            .setUVVec2(uvs[i].toVec());
+        vertices[i].abgr = color;
+        vertices[i].setUV(uvs[i]);
     }
 
     return builder.buffer;
@@ -43,8 +43,8 @@ pub fn quadRounded(
     rect: Rectf,
     color: u32,
     corners: [4]f32,
-) !VertexBuffer(IndexType) {
-    var builder: Builder(IndexType) = try .init(allocator);
+) !VertexBuffer(UIVertex, IndexType) {
+    var builder: Builder(UIVertex, IndexType) = try .init(allocator);
 
     const tl_radius = corners[0];
     const tr_radius = corners[1];
@@ -128,7 +128,7 @@ pub fn cubeBuffer(
     allocator: std.mem.Allocator,
     half_size: Vec,
     color: u32,
-) !VertexBuffer(IndexType) {
+) !VertexBuffer(Vertex, IndexType) {
     const min = half_size.mul(-1.0);
     const max = half_size;
 
@@ -180,7 +180,7 @@ pub fn cubeBuffer(
         20, 21, 22, 20, 22, 23,
     };
 
-    const buffer: VertexBuffer(IndexType) = try .init(allocator, vertices.len, indices.len);
+    const buffer: VertexBuffer(Vertex, IndexType) = try .init(allocator, vertices.len, indices.len);
     @memcpy(buffer.vertices.items, &vertices);
     @memcpy(buffer.indices.items, &indices);
 
@@ -257,20 +257,12 @@ fn quarterArcIndices(comptime IndexType: type, comptime segments: usize) [segmen
     return indices;
 }
 
-fn verifyIndexType(comptime IndexType: type) void {
-    if (IndexType != u16 and IndexType != u32) {
-        @compileError(std.fmt.comptimePrint("IndexType is not a u16 or u32. Given type is {s}.", .{@typeName(IndexType)}));
-    }
-}
-
-fn Builder(comptime IndexType: type) type {
-    verifyIndexType(IndexType);
-
+fn Builder(comptime VertexType: type, comptime IndexType: type) type {
     return struct {
         const Self = @This();
 
         allocator: std.mem.Allocator,
-        buffer: VertexBuffer(IndexType),
+        buffer: VertexBuffer(VertexType, IndexType),
 
         fn init(allocator: std.mem.Allocator) !Self {
             return .{
@@ -283,7 +275,7 @@ fn Builder(comptime IndexType: type) type {
             self: *Self,
             points: []const Vec,
             indices: []const IndexType,
-        ) ![]Vertex {
+        ) ![]VertexType {
             const base_v_index = self.buffer.vertices.items.len;
             const base_i_index = self.buffer.indices.items.len;
 
@@ -292,7 +284,12 @@ fn Builder(comptime IndexType: type) type {
 
             for (0..points.len) |i| {
                 const point = points[i];
-                _ = self.buffer.vertices.items[base_v_index + i].setPositionVec3(point);
+
+                if (VertexType == Vertex) {
+                    _ = self.buffer.vertices.items[base_v_index + i].setPositionVec3(point);
+                } else {
+                    self.buffer.vertices.items[base_v_index + i].setPosition(point);
+                }
             }
 
             const offset: IndexType = @intCast(base_v_index);
@@ -306,8 +303,18 @@ fn Builder(comptime IndexType: type) type {
     };
 }
 
-fn fillColor(vertices: []Vertex, color: u32) void {
-    for (vertices) |*vertex| {
-        _ = vertex.setColor(color);
+fn fillColor(vertices: anytype, color: u32) void {
+    const Type = @TypeOf(vertices);
+
+    if (Type == []Vertex) {
+        for (vertices) |*vertex| {
+            _ = vertex.setColor(color);
+        }
+    } else if (Type == []UIVertex) {
+        for (vertices) |*vertex| {
+            vertex.abgr = color;
+        }
+    } else {
+        @compileError(std.fmt.comptimePrint("Unsupported type {s}.", .{@typeName(Type)}));
     }
 }

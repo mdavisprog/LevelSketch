@@ -94,7 +94,7 @@ pub fn main() !void {
     var renderer = try allocator.create(Renderer);
     renderer.* = try .init(allocator);
     defer {
-        renderer.*.deinit();
+        renderer.deinit();
         allocator.destroy(renderer);
     }
 
@@ -119,9 +119,9 @@ pub fn main() !void {
         allocator,
         "common",
         .{
-            .varying_file_name = "common.def.sc",
-            .fragment_file_name = "common_fragment.sc",
-            .vertex_file_name = "common_vertex.sc",
+            .varying_file_name = "common/def.sc",
+            .fragment_file_name = "common/fragment.sc",
+            .vertex_file_name = "common/vertex.sc",
         },
     );
 
@@ -129,9 +129,9 @@ pub fn main() !void {
         allocator,
         "phong",
         .{
-            .varying_file_name = "phong.def.sc",
-            .fragment_file_name = "phong_fragment.sc",
-            .vertex_file_name = "phong_vertex.sc",
+            .varying_file_name = "phong/def.sc",
+            .fragment_file_name = "phong/fragment.sc",
+            .vertex_file_name = "phong/vertex.sc",
         },
     );
     const u_normal_mat = try phong_shader.getUniform("u_normal_mat");
