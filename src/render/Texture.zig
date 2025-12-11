@@ -19,6 +19,7 @@ handle: ?zbgfx.bgfx.TextureHandle = null,
 width: u16 = 0,
 height: u16 = 0,
 format: Format = .rgba8,
+flags: u32 = zbgfx.bgfx.TextureFlags_None,
 
 pub fn bind(self: Self, sampler: zbgfx.bgfx.UniformHandle, flags: u32) !void {
     const handle = self.handle orelse return Error.InvalidHandle;

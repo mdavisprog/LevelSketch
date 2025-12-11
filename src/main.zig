@@ -171,9 +171,7 @@ pub fn main() !void {
     defer cube.deinit();
     const model_transform: Mat = .initScale(.splat(0.5));
 
-    const material: render.materials.Phong = .{
-        .ambient = .init(1.0, 0.5, 0.31, 1.0),
-        .diffuse = .init(1.0, 0.5, 0.31, 1.0),
+    var material: render.materials.Phong = .{
         .specular = .init(0.5, 0.5, 0.5, 1.0),
     };
     try material.bind(phong_shader);
@@ -216,6 +214,8 @@ pub fn main() !void {
         _ = zbgfx.bgfx.setTransform(&model_transform.toArray(), 1);
         u_normal_mat.setMat(normal_mat);
         for (meshes) |mesh| {
+            material.diffuse = mesh.texture;
+            try material.bind(phong_shader);
             mesh.buffer.bind(Renderer.world_state);
             zbgfx.bgfx.submit(view_world.id, phong_shader.handle.data, 0, 0);
         }

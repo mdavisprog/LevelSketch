@@ -6,6 +6,7 @@ const Model = io.obj.Model;
 
 const RenderBuffer = render.RenderBuffer;
 const Renderer = render.Renderer;
+const Texture = render.Texture;
 const Vertex = render.Vertex;
 const VertexBuffer16 = render.VertexBuffer16;
 const VertexBuffer32 = render.VertexBuffer32;
@@ -18,12 +19,38 @@ pub const Error = error{
 };
 
 buffer: RenderBuffer,
+texture: Texture = .{},
 
 pub fn init(renderer: *Renderer, model: Model) !Self {
     const vertex_buffer = try convert(renderer.allocator, model);
     const buffer = try renderer.uploadVertexBuffer(vertex_buffer);
+    errdefer buffer.deinit();
+
+    // TODO: Load all materials.
+    const texture: Texture = blk: {
+        if (model.materials.items.len > 0) {
+            if (model.materials.items[0].diffuse_texture) |path| {
+                const texture = renderer.textures.loadImageAbsolute(
+                    &renderer.mem_factory,
+                    path,
+                ) catch |err| {
+                    std.debug.print(
+                        "Failed to load texture '{s}'' from model. Error: {}\n",
+                        .{ path, err },
+                    );
+                    break :blk .{};
+                };
+
+                break :blk texture;
+            }
+        }
+
+        break :blk .{};
+    };
+
     return .{
         .buffer = buffer,
+        .texture = texture,
     };
 }
 
