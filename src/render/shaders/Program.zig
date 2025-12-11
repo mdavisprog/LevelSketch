@@ -1,10 +1,13 @@
 const builtin = @import("builtin");
 const io = @import("io");
+const render = @import("../root.zig");
 const std = @import("std");
 const shaders = @import("root.zig");
 const zbgfx = @import("zbgfx");
 
 const Uniform = shaders.Uniform;
+
+const Texture = render.Texture;
 
 const Self = @This();
 
@@ -123,6 +126,11 @@ pub fn getUniform(self: Self, name: []const u8) !Uniform {
 pub fn setUniform(self: Self, name: []const u8, value: anytype) !void {
     const uniform = try self.getUniform(name);
     uniform.set(value);
+}
+
+pub fn setTexture(self: Self, name: []const u8, texture: Texture, stage: u8,) !void {
+    const uniform = try self.getUniform(name);
+    uniform.setTexture(texture, stage);
 }
 
 pub fn printUniforms(self: Self) void {

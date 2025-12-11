@@ -14,6 +14,7 @@ diffuse: Vec = .zero,
 specular: Vec = .zero,
 specular_exponent: f32 = 0.0,
 diffuse_texture: ?[]const u8 = null,
+specular_texture: ?[]const u8 = null,
 
 /// 'path' must be an absolute path.
 pub fn loadFile(allocator: std.mem.Allocator, path: []const u8) ![]Self {
@@ -44,9 +45,8 @@ pub fn init(name: []const u8) Self {
 pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
     allocator.free(self.name);
 
-    if (self.diffuse_texture) |texture| {
-        allocator.free(texture);
-    }
+    if (self.diffuse_texture) |texture| allocator.free(texture);
+    if (self.specular_texture) |texture| allocator.free(texture);
 }
 
 fn process(allocator: std.mem.Allocator, reader: *LineReader) ![]Self {
@@ -89,6 +89,12 @@ fn process(allocator: std.mem.Allocator, reader: *LineReader) ![]Self {
                     mat.diffuse_texture = try allocator.dupe(u8, file);
                 }
             }
+        } else if (std.mem.eql(u8, tag, "map_Ks")) {
+            if (tokens.next()) |file| {
+                if (material) |mat| {
+                    mat.specular_texture = try allocator.dupe(u8, file);
+                }
+            }
         }
     }
 
@@ -98,25 +104,32 @@ fn process(allocator: std.mem.Allocator, reader: *LineReader) ![]Self {
 fn resolve(allocator: std.mem.Allocator, path: []const u8, materials: []Self) !void {
     // Resolve path names for textures.
     for (materials) |*mat| {
-        if (mat.diffuse_texture) |diffuse_texture| {
-            if (!std.fs.path.isAbsolute(diffuse_texture)) {
-                const resolved = try resolvePath(allocator, path, diffuse_texture);
-                allocator.free(diffuse_texture);
-                mat.diffuse_texture = resolved;
-            }
-        }
+        mat.diffuse_texture = try resolvePath(allocator, path, mat.diffuse_texture);
+        mat.specular_texture = try resolvePath(allocator, path, mat.specular_texture);
     }
 }
 
 /// Given path should be a relative path.
-fn resolvePath(allocator: std.mem.Allocator, material_path: []const u8, path: []const u8) ![]u8 {
+fn resolvePath(
+    allocator: std.mem.Allocator,
+    material_path: []const u8,
+    path: ?[]const u8,
+) !?[]const u8 {
+    const path_ = path orelse return null;
+    if (std.fs.path.isAbsolute(path_)) {
+        return path_;
+    }
+
+    // Relative path needs to be transformed. Free the original string.
+    defer allocator.free(path_);
+
     const directory = if (std.fs.path.dirname(material_path)) |mat_path|
         try allocator.dupe(u8, mat_path)
     else
         try std.fs.cwd().realpathAlloc(allocator, ".");
     defer allocator.free(directory);
 
-    return try std.fs.path.join(allocator, &.{ directory, path });
+    return try std.fs.path.join(allocator, &.{ directory, path_ });
 }
 
 fn processVec(line: []const u8) Vec {

@@ -4,6 +4,7 @@ const std = @import("std");
 
 const Model = io.obj.Model;
 
+const Phong = render.materials.Phong;
 const RenderBuffer = render.RenderBuffer;
 const Renderer = render.Renderer;
 const Texture = render.Texture;
@@ -19,39 +20,27 @@ pub const Error = error{
 };
 
 buffer: RenderBuffer,
-texture: Texture = .{},
+phong: Phong = .{},
 
 pub fn init(renderer: *Renderer, model: Model) !Self {
     const vertex_buffer = try convert(renderer.allocator, model);
     const buffer = try renderer.uploadVertexBuffer(vertex_buffer);
     errdefer buffer.deinit();
 
-    // TODO: Load all materials.
-    const texture: Texture = blk: {
-        if (model.materials.items.len > 0) {
-            if (model.materials.items[0].diffuse_texture) |path| {
-                const texture = renderer.textures.loadImageAbsolute(
-                    &renderer.mem_factory,
-                    path,
-                ) catch |err| {
-                    std.debug.print(
-                        "Failed to load texture '{s}'' from model. Error: {}\n",
-                        .{ path, err },
-                    );
-                    break :blk .{};
-                };
-
-                break :blk texture;
-            }
-        }
-
-        break :blk .{};
-    };
-
-    return .{
+    var result: Self = .{
         .buffer = buffer,
-        .texture = texture,
     };
+
+    // TODO: Load all materials.
+    if (model.materials.items.len > 0) {
+        const material = model.materials.items[0];
+        result.phong.diffuse = try loadTexture(renderer, material.diffuse_texture);
+        result.phong.specular = try loadTexture(renderer, material.specular_texture);
+        result.phong.specular_color = material.specular;
+        result.phong.shininess = material.specular_exponent;
+    }
+
+    return result;
 }
 
 pub fn initWithBuffer(
@@ -89,6 +78,22 @@ fn convert(allocator: std.mem.Allocator, model: Model) !VertexBuffer32 {
     }
 
     return buffer;
+}
+
+fn loadTexture(renderer: *Renderer, path: ?[]const u8) !Texture {
+    const path_ = path orelse return .{};
+
+    return renderer.textures.loadImageAbsolute(
+        &renderer.mem_factory,
+        path_,
+    ) catch |err| {
+        std.log.warn(
+            "Failed to load texture '{s}'' from model. Error: {}",
+            .{ path_, err },
+        );
+
+        return .{};
+    };
 }
 
 fn addElement(

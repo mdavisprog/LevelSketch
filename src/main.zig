@@ -169,12 +169,7 @@ pub fn main() !void {
     var cube_yaw: f32 = 0.0;
     var cube = try render.shapes.cube(u16, renderer, .splat(0.2), 0xFFFFFFFF);
     defer cube.deinit();
-    const model_transform: Mat = .initScale(.splat(0.5));
-
-    var material: render.materials.Phong = .{
-        .specular = .init(0.5, 0.5, 0.5, 1.0),
-    };
-    try material.bind(phong_shader);
+    const model_transform: Mat = .identity;
 
     while (!window.shouldClose() and window.getKey(.escape) != .press) {
         const current_time = zglfw.getTime();
@@ -214,9 +209,8 @@ pub fn main() !void {
         _ = zbgfx.bgfx.setTransform(&model_transform.toArray(), 1);
         u_normal_mat.setMat(normal_mat);
         for (meshes) |mesh| {
-            material.diffuse = mesh.texture;
-            try material.bind(phong_shader);
             mesh.buffer.bind(Renderer.world_state);
+            try mesh.phong.bind(phong_shader);
             zbgfx.bgfx.submit(view_world.id, phong_shader.handle.data, 0, 0);
         }
 

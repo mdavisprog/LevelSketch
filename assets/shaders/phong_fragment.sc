@@ -11,6 +11,7 @@ uniform vec4 u_light_specular;
 uniform vec4 u_specular_shininess;
 
 SAMPLER2D(s_diffuse, 0);
+SAMPLER2D(s_specular, 1);
 
 #define u_specular u_specular_shininess.xyz
 #define u_shininess u_specular_shininess.w
@@ -28,8 +29,9 @@ void main()
     vec3 view_dir = normalize(u_view_pos.xyz - v_pos);
     vec3 reflect_dir = reflect(-light_dir, normal);
 
+    vec4 tex_color_specular = texture2D(s_specular, v_texcoord0.xy);
     float specular_term = pow(max(dot(view_dir, reflect_dir), 0.0), u_shininess);
-    vec4 specular = (specular_term * vec4(u_specular, 1.0)) * u_light_specular;
+    vec4 specular = (specular_term * tex_color_specular) * u_light_specular;
 
     gl_FragColor = (ambient + diffuse + specular);
 }

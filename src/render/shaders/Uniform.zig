@@ -19,7 +19,10 @@ pub fn set(self: Self, value: anytype) void {
         Mat => self.setMat(value),
         f32 => self.setFloat(value),
         []const f32 => self.setArray(value),
-        Texture => self.setTexture(value),
+        Texture => @compileError(std.fmt.comptimePrint(
+            "'Texture' type given to Uniform.set. Must use Uniform.setTexture directly.",
+            .{},
+        )),
         else => @compileError(std.fmt.comptimePrint(
             "Invalid type {s}. Must be of type Vec, Mat, or []const f32",
             .{@typeName(ValueType)},
@@ -39,7 +42,7 @@ pub fn setMat(self: Self, value: Mat) void {
     zbgfx.bgfx.setUniform(self.handle, @ptrCast(&value.toArray()), 1);
 }
 
-pub fn setTexture(self: Self, texture: Texture) void {
+pub fn setTexture(self: Self, texture: Texture, stage: u8) void {
     const handle = texture.handle orelse return;
-    zbgfx.bgfx.setTexture(0, self.handle, handle, texture.flags);
+    zbgfx.bgfx.setTexture(stage, self.handle, handle, texture.flags);
 }
