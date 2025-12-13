@@ -57,10 +57,12 @@ pub const Action = enum {
 current: Point = .zero,
 last: Point = .zero,
 buttons: [button_count]Action = .{.release} ** button_count,
+_last_buttons: [button_count]Action = .{.release} ** button_count,
 
 pub fn update(self: *Self, x: i64, y: i64) void {
     self.last.copy(self.current);
     self.current.set(x, y);
+    @memcpy(&self._last_buttons, &self.buttons);
 }
 
 pub fn delta(self: Self) Point {
@@ -71,6 +73,21 @@ pub fn pressed(self: Self, button: Button) bool {
     return self.buttons[@intFromEnum(button)] == .press;
 }
 
+pub fn justPressed(self: Self, button: Button) bool {
+    const index = @intFromEnum(button);
+    return self.buttons[index] == .press and self._last_buttons[index] == .release;
+}
+
 pub fn released(self: Self, button: Button) bool {
     return self.buttons[@intFromEnum(button)] == .release;
+}
+
+pub fn justReleased(self: Self, button: Button) bool {
+    const index = @intFromEnum(button);
+    return self.buttons[index] == .release and self._last_buttons[index] == .press;
+}
+
+pub fn didChange(self: Self, button: Button) bool {
+    const index = @intFromEnum(button);
+    return self.buttons[index] != self._last_buttons[index];
 }

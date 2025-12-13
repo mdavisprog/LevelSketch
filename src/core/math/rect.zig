@@ -29,5 +29,10 @@ pub fn rect(comptime T: type) type {
             return self.min.x <= point.x and point.x <= self.max.x and
                 self.min.y <= point.y and point.y <= self.max.y;
         }
+
+        pub fn move(self: *Self, delta: TVec) void {
+            _ = self.min.addMut(delta);
+            _ = self.max.addMut(delta);
+        }
     };
 }

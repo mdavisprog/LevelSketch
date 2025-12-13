@@ -30,11 +30,11 @@ pub fn init(renderer: *Renderer) Self {
 
 pub fn begin(self: Self) void {
     clay.setLayoutDimensions(toDimensions(self.renderer.framebuffer_size));
-    clay.builder.begin();
+    clay.beginLayout();
 }
 
 pub fn end(self: Self, commands: *Commands) !void {
-    const render_commands = clay.builder.end();
+    const render_commands = clay.endLayout();
     try renderCommands(self.renderer, render_commands.slice(), commands);
 }
 

@@ -1,6 +1,5 @@
 const std = @import("std");
 
-pub const builder = @import("builder.zig");
 pub const Context = anyopaque;
 
 pub const Arena = extern struct {
@@ -34,10 +33,21 @@ pub const Dimensions = extern struct {
 };
 
 pub const BoundingBox = extern struct {
+    pub const zero: BoundingBox = .init(0.0, 0.0, 0.0, 0.0);
+
     x: f32 = 0.0,
     y: f32 = 0.0,
     width: f32 = 0.0,
     height: f32 = 0.0,
+
+    pub fn init(x: f32, y: f32, width: f32, height: f32) BoundingBox {
+        return .{
+            .x = x,
+            .y = y,
+            .width = width,
+            .height = height,
+        };
+    }
 };
 
 pub const Color = extern struct {
@@ -102,9 +112,9 @@ pub const String = extern struct {
     length: i32 = 0,
     chars: [*c]const u8 = null,
 
-    pub fn init(comptime chars: []const u8) String {
+    pub fn init(chars: []const u8) String {
         return .{
-            .is_statically_allocated = true,
+            .is_statically_allocated = false,
             .length = @intCast(chars.len),
             .chars = chars.ptr,
         };
@@ -132,6 +142,27 @@ pub const ElementId = extern struct {
     offset: u32 = 0,
     base_id: u32 = 0,
     string_id: String = .{},
+
+    pub fn eql(self: ElementId, other: ElementId) bool {
+        return self.id == other.id and
+            self.offset == other.offset and
+            self.base_id == other.base_id;
+    }
+};
+
+pub const ElementIdArray = extern struct {
+    capacity: i32 = 0,
+    length: i32 = 0,
+    internal_array: [*c]const ElementId = null,
+
+    pub fn len(self: ElementIdArray) usize {
+        return @intCast(self.length);
+    }
+
+    pub fn get(self: ElementIdArray, index: usize) ElementId {
+        const slice = self.internal_array[0..self.len()];
+        return slice[index];
+    }
 };
 
 pub const Sizing = extern struct {
@@ -216,6 +247,15 @@ pub const Padding = extern struct {
             .right = value,
             .top = value,
             .bottom = value,
+        };
+    }
+
+    pub fn axes(horizontal: u16, vertical: u16) Padding {
+        return .{
+            .left = horizontal,
+            .right = horizontal,
+            .top = vertical,
+            .bottom = vertical,
         };
     }
 };
@@ -339,12 +379,33 @@ pub const BorderWidth = extern struct {
     top: u16 = 0,
     bottom: u16 = 0,
     betweenChildren: u16 = 0,
+
+    pub fn axes(width: u16, height: u16) BorderWidth {
+        return .{
+            .left = width,
+            .right = width,
+            .top = height,
+            .bottom = height,
+        };
+    }
 };
 
 // Controls settings related to element borders.
 pub const BorderElementConfig = extern struct {
     color: Color = .{},
     width: BorderWidth = .{},
+};
+
+pub const PointerData = extern struct {
+    pub const InteractionState = enum(u8) {
+        pressed_this_frame,
+        pressed,
+        released_this_frame,
+        released,
+    };
+
+    position: Vector2,
+    state: InteractionState = .released,
 };
 
 pub const ElementDeclaration = extern struct {
@@ -409,6 +470,11 @@ pub const RenderData = extern union {
     pub fn new() RenderData {
         return std.mem.zeroes(RenderData);
     }
+};
+
+pub const ElementData = extern struct {
+    bounding_box: BoundingBox = .zero,
+    found: bool = false,
 };
 
 pub const RenderCommand = extern struct {
@@ -476,12 +542,22 @@ pub const MeasureTextFunction = *const fn (
     user_data: ?*anyopaque,
 ) callconv(.c) Dimensions;
 
+pub const HoverFunction = *const fn (
+    element_id: ElementId,
+    pointer_data: PointerData,
+    user_data: usize,
+) callconv(.c) void;
+
 pub fn minMemorySize() u32 {
     return Clay_MinMemorySize();
 }
 
 pub fn createArenaWithCapacityAndMemory(capacity: usize, memory: ?*anyopaque) Arena {
     return Clay_CreateArenaWithCapacityAndMemory(capacity, memory);
+}
+
+pub fn setPointerState(position: Vector2, pointer_down: bool) void {
+    Clay_SetPointerState(position, pointer_down);
 }
 
 pub fn initialize(arena: Arena, layout_dimensions: Dimensions, error_handler: ErrorHandler) ?*Context {
@@ -500,6 +576,26 @@ pub fn endLayout() RenderCommandArray {
     return Clay_EndLayout();
 }
 
+pub fn getElementData(_id: ElementId) ElementData {
+    return Clay_GetElementData(_id);
+}
+
+pub fn hovered() bool {
+    return Clay_Hovered();
+}
+
+pub fn onHover(on_hover: ?HoverFunction, user_data: usize) void {
+    Clay_OnHover(on_hover, user_data);
+}
+
+pub fn pointerOver(element_id: ElementId) bool {
+    return Clay_PointerOver(element_id);
+}
+
+pub fn getPointerOverIds() ElementIdArray {
+    return Clay_GetPointerOverIds();
+}
+
 pub fn setMeasureTextFunction(on_measure_text: ?MeasureTextFunction, user_data: ?*anyopaque) void {
     Clay_SetMeasureTextFunction(on_measure_text, user_data);
 }
@@ -516,7 +612,7 @@ pub fn configureOpenElement(config: ElementDeclaration) void {
     Clay__ConfigureOpenElement(config);
 }
 
-pub fn openTextElement(comptime text: []const u8, text_config: [*c]TextElementConfig) void {
+pub fn openTextElement(text: []const u8, text_config: [*c]TextElementConfig) void {
     Clay__OpenTextElement(.init(text), text_config);
 }
 
@@ -528,7 +624,16 @@ pub fn RenderCommandArray_Get(array: [*c]RenderCommandArray, index: i32) [*c]Ren
     return Clay_RenderCommandArray_Get(array, index);
 }
 
-pub fn id(comptime label: []const u8) ElementId {
+pub fn id(label: []const u8) ElementId {
+    const str: String = .{
+        .is_statically_allocated = false,
+        .length = @intCast(label.len),
+        .chars = label.ptr,
+    };
+    return hashString(str, 0, 0);
+}
+
+pub fn idc(comptime label: []const u8) ElementId {
     const str: String = .{
         .is_statically_allocated = true,
         .length = @intCast(label.len),
@@ -537,11 +642,12 @@ pub fn id(comptime label: []const u8) ElementId {
     return hashString(str, 0, 0);
 }
 
-fn hashString(comptime key: String, comptime offset: u32, comptime seed: u32) ElementId {
+fn hashString(key: String, offset: u32, seed: u32) ElementId {
     var hash: u32 = 0;
     var base: u32 = seed;
 
-    for (0..key.length) |i| {
+    const len: usize = @intCast(key.length);
+    for (0..len) |i| {
         base +%= key.chars[i];
         base +%= (base << 10);
         base ^= (base >> 6);
@@ -568,10 +674,16 @@ fn hashString(comptime key: String, comptime offset: u32, comptime seed: u32) El
 
 extern fn Clay_MinMemorySize() u32;
 extern fn Clay_CreateArenaWithCapacityAndMemory(capacity: usize, memory: ?*anyopaque) Arena;
+extern fn Clay_SetPointerState(position: Vector2, pointer_down: bool) void;
 extern fn Clay_Initialize(arena: Arena, layout_dimension: Dimensions, error_handler: ErrorHandler) ?*Context;
 extern fn Clay_SetLayoutDimensions(dimensions: Dimensions) void;
 extern fn Clay_BeginLayout() void;
 extern fn Clay_EndLayout() RenderCommandArray;
+extern fn Clay_GetElementData(id: ElementId) ElementData;
+extern fn Clay_Hovered() bool;
+extern fn Clay_OnHover(on_hover: ?HoverFunction, user_data: usize) void;
+extern fn Clay_PointerOver(element_id: ElementId) bool;
+extern fn Clay_GetPointerOverIds() ElementIdArray;
 extern fn Clay_SetMeasureTextFunction(on_measure_text: ?MeasureTextFunction, user_data: ?*anyopaque) void;
 extern fn Clay_RenderCommandArray_Get(array: [*c]RenderCommandArray, index: i32) [*c]RenderCommand;
 extern fn Clay__OpenElement() void;

@@ -181,7 +181,7 @@ pub fn main() !void {
         try updateCamera(window, cursor, delta_time);
 
         renderer.update();
-        try main_gui.update(renderer, delta_time, cursor.current.toVec2f());
+        try main_gui.update(renderer, delta_time, cursor);
 
         const size = window.getFramebufferSize();
         view_world.submitPerspective(camera, @intCast(size[0]), @intCast(size[1]));
