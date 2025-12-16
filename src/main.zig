@@ -1,3 +1,4 @@
+const app = @import("app");
 const builtin = @import("builtin");
 const callbacks = @import("callbacks.zig");
 const core = @import("core");
@@ -158,13 +159,17 @@ pub fn main() !void {
     defer the_world.deinit();
     the_world.camera.position = .init(0.0, 0.0, -3.0, 1.0);
 
-    while (!glfw.primary_window.shouldClose()) {
+    while (!glfw.primary_window.shouldClose() and !app.State.should_exit) {
         const current_time = zglfw.getTime();
         const delta_time: f32 = @floatCast(current_time - last_time);
         last_time = current_time;
 
         glfw.update();
         try updateCamera(&the_world.camera, glfw.primary_window, delta_time);
+
+        if (glfw.primary_window.isPressed(.escape)) {
+            app.State.should_exit = true;
+        }
 
         renderer.update();
         try main_gui.update(renderer, &the_world, delta_time, glfw.primary_window.cursor);

@@ -17,6 +17,7 @@ pub fn begin(state: *State, id: clay.ElementId, title: []const u8) void {
             .sizing = .fixed(bounds.width(), bounds.height()),
             .layout_direction = .top_to_bottom,
             .child_gap = 4.0,
+            .padding = .splat(4.0),
         },
         .background_color = state.theme.colors.background,
         .floating = .{

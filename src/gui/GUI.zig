@@ -1,3 +1,4 @@
+const app = @import("app");
 const clay = @import("clay");
 const ClayContext = @import("ClayContext.zig");
 const ClayLayout = @import("ClayLayout.zig");
@@ -160,6 +161,6 @@ fn onResetCamera(context: State.Context) bool {
 }
 
 fn onQuit(_: State.Context) bool {
-    std.debug.print("onQuit\n", .{});
+    app.State.should_exit = true;
     return true;
 }
