@@ -3,6 +3,7 @@ const core = @import("core");
 const gui = @import("root.zig");
 const render = @import("render");
 const std = @import("std");
+const _world = @import("world");
 
 const Rectf = core.math.Rectf;
 const Vec2f = core.math.Vec2f;
@@ -14,6 +15,8 @@ const Theme = gui.Theme;
 const Font = render.Font;
 const Renderer = render.Renderer;
 
+const World = _world.World;
+
 const Self = @This();
 
 /// Passed to each callback.
@@ -22,6 +25,7 @@ pub const Context = struct {
     element: clay.ElementId = .{},
     gui: *const GUI,
     renderer: *const Renderer,
+    world: *World,
     state: *Self,
 };
 
@@ -70,7 +74,13 @@ pub fn deinit(self: *Self) void {
     self._data.deinit();
 }
 
-pub fn update(self: *Self, cursor: Cursor, _gui: *const GUI, renderer: *const Renderer) void {
+pub fn update(
+    self: *Self,
+    cursor: Cursor,
+    _gui: *const GUI,
+    renderer: *const Renderer,
+    world: *World,
+) void {
     const hovered = clay.getPointerOverIds();
     if (hovered.length == 0) {
         return;
@@ -80,6 +90,7 @@ pub fn update(self: *Self, cursor: Cursor, _gui: *const GUI, renderer: *const Re
         .gui = _gui,
         .renderer = renderer,
         .state = self,
+        .world = world,
     };
 
     // 'hovered' should be in order from topmost to bottom. Loop through each one and find the

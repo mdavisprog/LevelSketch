@@ -6,7 +6,7 @@ const std = @import("std");
 const Rectf = core.math.Rectf;
 const Vec2f = core.math.Vec2f;
 
-const default_bounds: Rectf = .init(20.0, 20.0, 120.0, 120.0);
+const default_bounds: Rectf = .init(20.0, 20.0, 200.0, 200.0);
 
 pub fn begin(state: *State, id: clay.ElementId, title: []const u8) void {
     const bounds = state.registerData(id, default_bounds);
@@ -16,6 +16,7 @@ pub fn begin(state: *State, id: clay.ElementId, title: []const u8) void {
         .layout = .{
             .sizing = .fixed(bounds.width(), bounds.height()),
             .layout_direction = .top_to_bottom,
+            .child_gap = 4.0,
         },
         .background_color = state.theme.colors.background,
         .floating = .{
@@ -50,7 +51,6 @@ fn titleBar(id: clay.ElementId, title: []const u8, state: *State) void {
                 .width = .percent(1.0),
             },
             .padding = .axes(2.0, 6.0),
-            .child_gap = 6,
         },
     });
     {

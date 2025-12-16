@@ -41,14 +41,15 @@ pub fn build(b: *std.Build) !void {
         "zbgfx",
         "zmath",
     });
+    try builder.addModule("world", "src/world/root.zig", &.{
+        "core",
+    });
     try builder.addModule("gui", "src/gui/root.zig", &.{
         "clay",
         "core",
         "render",
         "zbgfx",
-    });
-    try builder.addModule("world", "src/world/root.zig", &.{
-        "core",
+        "world",
     });
 
     const root_module = b.createModule(.{

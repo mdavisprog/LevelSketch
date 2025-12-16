@@ -167,7 +167,7 @@ pub fn main() !void {
         try updateCamera(&the_world.camera, glfw.primary_window, delta_time);
 
         renderer.update();
-        try main_gui.update(renderer, delta_time, glfw.primary_window.cursor);
+        try main_gui.update(renderer, &the_world, delta_time, glfw.primary_window.cursor);
 
         const size = glfw.primary_window.framebufferSize();
         view_world.submitPerspective(the_world.camera.toLookAt(), @intCast(size.x), @intCast(size.y));

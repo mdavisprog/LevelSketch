@@ -57,3 +57,9 @@ pub fn rotate(self: *Self, pitch: f32, yaw: f32) void {
     const transform = Mat.initRotationX(self.pitch).mul(.initRotationY(self.yaw));
     self.direction = Vec.forward.mul(transform).normalize();
 }
+
+pub fn resetRotation(self: *Self) void {
+    self.pitch = 0.0;
+    self.yaw = 0.0;
+    self.rotate(0.0, 0.0);
+}

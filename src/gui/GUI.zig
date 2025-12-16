@@ -6,11 +6,11 @@ const gui = @import("root.zig");
 const render = @import("render");
 const State = @import("State.zig");
 const std = @import("std");
+const _world = @import("world");
 
 const Vec2f = core.math.Vec2f;
 
 const Cursor = gui.Cursor;
-const Panel = gui.controls.Panel;
 
 const Commands = render.Commands;
 const Font = render.Font;
@@ -19,9 +19,12 @@ const Renderer = render.Renderer;
 const Texture = render.Texture;
 const View = render.View;
 
+const World = _world.World;
+
 const Self = @This();
 
 const id_panel: clay.ElementId = clay.idc("Panel");
+const id_camera: clay.ElementId = clay.idc("ResetCamera");
 const id_quit: clay.ElementId = clay.idc("QuitButton");
 
 view: View,
@@ -95,12 +98,18 @@ pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
     self._commands.deinit();
 }
 
-pub fn update(self: *Self, renderer: *Renderer, delta_time: f32, cursor: Cursor) !void {
+pub fn update(
+    self: *Self,
+    renderer: *Renderer,
+    world: *World,
+    delta_time: f32,
+    cursor: Cursor,
+) !void {
     _ = delta_time;
 
     const delta = cursor.delta();
     if (!delta.isZero() or cursor.didChange(.left)) {
-        self._state.update(cursor, self, renderer);
+        self._state.update(cursor, self, renderer, world);
 
         const position = cursor.current.toVec2f();
         clay.setPointerState(.init(position.x, position.y), cursor.pressed(.left));
@@ -123,6 +132,14 @@ fn layout(self: *Self) !void {
     {
         gui.controls.panels.begin(&self._state, id_panel, "Panel");
         {
+            self._state.registerId(id_camera, .{
+                .on_click = onResetCamera,
+            });
+            gui.controls.buttons.label(&self._state, id_camera, .{
+                .font = self.font,
+                .contents = "Reset Camera",
+            });
+
             self._state.registerId(id_quit, .{
                 .on_click = onQuit,
             });
@@ -134,6 +151,12 @@ fn layout(self: *Self) !void {
         gui.controls.panels.end();
     }
     try self._clay_layout.end(&self._commands);
+}
+
+fn onResetCamera(context: State.Context) bool {
+    context.world.camera.position = .init(0.0, 0.0, -3.0, 1.0);
+    context.world.camera.resetRotation();
+    return true;
 }
 
 fn onQuit(_: State.Context) bool {
