@@ -1,6 +1,7 @@
 const builtin = @import("builtin");
 const callbacks = @import("callbacks.zig");
 const core = @import("core");
+const glfw = @import("glfw.zig");
 const gui = @import("gui");
 const io = @import("io");
 const render = @import("render");
@@ -26,7 +27,6 @@ const View = render.View;
 
 var camera: Camera = undefined;
 var camera_rotating = false;
-var cursor: Cursor = .{};
 var view_world: View = undefined;
 
 pub fn main() !void {
@@ -48,27 +48,16 @@ pub fn main() !void {
     try stb.init(allocator);
     defer stb.deinit();
 
-    try zglfw.init();
-    defer zglfw.terminate();
-
-    const zglfw_version = zglfw.getVersion();
-    std.log.info("glfw version is {}.{}.{}", .{
-        zglfw_version.major,
-        zglfw_version.minor,
-        zglfw_version.patch,
-    });
-
-    zglfw.windowHint(.client_api, .no_api);
-    const window = try zglfw.createWindow(960, 540, "Level Sketch", null);
-    defer zglfw.destroyWindow(window);
+    try glfw.init();
+    defer glfw.deinit();
 
     var bgfx_init: zbgfx.bgfx.Init = undefined;
     zbgfx.bgfx.initCtor(&bgfx_init);
 
-    const framebuffer_size = window.getFramebufferSize();
+    const framebuffer_size = glfw.primary_window.framebufferSize();
 
-    bgfx_init.resolution.width = @intCast(framebuffer_size[0]);
-    bgfx_init.resolution.height = @intCast(framebuffer_size[1]);
+    bgfx_init.resolution.width = framebuffer_size.x;
+    bgfx_init.resolution.height = framebuffer_size.y;
     bgfx_init.platformData.ndt = null;
     bgfx_init.debug = true;
 
@@ -80,8 +69,7 @@ pub fn main() !void {
         .vtable = &callbacks.BGFXCallbacks.toVtbl(),
     };
     bgfx_init.callback = &bgfx_callbacks;
-
-    bgfx_init.platformData.nwh = zglfw.getWin32Window(window);
+    bgfx_init.platformData.nwh = glfw.primary_window.nativeHandle();
 
     if (!zbgfx.bgfx.init(&bgfx_init)) {
         std.log.err("Failed to initialize bgfx.", .{});
@@ -98,10 +86,7 @@ pub fn main() !void {
         allocator.destroy(renderer);
     }
 
-    renderer.*.framebuffer_size = .init(
-        @floatFromInt(framebuffer_size[0]),
-        @floatFromInt(framebuffer_size[1]),
-    );
+    renderer.framebuffer_size = framebuffer_size.to(f32);
 
     const meshes = try loadCommandLineModels(renderer);
     defer {
@@ -148,14 +133,14 @@ pub fn main() !void {
 
     zbgfx.bgfx.setDebug(zbgfx.bgfx.DebugFlags_None);
     zbgfx.bgfx.reset(
-        @intCast(framebuffer_size[0]),
-        @intCast(framebuffer_size[1]),
+        framebuffer_size.x,
+        framebuffer_size.y,
         zbgfx.bgfx.ResetFlags_Vsync,
         bgfx_init.resolution.format,
     );
 
-    const aspect = @as(f32, @floatFromInt(framebuffer_size[0])) /
-        @as(f32, @floatFromInt(framebuffer_size[1]));
+    const aspect = @as(f32, @floatFromInt(framebuffer_size.x)) /
+        @as(f32, @floatFromInt(framebuffer_size.y));
     view_world = .init(0x303030FF, true);
     view_world.setPerspective(60.0, aspect);
     view_world.clear();
@@ -171,20 +156,19 @@ pub fn main() !void {
     defer cube.deinit();
     const model_transform: Mat = .identity;
 
-    while (!window.shouldClose() and window.getKey(.escape) != .press) {
+    while (!glfw.primary_window.shouldClose()) {
         const current_time = zglfw.getTime();
         const delta_time: f32 = @floatCast(current_time - last_time);
         last_time = current_time;
 
-        zglfw.pollEvents();
-        updateCursor(window, &cursor);
-        try updateCamera(window, cursor, delta_time);
+        glfw.update();
+        try updateCamera(glfw.primary_window, delta_time);
 
         renderer.update();
-        try main_gui.update(renderer, delta_time, cursor);
+        try main_gui.update(renderer, delta_time, glfw.primary_window.cursor);
 
-        const size = window.getFramebufferSize();
-        view_world.submitPerspective(camera, @intCast(size[0]), @intCast(size[1]));
+        const size = glfw.primary_window.framebufferSize();
+        view_world.submitPerspective(camera, @intCast(size.x), @intCast(size.y));
 
         // Render the world
         u_view_pos.setArray(&camera.position.toArray());
@@ -234,58 +218,28 @@ fn printBGFXInfo() void {
     std.log.info("Transient Max Index Size: {}", .{caps.*.limits.transientIbSize});
 }
 
-fn updateCursor(window: *zglfw.Window, target: *Cursor) void {
-    const cursor_pos = window.getCursorPos();
-    target.update(@intFromFloat(cursor_pos[0]), @intFromFloat(cursor_pos[1]));
-
-    const left = zglfw.getMouseButton(window, .left);
-    const middle = zglfw.getMouseButton(window, .middle);
-    const right = zglfw.getMouseButton(window, .right);
-
-    updateCursorButton(target, .left, left);
-    updateCursorButton(target, .middle, middle);
-    updateCursorButton(target, .right, right);
-}
-
-fn updateCursorButton(target: *Cursor, button: zglfw.MouseButton, action: zglfw.Action) void {
-    const cursor_button = switch (button) {
-        zglfw.MouseButton.left => Cursor.Button.left,
-        zglfw.MouseButton.middle => Cursor.Button.middle,
-        zglfw.MouseButton.right => Cursor.Button.right,
-        else => Cursor.Button.unhandled,
-    };
-
-    const cursor_action = switch (action) {
-        zglfw.Action.press => Cursor.Action.press,
-        zglfw.Action.release => Cursor.Action.release,
-        zglfw.Action.repeat => Cursor.Action.repeat,
-    };
-
-    target.buttons[@intFromEnum(cursor_button)] = cursor_action;
-}
-
-fn updateCamera(window: *zglfw.Window, cursor_: Cursor, delta_time: f32) !void {
-    if (isPressed(window, .w)) {
+fn updateCamera(window: glfw.Window, delta_time: f32) !void {
+    if (window.isPressed(.w)) {
         camera.move(.forward);
-    } else if (isPressed(window, .s)) {
+    } else if (window.isPressed(.s)) {
         camera.move(.backward);
-    } else if (isPressed(window, .d)) {
+    } else if (window.isPressed(.d)) {
         camera.move(.right);
-    } else if (isPressed(window, .a)) {
+    } else if (window.isPressed(.a)) {
         camera.move(.left);
-    } else if (isPressed(window, .q)) {
+    } else if (window.isPressed(.q)) {
         camera.move(.up);
-    } else if (isPressed(window, .e)) {
+    } else if (window.isPressed(.e)) {
         camera.move(.down);
     }
 
     camera.update(delta_time);
 
-    if (cursor_.pressed(.right)) {
-        const delta = cursor_.delta();
+    if (window.cursor.pressed(.right)) {
+        const delta = window.cursor.delta();
         if (!delta.isZero()) {
             if (!camera_rotating) {
-                try toggleCursor(window, false);
+                try window.toggleCursor(false);
                 camera_rotating = true;
             }
 
@@ -293,24 +247,12 @@ fn updateCamera(window: *zglfw.Window, cursor_: Cursor, delta_time: f32) !void {
             const pitch: f32 = @floatFromInt(delta.y);
             camera.rotate(pitch, yaw);
         }
-    } else if (cursor_.released(.right)) {
+    } else if (window.cursor.released(.right)) {
         if (camera_rotating) {
-            try toggleCursor(window, true);
+            try window.toggleCursor(true);
             camera_rotating = false;
         }
     }
-}
-
-fn toggleCursor(window: *zglfw.Window, enabled: bool) !void {
-    try zglfw.setInputMode(window, .cursor, if (enabled) .normal else .disabled);
-    if (zglfw.rawMouseMotionSupported()) {
-        try zglfw.setInputMode(window, .raw_mouse_motion, enabled);
-    }
-}
-
-fn isPressed(window: *zglfw.Window, key: zglfw.Key) bool {
-    const action = window.getKey(key);
-    return action == .press;
 }
 
 fn loadCommandLineModels(renderer: *Renderer) ![]Mesh {

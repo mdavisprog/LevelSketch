@@ -24,6 +24,26 @@ pub fn Vec2(comptime T: type) type {
             };
         }
 
+        pub fn to(self: Self, comptime U: type) Vec2(U) {
+            if (T == U) {
+                return self;
+            }
+
+            if (T == f32 or T == f64) {
+                if (U != f32 and U != f64) {
+                    return .init(@intFromFloat(self.x), @intFromFloat(self.y));
+                } else {
+                    return .init(@floatCast(self.x), @floatCast(self.y));
+                }
+            } else {
+                if (U != f32 and U != f64) {
+                    return .init(@intCast(self.x), @intCast(self.y));
+                } else {
+                    return .init(@floatFromInt(self.x), @floatFromInt(self.y));
+                }
+            }
+        }
+
         pub fn add(self: Self, other: Self) Self {
             return Self{
                 .x = self.x + other.x,

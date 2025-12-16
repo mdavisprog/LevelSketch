@@ -15,6 +15,7 @@ pub const Rectus = rect.rect(usize);
 
 pub const Vec2i = vec2.Vec2(i32);
 pub const Vec2f = vec2.Vec2(f32);
+pub const Vec2u = vec2.Vec2(u32);
 pub const Vec2us = vec2.Vec2(usize);
 
 pub const Vec = @import("Vec.zig");
