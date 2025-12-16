@@ -47,6 +47,9 @@ pub fn build(b: *std.Build) !void {
         "render",
         "zbgfx",
     });
+    try builder.addModule("world", "src/world/root.zig", &.{
+        "core",
+    });
 
     const root_module = b.createModule(.{
         .root_source_file = b.path("src/main.zig"),

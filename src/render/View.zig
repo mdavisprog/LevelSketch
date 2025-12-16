@@ -1,4 +1,3 @@
-const Camera = @import("Camera.zig");
 const core = @import("core");
 const std = @import("std");
 const zbgfx = @import("zbgfx");
@@ -56,8 +55,8 @@ pub fn setMode(self: Self, mode: zbgfx.bgfx.ViewMode) void {
     zbgfx.bgfx.setViewMode(self.id, mode);
 }
 
-pub fn submitPerspective(self: Self, camera: Camera, width: u16, height: u16) void {
-    self.submit(camera.toLookAt(), width, height);
+pub fn submitPerspective(self: Self, perspective: Mat, width: u16, height: u16) void {
+    self.submit(perspective, width, height);
 }
 
 pub fn submitOrthographic(self: Self, width: u16, height: u16) void {

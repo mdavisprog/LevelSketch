@@ -8,6 +8,7 @@ const render = @import("render");
 const stb = @import("stb");
 const std = @import("std");
 const version = @import("version");
+const world = @import("world");
 const zbgfx = @import("zbgfx");
 const zglfw = @import("zglfw");
 
@@ -20,12 +21,13 @@ const GUI = gui.GUI;
 
 const Model = io.obj.Model;
 
-const Camera = render.Camera;
 const Mesh = render.Mesh;
 const Renderer = render.Renderer;
 const View = render.View;
 
-var camera: Camera = undefined;
+const Camera = world.Camera;
+const World = world.World;
+
 var camera_rotating = false;
 var view_world: View = undefined;
 
@@ -96,10 +98,6 @@ pub fn main() !void {
         renderer.allocator.free(meshes);
     }
 
-    camera = .{
-        .position = .init(0.0, 0.0, -3.0, 1.0),
-    };
-
     var shader_program = try renderer.programs.build(
         allocator,
         "common",
@@ -156,22 +154,26 @@ pub fn main() !void {
     defer cube.deinit();
     const model_transform: Mat = .identity;
 
+    var the_world: World = .init();
+    defer the_world.deinit();
+    the_world.camera.position = .init(0.0, 0.0, -3.0, 1.0);
+
     while (!glfw.primary_window.shouldClose()) {
         const current_time = zglfw.getTime();
         const delta_time: f32 = @floatCast(current_time - last_time);
         last_time = current_time;
 
         glfw.update();
-        try updateCamera(glfw.primary_window, delta_time);
+        try updateCamera(&the_world.camera, glfw.primary_window, delta_time);
 
         renderer.update();
         try main_gui.update(renderer, delta_time, glfw.primary_window.cursor);
 
         const size = glfw.primary_window.framebufferSize();
-        view_world.submitPerspective(camera, @intCast(size.x), @intCast(size.y));
+        view_world.submitPerspective(the_world.camera.toLookAt(), @intCast(size.x), @intCast(size.y));
 
         // Render the world
-        u_view_pos.setArray(&camera.position.toArray());
+        u_view_pos.setArray(&the_world.camera.position.toArray());
 
         try renderer.textures.default.bind(sampler_tex_color.handle, 0);
 
@@ -218,7 +220,9 @@ fn printBGFXInfo() void {
     std.log.info("Transient Max Index Size: {}", .{caps.*.limits.transientIbSize});
 }
 
-fn updateCamera(window: glfw.Window, delta_time: f32) !void {
+/// TODO: Move this logic into the camera.
+/// Should accept an input object that is translated from the glfw.Window object.
+fn updateCamera(camera: *Camera, window: glfw.Window, delta_time: f32) !void {
     if (window.isPressed(.w)) {
         camera.move(.forward);
     } else if (window.isPressed(.s)) {

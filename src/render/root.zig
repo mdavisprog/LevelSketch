@@ -1,5 +1,4 @@
 pub const Atlas = @import("Atlas.zig");
-pub const Camera = @import("Camera.zig");
 pub const Commands = @import("Commands.zig");
 pub const Font = @import("Font.zig");
 pub const Fonts = @import("Fonts.zig");
