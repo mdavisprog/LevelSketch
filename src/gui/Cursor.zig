@@ -40,7 +40,7 @@ pub const Point = struct {
     }
 };
 
-pub const Button = enum(usize) {
+pub const Button = enum(u8) {
     left,
     middle,
     right,
