@@ -2,6 +2,7 @@ const std = @import("std");
 
 pub const LineReader = @import("LineReader.zig");
 pub const obj = @import("obj/root.zig");
+pub const pnm = @import("pnm.zig");
 
 pub fn exeRelativePath(allocator: std.mem.Allocator, paths: []const []const u8) ![]u8 {
     const exe_dir = try std.fs.selfExeDirPathAlloc(allocator);
