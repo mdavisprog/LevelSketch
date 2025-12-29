@@ -22,13 +22,12 @@ pub fn label(state: *State, id: clay.ElementId, text: Text) void {
         .layout = .{
         .sizing = .{
             .width = .percent(1.0),
-            .height = .fixed(text.font.size),
         },
         .child_alignment = .{
             .x = .center,
             .y = .center,
         },
-        .padding = .axes(4.0, 2.0),
+        .padding = .axes(4.0, 4.0),
     },
     .background_color = button_color,
     });
@@ -36,6 +35,7 @@ pub fn label(state: *State, id: clay.ElementId, text: Text) void {
         const config = clay.storeTextElementConfig(.{
             .font_id = text.font.id,
             .text_alignment = .center,
+            .font_size = 18,
         });
         clay.openTextElement(text.contents, config);
     }

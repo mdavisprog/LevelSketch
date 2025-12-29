@@ -63,7 +63,6 @@
         //},
         .clay = .{ .path = "external/clay" },
         .stb = .{ .path = "external/stb" },
-        .TrueType = .{ .path = "external/truetype" },
         .zglfw = .{ .path = "external/zglfw" },
         .zbgfx = .{ .path = "external/zbgfx" },
         .zmath = .{ .path = "external/zmath" },

@@ -16,8 +16,7 @@ pub fn begin(state: *State, id: clay.ElementId, title: []const u8) void {
         .layout = .{
             .sizing = .fixed(bounds.width(), bounds.height()),
             .layout_direction = .top_to_bottom,
-            .child_gap = 4.0,
-            .padding = .splat(4.0),
+            .child_gap = 4,
         },
         .background_color = state.theme.colors.background,
         .floating = .{
@@ -51,12 +50,13 @@ fn titleBar(id: clay.ElementId, title: []const u8, state: *State) void {
             .sizing = .{
                 .width = .percent(1.0),
             },
-            .padding = .axes(2.0, 6.0),
+            .padding = .axes(2, 4),
         },
     });
     {
         const config = clay.storeTextElementConfig(.{
             .font_id = state.font.id,
+            .font_size = 22,
             .text_alignment = .center,
         });
         clay.openTextElement(title, config);

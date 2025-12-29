@@ -49,11 +49,20 @@ pub fn deinit(self: *Self, gpa: std.mem.Allocator) void {
 
 /// Must be relative to the 'assets/fonts' directory. The name of the file without the
 /// extensions will be used as the key for the font data.
-pub fn loadFile(self: *Self, renderer: *Renderer, path: []const u8, size: f32) !*Font {
+pub fn loadFile(
+    self: *Self,
+    renderer: *Renderer,
+    path: []const u8,
+    size: f32,
+    font_type: Font.Type,
+) !*Font {
     const full_path = try io.fontsPath(renderer.allocator, path);
+    defer renderer.allocator.free(full_path);
 
-    const font = try Font.init(renderer, full_path, size);
+    var font = try Font.init(renderer.allocator, full_path);
     errdefer renderer.allocator.destroy(font);
+
+    try font.load(renderer, size, font_type);
 
     const key = try toKey(renderer.allocator, path, size);
     errdefer renderer.allocator.free(key);

@@ -1,8 +1,8 @@
 const core = @import("core");
 const io = @import("io");
 const render = @import("root.zig");
+const stb = @import("stb");
 const std = @import("std");
-const TrueType = @import("TrueType");
 
 const Vec2f = core.math.Vec2f;
 
@@ -13,6 +13,8 @@ const Texture = render.Texture;
 const Textures = render.Textures;
 const Vertex = render.Vertex;
 const UIVertexBuffer16 = render.UIVertexBuffer16;
+
+const FontInfo = stb.truetype.FontInfo;
 
 const Self = @This();
 
@@ -27,8 +29,9 @@ pub const Glyph = struct {
     min: Vec2f = .zero,
     max: Vec2f = .zero,
     offset: Vec2f = .zero,
-    advance_width: i16 = 0,
-    left_side_bearing: i16 = 0,
+    // These are already scaled.
+    advance_width: f32 = 0.0,
+    left_side_bearing: f32 = 0.0,
 
     pub fn width(self: Glyph) f32 {
         return self.max.x - self.min.x;
@@ -44,78 +47,124 @@ pub const Glyph = struct {
 };
 pub const GlyphMap = std.AutoHashMap(u32, Glyph);
 
+pub const VMetrics = struct {
+    scale: f32 = 0.0,
+    ascent: f32 = 0.0,
+    descent: f32 = 0.0,
+    line_gap: f32 = 0.0,
+};
+
+pub const Type = enum {
+    bitmap,
+    sdf,
+};
+
 pub const invalid_id: Id = 0;
 
 id: Id = invalid_id,
-path: []const u8,
-size: f32,
-space_advance_width: i16,
+size: f32 = 0.0,
+scale: f32 = 1.0,
+space_advance_width: f32 = 0.0,
+v_metrics: VMetrics = .{},
 glyphs: GlyphMap,
-texture: Texture,
-_truetype: TrueType,
+texture: Texture = .{},
+_info: FontInfo,
+_data: []const u8,
 
-/// 'path' must be the full path. Font takes ownership of the path memory. Caller does
-/// not need to free memory.
+/// 'path' must be the full path. Creates the stb_truetype font info object and sets up this
+/// object for loading glyphs.
 pub fn init(
-    renderer: *Renderer,
+    allocator: std.mem.Allocator,
     path: []const u8,
-    size: f32,
 ) !*Self {
+    const contents = try io.getContents(allocator, path);
+    const info = try stb.truetype.initFont(contents, 0);
+
+    const result = try allocator.create(Self);
+    result.* = .{
+        .glyphs = .init(allocator),
+        ._info = info,
+        ._data = contents,
+    };
+
+    return result;
+}
+
+pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
+    allocator.free(self._data);
+    self.glyphs.clearAndFree();
+    self.glyphs.deinit();
+}
+
+pub fn load(
+    self: *Self,
+    renderer: *Renderer,
+    size: f32,
+    font_type: Type,
+) !void {
     const allocator = renderer.mem_factory.allocator;
 
-    // The TrueType object will hold the slice.
-    const contents = try io.getContents(allocator, path);
-
-    const truetype = try TrueType.load(contents);
-    const scale = truetype.scaleForPixelHeight(size);
+    const scale = stb.truetype.scaleForPixelHeight(&self._info, size);
 
     var atlas: Atlas = try .init(allocator, 128, 128);
     defer atlas.deinit();
-
-    var pixels = try std.ArrayList(u8).initCapacity(allocator, 0);
-    defer pixels.deinit(allocator);
 
     const range: Range = .{ .min = 0x20, .max = 0xFF };
     var valid_chars = try std.ArrayList(u32).initCapacity(allocator, 0);
     defer valid_chars.deinit(allocator);
 
-    var glyphs = GlyphMap.init(allocator);
     var ch = range.min;
     while (ch <= range.max) {
         defer ch += 1;
 
-        if (truetype.codepointGlyphIndex(@intCast(ch))) |glyph_index| {
-            pixels.clearRetainingCapacity();
+        const glyph_or_error = switch (font_type) {
+            .bitmap => stb.truetype.getCodepointBitmap(&self._info, scale, scale, ch),
+            .sdf => stb.truetype.getCodepointSDF(&self._info, size, ch, 4, 128, 32.0),
+        };
 
-            const glyph = truetype.glyphBitmap(
-                allocator,
-                &pixels,
-                glyph_index,
-                scale,
-                scale,
-            ) catch |err| {
-                switch (err) {
-                    TrueType.GlyphBitmapError.GlyphNotFound => continue,
-                    else => std.debug.panic(
-                        "Failed to get glyph ({}) bitmap: {}",
-                        .{ ch, err },
-                    ),
-                }
-            };
+        const glyph = glyph_or_error catch |err| {
+            switch (err) {
+                stb.truetype.Error.GlyphNotFound => {
+                    if (ch == ' ') {
+                        const metrics = stb.truetype.getCodepointHMetrics(&self._info, ch);
+                        self.space_advance_width =
+                            @as(f32, @floatFromInt(metrics.advance_width)) * scale;
+                    }
+                    continue;
+                },
+                else => std.debug.panic(
+                    "Failed to get bitmap for codepoint {} '{c}'. Error: {}",
+                    .{
+                        ch,
+                        @as(u8, @intCast(ch)),
+                        err,
+                    },
+                ),
+            }
+        };
 
-            try atlas.place(
-                .init(@intCast(glyph.width), @intCast(glyph.height)),
-                pixels.items,
-            );
-
-            try valid_chars.append(allocator, ch);
-
-            const h_metrics = truetype.glyphHMetrics(glyph_index);
-            const entry = try glyphs.getOrPut(ch);
-            entry.value_ptr.advance_width = h_metrics.advance_width;
-            entry.value_ptr.left_side_bearing = h_metrics.left_side_bearing;
-            entry.value_ptr.offset = .init(@floatFromInt(glyph.off_x), @floatFromInt(glyph.off_y));
+        const glyph_data = glyph.data orelse continue;
+        defer {
+            switch (font_type) {
+                .bitmap => stb.truetype.freeBitmap(glyph_data),
+                .sdf => stb.truetype.freeSDF(glyph_data),
+            }
         }
+
+        try atlas.place(
+            .init(@intCast(glyph.w), @intCast(glyph.h)),
+            glyph_data,
+        );
+
+        try valid_chars.append(allocator, ch);
+
+        const h_metrics = stb.truetype.getCodepointHMetrics(&self._info, ch);
+        const entry = try self.glyphs.getOrPut(ch);
+        entry.value_ptr.advance_width =
+            @as(f32, @floatFromInt(h_metrics.advance_width)) * scale;
+        entry.value_ptr.left_side_bearing =
+            @as(f32, @floatFromInt(h_metrics.left_side_bearing)) * scale;
+        entry.value_ptr.offset = .init(@floatFromInt(glyph.xoff), @floatFromInt(glyph.yoff));
     }
 
     // Set up the glyph map after all glyphs have been placed into the atlas.
@@ -123,7 +172,7 @@ pub fn init(
         const char = valid_chars.items[i];
         const region = atlas.regions.items[i];
 
-        const entry = try glyphs.getOrPut(char);
+        const entry = try self.glyphs.getOrPut(char);
         entry.value_ptr.*.min = .init(
             @floatFromInt(region.min.x),
             @floatFromInt(region.min.y),
@@ -135,38 +184,23 @@ pub fn init(
         );
     }
 
-    const space_advance_width: i16 = if (glyphs.get('i')) |glyph|
-        glyph.advance_width
-    else
-        1;
+    const metrics = stb.truetype.getFontVMetrics(&self._info);
+    self.v_metrics.scale = scale;
+    self.v_metrics.ascent = @as(f32, @floatFromInt(metrics.ascent)) * scale;
+    self.v_metrics.descent = @as(f32, @floatFromInt(metrics.descent)) * scale;
+    self.v_metrics.line_gap = @as(f32, @floatFromInt(metrics.line_gap)) * scale;
+
+    self.size = size;
+    self.scale = 1.0;
 
     var owned = try atlas.buffer.release();
-    const texture = try renderer.textures.loadBuffer(
+    self.texture = try renderer.textures.loadBuffer(
         &renderer.mem_factory,
         try owned.data.toOwnedSlice(allocator),
         @intCast(owned.width),
         @intCast(owned.height),
         .grayscale,
     );
-
-    const result = try allocator.create(Self);
-    result.* = .{
-        .path = path,
-        .size = size,
-        .space_advance_width = space_advance_width,
-        .glyphs = glyphs,
-        .texture = texture,
-        ._truetype = truetype,
-    };
-
-    return result;
-}
-
-pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
-    allocator.free(self.path);
-    allocator.free(self._truetype.ttf_bytes);
-    self.glyphs.clearAndFree();
-    self.glyphs.deinit();
 }
 
 /// Caller must free returned buffer.
@@ -185,11 +219,6 @@ pub fn getVertices(
     const index_count = string.len * 6;
     var buffer = try UIVertexBuffer16.init(allocator, vertex_count, index_count);
 
-    const metrics = self._truetype.verticalMetrics();
-    const scale = self._truetype.scaleForPixelHeight(self.size);
-    const ascent: f32 = @as(f32, @floatFromInt(metrics.ascent)) * scale;
-    const descent: f32 = @as(f32, @floatFromInt(metrics.descent)) * scale;
-
     var v_index: usize = 0;
     var vertex_offset: u16 = 0;
     var index: usize = 0;
@@ -197,25 +226,22 @@ pub fn getVertices(
     var prev_ch: u32 = 0;
     for (string) |ch| {
         if (ch == ' ') {
-            cursor.x += @as(f32, @floatFromInt(self.space_advance_width)) * scale;
+            cursor.x += self.space_advance_width * self.scale;
             prev_ch = 0;
             continue;
         }
 
         if (self.glyphs.get(ch)) |glyph| {
-            // The offset has already been scaled when rendering the bitmap. No need to apply here.
-            const glyph_offset: Vec2f = glyph.offset;
-            const left_side_bearing: f32 = @as(f32, @floatFromInt(glyph.left_side_bearing)) * scale;
+            const glyph_offset: Vec2f = glyph.offset.mulScalar(self.scale);
+            const glyph_size: Vec2f = glyph.size().mulScalar(self.scale);
+            const kern = self.getKernAdvance(prev_ch, ch);
 
             var min: Vec2f = cursor;
-            if (self.getKernAdvance(prev_ch, ch)) |advance| {
-                min.x += @as(f32, @floatFromInt(advance)) * scale;
-            }
+            min.x += @as(f32, @floatFromInt(kern)) * self.v_metrics.scale;
+            min.x += glyph.left_side_bearing * self.scale + glyph_offset.x;
+            min.y += glyph_offset.y + self.v_metrics.ascent * self.scale;
 
-            min.x += left_side_bearing + glyph_offset.x;
-            min.y += ascent + glyph_offset.y + descent;
-
-            var max: Vec2f = min.add(glyph.size());
+            var max: Vec2f = min.add(glyph_size);
 
             min.x = @floor(min.x);
             min.y = @floor(min.y);
@@ -251,7 +277,7 @@ pub fn getVertices(
             vertex_offset += 4;
             index += 6;
 
-            cursor.x += @as(f32, @floatFromInt(glyph.advance_width)) * scale;
+            cursor.x += glyph.advance_width * self.scale;
             prev_ch = ch;
         }
     }
@@ -260,42 +286,32 @@ pub fn getVertices(
 }
 
 pub fn measure(self: Self, text: []const u8) Vec2f {
-    const scale = self._truetype.scaleForPixelHeight(self.size);
-
     var result: Vec2f = .zero;
     var prev_ch: u32 = 0;
     for (text) |ch| {
         if (ch == ' ') {
-            result.x += @as(f32, @floatFromInt(self.space_advance_width)) * scale;
+            result.x += self.space_advance_width * self.scale;
             prev_ch = 0;
             continue;
         }
 
         if (self.glyphs.get(ch)) |glyph| {
-            result.x += @as(f32, @floatFromInt(glyph.advance_width)) * scale;
-            result.y = @max(result.y, glyph.height());
+            const glyph_size = glyph.size().mulScalar(self.scale);
+
+            result.x += glyph.advance_width * self.scale;
+            result.y = @max(result.y, glyph_size.y);
         }
     }
 
     return result;
 }
 
-pub fn lineHeight(self: Self) f32 {
-    const metrics = self._truetype.verticalMetrics();
-    const scale = self._truetype.scaleForPixelHeight(self.size);
-    const ascent: f32 = @floatFromInt(metrics.ascent);
-    const descent: f32 = @floatFromInt(metrics.descent);
-    const line_gap: f32 = @floatFromInt(metrics.line_gap);
-    return @floor((ascent * scale) - (descent * scale) + (line_gap * scale));
+pub fn scaleToSize(self: *Self, size: f32) void {
+    self.scale = size / self.size;
 }
 
-fn getKernAdvance(self: Self, a: u32, b: u32) ?i16 {
-    const glyph_a = self._truetype.codepointGlyphIndex(@intCast(a));
-    const glyph_b = self._truetype.codepointGlyphIndex(@intCast(b));
-
-    if (glyph_a == null or glyph_b == null) {
-        return null;
-    }
-
-    return self._truetype.glyphKernAdvance(glyph_a.?, glyph_b.?);
+fn getKernAdvance(self: Self, a: u32, b: u32) i32 {
+    const glyph_a = stb.truetype.findGlyphIndex(&self._info, a) catch return 0;
+    const glyph_b = stb.truetype.findGlyphIndex(&self._info, b) catch return 0;
+    return stb.truetype.getGlyphKernAdvance(&self._info, glyph_a, glyph_b);
 }

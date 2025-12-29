@@ -45,7 +45,14 @@ fn onMeasureText(
 ) callconv(.c) clay.Dimensions {
     const fonts: *Fonts = @ptrCast(@alignCast(user_data.?));
     const font = fonts.getById(config.*.font_id);
-    const size: Vec2f = if (font) |f| f.measure(text.str()) else .zero;
+    const size: Vec2f = blk: {
+        if (font) |f| {
+            f.scaleToSize(@floatFromInt(config.*.font_size));
+            break :blk f.measure(text.str());
+        }
+
+        break :blk .zero;
+    };
 
     return toDimensions(size);
 }
@@ -103,6 +110,7 @@ fn renderCommand(
 
             var buffer = blk: {
                 if (maybe_font) |font| {
+                    font.scaleToSize(@floatFromInt(text_data.font_size));
                     break :blk try font.getVertices(
                         renderer.allocator,
                         text_data.string_contents.str(),

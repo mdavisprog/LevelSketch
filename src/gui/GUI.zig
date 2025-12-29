@@ -49,7 +49,8 @@ pub fn init(renderer: *Renderer) !Self {
     const font = try renderer.fonts.loadFile(
         renderer,
         "Roboto-Regular.ttf",
-        20.0,
+        48.0,
+        .sdf,
     );
 
     const ui_shader: *Program = try renderer.programs.build(
@@ -67,7 +68,7 @@ pub fn init(renderer: *Renderer) !Self {
         "text",
         .{
             .varying_file_name = "ui/def.sc",
-            .fragment_file_name = "ui/text.sc",
+            .fragment_file_name = "ui/text_sdf.sc",
             .vertex_file_name = "ui/vertex.sc",
         },
     );

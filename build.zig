@@ -22,7 +22,6 @@ pub fn build(b: *std.Build) !void {
 
     try builder.addDependency("clay", "root");
     try builder.addDependency("stb", "root");
-    try builder.addDependency("TrueType", "TrueType");
     try builder.addDependency("zglfw", "root");
     try builder.addDependency("zbgfx", "zbgfx");
     try builder.addDependency("zmath", "root");
@@ -37,7 +36,6 @@ pub fn build(b: *std.Build) !void {
         "core",
         "io",
         "stb",
-        "TrueType",
         "zbgfx",
         "zmath",
     });
