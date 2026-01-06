@@ -62,6 +62,7 @@
         //    .lazy = false,
         //},
         .clay = .{ .path = "external/clay" },
+        .lunasvg = .{ .path = "external/lunasvg" },
         .stb = .{ .path = "external/stb" },
         .zglfw = .{ .path = "external/zglfw" },
         .zbgfx = .{ .path = "external/zbgfx" },

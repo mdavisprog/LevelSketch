@@ -51,6 +51,9 @@ pub const BoundingBox = extern struct {
 };
 
 pub const Color = extern struct {
+    pub const white: Color = .initu8(255, 255, 255, 255);
+    pub const black: Color = .initu8(0, 0, 0, 255);
+
     r: f32 = 0.0,
     g: f32 = 0.0,
     b: f32 = 0.0,

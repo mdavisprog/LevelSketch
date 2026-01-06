@@ -1,3 +1,4 @@
+const lunasvg = @import("lunasvg");
 const std = @import("std");
 
 pub const LineReader = @import("LineReader.zig");
@@ -29,6 +30,15 @@ pub fn getContents(allocator: std.mem.Allocator, path: []const u8) ![]u8 {
     var buffer: [1024]u8 = undefined;
     var reader = file.reader(&buffer);
     return try reader.interface.readAlloc(allocator, file_size);
+}
+
+pub fn loadSVG(
+    allocator: std.mem.Allocator,
+    path: []const u8,
+    width: usize,
+    height: usize,
+) ![]u8 {
+    return try lunasvg.loadFile(allocator, path, width, height);
 }
 
 test "refall" {

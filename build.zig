@@ -21,6 +21,7 @@ pub fn build(b: *std.Build) !void {
     defer builder.deinit();
 
     try builder.addDependency("clay", "root");
+    try builder.addDependency("lunasvg", "root");
     try builder.addDependency("stb", "root");
     try builder.addDependency("zglfw", "root");
     try builder.addDependency("zbgfx", "zbgfx");
@@ -31,6 +32,7 @@ pub fn build(b: *std.Build) !void {
     });
     try builder.addModule("io", "src/io/root.zig", &.{
         "core",
+        "lunasvg",
     });
     try builder.addModule("render", "src/render/root.zig", &.{
         "core",
@@ -71,6 +73,7 @@ pub fn build(b: *std.Build) !void {
     }
 
     exe.linkLibrary(try builder.dependencyArtifact("zbgfx", "bgfx"));
+    exe.linkLibrary(try builder.dependencyArtifact("lunasvg", "bindings"));
 
     b.installArtifact(exe);
     b.installArtifact(try builder.dependencyArtifact("zbgfx", "shaderc"));
