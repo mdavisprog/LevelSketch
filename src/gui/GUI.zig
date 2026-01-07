@@ -35,7 +35,6 @@ text_shader: *Program,
 clay_context: ClayContext,
 _clay_layout: ClayLayout,
 _commands: Commands,
-_default_texture: Texture,
 _state: State,
 
 /// Must be initialized after bgfx has been initialized.
@@ -83,7 +82,6 @@ pub fn init(renderer: *Renderer) !Self {
         .ui_shader = ui_shader,
         .text_shader = text_shader,
         ._commands = try Commands.init(renderer.mem_factory.allocator),
-        ._default_texture = renderer.textures.default,
         .clay_context = clay_context,
         ._clay_layout = .init(renderer),
         ._state = state,

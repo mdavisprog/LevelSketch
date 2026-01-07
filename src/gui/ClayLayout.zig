@@ -12,6 +12,7 @@ const Commands = render.Commands;
 const Fonts = render.Fonts;
 const RenderBuffer = render.RenderBuffer;
 const Renderer = render.Renderer;
+const Texture = render.Texture;
 const VertexBuffer16 = render.VertexBuffer16;
 
 /// Object that manages layout setup and translating the clay render commands to the internal
@@ -132,6 +133,38 @@ fn renderCommand(
                 .texture_flags = zbgfx.bgfx.SamplerFlags_UBorder | zbgfx.bgfx.SamplerFlags_VBorder,
                 .shader = shader,
                 .sampler = try shader.getUniform("s_font"),
+                .state = Renderer.ui_state,
+            });
+        },
+        .image => {
+            const corner_radius = render_command.render_data.image.corner_radius;
+            const color = hexColor(render_command.render_data.image.background_color);
+            const image_data = render_command.render_data.image.image_data orelse return;
+            const texture_id = @intFromPtr(image_data);
+            const texture = renderer.textures.getById(@intCast(texture_id)) orelse return;
+
+            var quad = if (corner_radius.isZero())
+                try render.shapes.quad(u16, renderer.allocator, rect, color.data)
+            else
+                try render.shapes.quadRounded(
+                    u16,
+                    renderer.allocator,
+                    rect,
+                    color.data,
+                    corner_radius.toArray(),
+                );
+            defer quad.deinit(renderer.allocator);
+
+            var render_buffer: RenderBuffer = .init();
+            try render_buffer.setTransientBuffer(quad);
+
+            const shader = try renderer.programs.get("common");
+            try commands.addCommand(.{
+                .buffer = render_buffer,
+                .texture = texture,
+                .texture_flags = 0,
+                .shader = shader,
+                .sampler = try shader.getUniform("s_tex_color"),
                 .state = Renderer.ui_state,
             });
         },

@@ -114,6 +114,16 @@ pub fn loadStaticBuffer(
     );
 }
 
+pub fn getById(self: Self, id: Texture.Id) ?Texture {
+    for (self.collection.items) |item| {
+        if (item.id == id) {
+            return item;
+        }
+    }
+
+    return null;
+}
+
 fn load(
     self: *Self,
     mem_factory: *MemFactory,
