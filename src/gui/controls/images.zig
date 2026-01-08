@@ -1,5 +1,4 @@
 const clay = @import("clay");
-const controls = @import("root.zig");
 const render = @import("render");
 const State = @import("../State.zig");
 

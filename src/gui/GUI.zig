@@ -132,21 +132,19 @@ fn layout(self: *Self) !void {
     {
         gui.controls.panels.begin(&self._state, id_panel, "Panel");
         {
-            self._state.registerId(id_camera, .{
-                .on_click = onResetCamera,
-            });
-            gui.controls.buttons.label(&self._state, id_camera, .{
-                .font = self.font,
-                .contents = "Reset Camera",
-            });
+            gui.controls.buttons.label(
+                &self._state,
+                id_camera,
+                "Reset Camera",
+                onResetCamera,
+            );
 
-            self._state.registerId(id_quit, .{
-                .on_click = onQuit,
-            });
-            gui.controls.buttons.label(&self._state, id_quit, .{
-                .font = self.font,
-                .contents = "Quit",
-            });
+            gui.controls.buttons.label(
+                &self._state,
+                id_quit,
+                "Quit",
+                onQuit,
+            );
         }
         gui.controls.panels.end();
     }

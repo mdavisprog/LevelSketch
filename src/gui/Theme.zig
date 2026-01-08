@@ -1,4 +1,7 @@
 const clay = @import("clay");
+const render = @import("render");
+
+const Font = render.Font;
 
 const Self = @This();
 
@@ -9,4 +12,11 @@ pub const Colors = struct {
     pressed: clay.Color = .initu8(85, 85, 85, 255),
 };
 
+pub const FontSizes = struct {
+    header: u16 = 22,
+    normal: u16 = 18,
+};
+
 colors: Colors = .{},
+font: *const Font,
+font_sizes: FontSizes = .{},

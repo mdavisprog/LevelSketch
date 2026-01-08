@@ -55,17 +55,18 @@ pub const Callbacks = struct {
     on_drag: ?OnPointerMove = null,
 };
 
-font: *const Font,
+theme: Theme,
 pressed: clay.ElementId = .{},
-theme: Theme = .{},
 _callbacks: std.AutoHashMap(clay.ElementId, Callbacks),
 _data: std.AutoHashMap(clay.ElementId, Data),
 
 pub fn init(allocator: std.mem.Allocator, font: *const Font) Self {
     return .{
-        .font = font,
         ._callbacks = .init(allocator),
         ._data = .init(allocator),
+        .theme = .{
+            .font = font,
+        },
     };
 }
 
@@ -154,6 +155,20 @@ pub fn registerId(self: *Self, id: clay.ElementId, callbacks: Callbacks) void {
     self._callbacks.put(id, callbacks) catch |err| {
         std.log.warn("Failed to allocate callbacks! Error: {}", .{err});
     };
+}
+
+/// Updates or adds the callbacks for the given element.
+pub fn updateId(self: *Self, id: clay.ElementId, callbacks: Callbacks) void {
+    if (self._callbacks.getPtr(id)) |value| {
+        value.on_press = callbacks.on_press orelse value.on_press;
+        value.on_release = callbacks.on_release orelse value.on_release;
+        value.on_click = callbacks.on_click orelse value.on_click;
+        value.on_drag = callbacks.on_drag orelse value.on_drag;
+    } else {
+        self._callbacks.put(id, callbacks) catch |err| {
+            std.log.warn("Failed to update callbacks! Error: {}", .{err});
+        };
+    }
 }
 
 pub fn registerData(self: *Self, id: clay.ElementId, data: anytype) @TypeOf(data) {

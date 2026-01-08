@@ -4,7 +4,16 @@ const State = @import("../State.zig");
 
 const Text = controls.Text;
 
-pub fn label(state: *State, id: clay.ElementId, text: Text) void {
+pub fn label(
+    state: *State,
+    id: clay.ElementId,
+    text: []const u8,
+    on_click: ?State.OnPointerEvent,
+) void {
+    state.updateId(id, .{
+        .on_click = on_click,
+    });
+
     clay.openElement();
 
     const button_color: clay.Color = blk: {
@@ -13,31 +22,30 @@ pub fn label(state: *State, id: clay.ElementId, text: Text) void {
         } else if (clay.hovered()) {
             break :blk state.theme.colors.hovered;
         } else {
-            break: blk state.theme.colors.control;
+            break :blk state.theme.colors.control;
         }
     };
 
     clay.configureOpenElement(.{
         .id = id,
         .layout = .{
-        .sizing = .{
-            .width = .percent(1.0),
+            .sizing = .{
+                .width = .percent(1.0),
+            },
+            .child_alignment = .{
+                .x = .center,
+                .y = .center,
+            },
+            .padding = .axes(4.0, 4.0),
         },
-        .child_alignment = .{
-            .x = .center,
-            .y = .center,
-        },
-        .padding = .axes(4.0, 4.0),
-    },
-    .background_color = button_color,
+        .background_color = button_color,
     });
     {
         const config = clay.storeTextElementConfig(.{
-            .font_id = text.font.id,
-            .text_alignment = .center,
-            .font_size = 18,
+            .font_id = state.theme.font.id,
+            .font_size = state.theme.font_sizes.normal,
         });
-        clay.openTextElement(text.contents, config);
+        clay.openTextElement(text, config);
     }
     clay.closeElement();
 }
