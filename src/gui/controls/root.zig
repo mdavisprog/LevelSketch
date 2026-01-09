@@ -14,3 +14,19 @@ pub fn dummy(width: f32, height: f32) void {
     });
     clay.closeElement();
 }
+
+pub const Type = enum {
+    checkbox,
+    panel,
+};
+
+pub const Data = union(Type) {
+    checkbox: checkbox.Checkbox,
+    panel: panels.Panel,
+
+    pub fn init() Data {
+        return .{
+            .checkbox = .{},
+        };
+    }
+};

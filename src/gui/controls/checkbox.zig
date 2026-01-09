@@ -6,14 +6,24 @@ const std = @import("std");
 
 const Texture = render.Texture;
 
+pub const Checkbox = struct {
+    on_click: ?State.OnPointerEvent = null,
+    checked: bool = false,
+};
+
 pub fn check(
     state: *State,
     id: clay.ElementId,
     text: []const u8,
     on_click: ?State.OnPointerEvent,
 ) void {
-    state.updateId(id, .{ .on_click = on_click });
-    const checked = state.registerData(id, false);
+    state.updateId(id, .{ .on_click = onClick });
+    const data = state.getOrSetData(id, .{
+        .checkbox = .{
+            .checked = false,
+            .on_click = on_click,
+        },
+    });
 
     // Main container.
     clay.openElement();
@@ -54,7 +64,7 @@ pub fn check(
         {
             // Check mark
             const icon = state.theme.getIcon("check");
-            if (checked) {
+            if (data.checkbox.checked) {
                 controls.images.image(state, icon, .white);
             } else {
                 controls.dummy(@floatFromInt(icon.width), @floatFromInt(icon.height));
@@ -71,4 +81,15 @@ pub fn check(
         clay.openTextElement(text, config);
     }
     clay.closeElement();
+}
+
+fn onClick(context: State.Context) bool {
+    const data = context.state.getDataMut(context.element) orelse return false;
+
+    data.checkbox.checked = !data.checkbox.checked;
+    if (data.checkbox.on_click) |on_click| {
+        return on_click(context);
+    }
+
+    return true;
 }

@@ -6,10 +6,20 @@ const std = @import("std");
 const Rectf = core.math.Rectf;
 const Vec2f = core.math.Vec2f;
 
+pub const Panel = struct {
+    bounds: Rectf = .zero,
+};
+
 const default_bounds: Rectf = .init(20.0, 20.0, 200.0, 200.0);
 
 pub fn begin(state: *State, id: clay.ElementId, title: []const u8) void {
-    const bounds = state.registerData(id, default_bounds);
+    const data = state.getOrSetData(id, .{
+        .panel = .{
+            .bounds = default_bounds,
+        },
+    });
+
+    const bounds = data.panel.bounds;
 
     clay.openElement();
     clay.configureOpenElement(.{
@@ -66,5 +76,5 @@ fn titleBar(id: clay.ElementId, title: []const u8, state: *State) void {
 
 fn onDragTitle(delta: Vec2f, context: State.Context) void {
     const data = context.state.getDataMut(context.element) orelse return;
-    data.rect.move(delta);
+    data.panel.bounds.move(delta);
 }

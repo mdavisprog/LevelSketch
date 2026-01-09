@@ -29,22 +29,6 @@ pub const Context = struct {
     state: *Self,
 };
 
-pub const DataType = enum {
-    boolean,
-    rect,
-};
-
-pub const Data = union(DataType) {
-    boolean: bool,
-    rect: Rectf,
-
-    fn init() Data {
-        return .{
-            .rect = .zero,
-        };
-    }
-};
-
 /// Callback function prototype for all mouse button interactions.
 pub const OnPointerEvent = *const fn (context: Context) bool;
 pub const OnPointerMove = *const fn (delta: Vec2f, context: Context) void;
@@ -57,22 +41,24 @@ pub const Callbacks = struct {
     on_drag: ?OnPointerMove = null,
 };
 
+pub const DataMap = std.AutoHashMap(clay.ElementId, gui.controls.Data);
+
 theme: Theme,
 pressed: clay.ElementId = .{},
 _callbacks: std.AutoHashMap(clay.ElementId, Callbacks),
-_data: std.AutoHashMap(clay.ElementId, Data),
+_data_map: DataMap,
 
 pub fn init(renderer: *Renderer, font: *const Font) !Self {
     return .{
         ._callbacks = .init(renderer.allocator),
-        ._data = .init(renderer.allocator),
+        ._data_map = .init(renderer.allocator),
         .theme = try .init(renderer, font),
     };
 }
 
 pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
     self._callbacks.deinit();
-    self._data.deinit();
+    self._data_map.deinit();
     self.theme.deinit(allocator);
 }
 
@@ -172,64 +158,32 @@ pub fn updateId(self: *Self, id: clay.ElementId, callbacks: Callbacks) void {
     }
 }
 
-pub fn registerData(self: *Self, id: clay.ElementId, data: anytype) @TypeOf(data) {
-    const new = !self._data.contains(id);
-    const entry: *Data = blk: {
-        if (!self._data.contains(id)) {
-            self._data.put(id, .init()) catch |err| {
-                std.debug.panic("Failed to allocate memory for data. Error: {}", .{err});
-            };
-        }
+pub fn setData(self: *Self, id: clay.ElementId, data: gui.controls.Data) void {
+    self._data_map.put(id, data) catch |err| {
+        std.debug.panic("Failed to set data for element '{s}'. Err: {}", .{
+            id.string_id.str(),
+            err,
+        });
+    };
+}
 
-        break :blk self._data.getPtr(id).?;
+pub fn getOrSetData(self: *Self, id: clay.ElementId, data: gui.controls.Data) gui.controls.Data {
+    if (self._data_map.get(id)) |entry| {
+        return entry;
+    }
+
+    self._data_map.put(id, data) catch |err| {
+        std.debug.panic("Failed to set data for element '{s}'. Err: {}", .{
+            id.string_id.str(),
+            err,
+        });
     };
 
-    if (new) {
-        updateDataEntry(entry, data);
-    }
-
-    return self.getData(@TypeOf(data), id) orelse std.debug.panic("Failed to register data!", .{});
+    return self._data_map.get(id) orelse {
+        std.debug.panic("Failed to return set data for element '{s}'.", .{id.string_id.str()});
+    };
 }
 
-pub fn updateData(self: *Self, id: clay.ElementId, data: anytype) void {
-    if (self._data.getPtr(id)) |entry| {
-        updateDataEntry(entry, data);
-    }
-}
-
-/// Making self mutable since data within the map will be modified.
-pub fn getDataMut(self: *Self, id: clay.ElementId) ?*Data {
-    return self._data.getPtr(id);
-}
-
-pub fn getData(self: Self, comptime T: type, id: clay.ElementId) ?T {
-    if (self._data.get(id)) |data| {
-        switch (T) {
-            bool => {
-                std.debug.assert(data == .boolean);
-                return data.boolean;
-            },
-            Rectf => {
-                std.debug.assert(data == .rect);
-                return data.rect;
-            },
-            else => {},
-        }
-    }
-
-    return null;
-}
-
-fn updateDataEntry(entry: *Data, data: anytype) void {
-    const Type = @TypeOf(data);
-    switch (Type) {
-        bool => entry.* = .{ .boolean = data },
-        Rectf => entry.* = .{ .rect = data },
-        else => {
-            @compileError(std.fmt.comptimePrint(
-                "Data is an invalid type: {s}!",
-                .{@typeName(Type)},
-            ));
-        },
-    }
+pub fn getDataMut(self: Self, id: clay.ElementId) ?*gui.controls.Data {
+    return self._data_map.getPtr(id);
 }
