@@ -151,6 +151,7 @@ pub fn main() !void {
     var last_time: f64 = 0.0;
 
     var cube_yaw: f32 = 0.0;
+    var cube_time: f32 = 0.0;
     var cube = try render.shapes.cube(u16, renderer, .splat(0.2), 0xFFFFFFFF);
     defer cube.deinit();
     const model_transform: Mat = .identity;
@@ -183,13 +184,16 @@ pub fn main() !void {
         try renderer.textures.default.bind(sampler_tex_color.handle, 0);
 
         // Update light source (cube).
-        cube_yaw = @mod(cube_yaw + delta_time * 20.0, 360.0);
-        const cube_sin = std.math.sin(@as(f32, @floatCast(current_time)));
-        light.position = Mat.initTranslation(.right)
-            .rotateY(cube_yaw)
-            .scale(.splat(2.0))
-            .getTranslation();
-        light.position.setY(cube_sin);
+        if (the_world.light_orbit) {
+            cube_yaw = @mod(cube_yaw + delta_time * 20.0, 360.0);
+            cube_time += delta_time;
+            const cube_sin = std.math.sin(cube_time);
+            light.position = Mat.initTranslation(.right)
+                .rotateY(cube_yaw)
+                .scale(.splat(2.0))
+                .getTranslation();
+            light.position.setY(cube_sin);
+        }
         const cube_transform = Mat.initTranslation(light.position);
         try light.bindPosition(phong_shader);
         _ = zbgfx.bgfx.setTransform(&cube_transform.toArray(), 1);

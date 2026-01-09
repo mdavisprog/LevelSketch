@@ -15,12 +15,13 @@ pub fn check(
     state: *State,
     id: clay.ElementId,
     text: []const u8,
+    checked: bool,
     on_click: ?State.OnPointerEvent,
 ) void {
     state.updateId(id, .{ .on_click = onClick });
     const data = state.getOrSetData(id, .{
         .checkbox = .{
-            .checked = false,
+            .checked = checked,
             .on_click = on_click,
         },
     });

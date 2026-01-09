@@ -5,6 +5,7 @@ const Camera = world.Camera;
 const Self = @This();
 
 camera: Camera = .{},
+light_orbit: bool = true,
 
 pub fn init() Self {
     return .{};

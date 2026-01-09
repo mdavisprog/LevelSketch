@@ -27,6 +27,10 @@ pub const Context = struct {
     renderer: *const Renderer,
     world: *World,
     state: *Self,
+
+    pub fn getDataMut(self: Context) ?*gui.controls.Data {
+        return self.state.getDataMut(self.element);
+    }
 };
 
 /// Callback function prototype for all mouse button interactions.

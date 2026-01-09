@@ -76,7 +76,7 @@ pub fn init(renderer: *Renderer) !Self {
 
     const state: State = try .init(renderer, font);
 
-    var result = Self{
+    return .{
         .view = view,
         .font = font,
         .ui_shader = ui_shader,
@@ -86,10 +86,6 @@ pub fn init(renderer: *Renderer) !Self {
         ._clay_layout = .init(renderer),
         ._state = state,
     };
-
-    try result.layout();
-
-    return result;
 }
 
 pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
@@ -113,7 +109,7 @@ pub fn update(
 
         const position = cursor.current.toVec2f();
         clay.setPointerState(.init(position.x, position.y), cursor.pressed(.left));
-        try self.layout();
+        try self.layout(world);
     }
 }
 
@@ -125,7 +121,7 @@ pub fn draw(self: *Self, renderer: *const Renderer) !void {
     try self._commands.run(self.view);
 }
 
-fn layout(self: *Self) !void {
+fn layout(self: *Self, world: *World) !void {
     self._commands.clear();
 
     self._clay_layout.begin();
@@ -145,6 +141,14 @@ fn layout(self: *Self) !void {
                 "Quit",
                 onQuit,
             );
+
+            gui.controls.checkbox.check(
+                &self._state,
+                clay.idc("LightOrbit"),
+                "Orbit",
+                world.light_orbit,
+                onToggleOrbit,
+            );
         }
         gui.controls.panels.end();
     }
@@ -159,5 +163,11 @@ fn onResetCamera(context: State.Context) bool {
 
 fn onQuit(_: State.Context) bool {
     app.State.should_exit = true;
+    return true;
+}
+
+fn onToggleOrbit(context: State.Context) bool {
+    const data = context.getDataMut() orelse return false;
+    context.world.light_orbit = data.checkbox.checked;
     return true;
 }
