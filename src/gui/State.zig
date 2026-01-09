@@ -30,10 +30,12 @@ pub const Context = struct {
 };
 
 pub const DataType = enum {
+    boolean,
     rect,
 };
 
 pub const Data = union(DataType) {
+    boolean: bool,
     rect: Rectf,
 
     fn init() Data {
@@ -60,19 +62,18 @@ pressed: clay.ElementId = .{},
 _callbacks: std.AutoHashMap(clay.ElementId, Callbacks),
 _data: std.AutoHashMap(clay.ElementId, Data),
 
-pub fn init(allocator: std.mem.Allocator, font: *const Font) Self {
+pub fn init(renderer: *Renderer, font: *const Font) !Self {
     return .{
-        ._callbacks = .init(allocator),
-        ._data = .init(allocator),
-        .theme = .{
-            .font = font,
-        },
+        ._callbacks = .init(renderer.allocator),
+        ._data = .init(renderer.allocator),
+        .theme = try .init(renderer, font),
     };
 }
 
-pub fn deinit(self: *Self) void {
+pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
     self._callbacks.deinit();
     self._data.deinit();
+    self.theme.deinit(allocator);
 }
 
 pub fn update(
@@ -183,14 +184,47 @@ pub fn registerData(self: *Self, id: clay.ElementId, data: anytype) @TypeOf(data
         break :blk self._data.getPtr(id).?;
     };
 
+    if (new) {
+        updateDataEntry(entry, data);
+    }
+
+    return self.getData(@TypeOf(data), id) orelse std.debug.panic("Failed to register data!", .{});
+}
+
+pub fn updateData(self: *Self, id: clay.ElementId, data: anytype) void {
+    if (self._data.getPtr(id)) |entry| {
+        updateDataEntry(entry, data);
+    }
+}
+
+/// Making self mutable since data within the map will be modified.
+pub fn getDataMut(self: *Self, id: clay.ElementId) ?*Data {
+    return self._data.getPtr(id);
+}
+
+pub fn getData(self: Self, comptime T: type, id: clay.ElementId) ?T {
+    if (self._data.get(id)) |data| {
+        switch (T) {
+            bool => {
+                std.debug.assert(data == .boolean);
+                return data.boolean;
+            },
+            Rectf => {
+                std.debug.assert(data == .rect);
+                return data.rect;
+            },
+            else => {},
+        }
+    }
+
+    return null;
+}
+
+fn updateDataEntry(entry: *Data, data: anytype) void {
     const Type = @TypeOf(data);
     switch (Type) {
-        Rectf => {
-            if (new) {
-                entry.rect = data;
-            }
-            return entry.rect;
-        },
+        bool => entry.* = .{ .boolean = data },
+        Rectf => entry.* = .{ .rect = data },
         else => {
             @compileError(std.fmt.comptimePrint(
                 "Data is an invalid type: {s}!",
@@ -198,9 +232,4 @@ pub fn registerData(self: *Self, id: clay.ElementId, data: anytype) @TypeOf(data
             ));
         },
     }
-}
-
-/// Making self mutable since data within the map will be modified.
-pub fn getDataMut(self: *Self, id: clay.ElementId) ?*Data {
-    return self._data.getPtr(id);
 }

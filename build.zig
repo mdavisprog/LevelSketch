@@ -49,6 +49,7 @@ pub fn build(b: *std.Build) !void {
         "app",
         "clay",
         "core",
+        "io",
         "render",
         "zbgfx",
         "world",

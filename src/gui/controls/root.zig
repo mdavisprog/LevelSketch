@@ -1,6 +1,7 @@
 const clay = @import("clay");
 
 pub const buttons = @import("buttons.zig");
+pub const checkbox = @import("checkbox.zig");
 pub const images = @import("images.zig");
 pub const panels = @import("panels.zig");
 

@@ -74,7 +74,7 @@ pub fn init(renderer: *Renderer) !Self {
 
     const clay_context: ClayContext = try .init(renderer.allocator);
 
-    const state: State = .init(renderer.allocator, font);
+    const state: State = try .init(renderer, font);
 
     var result = Self{
         .view = view,
@@ -93,7 +93,7 @@ pub fn init(renderer: *Renderer) !Self {
 }
 
 pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
-    self._state.deinit();
+    self._state.deinit(allocator);
     self.clay_context.deinit(allocator);
     self._commands.deinit();
 }
