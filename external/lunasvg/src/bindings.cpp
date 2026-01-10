@@ -2,7 +2,9 @@
 #include <cstdio>
 #include <cstring>
 
-extern "C" unsigned char* load(const char* path, int width, int height) {
+extern "C" {
+
+unsigned char* load(const char* path, int width, int height) {
     std::unique_ptr<lunasvg::Document> document = lunasvg::Document::loadFromFile(path);
     if (document == nullptr) {
         return nullptr;
@@ -20,4 +22,6 @@ extern "C" unsigned char* load(const char* path, int width, int height) {
     std::memcpy(result, bitmap.data(), size);
 
     return result;
+}
+
 }

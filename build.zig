@@ -103,6 +103,7 @@ pub fn build(b: *std.Build) !void {
 
         if (builder.target.result.os.tag != .emscripten) {
             exe_check.linkLibrary(try builder.dependencyArtifact("zglfw", "glfw"));
+            exe_check.linkLibrary(try builder.dependencyArtifact("lunasvg", "bindings"));
         }
 
         exe_check.linkLibrary(try builder.dependencyArtifact("zbgfx", "bgfx"));
@@ -120,7 +121,14 @@ pub fn build(b: *std.Build) !void {
         run_cmd.addArgs(args);
     }
 
-    try builder.addTests(b, exe, &.{ "core", "io", "render" });
+    try builder.addTests(b, exe, &.{
+        .{ .module_name = "core", .link_params = &.{} },
+        .{
+            .module_name = "io",
+            .link_params = &.{.{ .dependency = "lunasvg", .artifact = "bindings" }},
+        },
+        .{ .module_name = "render", .link_params = &.{} },
+    });
 }
 
 const Builder = struct {
@@ -237,11 +245,21 @@ const Builder = struct {
         return Error.DependencyDoesntExist;
     }
 
+    pub const TestParam = struct {
+        pub const LinkParam = struct {
+            dependency: []const u8,
+            artifact: []const u8,
+        };
+
+        module_name: []const u8,
+        link_params: []const LinkParam,
+    };
+
     pub fn addTests(
         self: Self,
         b: *std.Build,
         exe: *std.Build.Step.Compile,
-        modules: []const []const u8,
+        modules: []const TestParam,
     ) !void {
         const step = b.step("test", "Run tests");
 
@@ -251,12 +269,17 @@ const Builder = struct {
         const exe_run = b.addRunArtifact(exe_test);
         step.dependOn(&exe_run.step);
 
-        for (modules) |name| {
-            const module = try self.getModule(name);
+        for (modules) |param| {
+            const module = try self.getModule(param.module_name);
 
             const module_test = b.addTest(.{
                 .root_module = module,
             });
+
+            for (param.link_params) |link| {
+                const artifact = try self.dependencyArtifact(link.dependency, link.artifact);
+                module_test.linkLibrary(artifact);
+            }
 
             const run = b.addRunArtifact(module_test);
 
