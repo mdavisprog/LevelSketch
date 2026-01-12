@@ -128,6 +128,7 @@ pub fn build(b: *std.Build) !void {
             .link_params = &.{.{ .dependency = "lunasvg", .artifact = "bindings" }},
         },
         .{ .module_name = "render", .link_params = &.{} },
+        .{ .module_name = "world", .link_params = &.{} },
     });
 }
 

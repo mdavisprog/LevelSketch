@@ -3,10 +3,11 @@ const std = @import("std");
 pub fn HashSetUnmanaged(comptime T: type) type {
     return struct {
         const Self = @This();
+        const Keys = std.AutoHashMapUnmanaged(T, void);
 
         pub const empty: Self = .{};
 
-        _data: std.AutoHashMapUnmanaged(T, void) = .empty,
+        _data: Keys = .empty,
 
         pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
             self._data.deinit(allocator);
@@ -26,6 +27,10 @@ pub fn HashSetUnmanaged(comptime T: type) type {
 
         pub fn remove(self: *Self, key: T) bool {
             return self._data.remove(key);
+        }
+
+        pub fn iterator(self: Self) Keys.KeyIterator {
+            return self._data.keyIterator();
         }
     };
 }

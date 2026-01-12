@@ -156,7 +156,7 @@ pub fn main() !void {
     defer cube.deinit();
     const model_transform: Mat = .identity;
 
-    var the_world: World = .init();
+    var the_world: World = try .init(allocator);
     defer the_world.deinit();
     the_world.camera.position = .init(0.0, 0.0, -3.0, 1.0);
 
