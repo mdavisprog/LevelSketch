@@ -160,6 +160,8 @@ pub fn main() !void {
     defer the_world.deinit();
     the_world.camera.position = .init(0.0, 0.0, -3.0, 1.0);
 
+    the_world.runSystems(.startup);
+
     while (!glfw.primary_window.shouldClose() and !app.State.should_exit) {
         const current_time = zglfw.getTime();
         const delta_time: f32 = @floatCast(current_time - last_time);
@@ -171,6 +173,8 @@ pub fn main() !void {
         if (glfw.primary_window.isPressed(.escape)) {
             app.State.should_exit = true;
         }
+
+        the_world.runSystems(.update);
 
         renderer.update();
         try main_gui.update(renderer, &the_world, delta_time, glfw.primary_window.cursor);
@@ -216,6 +220,8 @@ pub fn main() !void {
 
         _ = zbgfx.bgfx.frame(false);
     }
+
+    the_world.runSystems(.shutdown);
 }
 
 fn printBGFXInfo() void {
