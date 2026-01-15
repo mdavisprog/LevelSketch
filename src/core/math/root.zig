@@ -13,6 +13,8 @@ pub const Recti = rect.rect(i32);
 pub const Rectf = rect.rect(f32);
 pub const Rectus = rect.rect(usize);
 
+pub const Rotation = @import("Rotation.zig");
+
 pub const Vec2i = vec2.Vec2(i32);
 pub const Vec2f = vec2.Vec2(f32);
 pub const Vec2u = vec2.Vec2(u32);

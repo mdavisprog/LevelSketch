@@ -2,6 +2,7 @@ const math = @import("root.zig");
 const std = @import("std");
 const zmath = @import("zmath");
 
+const Rotation = math.Rotation;
 const Vec = math.Vec;
 
 const Self = @This();
@@ -13,6 +14,16 @@ data: zmath.Mat = zmath.identity(),
 pub fn initTranslation(translation: Vec) Self {
     return .{
         .data = zmath.translation(translation.x(), translation.y(), translation.z()),
+    };
+}
+
+pub fn initRotation(rotation: Rotation) Self {
+    const pitch = std.math.degreesToRadians(rotation.pitch);
+    const yaw = std.math.degreesToRadians(rotation.yaw);
+    const roll = std.math.degreesToRadians(rotation.roll);
+    const quat = zmath.quatFromRollPitchYaw(pitch, yaw, roll);
+    return .{
+        .data = zmath.matFromQuat(quat),
     };
 }
 
@@ -79,8 +90,20 @@ pub fn translate(self: Self, translation: Vec) Self {
     return self.mul(.initTranslation(translation));
 }
 
+pub fn rotate(self: Self, rotation: Rotation) Self {
+    return self.mul(.initRotation(rotation));
+}
+
+pub fn rotateX(self: Self, degrees: f32) Self {
+    return self.mul(.initRotationX(degrees));
+}
+
 pub fn rotateY(self: Self, degrees: f32) Self {
     return self.mul(.initRotationY(degrees));
+}
+
+pub fn rotateZ(self: Self, degrees: f32) Self {
+    return self.mul(.initRotationZ(degrees));
 }
 
 pub fn scale(self: Self, _scale: Vec) Self {
