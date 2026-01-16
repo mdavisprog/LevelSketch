@@ -34,7 +34,7 @@ pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
 
 pub fn register(self: *Self, comptime T: type, allocator: std.mem.Allocator) !void {
     const id = self._id;
-    var array: *Array(T, Entities.max) = try .init(allocator);
+    var array: *Array(T) = try .init(allocator);
     try self._arrays.put(allocator, id, array.interface());
     try self._types.put(allocator, @typeName(T), id);
     self._id += 1;
@@ -113,24 +113,26 @@ const IArray = struct {
 };
 
 /// Holds all components for a specific component type.
-fn Array(comptime T: type, comptime size: usize) type {
+fn Array(comptime T: type) type {
     return struct {
         const ArraySelf = @This();
 
         pub const empty: ArraySelf = .{};
 
-        components: [size]T = @splat(.{}),
+        components: std.ArrayListUnmanaged(T) = .empty,
         entity_to_index: std.AutoHashMapUnmanaged(Entity.Id, usize) = .empty,
         index_to_entity: std.AutoHashMapUnmanaged(usize, Entity.Id) = .empty,
-        count: usize = 0,
 
         pub fn init(allocator: std.mem.Allocator) !*ArraySelf {
             const result = try allocator.create(ArraySelf);
-            result.* = .{};
+            result.* = .{
+                .components = try .initCapacity(allocator, 255),
+            };
             return result;
         }
 
         pub fn deinit(self: *ArraySelf, allocator: std.mem.Allocator) void {
+            self.components.deinit(allocator);
             self.entity_to_index.deinit(allocator);
             self.index_to_entity.deinit(allocator);
             allocator.destroy(self);
@@ -144,13 +146,12 @@ fn Array(comptime T: type, comptime size: usize) type {
         ) !void {
             std.debug.assert(!self.entity_to_index.contains(entity.id));
 
-            const index = self.count;
-            self.count += 1;
+            const index = self.components.items.len;
 
             try self.entity_to_index.put(allocator, entity.id, index);
             try self.index_to_entity.put(allocator, index, entity.id);
 
-            self.components[index] = component;
+            try self.components.append(allocator, component);
         }
 
         pub fn remove(self: *ArraySelf, allocator: std.mem.Allocator, entity: Entity) !void {
@@ -161,8 +162,8 @@ fn Array(comptime T: type, comptime size: usize) type {
                     entity.id,
                 });
             };
-            const last_index = self.count - 1;
-            self.components[removed_index] = self.components[last_index];
+            const last_index = self.components.items.len - 1;
+            _ = self.components.swapRemove(removed_index);
 
             const last_entity = self.index_to_entity.get(last_index) orelse {
                 std.debug.panic("Failed to entity id for component index: {}.", .{
@@ -174,8 +175,6 @@ fn Array(comptime T: type, comptime size: usize) type {
 
             _ = self.entity_to_index.remove(entity.id);
             _ = self.index_to_entity.remove(last_index);
-
-            self.count -= 1;
         }
 
         pub fn entityDestroyed(self: *ArraySelf, allocator: std.mem.Allocator, entity: Entity) !void {
@@ -186,7 +185,7 @@ fn Array(comptime T: type, comptime size: usize) type {
 
         pub fn getMut(self: *ArraySelf, entity: Entity) ?*T {
             const index = self.entity_to_index.get(entity.id) orelse return null;
-            return &self.components[index];
+            return &self.components.items[index];
         }
 
         fn onDeinit(ptr: *anyopaque, allocator: std.mem.Allocator) void {
