@@ -26,11 +26,14 @@ pub fn init(allocator: std.mem.Allocator) !Self {
     var components: Components = .init();
     try components.register(Transform, allocator);
 
+    var resources: Resources = .init();
+    try resources.add(world.resources.core.Frame, allocator, .{});
+
     return .{
         .entities = .init(allocator),
         .components = components,
         .systems = .init(),
-        .resources = .init(),
+        .resources = resources,
         ._allocator = allocator,
     };
 }

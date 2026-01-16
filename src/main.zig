@@ -167,6 +167,13 @@ pub fn main() !void {
         const delta_time: f32 = @floatCast(current_time - last_time);
         last_time = current_time;
 
+        if (the_world.getResource(world.resources.core.Frame)) |frame| {
+            frame.count += 1;
+            frame.times.current = current_time;
+            frame.times.elapsed += current_time - last_time;
+            frame.times.delta = delta_time;
+        }
+
         glfw.update();
         try updateCamera(&the_world.camera, glfw.primary_window, delta_time);
 
