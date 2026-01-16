@@ -204,7 +204,7 @@ pub fn build(b: *std.Build) !void {
     const zbgfx_module = b.addModule("zbgfx", .{
         .root_source_file = b.path("src/zbgfx.zig"),
     });
-    _ = zbgfx_module; // autofix
+    zbgfx_module.addIncludePath(b.path("libs/bgfx"));
 
     //
     // Shaderc

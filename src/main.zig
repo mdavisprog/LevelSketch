@@ -225,7 +225,7 @@ pub fn main() !void {
 }
 
 fn printBGFXInfo() void {
-    std.log.info("bgfx version is 1.{}.{}", .{ zbgfx.API_VERSION, zbgfx.REV_VERSION });
+    std.log.info("bgfx version is 1.{}.{}", .{ zbgfx.version.api, zbgfx.version.rev });
 
     const renderer = zbgfx.bgfx.getRendererType();
     std.log.info("Renderer type: {s}", .{zbgfx.bgfx.getRendererName(renderer)});
