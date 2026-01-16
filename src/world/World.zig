@@ -8,6 +8,7 @@ const Camera = world.Camera;
 const Entity = world.Entity;
 const Systems = world.Systems;
 const SystemParam = Systems.SystemParam;
+const Transform = world.components.core.Transform;
 const World = world.World;
 
 const Self = @This();
@@ -21,7 +22,7 @@ _allocator: std.mem.Allocator,
 
 pub fn init(allocator: std.mem.Allocator) !Self {
     var components: Components = .init();
-    try components.register(world.components.Transform, allocator);
+    try components.register(Transform, allocator);
 
     return .{
         .entities = .init(allocator),
@@ -141,10 +142,10 @@ test "destroy entity" {
     try std.testing.expectEqual(1, entity2.id);
     try std.testing.expectEqual(2, entity3.id);
 
-    try _world.insertComponent(world.components.Transform, entity2, .{});
+    try _world.insertComponent(Transform, entity2, .{});
 
     try _world.destroyEntity(entity2);
-    try std.testing.expectEqual(null, _world.getComponent(world.components.Transform, entity2));
+    try std.testing.expectEqual(null, _world.getComponent(Transform, entity2));
 
     const entity4 = _world.createEntity();
     try std.testing.expectEqual(1, entity4.id);
@@ -157,7 +158,7 @@ test "add component" {
     defer _world.deinit();
 
     const entity = _world.createEntity();
-    try _world.insertComponent(world.components.Transform, entity, .{
+    try _world.insertComponent(Transform, entity, .{
         .translation = .init(
             1.0,
             2.0,
@@ -166,7 +167,7 @@ test "add component" {
         ),
     });
 
-    const transform = _world.getComponent(world.components.Transform, entity) orelse unreachable;
+    const transform = _world.getComponent(Transform, entity) orelse unreachable;
 
     try std.testing.expectEqual(1.0, transform.translation.x());
     try std.testing.expectEqual(2.0, transform.translation.y());
@@ -181,19 +182,19 @@ test "remove component" {
     defer _world.deinit();
 
     const entity = _world.createEntity();
-    try _world.insertComponent(world.components.Transform, entity, .{
+    try _world.insertComponent(Transform, entity, .{
         .translation = .splat(1.0),
     });
 
-    const transform = _world.getComponent(world.components.Transform, entity) orelse unreachable;
+    const transform = _world.getComponent(Transform, entity) orelse unreachable;
 
     try std.testing.expectEqual(1.0, transform.translation.x());
     try std.testing.expectEqual(1.0, transform.translation.y());
     try std.testing.expectEqual(1.0, transform.translation.z());
     try std.testing.expectEqual(1.0, transform.translation.w());
 
-    try _world.removeComponent(world.components.Transform, entity);
-    try std.testing.expectEqual(null, _world.getComponent(world.components.Transform, entity));
+    try _world.removeComponent(Transform, entity);
+    try std.testing.expectEqual(null, _world.getComponent(Transform, entity));
 }
 
 test "update component" {
@@ -203,17 +204,17 @@ test "update component" {
     defer _world.deinit();
 
     const entity = _world.createEntity();
-    try _world.insertComponent(world.components.Transform, entity, .{
+    try _world.insertComponent(Transform, entity, .{
         .translation = .splat(1.0),
     });
 
     {
-        const transform = _world.getComponent(world.components.Transform, entity) orelse unreachable;
+        const transform = _world.getComponent(Transform, entity) orelse unreachable;
         transform.translation = .init(4.0, 3.0, 2.0, 1.0);
     }
 
     {
-        const transform = _world.getComponent(world.components.Transform, entity) orelse unreachable;
+        const transform = _world.getComponent(Transform, entity) orelse unreachable;
 
         try std.testing.expectEqual(4.0, transform.translation.x());
         try std.testing.expectEqual(3.0, transform.translation.y());
