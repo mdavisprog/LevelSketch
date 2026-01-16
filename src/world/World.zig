@@ -1,5 +1,6 @@
 const Components = @import("Components.zig");
 const Entities = @import("Entities.zig");
+const Resources = @import("Resources.zig");
 const std = @import("std");
 const world = @import("root.zig");
 
@@ -18,6 +19,7 @@ light_orbit: bool = true,
 entities: Entities,
 components: Components,
 systems: Systems,
+resources: Resources,
 _allocator: std.mem.Allocator,
 
 pub fn init(allocator: std.mem.Allocator) !Self {
@@ -28,6 +30,7 @@ pub fn init(allocator: std.mem.Allocator) !Self {
         .entities = .init(allocator),
         .components = components,
         .systems = .init(),
+        .resources = .init(),
         ._allocator = allocator,
     };
 }
@@ -36,6 +39,7 @@ pub fn deinit(self: *Self) void {
     self.entities.deinit(self._allocator);
     self.components.deinit(self._allocator);
     self.systems.deinit(self._allocator);
+    self.resources.deinit(self._allocator);
 }
 
 pub fn createEntity(self: *Self) Entity {
@@ -116,6 +120,14 @@ pub fn unregisterSystem(self: *Self, system: Systems.SystemId) void {
 
 pub fn runSystems(self: *Self, schedule: Systems.Schedule) void {
     self.systems.run(schedule, self);
+}
+
+pub fn registerResource(self: *Self, comptime T: type, resource: T) !void {
+    try self.resources.add(T, self._allocator, resource);
+}
+
+pub fn getResource(self: Self, comptime T: type) ?*T {
+    return self.resources.get(T);
 }
 
 test "add entity" {
@@ -364,5 +376,39 @@ test "entity change systems" {
 
     {
         try std.testing.expectEqual(null, _world.getComponent(ComponentA, entity));
+    }
+}
+
+const TestResource = struct {
+    value: u32 = 0,
+};
+
+fn systemResource(param: SystemParam) void {
+    const resource = param.world.getResource(TestResource) orelse unreachable;
+    resource.value += 5;
+}
+
+test "resource" {
+    const allocator = std.testing.allocator;
+
+    var _world: World = try .init(allocator);
+    defer _world.deinit();
+
+    _ = try _world.registerSystem(&.{}, .update, systemResource);
+
+    try _world.registerResource(TestResource, .{
+        .value = 5,
+    });
+
+    {
+        const resource = _world.getResource(TestResource) orelse unreachable;
+        try std.testing.expectEqual(5, resource.value);
+    }
+
+    _world.runSystems(.update);
+
+    {
+        const resource = _world.getResource(TestResource) orelse unreachable;
+        try std.testing.expectEqual(10, resource.value);
     }
 }
