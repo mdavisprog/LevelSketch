@@ -3,31 +3,56 @@ const render = @import("root.zig");
 const std = @import("std");
 
 const Model = io.obj.Model;
-
 const Phong = render.materials.Phong;
+const Program = render.shaders.Program;
 const RenderBuffer = render.RenderBuffer;
 const Renderer = render.Renderer;
 const Texture = render.Texture;
 const Vertex = render.Vertex;
-const VertexBuffer16 = render.VertexBuffer16;
 const VertexBuffer32 = render.VertexBuffer32;
 
+/// Manages all mesh resources.
 const Self = @This();
-const VisitMap = std.AutoHashMap(Model.Face.Element, usize);
 
 pub const Error = error{
     InvalidModel,
+    MeshNotFound,
 };
 
-buffer: RenderBuffer,
-phong: Phong = .{},
+/// Identifier for a loaded mesh.
+pub const Id = u32;
+pub const invalid: Id = std.math.maxInt(Id);
 
-pub fn init(renderer: *Renderer, model: Model) !Self {
+/// Holds the handles and material parameters for a single mesh.
+pub const Mesh = struct {
+    buffer: RenderBuffer = .{},
+    phong: Phong = .{},
+};
+
+pub const MeshMap = std.AutoHashMapUnmanaged(Id, Mesh);
+const VisitMap = std.AutoHashMap(Model.Face.Element, usize);
+
+_map: MeshMap = .empty,
+_id: Id = 0,
+
+pub fn init() Self {
+    return .{};
+}
+
+pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
+    var it = self._map.valueIterator();
+    while (it.next()) |mesh| {
+        mesh.buffer.deinit();
+    }
+    self._map.deinit(allocator);
+}
+
+pub fn loadFromModel(self: *Self, renderer: *Renderer, model: Model) !Id {
     const vertex_buffer = try convert(renderer.allocator, model);
-    const buffer = try renderer.uploadVertexBuffer(vertex_buffer);
+    var buffer = try renderer.uploadVertexBuffer(vertex_buffer);
     errdefer buffer.deinit();
 
-    var result: Self = .{
+    var result: Mesh = .{
         .buffer = buffer,
     };
 
@@ -40,21 +65,32 @@ pub fn init(renderer: *Renderer, model: Model) !Self {
         result.phong.shininess = material.specular_exponent;
     }
 
-    return result;
+    const id = self._id;
+    try self._map.put(renderer.allocator, id, result);
+    self._id += 1;
+
+    return id;
 }
 
-pub fn initWithBuffer(
-    renderer: *Renderer,
-    buffer: anytype,
-) !Self {
-    const mesh_buffer = try renderer.uploadVertexBuffer(buffer);
-    return .{
-        .buffer = mesh_buffer,
-    };
+pub fn loadFromBuffer(self: *Self, renderer: *Renderer, buffer: anytype) !Id {
+    const render_buffer = try renderer.uploadVertexBuffer(buffer);
+
+    const id = self._id;
+    try self._map.put(renderer.allocator, id, .{
+        .buffer = render_buffer,
+    });
+    self._id += 1;
+
+    return id;
 }
 
-pub fn deinit(self: *Self) void {
-    self.buffer.deinit();
+pub fn bind(self: Self, mesh: Id, shader: ?*const Program) !void {
+    const _mesh = self._map.get(mesh) orelse return Error.MeshNotFound;
+    _mesh.buffer.bind(Renderer.world_state);
+
+    if (shader) |_shader| {
+        try _mesh.phong.bind(_shader);
+    }
 }
 
 fn convert(allocator: std.mem.Allocator, model: Model) !VertexBuffer32 {

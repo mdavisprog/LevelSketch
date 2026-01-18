@@ -1,15 +1,17 @@
 const core = @import("core");
+const io = @import("io");
 const render = @import("root.zig");
 const std = @import("std");
 const zbgfx = @import("zbgfx");
 
-const Vec2f = core.math.Vec2f;
-
 const Fonts = render.Fonts;
 const Programs = render.shaders.Programs;
 const MemFactory = render.MemFactory;
+const Meshes = render.Meshes;
+const Model = io.obj.Model;
 const RenderBuffer = render.RenderBuffer;
 const Textures = render.Textures;
+const Vec2f = core.math.Vec2f;
 const VertexBuffer16 = render.VertexBuffer16;
 const VertexBuffer32 = render.VertexBuffer32;
 const VertexBufferUploads16 = render.VertexBufferUploads16;
@@ -36,6 +38,7 @@ mem_factory: MemFactory,
 textures: Textures,
 programs: Programs,
 fonts: *Fonts,
+meshes: Meshes,
 framebuffer_size: Vec2f = .zero,
 allocator: std.mem.Allocator,
 _uploads16: VertexBufferUploads16,
@@ -51,6 +54,7 @@ pub fn init(allocator: std.mem.Allocator) !Self {
         .textures = textures,
         .programs = programs,
         .fonts = fonts,
+        .meshes = .init(),
         .allocator = allocator,
         ._uploads16 = try .init(allocator),
         ._uploads32 = try .init(allocator),
@@ -58,7 +62,8 @@ pub fn init(allocator: std.mem.Allocator) !Self {
 }
 
 pub fn deinit(self: *Self) void {
-    self.fonts.*.deinit(self.allocator);
+    self.meshes.deinit(self.allocator);
+    self.fonts.deinit(self.allocator);
     self.allocator.destroy(self.fonts);
 
     self.programs.deinit(self.allocator);
@@ -87,4 +92,12 @@ pub fn uploadVertexBuffer(self: *Self, buffer: anytype) !RenderBuffer {
             .{@typeName(BufferType)},
         ));
     }
+}
+
+pub fn loadMeshFromModel(self: *Self, model: Model) !Meshes.Id {
+    return self.meshes.loadFromModel(self, model);
+}
+
+pub fn loadMeshFromBuffer(self: *Self, buffer: anytype) !Meshes.Id {
+    return self.meshes.loadFromBuffer(self, buffer);
 }

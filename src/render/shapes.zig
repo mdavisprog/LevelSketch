@@ -3,13 +3,12 @@ const render = @import("root.zig");
 const std = @import("std");
 const vertex_buffer = @import("vertex_buffer.zig");
 
+const Meshes = render.Meshes;
 const Rectf = core.math.Rectf;
-const Vec2f = core.math.Vec2f;
-const Vec = core.math.Vec;
-
-const Mesh = render.Mesh;
 const Renderer = render.Renderer;
 const UIVertex = render.UIVertex;
+const Vec = core.math.Vec;
+const Vec2f = core.math.Vec2f;
 const Vertex = render.Vertex;
 const VertexBuffer = vertex_buffer.VertexBuffer;
 
@@ -118,9 +117,11 @@ pub fn cube(
     renderer: *Renderer,
     half_size: Vec,
     color: u32,
-) !Mesh {
-    const buffer = try cubeBuffer(IndexType, renderer.allocator, half_size, color);
-    return try Mesh.initWithBuffer(renderer, buffer);
+) !Meshes.Id {
+    var buffer = try cubeBuffer(IndexType, renderer.allocator, half_size, color);
+    errdefer buffer.deinit(renderer.allocator);
+
+    return renderer.loadMeshFromBuffer(buffer);
 }
 
 pub fn cubeBuffer(
@@ -132,7 +133,7 @@ pub fn cubeBuffer(
     const min = half_size.mul(-1.0);
     const max = half_size;
 
-    // TODO: Add Normals. Will need 24 verts for this.
+    // TODO: Add UVs.
     const vertices = [_]Vertex{
         // Front face
         .init(.init3(min.x(), max.y(), min.z()), .init3(0.0, 0.0, -1.0), .init2(0.0, 0.0), color),

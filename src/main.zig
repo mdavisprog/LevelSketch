@@ -13,20 +13,16 @@ const world = @import("world");
 const zbgfx = @import("zbgfx");
 const zglfw = @import("zglfw");
 
+const Camera = world.Camera;
 const commandline = core.commandline;
-const Mat = core.math.Mat;
-const Vec = core.math.Vec;
-
 const Cursor = gui.Cursor;
 const GUI = gui.GUI;
-
+const Mat = core.math.Mat;
+const Meshes = render.Meshes;
 const Model = io.obj.Model;
-
-const Mesh = render.Mesh;
 const Renderer = render.Renderer;
+const Vec = core.math.Vec;
 const View = render.View;
-
-const Camera = world.Camera;
 const World = world.World;
 
 var camera_rotating = false;
@@ -91,14 +87,6 @@ pub fn main() !void {
 
     renderer.framebuffer_size = framebuffer_size.to(f32);
 
-    const meshes = try loadCommandLineModels(renderer);
-    defer {
-        for (meshes) |*mesh| {
-            mesh.deinit();
-        }
-        renderer.allocator.free(meshes);
-    }
-
     var shader_program = try renderer.programs.build(
         allocator,
         "common",
@@ -152,13 +140,15 @@ pub fn main() !void {
 
     var cube_yaw: f32 = 0.0;
     var cube_time: f32 = 0.0;
-    var cube = try render.shapes.cube(u16, renderer, .splat(0.2), 0xFFFFFFFF);
-    defer cube.deinit();
+    const cube = try render.shapes.cube(u16, renderer, .splat(0.2), 0xFFFFFFFF);
     const model_transform: Mat = .identity;
 
     var the_world: World = try .init(allocator);
     defer the_world.deinit();
     the_world.camera.position = .init(0.0, 0.0, -3.0, 1.0);
+
+    const meshes = try loadCommandLineModels(renderer);
+    defer allocator.free(meshes);
 
     the_world.runSystems(.startup);
 
@@ -208,15 +198,14 @@ pub fn main() !void {
         const cube_transform = Mat.initTranslation(light.position);
         try light.bindPosition(phong_shader);
         _ = zbgfx.bgfx.setTransform(&cube_transform.toArray(), 1);
-        cube.buffer.bind(Renderer.world_state);
+        try renderer.meshes.bind(cube, null);
         zbgfx.bgfx.submit(view_world.id, shader_program.handle.data, 0, 0);
 
         const normal_mat = model_transform.inverse().transpose();
         _ = zbgfx.bgfx.setTransform(&model_transform.toArray(), 1);
         u_normal_mat.setMat(normal_mat);
         for (meshes) |mesh| {
-            mesh.buffer.bind(Renderer.world_state);
-            try mesh.phong.bind(phong_shader);
+            try renderer.meshes.bind(mesh, phong_shader);
             zbgfx.bgfx.submit(view_world.id, phong_shader.handle.data, 0, 0);
         }
 
@@ -281,10 +270,10 @@ fn updateCamera(camera: *Camera, window: glfw.Window, delta_time: f32) !void {
     }
 }
 
-fn loadCommandLineModels(renderer: *Renderer) ![]Mesh {
+fn loadCommandLineModels(renderer: *Renderer) ![]Meshes.Id {
     const allocator = renderer.allocator;
 
-    var meshes = try std.ArrayList(Mesh).initCapacity(allocator, 0);
+    var meshes = try std.ArrayList(Meshes.Id).initCapacity(allocator, 0);
     defer meshes.deinit(allocator);
 
     const file_names = try commandline.getArgValues(allocator, "--model") orelse
@@ -301,7 +290,7 @@ fn loadCommandLineModels(renderer: *Renderer) ![]Mesh {
         var model = try io.obj.Model.loadFile(allocator, path);
         defer model.deinit(allocator);
 
-        const mesh = try Mesh.init(renderer, model);
+        const mesh = try renderer.loadMeshFromModel(model);
         try meshes.append(allocator, mesh);
     }
 
