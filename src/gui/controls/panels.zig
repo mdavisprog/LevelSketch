@@ -65,7 +65,7 @@ fn titleBar(id: clay.ElementId, title: []const u8, state: *State) void {
     });
     {
         const config = clay.storeTextElementConfig(.{
-            .font_id = state.theme.font.id,
+            .font_id = @intCast(state.theme.font.handle.id),
             .font_size = state.theme.font_sizes.header,
             .text_alignment = .center,
         });

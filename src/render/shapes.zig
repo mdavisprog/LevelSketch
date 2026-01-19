@@ -117,7 +117,7 @@ pub fn cube(
     renderer: *Renderer,
     half_size: Vec,
     color: u32,
-) !Meshes.Id {
+) !Meshes.Mesh.Handle {
     var buffer = try cubeBuffer(IndexType, renderer.allocator, half_size, color);
     errdefer buffer.deinit(renderer.allocator);
 

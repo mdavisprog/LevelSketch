@@ -270,10 +270,10 @@ fn updateCamera(camera: *Camera, window: glfw.Window, delta_time: f32) !void {
     }
 }
 
-fn loadCommandLineModels(renderer: *Renderer) ![]Meshes.Id {
+fn loadCommandLineModels(renderer: *Renderer) ![]Meshes.Mesh.Handle {
     const allocator = renderer.allocator;
 
-    var meshes = try std.ArrayList(Meshes.Id).initCapacity(allocator, 0);
+    var meshes = try std.ArrayList(Meshes.Mesh.Handle).initCapacity(allocator, 0);
     defer meshes.deinit(allocator);
 
     const file_names = try commandline.getArgValues(allocator, "--model") orelse

@@ -76,7 +76,7 @@ pub fn check(
 
         // Label
         const config = clay.storeTextElementConfig(.{
-            .font_id = state.theme.font.id,
+            .font_id = @intCast(state.theme.font.handle.id),
             .font_size = state.theme.font_sizes.normal,
         });
         clay.openTextElement(text, config);

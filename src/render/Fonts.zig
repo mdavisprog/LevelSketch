@@ -8,12 +8,11 @@ const Renderer = render.Renderer;
 const Self = @This();
 
 pub const FontMap = std.StringHashMap(*Font);
-pub const FontIdMap = std.AutoHashMap(u32, *Font);
+pub const FontHandleMap = std.AutoHashMap(Font.Handle, *Font);
 
 fonts: FontMap,
-default: Font.Id = Font.invalid_id,
-_font_ids: FontIdMap,
-_id: Font.Id = 1,
+default: Font.Handle = Font.Handle.invalid,
+_font_handles: FontHandleMap,
 
 /// Caller is responsible for returned memory.
 pub fn toKey(allocator: std.mem.Allocator, path: []const u8, size: f32) ![]u8 {
@@ -26,17 +25,17 @@ pub fn toKey(allocator: std.mem.Allocator, path: []const u8, size: f32) ![]u8 {
 
 pub fn init(gpa: std.mem.Allocator) !*Self {
     const fonts = FontMap.init(gpa);
-    const font_ids = FontIdMap.init(gpa);
+    const font_handles = FontHandleMap.init(gpa);
     const result = try gpa.create(Self);
     result.* = .{
         .fonts = fonts,
-        ._font_ids = font_ids,
+        ._font_handles = font_handles,
     };
     return result;
 }
 
 pub fn deinit(self: *Self, gpa: std.mem.Allocator) void {
-    self._font_ids.deinit();
+    self._font_handles.deinit();
 
     var it = self.fonts.iterator();
     while (it.next()) |font| {
@@ -67,19 +66,18 @@ pub fn loadFile(
     const key = try toKey(renderer.allocator, path, size);
     errdefer renderer.allocator.free(key);
 
-    font.*.id = self._id;
-    self.*._id += 1;
+    font.handle = .generate();
 
     try self.fonts.put(key, font);
-    try self._font_ids.put(font.id, font);
+    try self._font_handles.put(font.handle, font);
 
-    if (self.default == Font.invalid_id) {
-        self.default = font.id;
+    if (!self.default.isValid()) {
+        self.default = font.handle;
     }
 
     return font;
 }
 
-pub fn getById(self: Self, id: Font.Id) ?*Font {
-    return self._font_ids.get(id);
+pub fn getByHandle(self: Self, handle: Font.Handle) ?*Font {
+    return self._font_handles.get(handle);
 }

@@ -18,7 +18,7 @@ const FontInfo = stb.truetype.FontInfo;
 
 const Self = @This();
 
-pub const Id = u16;
+pub const Handle = render.Handle(Self);
 
 pub const Range = struct {
     min: u32,
@@ -59,9 +59,7 @@ pub const Type = enum {
     sdf,
 };
 
-pub const invalid_id: Id = 0;
-
-id: Id = invalid_id,
+handle: Handle = .invalid,
 size: f32 = 0.0,
 scale: f32 = 1.0,
 space_advance_width: f32 = 0.0,

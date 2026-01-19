@@ -43,6 +43,6 @@ pub fn setMat(self: Self, value: Mat) void {
 }
 
 pub fn setTexture(self: Self, texture: Texture, stage: u8) void {
-    const handle = texture.handle orelse return;
+    const handle = texture.bgfx_handle orelse return;
     zbgfx.bgfx.setTexture(stage, self.handle, handle, texture.flags);
 }

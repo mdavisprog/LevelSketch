@@ -19,21 +19,18 @@ pub const Error = error{
     MeshNotFound,
 };
 
-/// Identifier for a loaded mesh.
-pub const Id = u32;
-pub const invalid: Id = std.math.maxInt(Id);
-
 /// Holds the handles and material parameters for a single mesh.
 pub const Mesh = struct {
+    pub const Handle = render.Handle(Mesh);
+
     buffer: RenderBuffer = .{},
     phong: Phong = .{},
 };
 
-pub const MeshMap = std.AutoHashMapUnmanaged(Id, Mesh);
+pub const MeshMap = std.AutoHashMapUnmanaged(Mesh.Handle, Mesh);
 const VisitMap = std.AutoHashMap(Model.Face.Element, usize);
 
 _map: MeshMap = .empty,
-_id: Id = 0,
 
 pub fn init() Self {
     return .{};
@@ -47,7 +44,7 @@ pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
     self._map.deinit(allocator);
 }
 
-pub fn loadFromModel(self: *Self, renderer: *Renderer, model: Model) !Id {
+pub fn loadFromModel(self: *Self, renderer: *Renderer, model: Model) !Mesh.Handle {
     const vertex_buffer = try convert(renderer.allocator, model);
     var buffer = try renderer.uploadVertexBuffer(vertex_buffer);
     errdefer buffer.deinit();
@@ -65,26 +62,24 @@ pub fn loadFromModel(self: *Self, renderer: *Renderer, model: Model) !Id {
         result.phong.shininess = material.specular_exponent;
     }
 
-    const id = self._id;
-    try self._map.put(renderer.allocator, id, result);
-    self._id += 1;
+    const handle: Mesh.Handle = .generate();
+    try self._map.put(renderer.allocator, handle, result);
 
-    return id;
+    return handle;
 }
 
-pub fn loadFromBuffer(self: *Self, renderer: *Renderer, buffer: anytype) !Id {
+pub fn loadFromBuffer(self: *Self, renderer: *Renderer, buffer: anytype) !Mesh.Handle {
     const render_buffer = try renderer.uploadVertexBuffer(buffer);
 
-    const id = self._id;
-    try self._map.put(renderer.allocator, id, .{
+    const handle: Mesh.Handle = .generate();
+    try self._map.put(renderer.allocator, handle, .{
         .buffer = render_buffer,
     });
-    self._id += 1;
 
-    return id;
+    return handle;
 }
 
-pub fn bind(self: Self, mesh: Id, shader: ?*const Program) !void {
+pub fn bind(self: Self, mesh: Mesh.Handle, shader: ?*const Program) !void {
     const _mesh = self._map.get(mesh) orelse return Error.MeshNotFound;
     _mesh.buffer.bind(Renderer.world_state);
 

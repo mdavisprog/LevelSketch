@@ -94,10 +94,10 @@ pub fn uploadVertexBuffer(self: *Self, buffer: anytype) !RenderBuffer {
     }
 }
 
-pub fn loadMeshFromModel(self: *Self, model: Model) !Meshes.Id {
+pub fn loadMeshFromModel(self: *Self, model: Model) !Meshes.Mesh.Handle {
     return self.meshes.loadFromModel(self, model);
 }
 
-pub fn loadMeshFromBuffer(self: *Self, buffer: anytype) !Meshes.Id {
+pub fn loadMeshFromBuffer(self: *Self, buffer: anytype) !Meshes.Mesh.Handle {
     return self.meshes.loadFromBuffer(self, buffer);
 }

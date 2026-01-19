@@ -45,7 +45,7 @@ fn onMeasureText(
     user_data: ?*anyopaque,
 ) callconv(.c) clay.Dimensions {
     const fonts: *Fonts = @ptrCast(@alignCast(user_data.?));
-    const font = fonts.getById(config.*.font_id);
+    const font = fonts.getByHandle(.init(config.*.font_id));
     const size: Vec2f = blk: {
         if (font) |f| {
             f.scaleToSize(@floatFromInt(config.*.font_size));
@@ -107,7 +107,7 @@ fn renderCommand(
         .text => {
             const text_data = render_command.render_data.text;
             const color = hexColor(text_data.text_color);
-            const maybe_font = renderer.fonts.getById(text_data.font_id);
+            const maybe_font = renderer.fonts.getByHandle(.init(text_data.font_id));
 
             var buffer = blk: {
                 if (maybe_font) |font| {
@@ -141,7 +141,7 @@ fn renderCommand(
             const color = hexColor(render_command.render_data.image.background_color);
             const image_data = render_command.render_data.image.image_data orelse return;
             const texture_id = @intFromPtr(image_data);
-            const texture = renderer.textures.getById(@intCast(texture_id)) orelse return;
+            const texture = renderer.textures.getByHandle(.init(@intCast(texture_id))) orelse return;
 
             var quad = if (corner_radius.isZero())
                 try render.shapes.quad(u16, renderer.allocator, rect, color.data)

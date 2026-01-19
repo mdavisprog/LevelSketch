@@ -13,7 +13,6 @@ pub const Error = error{
 
 collection: std.ArrayList(Texture),
 default: Texture = .{},
-_id: Texture.Id = 1,
 _uploads: std.ArrayList(*Upload),
 
 pub fn init(factory: *MemFactory) !Self {
@@ -34,10 +33,8 @@ pub fn init(factory: *MemFactory) !Self {
 }
 
 pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
-    for (self.collection.items) |texture| {
-        if (texture.handle) |handle| {
-            zbgfx.bgfx.destroyTexture(handle);
-        }
+    for (self.collection.items) |*texture| {
+        texture.deinit();
     }
     self.collection.deinit(allocator);
 
@@ -114,9 +111,9 @@ pub fn loadStaticBuffer(
     );
 }
 
-pub fn getById(self: Self, id: Texture.Id) ?Texture {
+pub fn getByHandle(self: Self, handle: Texture.Handle) ?Texture {
     for (self.collection.items) |item| {
-        if (item.id == id) {
+        if (item.handle.eql(handle)) {
             return item;
         }
     }
@@ -134,18 +131,16 @@ fn load(
     height: u16,
     format: Texture.Format,
 ) !Texture {
-    const id = self._id;
-    self._id += 1;
-
+    const handle: Texture.Handle = .generate();
     const slice = buffer[0..length];
 
     const mem = blk: {
         switch (buffer_type) {
             .stb_image, .buffer => {
                 const upload = try mem_factory.allocator.create(Upload);
-                upload.*.id = id;
-                upload.*.textures = self;
-                upload.*.buffer_type = buffer_type;
+                upload.handle = handle;
+                upload.textures = self;
+                upload.buffer_type = buffer_type;
 
                 try self._uploads.append(mem_factory.allocator, upload);
                 break :blk try mem_factory.create(
@@ -165,7 +160,7 @@ fn load(
         .rgba8 => .RGBA8,
     };
 
-    const handle = zbgfx.bgfx.createTexture2D(
+    const bgfx_handle = zbgfx.bgfx.createTexture2D(
         width,
         height,
         false,
@@ -176,8 +171,8 @@ fn load(
     );
 
     const result = Texture{
-        .id = id,
         .handle = handle,
+        .bgfx_handle = bgfx_handle,
         .width = width,
         .height = height,
         .format = format,
@@ -188,9 +183,9 @@ fn load(
 }
 
 /// Called on the main thread. No need to worry about a mutex.
-fn onUploaded(self: *Self, allocator: std.mem.Allocator, id: Texture.Id) void {
+fn onUploaded(self: *Self, allocator: std.mem.Allocator, handle: Texture.Handle) void {
     for (self._uploads.items, 0..) |upload, i| {
-        if (upload.id == id) {
+        if (upload.handle.eql(handle)) {
             const removed = self._uploads.swapRemove(i);
             allocator.destroy(removed);
             break;
@@ -211,7 +206,7 @@ fn onUploadedCallback(result: MemFactory.OnUploadedResult) void {
         .static_buffer => {},
     }
 
-    upload.textures.onUploaded(result.allocator, upload.id);
+    upload.textures.onUploaded(result.allocator, upload.handle);
 }
 
 const BufferType = enum {
@@ -222,6 +217,6 @@ const BufferType = enum {
 
 const Upload = struct {
     textures: *Self,
-    id: Texture.Id,
+    handle: Texture.Handle,
     buffer_type: BufferType,
 };

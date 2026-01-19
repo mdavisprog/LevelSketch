@@ -32,7 +32,7 @@ pub fn imageSized(
             .sizing = .fixed(size.x, size.y),
         },
         .image = .{
-            .image_data = @ptrFromInt(texture.id),
+            .image_data = @ptrFromInt(texture.handle.id),
         },
         .background_color = color,
     });
