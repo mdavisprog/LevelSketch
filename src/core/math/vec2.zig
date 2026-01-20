@@ -127,5 +127,10 @@ pub fn Vec2(comptime T: type) type {
                 return .init2(@floatFromInt(self.x), @floatFromInt(self.y));
             }
         }
+
+        pub fn copy(self: *Self, other: Self) void {
+            self.x = other.x;
+            self.y = other.y;
+        }
     };
 }

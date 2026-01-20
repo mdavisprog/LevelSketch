@@ -37,6 +37,11 @@ pub fn build(b: *std.Build) !void {
     try builder.addModule("world", "src/world/root.zig", &.{
         "core",
     });
+    try builder.addModule("platform", "src/platform/root.zig", &.{
+        "core",
+        "world",
+        "zglfw",
+    });
     try builder.addModule("render", "src/render/root.zig", &.{
         "core",
         "io",
