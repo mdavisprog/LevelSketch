@@ -52,7 +52,7 @@ pub fn run(
     for (self._commands.items) |command| {
         try command.texture.bind(command.sampler.handle, command.texture_flags);
         command.buffer.bind(command.state);
-        zbgfx.bgfx.submit(view.id, command.shader.handle.data, 255, 0);
+        zbgfx.bgfx.submit(view.id, command.shader.bgfx_handle, 255, 0);
     }
 
     view.touch();

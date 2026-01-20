@@ -30,8 +30,6 @@ const id_quit: clay.ElementId = clay.idc("QuitButton");
 
 view: View,
 font: *Font,
-ui_shader: *Program,
-text_shader: *Program,
 clay_context: ClayContext,
 _clay_layout: ClayLayout,
 _commands: Commands,
@@ -52,7 +50,7 @@ pub fn init(renderer: *Renderer) !Self {
         .sdf,
     );
 
-    const ui_shader: *Program = try renderer.programs.build(
+    _ = try renderer.programs.buildWithName(
         renderer.allocator,
         "ui",
         .{
@@ -62,7 +60,7 @@ pub fn init(renderer: *Renderer) !Self {
         },
     );
 
-    const text_shader: *Program = try renderer.programs.build(
+    _ = try renderer.programs.buildWithName(
         renderer.allocator,
         "text",
         .{
@@ -79,8 +77,6 @@ pub fn init(renderer: *Renderer) !Self {
     return .{
         .view = view,
         .font = font,
-        .ui_shader = ui_shader,
-        .text_shader = text_shader,
         ._commands = try Commands.init(renderer.mem_factory.allocator),
         .clay_context = clay_context,
         ._clay_layout = .init(renderer),

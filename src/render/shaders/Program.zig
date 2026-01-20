@@ -5,12 +5,12 @@ const std = @import("std");
 const shaders = @import("root.zig");
 const zbgfx = @import("zbgfx");
 
-const Uniform = shaders.Uniform;
-
 const Texture = render.Texture;
+const Uniform = shaders.Uniform;
 
 const Self = @This();
 
+pub const Handle = render.Handle(Self);
 pub const UniformMap = std.StringHashMap(Uniform);
 
 pub const Paths = struct {
@@ -19,23 +19,20 @@ pub const Paths = struct {
     vertex_file_name: []const u8,
 };
 
-pub const Handle = struct {
-    data: zbgfx.bgfx.ProgramHandle = .{ .idx = 0 },
-};
-
 pub const Error = error{
     UniformNotFound,
 };
 
 const SHADER_PATH = "assets/shaders";
 
-handle: Handle = .{},
+handle: Handle = .invalid,
+bgfx_handle: zbgfx.bgfx.ProgramHandle = .{ .idx = 0 },
 uniforms: UniformMap,
 
-pub fn init(gpa: std.mem.Allocator) !*Self {
-    const result = try gpa.create(Self);
-    result.*.uniforms = UniformMap.init(gpa);
-    return result;
+pub fn init(allocator: std.mem.Allocator) Self {
+    return .{
+        .uniforms = .init(allocator),
+    };
 }
 
 pub fn deinit(self: *Self) void {
@@ -45,7 +42,7 @@ pub fn deinit(self: *Self) void {
     }
 
     self.uniforms.deinit();
-    zbgfx.bgfx.destroyProgram(self.handle.data);
+    zbgfx.bgfx.destroyProgram(self.bgfx_handle);
 }
 
 pub fn build(self: *Self, paths: Paths) !void {
@@ -106,7 +103,7 @@ pub fn build(self: *Self, paths: Paths) !void {
         @intCast(vertex_compiled.len),
     ));
 
-    self.handle.data = zbgfx.bgfx.createProgram(vertex_shader, fragment_shader, false);
+    self.bgfx_handle = zbgfx.bgfx.createProgram(vertex_shader, fragment_shader, false);
 
     try getUniforms(&self.uniforms, fragment_shader);
     try getUniforms(&self.uniforms, vertex_shader);

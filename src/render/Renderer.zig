@@ -5,6 +5,7 @@ const std = @import("std");
 const zbgfx = @import("zbgfx");
 
 const Fonts = render.Fonts;
+const Program = render.shaders.Program;
 const Programs = render.shaders.Programs;
 const MemFactory = render.MemFactory;
 const Meshes = render.Meshes;
@@ -47,8 +48,29 @@ _uploads32: VertexBufferUploads32,
 pub fn init(allocator: std.mem.Allocator) !Self {
     var mem_factory = try MemFactory.init(allocator);
     const textures = try Textures.init(&mem_factory);
-    const programs: Programs = .init(allocator);
+    var programs: Programs = .init();
     const fonts: *Fonts = try .init(allocator);
+
+    _ = try programs.buildWithName(
+        allocator,
+        "common",
+        .{
+            .varying_file_name = "common/def.sc",
+            .fragment_file_name = "common/fragment.sc",
+            .vertex_file_name = "common/vertex.sc",
+        },
+    );
+
+    _ = try programs.buildWithName(
+        allocator,
+        "phong",
+        .{
+            .varying_file_name = "phong/def.sc",
+            .fragment_file_name = "phong/fragment.sc",
+            .vertex_file_name = "phong/vertex.sc",
+        },
+    );
+
     return .{
         .mem_factory = mem_factory,
         .textures = textures,

@@ -7,49 +7,73 @@ const Self = @This();
 
 pub const Error = error{
     ProgramAlreadyExists,
-    ProgramNotFound,
 };
 
-const ProgramMap = std.StringHashMap(*Program);
+const ProgramMap = std.AutoHashMapUnmanaged(Program.Handle, *Program);
+const ProgramNameMap = std.StringHashMapUnmanaged(Program.Handle);
 
-programs: ProgramMap,
+programs: ProgramMap = .empty,
+program_names: ProgramNameMap = .empty,
 
-pub fn init(gpa: std.mem.Allocator) Self {
-    const programs = ProgramMap.init(gpa);
-    return Self{
-        .programs = programs,
-    };
+pub fn init() Self {
+    return .{};
 }
 
-pub fn deinit(self: *Self, gpa: std.mem.Allocator) void {
+pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
+    var names = self.program_names.keyIterator();
+    while (names.next()) |name| {
+        allocator.free(name.*);
+    }
+    self.program_names.deinit(allocator);
+
     var it = self.programs.iterator();
-    while (it.next()) |item| {
-        gpa.free(item.key_ptr.*);
-
-        item.value_ptr.*.deinit();
-        gpa.destroy(item.value_ptr.*);
+    while (it.next()) |entry| {
+        entry.value_ptr.*.deinit();
+        allocator.destroy(entry.value_ptr.*);
     }
-
-    self.programs.deinit();
+    self.programs.deinit(allocator);
 }
 
-pub fn build(self: *Self, gpa: std.mem.Allocator, name: []const u8, paths: Program.Paths) !*Program {
-    if (self.programs.contains(name)) {
-        return Error.ProgramAlreadyExists;
-    }
+pub fn build(
+    self: *Self,
+    allocator: std.mem.Allocator,
+    paths: Program.Paths,
+) !Program.Handle {
+    const program: *Program = try allocator.create(Program);
+    program.* = .init(allocator);
+    try program.build(paths);
 
-    const program: *Program = try .init(gpa);
-    try program.*.build(paths);
+    const handle: Program.Handle = .generate();
+    try self.programs.put(allocator, handle, program);
 
-    try self.programs.put(try gpa.dupe(u8, name), program);
-
-    return program;
+    return handle;
 }
 
-pub fn get(self: Self, name: []const u8) !*Program {
-    if (self.programs.get(name)) |program| {
-        return program;
+pub fn buildWithName(
+    self: *Self,
+    allocator: std.mem.Allocator,
+    name: []const u8,
+    paths: Program.Paths,
+) !Program.Handle {
+    const program: *Program = try allocator.create(Program);
+    program.* = .init(allocator);
+    try program.build(paths);
+
+    const handle: Program.Handle = .generate();
+    try self.programs.put(allocator, handle, program);
+    try self.program_names.put(allocator, try allocator.dupe(u8, name), handle);
+
+    return handle;
+}
+
+pub fn get(self: Self, handle: Program.Handle) ?*Program {
+    return self.programs.get(handle);
+}
+
+pub fn getByName(self: Self, name: []const u8) ?*Program {
+    if (self.program_names.get(name)) |handle| {
+        return self.programs.get(handle);
     }
 
-    return Error.ProgramNotFound;
+    return null;
 }

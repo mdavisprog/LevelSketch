@@ -86,37 +86,20 @@ pub fn main() !void {
     }
 
     renderer.framebuffer_size = framebuffer_size.to(f32);
+    const common = renderer.programs.getByName("common").?;
+    const phong = renderer.programs.getByName("phong").?;
 
-    var shader_program = try renderer.programs.build(
-        allocator,
-        "common",
-        .{
-            .varying_file_name = "common/def.sc",
-            .fragment_file_name = "common/fragment.sc",
-            .vertex_file_name = "common/vertex.sc",
-        },
-    );
-
-    const phong_shader = try renderer.programs.build(
-        allocator,
-        "phong",
-        .{
-            .varying_file_name = "phong/def.sc",
-            .fragment_file_name = "phong/fragment.sc",
-            .vertex_file_name = "phong/vertex.sc",
-        },
-    );
-    const u_normal_mat = try phong_shader.getUniform("u_normal_mat");
-    const u_view_pos = try phong_shader.getUniform("u_view_pos");
+    const u_normal_mat = try phong.getUniform("u_normal_mat");
+    const u_view_pos = try phong.getUniform("u_view_pos");
 
     var light: render.materials.Light = .{
         .ambient = .init(0.2, 0.2, 0.2, 1.0),
         .diffuse = .init(0.5, 0.5, 0.5, 1.0),
         .specular = .splat(1.0),
     };
-    try light.bind(phong_shader);
+    try light.bind(phong);
 
-    const sampler_tex_color = try shader_program.getUniform("s_tex_color");
+    const sampler_tex_color = try common.getUniform("s_tex_color");
 
     zbgfx.bgfx.setDebug(zbgfx.bgfx.DebugFlags_None);
     zbgfx.bgfx.reset(
@@ -196,17 +179,17 @@ pub fn main() !void {
             light.position.setY(cube_sin);
         }
         const cube_transform = Mat.initTranslation(light.position);
-        try light.bindPosition(phong_shader);
+        try light.bindPosition(phong);
         _ = zbgfx.bgfx.setTransform(&cube_transform.toArray(), 1);
         try renderer.meshes.bind(cube, null);
-        zbgfx.bgfx.submit(view_world.id, shader_program.handle.data, 0, 0);
+        zbgfx.bgfx.submit(view_world.id, common.bgfx_handle, 0, 0);
 
         const normal_mat = model_transform.inverse().transpose();
         _ = zbgfx.bgfx.setTransform(&model_transform.toArray(), 1);
         u_normal_mat.setMat(normal_mat);
         for (meshes) |mesh| {
-            try renderer.meshes.bind(mesh, phong_shader);
-            zbgfx.bgfx.submit(view_world.id, phong_shader.handle.data, 0, 0);
+            try renderer.meshes.bind(mesh, phong);
+            zbgfx.bgfx.submit(view_world.id, phong.bgfx_handle, 0, 0);
         }
 
         view_world.touch();

@@ -4,15 +4,14 @@ const render = @import("render");
 const std = @import("std");
 const zbgfx = @import("zbgfx");
 
-const HexColor = core.math.HexColor;
-const Rectf = core.math.Rectf;
-const Vec2f = core.math.Vec2f;
-
 const Commands = render.Commands;
 const Fonts = render.Fonts;
+const HexColor = core.math.HexColor;
 const RenderBuffer = render.RenderBuffer;
+const Rectf = core.math.Rectf;
 const Renderer = render.Renderer;
 const Texture = render.Texture;
+const Vec2f = core.math.Vec2f;
 const VertexBuffer16 = render.VertexBuffer16;
 
 /// Object that manages layout setup and translating the clay render commands to the internal
@@ -94,7 +93,7 @@ fn renderCommand(
             var render_buffer: RenderBuffer = .init();
             try render_buffer.setTransientBuffer(quad);
 
-            const shader = try renderer.programs.get("common");
+            const shader = renderer.programs.getByName("common").?;
             try commands.addCommand(.{
                 .buffer = render_buffer,
                 .texture = renderer.textures.default,
@@ -126,7 +125,7 @@ fn renderCommand(
             var render_buffer: RenderBuffer = .init();
             try render_buffer.setTransientBuffer(buffer);
 
-            const shader = try renderer.programs.get("text");
+            const shader = renderer.programs.getByName("text").?;
             try commands.addCommand(.{
                 .buffer = render_buffer,
                 .texture = if (maybe_font) |font| font.texture else .{},
@@ -158,7 +157,7 @@ fn renderCommand(
             var render_buffer: RenderBuffer = .init();
             try render_buffer.setTransientBuffer(quad);
 
-            const shader = try renderer.programs.get("common");
+            const shader = renderer.programs.getByName("common").?;
             try commands.addCommand(.{
                 .buffer = render_buffer,
                 .texture = texture,
