@@ -1,5 +1,6 @@
 pub const Atlas = @import("Atlas.zig");
 pub const Commands = @import("Commands.zig");
+pub const ecs = @import("ecs/root.zig");
 pub const Font = @import("Font.zig");
 pub const Fonts = @import("Fonts.zig");
 pub const materials = @import("materials/root.zig");

@@ -34,15 +34,16 @@ pub fn build(b: *std.Build) !void {
         "core",
         "lunasvg",
     });
+    try builder.addModule("world", "src/world/root.zig", &.{
+        "core",
+    });
     try builder.addModule("render", "src/render/root.zig", &.{
         "core",
         "io",
         "stb",
         "zbgfx",
         "zmath",
-    });
-    try builder.addModule("world", "src/world/root.zig", &.{
-        "core",
+        "world",
     });
     try builder.addModule("app", "src/app/root.zig", &.{});
     try builder.addModule("gui", "src/gui/root.zig", &.{

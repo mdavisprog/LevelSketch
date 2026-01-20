@@ -21,6 +21,10 @@ pub fn HashSetUnmanaged(comptime T: type) type {
             return self._data.count();
         }
 
+        pub fn isEmpty(self: Self) bool {
+            return self.count() == 0;
+        }
+
         pub fn insert(self: *Self, allocator: std.mem.Allocator, key: T) !void {
             try self._data.put(allocator, key, {});
         }

@@ -59,7 +59,7 @@ pub fn registerComponent(self: *Self, comptime T: type) !void {
     try self.components.register(T, self._allocator);
 }
 
-pub fn registerComponents(self: *Self, comptime components: []const type)  !void {
+pub fn registerComponents(self: *Self, comptime components: []const type) !void {
     inline for (components) |component| {
         try self.components.register(component, self._allocator);
     }
@@ -95,13 +95,20 @@ pub fn getComponent(self: Self, comptime T: type, entity: Entity) ?*T {
     return self.components.get(T, entity);
 }
 
+/// A system with 0 components registered will always run. A system with registered components
+/// will only run if entities with matching components exist.
 pub fn registerSystem(
     self: *Self,
     comptime components: []const type,
     schedule: Systems.Schedule,
     system: Systems.WorldSystem,
 ) !Systems.SystemId {
-    const system_id = try self.systems.register(self._allocator, schedule, system);
+    const system_id = try self.systems.register(
+        self._allocator,
+        schedule,
+        system,
+        components.len == 0,
+    );
 
     var signature: Signature = .initEmpty();
     inline for (components) |component| {
@@ -310,9 +317,9 @@ test "multiple systems" {
     var _world: Self = try .init(allocator);
     defer _world.deinit();
 
-    try _world.registerComponents(&.{ComponentA, ComponentB});
+    try _world.registerComponents(&.{ ComponentA, ComponentB });
     _ = try _world.registerSystem(&.{ComponentA}, .update, systemA);
-    _ = try _world.registerSystem(&.{ComponentA, ComponentB}, .update, systemAB);
+    _ = try _world.registerSystem(&.{ ComponentA, ComponentB }, .update, systemAB);
 
     const entityA = _world.createEntity();
     const entityAB = _world.createEntity();
@@ -342,9 +349,9 @@ test "entity change systems" {
     var _world: Self = try .init(allocator);
     defer _world.deinit();
 
-    try _world.registerComponents(&.{ComponentA, ComponentB});
+    try _world.registerComponents(&.{ ComponentA, ComponentB });
     _ = try _world.registerSystem(&.{ComponentA}, .update, systemA);
-    _ = try _world.registerSystem(&.{ComponentA, ComponentB}, .update, systemAB);
+    _ = try _world.registerSystem(&.{ ComponentA, ComponentB }, .update, systemAB);
 
     const entity = _world.createEntity();
     try _world.insertComponent(ComponentA, entity, .{});

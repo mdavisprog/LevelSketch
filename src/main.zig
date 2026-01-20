@@ -88,8 +88,6 @@ pub fn main() !void {
     renderer.framebuffer_size = framebuffer_size.to(f32);
     const common = renderer.programs.getByName("common").?;
     const phong = renderer.programs.getByName("phong").?;
-
-    const u_normal_mat = try phong.getUniform("u_normal_mat");
     const u_view_pos = try phong.getUniform("u_view_pos");
 
     var light: render.materials.Light = .{
@@ -109,12 +107,6 @@ pub fn main() !void {
         bgfx_init.resolution.format,
     );
 
-    const aspect = @as(f32, @floatFromInt(framebuffer_size.x)) /
-        @as(f32, @floatFromInt(framebuffer_size.y));
-    view_world = .init(0x303030FF, true);
-    view_world.setPerspective(60.0, aspect);
-    view_world.clear();
-
     var main_gui: GUI = try .init(renderer);
     defer main_gui.deinit(allocator);
 
@@ -124,14 +116,14 @@ pub fn main() !void {
     var cube_yaw: f32 = 0.0;
     var cube_time: f32 = 0.0;
     const cube = try render.shapes.cube(u16, renderer, .splat(0.2), 0xFFFFFFFF);
-    const model_transform: Mat = .identity;
 
     var the_world: World = try .init(allocator);
     defer the_world.deinit();
     the_world.camera.position = .init(0.0, 0.0, -3.0, 1.0);
 
-    const meshes = try loadCommandLineModels(renderer);
-    defer allocator.free(meshes);
+    try renderer.initECS(&the_world);
+
+    try loadCommandLineModels(renderer, &the_world);
 
     the_world.runSystems(.startup);
 
@@ -156,11 +148,11 @@ pub fn main() !void {
 
         the_world.runSystems(.update);
 
-        renderer.update();
         try main_gui.update(renderer, &the_world, delta_time, glfw.primary_window.cursor);
 
         const size = glfw.primary_window.framebufferSize();
-        view_world.submitPerspective(the_world.camera.toLookAt(), @intCast(size.x), @intCast(size.y));
+        renderer.updateView(size);
+        renderer.view_world.submitPerspective(the_world.camera.toLookAt(), @intCast(size.x), @intCast(size.y));
 
         // Render the world
         u_view_pos.setArray(&the_world.camera.position.toArray());
@@ -182,17 +174,10 @@ pub fn main() !void {
         try light.bindPosition(phong);
         _ = zbgfx.bgfx.setTransform(&cube_transform.toArray(), 1);
         try renderer.meshes.bind(cube, null);
-        zbgfx.bgfx.submit(view_world.id, common.bgfx_handle, 0, 0);
+        zbgfx.bgfx.submit(renderer.view_world.id, common.bgfx_handle, 0, 0);
 
-        const normal_mat = model_transform.inverse().transpose();
-        _ = zbgfx.bgfx.setTransform(&model_transform.toArray(), 1);
-        u_normal_mat.setMat(normal_mat);
-        for (meshes) |mesh| {
-            try renderer.meshes.bind(mesh, phong);
-            zbgfx.bgfx.submit(view_world.id, phong.bgfx_handle, 0, 0);
-        }
-
-        view_world.touch();
+        the_world.runSystems(.render);
+        renderer.view_world.touch();
 
         // Render the GUI
         try main_gui.draw(renderer);
@@ -253,14 +238,10 @@ fn updateCamera(camera: *Camera, window: glfw.Window, delta_time: f32) !void {
     }
 }
 
-fn loadCommandLineModels(renderer: *Renderer) ![]Meshes.Mesh.Handle {
+fn loadCommandLineModels(renderer: *Renderer, _world: *World) !void {
     const allocator = renderer.allocator;
 
-    var meshes = try std.ArrayList(Meshes.Mesh.Handle).initCapacity(allocator, 0);
-    defer meshes.deinit(allocator);
-
-    const file_names = try commandline.getArgValues(allocator, "--model") orelse
-        return try meshes.toOwnedSlice(allocator);
+    const file_names = try commandline.getArgValues(allocator, "--model") orelse return;
     defer allocator.free(file_names);
 
     for (file_names) |file_name| {
@@ -268,16 +249,19 @@ fn loadCommandLineModels(renderer: *Renderer) ![]Meshes.Mesh.Handle {
             std.log.warn("Failed load model file {s}. Error: {}", .{ file_name, err });
             continue;
         };
-        defer renderer.allocator.free(path);
+        defer allocator.free(path);
 
         var model = try io.obj.Model.loadFile(allocator, path);
         defer model.deinit(allocator);
 
         const mesh = try renderer.loadMeshFromModel(model);
-        try meshes.append(allocator, mesh);
-    }
 
-    return try meshes.toOwnedSlice(allocator);
+        const entity = _world.createEntity();
+        try _world.insertComponent(world.components.core.Transform, entity, .{});
+        try _world.insertComponent(render.ecs.components.Mesh, entity, .{
+            .handle = mesh,
+        });
+    }
 }
 
 // The code below will ensure that all referenced files will have their

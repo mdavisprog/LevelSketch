@@ -27,6 +27,7 @@ pub const WorldSystem = *const fn (param: SystemParam) void;
 pub const Schedule = enum {
     startup,
     update,
+    render,
     shutdown,
 };
 const schedule_count = @typeInfo(Schedule).@"enum".fields.len;
@@ -58,11 +59,13 @@ pub fn register(
     allocator: std.mem.Allocator,
     schedule: Schedule,
     system: WorldSystem,
+    always_run: bool,
 ) !SystemId {
     var systems = &self.systems[@intFromEnum(schedule)];
     const id = self._system_id;
     try systems.put(allocator, id, .{
         .system = system,
+        .run_condition = if (always_run) .always else .entities,
     });
     self._system_id += 1;
     return id;
@@ -84,10 +87,18 @@ pub fn run(self: *Self, schedule: Schedule, _world: *World) void {
     var it = systems.iterator();
     while (it.next()) |entry| {
         const item = entry.value_ptr.*;
-        item.system(.{
-            .entities = entry.value_ptr.entities,
-            .world = _world,
-        });
+
+        const should_run = switch (item.run_condition) {
+            .always => true,
+            .entities => !item.entities.isEmpty(),
+        };
+
+        if (should_run) {
+            item.system(.{
+                .entities = entry.value_ptr.entities,
+                .world = _world,
+            });
+        }
     }
 }
 
@@ -131,7 +142,17 @@ pub fn entitySignatureChanged(
     }
 }
 
+/// Determines if a system should be run.
+const RunCondition = enum {
+    // Will always run regardless if entities are registered with this system or not.
+    always,
+
+    // Only runs if entities are available.
+    entities,
+};
+
 const SystemEntry = struct {
     system: WorldSystem,
     entities: HashSetUnmanaged(Entity) = .empty,
+    run_condition: RunCondition = .entities,
 };

@@ -1,7 +1,9 @@
 const core = @import("core");
+const ecs = @import("ecs/root.zig");
 const io = @import("io");
 const render = @import("root.zig");
 const std = @import("std");
+const world = @import("world");
 const zbgfx = @import("zbgfx");
 
 const Fonts = render.Fonts;
@@ -13,10 +15,13 @@ const Model = io.obj.Model;
 const RenderBuffer = render.RenderBuffer;
 const Textures = render.Textures;
 const Vec2f = core.math.Vec2f;
+const Vec2u = core.math.Vec2u;
 const VertexBuffer16 = render.VertexBuffer16;
 const VertexBuffer32 = render.VertexBuffer32;
 const VertexBufferUploads16 = render.VertexBufferUploads16;
 const VertexBufferUploads32 = render.VertexBufferUploads32;
+const View = render.View;
+const World = world.World;
 
 const Self = @This();
 
@@ -42,6 +47,7 @@ fonts: *Fonts,
 meshes: Meshes,
 framebuffer_size: Vec2f = .zero,
 allocator: std.mem.Allocator,
+view_world: View,
 _uploads16: VertexBufferUploads16,
 _uploads32: VertexBufferUploads32,
 
@@ -71,6 +77,11 @@ pub fn init(allocator: std.mem.Allocator) !Self {
         },
     );
 
+    const view: View = .init(0x303030FF, true);
+    // This needs to be a separate call. This notifies bgfx that this view will perform the
+    // clear operation. Other views should not be performing any clears.
+    view.clear();
+
     return .{
         .mem_factory = mem_factory,
         .textures = textures,
@@ -78,6 +89,7 @@ pub fn init(allocator: std.mem.Allocator) !Self {
         .fonts = fonts,
         .meshes = .init(),
         .allocator = allocator,
+        .view_world = view,
         ._uploads16 = try .init(allocator),
         ._uploads32 = try .init(allocator),
     };
@@ -96,10 +108,30 @@ pub fn deinit(self: *Self) void {
     self._uploads32.deinit(self.allocator);
 }
 
-pub fn update(self: *Self) void {
-    self.mem_factory.update();
-    self._uploads16.update(self.allocator);
-    self._uploads32.update(self.allocator);
+pub fn initECS(self: *Self, _world: *World) !void {
+    try _world.registerResource(ecs.resources.Render, .{
+        .renderer = self,
+    });
+
+    try _world.registerComponents(&.{
+        ecs.components.Mesh,
+    });
+
+    _ = try _world.registerSystem(&.{}, .update, updateSystem);
+    _ = try _world.registerSystem(
+        &.{
+            world.components.core.Transform,
+            ecs.components.Mesh,
+        },
+        .render,
+        renderSystem,
+    );
+}
+
+pub fn updateView(self: *Self, size: Vec2u) void {
+    self.framebuffer_size = size.to(f32);
+    const aspect = self.framebuffer_size.x / self.framebuffer_size.y;
+    self.view_world.setPerspective(60.0, aspect);
 }
 
 pub fn uploadVertexBuffer(self: *Self, buffer: anytype) !RenderBuffer {
@@ -122,4 +154,37 @@ pub fn loadMeshFromModel(self: *Self, model: Model) !Meshes.Mesh.Handle {
 
 pub fn loadMeshFromBuffer(self: *Self, buffer: anytype) !Meshes.Mesh.Handle {
     return self.meshes.loadFromBuffer(self, buffer);
+}
+
+fn updateSystem(param: world.Systems.SystemParam) void {
+    const resource = param.world.getResource(ecs.resources.Render) orelse unreachable;
+    resource.renderer.mem_factory.update();
+    resource.renderer._uploads16.update(resource.renderer.allocator);
+    resource.renderer._uploads32.update(resource.renderer.allocator);
+}
+
+fn renderSystem(param: world.Systems.SystemParam) void {
+    if (param.entities.isEmpty()) {
+        return;
+    }
+
+    const _render = param.world.getResource(ecs.resources.Render) orelse unreachable;
+    const renderer = _render.renderer;
+    const phong = renderer.programs.getByName("phong") orelse unreachable;
+    const u_normal = phong.getUniform("u_normal_mat") catch unreachable;
+
+    var it = param.entities.iterator();
+    while (it.next()) |entity| {
+        const transform = param.world.getComponent(world.components.core.Transform, entity.*) orelse continue;
+        const mesh = param.world.getComponent(ecs.components.Mesh, entity.*) orelse continue;
+
+        const model_mat = transform.toMatrix();
+        const normal_mat = model_mat.inverse().transpose();
+
+        _ = zbgfx.bgfx.setTransform(&model_mat.toArray(), 1);
+        u_normal.set(normal_mat);
+
+        renderer.meshes.bind(mesh.handle, phong) catch unreachable;
+        zbgfx.bgfx.submit(renderer.view_world.id, phong.bgfx_handle, 0, 0);
+    }
 }
