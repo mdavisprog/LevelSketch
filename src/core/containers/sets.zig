@@ -36,6 +36,21 @@ pub fn HashSetUnmanaged(comptime T: type) type {
         pub fn iterator(self: Self) Keys.KeyIterator {
             return self._data.keyIterator();
         }
+
+        pub fn clearAndFree(self: *Self, allocator: std.mem.Allocator) void {
+            self._data.clearAndFree(allocator);
+        }
+
+        pub fn clearRetainingCapacity(self: *Self) void {
+            self._data.clearRetainingCapacity();
+        }
+
+        pub fn setFrom(self: *Self, allocator: std.mem.Allocator, other: Self) !void {
+            var it = other.iterator();
+            while (it.next()) |element| {
+                try self.insert(allocator, element.*);
+            }
+        }
     };
 }
 
