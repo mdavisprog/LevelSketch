@@ -1,3 +1,4 @@
+const core = @import("core");
 const io = @import("io");
 const render = @import("root.zig");
 const std = @import("std");
@@ -21,7 +22,7 @@ pub const Error = error{
 
 /// Holds the handles and material parameters for a single mesh.
 pub const Mesh = struct {
-    pub const Handle = render.Handle(Mesh);
+    pub const Handle = core.Handle(Mesh);
 
     buffer: RenderBuffer = .{},
     phong: Phong = .{},

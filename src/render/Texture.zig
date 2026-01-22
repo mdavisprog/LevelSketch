@@ -1,9 +1,9 @@
-const render = @import("root.zig");
+const core = @import("core");
 const zbgfx = @import("zbgfx");
 
 const Self = @This();
 
-pub const Handle = render.Handle(Self);
+pub const Handle = core.Handle(Self);
 
 pub const Error = error{
     InvalidHandle,

@@ -1,4 +1,5 @@
 const builtin = @import("builtin");
+const core = @import("core");
 const io = @import("io");
 const render = @import("../root.zig");
 const std = @import("std");
@@ -10,7 +11,7 @@ const Uniform = shaders.Uniform;
 
 const Self = @This();
 
-pub const Handle = render.Handle(Self);
+pub const Handle = core.Handle(Self);
 pub const UniformMap = std.StringHashMap(Uniform);
 
 pub const Paths = struct {

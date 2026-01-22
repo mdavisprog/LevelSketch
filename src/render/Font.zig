@@ -18,7 +18,7 @@ const FontInfo = stb.truetype.FontInfo;
 
 const Self = @This();
 
-pub const Handle = render.Handle(Self);
+pub const Handle = core.Handle(Self);
 
 pub const Range = struct {
     min: u32,
