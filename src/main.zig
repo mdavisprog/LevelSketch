@@ -197,7 +197,7 @@ fn printBGFXInfo() void {
 
 /// TODO: Move this logic into the camera.
 /// Should accept an input object that is translated from the glfw.Window object.
-fn updateCamera(param: world.Systems.SystemParam) void {
+fn updateCamera(param: world.Systems.SystemParam) !void {
     const frame = param.world.getResource(world.resources.core.Frame) orelse return;
     const _platform = param.world.getResource(platform.resources.Platform) orelse return;
     const keyboard = param.world.getResource(platform.input.resources.Keyboard) orelse return;

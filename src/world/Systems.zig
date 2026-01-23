@@ -22,7 +22,7 @@ pub const SystemParam = struct {
 };
 
 /// Function signature for systems with direct world access.
-pub const WorldSystem = *const fn (param: SystemParam) void;
+pub const WorldSystem = *const fn (param: SystemParam) anyerror!void;
 
 pub const Schedule = enum {
     startup,
@@ -97,7 +97,12 @@ pub fn run(self: *Self, schedule: Schedule, _world: *World) void {
             item.system(.{
                 .entities = entry.value_ptr.entities,
                 .world = _world,
-            });
+            }) catch |err| {
+                std.debug.panic("Failed to run system: '{}'. Error: {}.", .{
+                    item.system,
+                    err,
+                });
+            };
         }
     }
 }

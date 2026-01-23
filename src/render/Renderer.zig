@@ -156,14 +156,14 @@ pub fn loadMeshFromBuffer(self: *Self, buffer: anytype) !Meshes.Mesh.Handle {
     return self.meshes.loadFromBuffer(self, buffer);
 }
 
-fn updateSystem(param: world.Systems.SystemParam) void {
+fn updateSystem(param: world.Systems.SystemParam) !void {
     const resource = param.world.getResource(ecs.resources.Render) orelse unreachable;
     resource.renderer.mem_factory.update();
     resource.renderer._uploads16.update(resource.renderer.allocator);
     resource.renderer._uploads32.update(resource.renderer.allocator);
 }
 
-fn renderSystem(param: world.Systems.SystemParam) void {
+fn renderSystem(param: world.Systems.SystemParam) !void {
     if (param.entities.isEmpty()) {
         return;
     }
@@ -171,7 +171,7 @@ fn renderSystem(param: world.Systems.SystemParam) void {
     const _render = param.world.getResource(ecs.resources.Render) orelse unreachable;
     const renderer = _render.renderer;
     const phong = renderer.programs.getByName("phong") orelse unreachable;
-    const u_normal = phong.getUniform("u_normal_mat") catch unreachable;
+    const u_normal = try phong.getUniform("u_normal_mat");
 
     var it = param.entities.iterator();
     while (it.next()) |entity| {
@@ -184,7 +184,7 @@ fn renderSystem(param: world.Systems.SystemParam) void {
         _ = zbgfx.bgfx.setTransform(&model_mat.toArray(), 1);
         u_normal.set(normal_mat);
 
-        renderer.meshes.bind(mesh.handle, phong) catch unreachable;
+        try renderer.meshes.bind(mesh.handle, phong);
         zbgfx.bgfx.submit(renderer.view_world.id, phong.bgfx_handle, 0, 0);
     }
 }

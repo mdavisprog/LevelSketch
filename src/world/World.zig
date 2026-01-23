@@ -253,7 +253,7 @@ const ComponentB = struct {
     count: usize = 0,
 };
 
-fn systemA(param: SystemParam) void {
+fn systemA(param: SystemParam) !void {
     var entities = param.entities.iterator();
     while (entities.next()) |entity| {
         const component = param.world.getComponent(ComponentA, entity.*) orelse continue;
@@ -261,7 +261,7 @@ fn systemA(param: SystemParam) void {
     }
 }
 
-fn systemAB(param: SystemParam) void {
+fn systemAB(param: SystemParam) !void {
     var entities = param.entities.iterator();
     while (entities.next()) |entity| {
         const a = param.world.getComponent(ComponentA, entity.*) orelse continue;
@@ -393,7 +393,7 @@ const TestResource = struct {
     value: u32 = 0,
 };
 
-fn systemResource(param: SystemParam) void {
+fn systemResource(param: SystemParam) !void {
     const resource = param.world.getResource(TestResource) orelse unreachable;
     resource.value += 5;
 }

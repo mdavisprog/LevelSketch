@@ -36,7 +36,7 @@ pub fn init(_world: *World) !void {
     _ = try _world.registerSystem(&.{}, .shutdown, shutdown);
 }
 
-fn update(param: SystemParam) void {
+fn update(param: SystemParam) !void {
     const allocator = param.world._allocator;
 
     const platform = param.world.getResource(resources.Platform) orelse unreachable;
@@ -46,9 +46,7 @@ fn update(param: SystemParam) void {
     // Move any just_pressed keys to the pressed set. The release action will clear the
     // pressed events. Also want to clear the just_pressed/just_released sets. Those should
     // only be active for a single frame.
-    keyboard.state.pressed.setFrom(allocator, keyboard.state.just_pressed) catch |err| {
-        std.debug.panic("Failed to set pressed keys from just_pressed. Error: {}", .{err});
-    };
+    try keyboard.state.pressed.setFrom(allocator, keyboard.state.just_pressed);
     keyboard.state.just_pressed.clearRetainingCapacity();
     keyboard.state.just_released.clearRetainingCapacity();
 
@@ -78,22 +76,16 @@ fn update(param: SystemParam) void {
     for (key_events.items) |event| {
         switch (event.action) {
             .press => {
-                keyboard.state.just_pressed.insert(allocator, event.key) catch |err| {
-                    std.debug.panic("Failed to add key to just_pressed set. Error: {}", .{err});
-                };
+                try keyboard.state.just_pressed.insert(allocator, event.key);
             },
             .release => {
                 _ = keyboard.state.just_pressed.remove(event.key);
                 _ = keyboard.state.pressed.remove(event.key);
-                keyboard.state.just_released.insert(allocator, event.key) catch |err| {
-                    std.debug.panic("Failed to add key to just_released set. Error: {}", .{err});
-                };
+                try keyboard.state.just_released.insert(allocator, event.key);
             },
             .repeat => {
                 _ = keyboard.state.just_pressed.remove(event.key);
-                keyboard.state.pressed.insert(allocator, event.key) catch |err| {
-                    std.debug.panic("Failed to add key to pressed set. Error: {}", .{err});
-                };
+                try keyboard.state.pressed.insert(allocator, event.key);
             },
         }
     }
@@ -104,7 +96,7 @@ fn update(param: SystemParam) void {
     }
 }
 
-fn shutdown(param: SystemParam) void {
+fn shutdown(param: SystemParam) !void {
     const platform = param.world.getResource(resources.Platform) orelse unreachable;
     platform.primary_window.deinit(param.world._allocator);
 
