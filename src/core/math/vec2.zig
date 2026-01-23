@@ -132,5 +132,9 @@ pub fn Vec2(comptime T: type) type {
             self.x = other.x;
             self.y = other.y;
         }
+
+        pub fn isZero(self: Self) bool {
+            return self.x == 0 and self.y == 0;
+        }
     };
 }

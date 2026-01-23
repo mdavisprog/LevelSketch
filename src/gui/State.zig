@@ -1,20 +1,18 @@
 const clay = @import("clay");
 const core = @import("core");
 const gui = @import("root.zig");
+const platform = @import("platform");
 const render = @import("render");
 const std = @import("std");
 const _world = @import("world");
 
-const Rectf = core.math.Rectf;
-const Vec2f = core.math.Vec2f;
-
-const Cursor = gui.Cursor;
-const GUI = gui.GUI;
-const Theme = gui.Theme;
-
 const Font = render.Font;
+const GUI = gui.GUI;
+const Mouse = platform.input.Mouse;
+const Rectf = core.math.Rectf;
 const Renderer = render.Renderer;
-
+const Theme = gui.Theme;
+const Vec2f = core.math.Vec2f;
 const World = _world.World;
 
 const Self = @This();
@@ -68,7 +66,7 @@ pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
 
 pub fn update(
     self: *Self,
-    cursor: Cursor,
+    mouse: Mouse,
     _gui: *const GUI,
     renderer: *const Renderer,
     world: *World,
@@ -87,14 +85,14 @@ pub fn update(
 
     // 'hovered' should be in order from topmost to bottom. Loop through each one and find the
     // first element that is registered.
-    var pressed: clay.ElementId = if (cursor.justReleased(.left)) .{} else self.pressed;
+    var pressed: clay.ElementId = if (mouse.justReleased(.left)) .{} else self.pressed;
     for (0..hovered.len()) |i| {
         const id = hovered.get(i);
 
         // If an element has callbacks, then consider it as a target element.
         if (self._callbacks.get(id)) |callbacks| {
             context.element = id;
-            if (cursor.justPressed(.left)) {
+            if (mouse.justPressed(.left)) {
                 // If any button is pressed, record the element.
                 if (pressed.id == 0) {
                     pressed = id;
@@ -107,7 +105,7 @@ pub fn update(
                 }
             }
 
-            if (cursor.justReleased(.left)) {
+            if (mouse.justReleased(.left)) {
                 if (callbacks.on_release) |on_release| {
                     _ = on_release(context);
                 }
@@ -127,10 +125,10 @@ pub fn update(
 
     // Drag is performed here to avoid hover checks.
     if (self._callbacks.get(self.pressed)) |callbacks| {
-        if (cursor.pressed(.left)) {
+        if (mouse.pressed(.left)) {
             if (callbacks.on_drag) |on_drag| {
                 context.element = self.pressed;
-                _ = on_drag(cursor.delta().toVec2f(), context);
+                _ = on_drag(mouse.delta(), context);
             }
         }
     }

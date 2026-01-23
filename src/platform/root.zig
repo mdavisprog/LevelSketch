@@ -98,6 +98,10 @@ fn update(param: SystemParam) void {
         }
     }
     key_events.clear();
+
+    if (keyboard.state.justPressed(.escape)) {
+        platform.primary_window.setShouldClose(true);
+    }
 }
 
 fn shutdown(param: SystemParam) void {

@@ -80,6 +80,10 @@ pub fn getKeyEvents(self: Self) *KeyEventBuffer {
     return &data.key_events;
 }
 
+pub fn setShouldClose(self: Self, should_close: bool) void {
+    self.handle.setShouldClose(should_close);
+}
+
 fn registerCallbacks(window: *zglfw.Window) void {
     _ = zglfw.setKeyCallback(window, onKey);
 }

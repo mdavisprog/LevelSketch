@@ -1,10 +1,9 @@
-const app = @import("app");
 const builtin = @import("builtin");
 const callbacks = @import("callbacks.zig");
 const core = @import("core");
-const glfw = @import("glfw.zig");
 const gui = @import("gui");
 const io = @import("io");
+const platform = @import("platform");
 const render = @import("render");
 const stb = @import("stb");
 const std = @import("std");
@@ -47,13 +46,18 @@ pub fn main() !void {
     try stb.init(allocator);
     defer stb.deinit();
 
-    try glfw.init();
-    defer glfw.deinit();
+    var the_world: World = try .init(allocator);
+    defer the_world.deinit();
+    the_world.camera.position = .init(0.0, 0.0, -3.0, 1.0);
+
+    try platform.init(&the_world);
+    const platform_resource = the_world.getResource(platform.resources.Platform).?;
+    const mouse = the_world.getResource(platform.input.resources.Mouse).?;
 
     var bgfx_init: zbgfx.bgfx.Init = undefined;
     zbgfx.bgfx.initCtor(&bgfx_init);
 
-    const framebuffer_size = glfw.primary_window.framebufferSize();
+    const framebuffer_size = platform_resource.primary_window.framebufferSize();
 
     bgfx_init.resolution.width = framebuffer_size.x;
     bgfx_init.resolution.height = framebuffer_size.y;
@@ -68,7 +72,7 @@ pub fn main() !void {
         .vtable = &callbacks.BGFXCallbacks.toVtbl(),
     };
     bgfx_init.callback = &bgfx_callbacks;
-    bgfx_init.platformData.nwh = glfw.primary_window.nativeHandle();
+    bgfx_init.platformData.nwh = platform_resource.primary_window.nativeHandle();
 
     if (!zbgfx.bgfx.init(&bgfx_init)) {
         std.log.err("Failed to initialize bgfx.", .{});
@@ -117,17 +121,14 @@ pub fn main() !void {
     var cube_time: f32 = 0.0;
     const cube = try render.shapes.cube(u16, renderer, .splat(0.2), 0xFFFFFFFF);
 
-    var the_world: World = try .init(allocator);
-    defer the_world.deinit();
-    the_world.camera.position = .init(0.0, 0.0, -3.0, 1.0);
-
+    _ = try the_world.registerSystem(&.{}, .update, updateCamera);
     try renderer.initECS(&the_world);
 
     try loadCommandLineModels(renderer, &the_world);
 
     the_world.runSystems(.startup);
 
-    while (!glfw.primary_window.shouldClose() and !app.State.should_exit) {
+    while (!platform_resource.primary_window.shouldClose()) {
         const current_time = zglfw.getTime();
         const delta_time: f32 = @floatCast(current_time - last_time);
         last_time = current_time;
@@ -139,18 +140,13 @@ pub fn main() !void {
             frame.times.delta = delta_time;
         }
 
-        glfw.update();
-        try updateCamera(&the_world.camera, glfw.primary_window, delta_time);
-
-        if (glfw.primary_window.isPressed(.escape)) {
-            app.State.should_exit = true;
-        }
+        //try updateCamera(&the_world.camera, platform_resource.primary_window, delta_time);
 
         the_world.runSystems(.update);
 
-        try main_gui.update(renderer, &the_world, delta_time, glfw.primary_window.cursor);
+        try main_gui.update(renderer, &the_world, delta_time, mouse.state);
 
-        const size = glfw.primary_window.framebufferSize();
+        const size = platform_resource.primary_window.framebufferSize();
         renderer.updateView(size);
         renderer.view_world.submitPerspective(the_world.camera.toLookAt(), @intCast(size.x), @intCast(size.y));
 
@@ -201,38 +197,44 @@ fn printBGFXInfo() void {
 
 /// TODO: Move this logic into the camera.
 /// Should accept an input object that is translated from the glfw.Window object.
-fn updateCamera(camera: *Camera, window: glfw.Window, delta_time: f32) !void {
-    if (window.isPressed(.w)) {
+fn updateCamera(param: world.Systems.SystemParam) void {
+    const frame = param.world.getResource(world.resources.core.Frame) orelse return;
+    const _platform = param.world.getResource(platform.resources.Platform) orelse return;
+    const keyboard = param.world.getResource(platform.input.resources.Keyboard) orelse return;
+    const mouse = param.world.getResource(platform.input.resources.Mouse) orelse return;
+    const camera: *Camera = &param.world.camera;
+
+    if (keyboard.state.isPressed(.w)) {
         camera.move(.forward);
-    } else if (window.isPressed(.s)) {
+    } else if (keyboard.state.isPressed(.s)) {
         camera.move(.backward);
-    } else if (window.isPressed(.d)) {
+    } else if (keyboard.state.isPressed(.d)) {
         camera.move(.right);
-    } else if (window.isPressed(.a)) {
+    } else if (keyboard.state.isPressed(.a)) {
         camera.move(.left);
-    } else if (window.isPressed(.q)) {
+    } else if (keyboard.state.isPressed(.q)) {
         camera.move(.up);
-    } else if (window.isPressed(.e)) {
+    } else if (keyboard.state.isPressed(.e)) {
         camera.move(.down);
     }
 
-    camera.update(delta_time);
+    camera.update(frame.times.delta);
 
-    if (window.cursor.pressed(.right)) {
-        const delta = window.cursor.delta();
+    if (mouse.state.pressed(.right)) {
+        const delta = mouse.state.delta();
         if (!delta.isZero()) {
             if (!camera_rotating) {
-                try window.toggleCursor(false);
+                _platform.primary_window.toggleCursor(false) catch unreachable;
                 camera_rotating = true;
             }
 
-            const yaw: f32 = @floatFromInt(delta.x);
-            const pitch: f32 = @floatFromInt(delta.y);
+            const yaw: f32 = delta.x;
+            const pitch: f32 = delta.y;
             camera.rotate(pitch, yaw);
         }
-    } else if (window.cursor.released(.right)) {
+    } else if (mouse.state.released(.right)) {
         if (camera_rotating) {
-            try window.toggleCursor(true);
+            _platform.primary_window.toggleCursor(true) catch unreachable;
             camera_rotating = false;
         }
     }

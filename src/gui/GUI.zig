@@ -1,25 +1,22 @@
-const app = @import("app");
 const clay = @import("clay");
 const ClayContext = @import("ClayContext.zig");
 const ClayLayout = @import("ClayLayout.zig");
 const core = @import("core");
 const gui = @import("root.zig");
+const platform = @import("platform");
 const render = @import("render");
 const State = @import("State.zig");
 const std = @import("std");
 const _world = @import("world");
 
-const Vec2f = core.math.Vec2f;
-
-const Cursor = gui.Cursor;
-
 const Commands = render.Commands;
+const Cursor = gui.Cursor;
 const Font = render.Font;
 const Program = render.shaders.Program;
 const Renderer = render.Renderer;
 const Texture = render.Texture;
+const Vec2f = core.math.Vec2f;
 const View = render.View;
-
 const World = _world.World;
 
 const Self = @This();
@@ -95,16 +92,16 @@ pub fn update(
     renderer: *Renderer,
     world: *World,
     delta_time: f32,
-    cursor: Cursor,
+    mouse: platform.input.Mouse,
 ) !void {
     _ = delta_time;
 
-    const delta = cursor.delta();
-    if (!delta.isZero() or cursor.didChange(.left)) {
-        self._state.update(cursor, self, renderer, world);
+    const delta = mouse.delta();
+    if (!delta.isZero() or mouse.didChange(.left)) {
+        self._state.update(mouse, self, renderer, world);
 
-        const position = cursor.current.toVec2f();
-        clay.setPointerState(.init(position.x, position.y), cursor.pressed(.left));
+        const position = mouse.current;
+        clay.setPointerState(.init(position.x, position.y), mouse.pressed(.left));
         try self.layout(world);
     }
 }
@@ -157,8 +154,9 @@ fn onResetCamera(context: State.Context) bool {
     return true;
 }
 
-fn onQuit(_: State.Context) bool {
-    app.State.should_exit = true;
+fn onQuit(context: State.Context) bool {
+    const _platform = context.world.getResource(platform.resources.Platform) orelse return false;
+    _platform.primary_window.setShouldClose(true);
     return true;
 }
 
