@@ -10,7 +10,7 @@ const Self = @This();
 
 name: []const u8,
 ambient: Vec = .zero,
-diffuse: Vec = .zero,
+diffuse: Vec = .splat(1.0),
 specular: Vec = .zero,
 specular_exponent: f32 = 0.0,
 diffuse_texture: ?[]const u8 = null,
@@ -160,6 +160,12 @@ test "parse mtl data" {
 
     const allocator = std.testing.allocator;
     const materials = try loadData(allocator, data);
+    defer {
+        for (materials) |*material| {
+            material.deinit(allocator);
+        }
+        allocator.free(materials);
+    }
 
     try std.testing.expectEqual(2, materials.len);
     try std.testing.expectEqualStrings("test", materials[0].name);
@@ -169,14 +175,9 @@ test "parse mtl data" {
     try std.testing.expectEqualStrings("test2.tga", std.fs.path.basename(materials[1].diffuse_texture.?));
 
     try std.testing.expect(materials[0].ambient.eql(.init(0.2, 0.45, 0.89, 0.0)));
-    try std.testing.expect(materials[0].diffuse.eql(.zero));
+    try std.testing.expect(materials[0].diffuse.eql(.splat(1.0)));
 
     try std.testing.expect(materials[1].diffuse.eql(.init(1.0, 0.8, 0.5, 0.0)));
     try std.testing.expect(materials[1].specular.eql(.init(0.5, 0.4, 0.3, 0.0)));
     try std.testing.expectEqual(32.0, materials[1].specular_exponent);
-
-    for (materials) |*material| {
-        material.deinit(allocator);
-    }
-    allocator.free(materials);
 }

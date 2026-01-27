@@ -1,6 +1,7 @@
 const builtin = @import("builtin");
 const callbacks = @import("callbacks.zig");
 const core = @import("core");
+const editor = @import("editor");
 const gui = @import("gui");
 const io = @import("io");
 const platform = @import("platform");
@@ -12,9 +13,9 @@ const world = @import("world");
 const zbgfx = @import("zbgfx");
 const zglfw = @import("zglfw");
 
-const Camera = world.Camera;
 const commandline = core.commandline;
 const Cursor = gui.Cursor;
+const Editor = editor.Editor;
 const GUI = gui.GUI;
 const Mat = core.math.Mat;
 const Meshes = render.Meshes;
@@ -23,9 +24,6 @@ const Renderer = render.Renderer;
 const Vec = core.math.Vec;
 const View = render.View;
 const World = world.World;
-
-var camera_rotating = false;
-var view_world: View = undefined;
 
 pub fn main() !void {
     std.log.info("Welcome to LevelSketch!", .{});
@@ -48,7 +46,6 @@ pub fn main() !void {
 
     var the_world: World = try .init(allocator);
     defer the_world.deinit();
-    the_world.camera.position = .init(0.0, 0.0, -3.0, 1.0);
 
     try platform.init(&the_world);
     const platform_resource = the_world.getResource(platform.resources.Platform).?;
@@ -90,9 +87,7 @@ pub fn main() !void {
     }
 
     renderer.framebuffer_size = framebuffer_size.to(f32);
-    const common = renderer.programs.getByName("common").?;
     const phong = renderer.programs.getByName("phong").?;
-    const u_view_pos = try phong.getUniform("u_view_pos");
 
     var light: render.materials.Light = .{
         .ambient = .init(0.2, 0.2, 0.2, 1.0),
@@ -100,8 +95,6 @@ pub fn main() !void {
         .specular = .splat(1.0),
     };
     try light.bind(phong);
-
-    const sampler_tex_color = try common.getUniform("s_tex_color");
 
     zbgfx.bgfx.setDebug(zbgfx.bgfx.DebugFlags_None);
     zbgfx.bgfx.reset(
@@ -117,15 +110,14 @@ pub fn main() !void {
     // Timing
     var last_time: f64 = 0.0;
 
-    var cube_yaw: f32 = 0.0;
-    var cube_time: f32 = 0.0;
-    const cube = try render.shapes.cube(u16, renderer, .splat(0.2), 0xFFFFFFFF);
-
-    _ = try the_world.registerSystem(&.{}, .update, updateCamera);
     try renderer.initECS(&the_world);
+
+    var _editor: Editor = try .init(&the_world);
+    defer _editor.deinit();
 
     try loadCommandLineModels(renderer, &the_world);
 
+    try _editor.addLight(renderer);
     the_world.runSystems(.startup);
 
     while (!platform_resource.primary_window.shouldClose()) {
@@ -140,40 +132,11 @@ pub fn main() !void {
             frame.times.delta = delta_time;
         }
 
-        //try updateCamera(&the_world.camera, platform_resource.primary_window, delta_time);
-
         the_world.runSystems(.update);
 
-        try main_gui.update(renderer, &the_world, delta_time, mouse.state);
-
-        const size = platform_resource.primary_window.framebufferSize();
-        renderer.updateView(size);
-        renderer.view_world.submitPerspective(the_world.camera.toLookAt(), @intCast(size.x), @intCast(size.y));
-
-        // Render the world
-        u_view_pos.setArray(&the_world.camera.position.toArray());
-
-        try renderer.textures.default.bind(sampler_tex_color.handle, 0);
-
-        // Update light source (cube).
-        if (the_world.light_orbit) {
-            cube_yaw = @mod(cube_yaw + delta_time * 20.0, 360.0);
-            cube_time += delta_time;
-            const cube_sin = std.math.sin(cube_time);
-            light.position = Mat.initTranslation(.right)
-                .rotateY(cube_yaw)
-                .scale(.splat(2.0))
-                .getTranslation();
-            light.position.setY(cube_sin);
-        }
-        const cube_transform = Mat.initTranslation(light.position);
-        try light.bindPosition(phong);
-        _ = zbgfx.bgfx.setTransform(&cube_transform.toArray(), 1);
-        try renderer.meshes.bind(cube, null);
-        zbgfx.bgfx.submit(renderer.view_world.id, common.bgfx_handle, 0, 0);
+        try main_gui.update(&the_world, delta_time, mouse.state);
 
         the_world.runSystems(.render);
-        renderer.view_world.touch();
 
         // Render the GUI
         try main_gui.draw(renderer);
@@ -195,51 +158,7 @@ fn printBGFXInfo() void {
     std.log.info("Transient Max Index Size: {}", .{caps.*.limits.transientIbSize});
 }
 
-/// TODO: Move this logic into the camera.
-/// Should accept an input object that is translated from the glfw.Window object.
-fn updateCamera(param: world.Systems.SystemParam) !void {
-    const frame = param.world.getResource(world.resources.core.Frame) orelse return;
-    const _platform = param.world.getResource(platform.resources.Platform) orelse return;
-    const keyboard = param.world.getResource(platform.input.resources.Keyboard) orelse return;
-    const mouse = param.world.getResource(platform.input.resources.Mouse) orelse return;
-    const camera: *Camera = &param.world.camera;
-
-    if (keyboard.state.isPressed(.w)) {
-        camera.move(.forward);
-    } else if (keyboard.state.isPressed(.s)) {
-        camera.move(.backward);
-    } else if (keyboard.state.isPressed(.d)) {
-        camera.move(.right);
-    } else if (keyboard.state.isPressed(.a)) {
-        camera.move(.left);
-    } else if (keyboard.state.isPressed(.q)) {
-        camera.move(.up);
-    } else if (keyboard.state.isPressed(.e)) {
-        camera.move(.down);
-    }
-
-    camera.update(frame.times.delta);
-
-    if (mouse.state.pressed(.right)) {
-        const delta = mouse.state.delta();
-        if (!delta.isZero()) {
-            if (!camera_rotating) {
-                _platform.primary_window.toggleCursor(false) catch unreachable;
-                camera_rotating = true;
-            }
-
-            const yaw: f32 = delta.x;
-            const pitch: f32 = delta.y;
-            camera.rotate(pitch, yaw);
-        }
-    } else if (mouse.state.released(.right)) {
-        if (camera_rotating) {
-            _platform.primary_window.toggleCursor(true) catch unreachable;
-            camera_rotating = false;
-        }
-    }
-}
-
+// TODO: Move to 'editor' module.
 fn loadCommandLineModels(renderer: *Renderer, _world: *World) !void {
     const allocator = renderer.allocator;
 
@@ -263,7 +182,37 @@ fn loadCommandLineModels(renderer: *Renderer, _world: *World) !void {
         try _world.insertComponent(render.ecs.components.Mesh, entity, .{
             .handle = mesh,
         });
+
+        if (model.materials.items.len > 0) {
+            const material = model.materials.items[0];
+            const phong: render.ecs.components.Phong = .{
+                .diffuse = try loadTexture(renderer, material.diffuse_texture),
+                .diffuse_color = material.diffuse,
+                .specular = try loadTexture(renderer, material.specular_texture),
+                .specular_color = material.specular,
+                .shininess = material.specular_exponent,
+            };
+            try _world.insertComponent(render.ecs.components.Phong, entity, phong);
+        } else {
+            try _world.insertComponent(render.ecs.components.Color, entity, .{});
+        }
     }
+}
+
+fn loadTexture(renderer: *Renderer, path: ?[]const u8) !render.Texture {
+    const path_ = path orelse return .{};
+
+    return renderer.textures.loadImageAbsolute(
+        &renderer.mem_factory,
+        path_,
+    ) catch |err| {
+        std.log.warn(
+            "Failed to load texture '{s}'' from model. Error: {}",
+            .{ path_, err },
+        );
+
+        return renderer.textures.default;
+    };
 }
 
 // The code below will ensure that all referenced files will have their

@@ -54,6 +54,4 @@ pub fn run(
         command.buffer.bind(command.state);
         zbgfx.bgfx.submit(view.id, command.shader.bgfx_handle, 255, 0);
     }
-
-    view.touch();
 }

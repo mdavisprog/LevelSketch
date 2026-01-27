@@ -8,6 +8,7 @@ uniform vec4 u_light_ambient;
 uniform vec4 u_light_diffuse;
 uniform vec4 u_light_specular;
 
+uniform vec4 u_diffuse;
 uniform vec4 u_specular_shininess;
 
 SAMPLER2D(s_diffuse, 0);
@@ -24,7 +25,7 @@ void main()
 
     vec4 tex_color = texture2D(s_diffuse, v_texcoord0.xy);
     vec4 ambient = tex_color * u_light_ambient;
-    vec4 diffuse = (diff * tex_color) * u_light_diffuse;
+    vec4 diffuse = (diff * tex_color) * u_diffuse * u_light_diffuse;
 
     vec3 view_dir = normalize(u_view_pos.xyz - v_pos);
     vec3 reflect_dir = reflect(-light_dir, normal);

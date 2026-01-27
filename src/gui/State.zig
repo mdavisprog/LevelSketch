@@ -22,7 +22,6 @@ const Self = @This();
 pub const Context = struct {
     element: clay.ElementId = .{},
     gui: *const GUI,
-    renderer: *const Renderer,
     world: *World,
     state: *Self,
 
@@ -68,7 +67,6 @@ pub fn update(
     self: *Self,
     mouse: Mouse,
     _gui: *const GUI,
-    renderer: *const Renderer,
     world: *World,
 ) void {
     const hovered = clay.getPointerOverIds();
@@ -78,7 +76,6 @@ pub fn update(
 
     var context: Context = .{
         .gui = _gui,
-        .renderer = renderer,
         .state = self,
         .world = world,
     };

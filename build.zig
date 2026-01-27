@@ -50,9 +50,16 @@ pub fn build(b: *std.Build) !void {
         "zmath",
         "world",
     });
+    try builder.addModule("editor", "src/editor/root.zig", &.{
+        "core",
+        "platform",
+        "render",
+        "world",
+    });
     try builder.addModule("gui", "src/gui/root.zig", &.{
         "clay",
         "core",
+        "editor",
         "io",
         "platform",
         "render",

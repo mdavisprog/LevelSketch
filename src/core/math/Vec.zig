@@ -4,6 +4,7 @@ const vec2 = @import("vec2.zig");
 const zmath = @import("zmath");
 
 const Mat = math.Mat;
+const Rotation = math.Rotation;
 const Vec2f = vec2.Vec2(f32);
 
 /// A 4 component vector. All 3D/4D operations should use this struct at it wraps around zmath.
@@ -23,11 +24,11 @@ pub fn init(_x: f32, _y: f32, _z: f32, _w: f32) Self {
 }
 
 pub fn init3(_x: f32, _y: f32, _z: f32) Self {
-    return .init(_x, _y, _z, 0.0);
+    return .init(_x, _y, _z, 1.0);
 }
 
 pub fn init2(_x: f32, _y: f32) Self {
-    return .init(_x, _y, 0.0, 0.0);
+    return .init(_x, _y, 0.0, 1.0);
 }
 
 pub fn splat(value: f32) Self {
@@ -138,6 +139,18 @@ pub fn toArray(self: Self) [4]f32 {
 
 pub fn toVec2(self: Self) Vec2f {
     return .init(self.data[0], self.data[1]);
+}
+
+pub fn toRotation(self: Self) Rotation {
+    const normal = self.normalize();
+    const pitch = std.math.asin(-normal.y());
+    const yaw = std.math.atan2(normal.z(), normal.x());
+    // TODO: Support calculating roll.
+    return .{
+        .pitch = std.math.radiansToDegrees(pitch),
+        .yaw = std.math.radiansToDegrees(yaw),
+        .roll = 0.0,
+    };
 }
 
 fn operation(self: Self, other: anytype, op: Operation) Self {

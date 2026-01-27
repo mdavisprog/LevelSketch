@@ -7,13 +7,15 @@ const world = @import("world");
 const zbgfx = @import("zbgfx");
 
 const Fonts = render.Fonts;
-const Program = render.shaders.Program;
-const Programs = render.shaders.Programs;
 const MemFactory = render.MemFactory;
 const Meshes = render.Meshes;
 const Model = io.obj.Model;
+const Program = render.shaders.Program;
+const Programs = render.shaders.Programs;
 const RenderBuffer = render.RenderBuffer;
+const SystemParam = world.Systems.SystemParam;
 const Textures = render.Textures;
+const Vec = core.math.Vec;
 const Vec2f = core.math.Vec2f;
 const Vec2u = core.math.Vec2u;
 const VertexBuffer16 = render.VertexBuffer16;
@@ -112,20 +114,36 @@ pub fn initECS(self: *Self, _world: *World) !void {
     try _world.registerResource(ecs.resources.Render, .{
         .renderer = self,
     });
+    try _world.registerResource(ecs.resources.Lights, .{});
 
     try _world.registerComponents(&.{
         ecs.components.Mesh,
+        ecs.components.Phong,
+        ecs.components.Light,
+        ecs.components.Color,
     });
 
     _ = try _world.registerSystem(&.{}, .update, updateSystem);
+    // TODO: Need a way to render all meshes and their materials in a single system.
     _ = try _world.registerSystem(
         &.{
             world.components.core.Transform,
             ecs.components.Mesh,
+            ecs.components.Phong,
         },
         .render,
-        renderSystem,
+        renderPhong,
     );
+    _ = try _world.registerSystem(
+        &.{
+            world.components.core.Transform,
+            ecs.components.Mesh,
+            ecs.components.Color,
+        },
+        .render,
+        renderColor,
+    );
+    _ = try _world.registerSystem(&.{}, .shutdown, shutdownSystem);
 }
 
 pub fn updateView(self: *Self, size: Vec2u) void {
@@ -156,35 +174,85 @@ pub fn loadMeshFromBuffer(self: *Self, buffer: anytype) !Meshes.Mesh.Handle {
     return self.meshes.loadFromBuffer(self, buffer);
 }
 
-fn updateSystem(param: world.Systems.SystemParam) !void {
+fn shutdownSystem(param: SystemParam) !void {
+    const lights = param.world.getResource(ecs.resources.Lights) orelse unreachable;
+    lights.entities.deinit(param.world._allocator);
+}
+
+fn updateSystem(param: SystemParam) !void {
     const resource = param.world.getResource(ecs.resources.Render) orelse unreachable;
     resource.renderer.mem_factory.update();
     resource.renderer._uploads16.update(resource.renderer.allocator);
     resource.renderer._uploads32.update(resource.renderer.allocator);
 }
 
-fn renderSystem(param: world.Systems.SystemParam) !void {
-    if (param.entities.isEmpty()) {
-        return;
-    }
-
+fn renderPhong(param: SystemParam) !void {
     const _render = param.world.getResource(ecs.resources.Render) orelse unreachable;
     const renderer = _render.renderer;
+    // TODO: For now, all light entities are added to a resource. Should allow this system to
+    // query for light entities.
+    const lights_resource = param.world.getResource(ecs.resources.Lights) orelse unreachable;
     const phong = renderer.programs.getByName("phong") orelse unreachable;
-    const u_normal = try phong.getUniform("u_normal_mat");
 
-    var it = param.entities.iterator();
-    while (it.next()) |entity| {
+    var lights = lights_resource.entities.iterator();
+    while (lights.next()) |light| {
+        const light_transform = param.world.getComponent(world.components.core.Transform, light.*) orelse continue;
+        const light_component = param.world.getComponent(ecs.components.Light, light.*) orelse continue;
+
+        try phong.setUniform("u_light_position", light_transform.translation);
+        try phong.setUniform("u_light_ambient", light_component.ambient);
+        try phong.setUniform("u_light_diffuse", light_component.diffuse);
+        try phong.setUniform("u_light_specular", light_component.specular);
+
+        var entities = param.entities.iterator();
+        while (entities.next()) |entity| {
+            const transform = param.world.getComponent(world.components.core.Transform, entity.*) orelse continue;
+            const mesh_component = param.world.getComponent(ecs.components.Mesh, entity.*) orelse continue;
+            const mesh = renderer.meshes.get(mesh_component.handle) orelse continue;
+            const material = param.world.getComponent(ecs.components.Phong, entity.*) orelse continue;
+
+            mesh.buffer.bind(world_state);
+            try phong.setTexture("s_diffuse", material.diffuse, 0);
+            try phong.setTexture("s_specular", material.specular, 1);
+            try phong.setUniform("u_diffuse", material.diffuse_color);
+            try phong.setUniform("u_specular_shininess", Vec.init(
+                material.specular_color.x(),
+                material.specular_color.y(),
+                material.specular_color.z(),
+                material.shininess,
+            ));
+
+            const model_mat = transform.toMatrix();
+            const normal_mat = model_mat.inverse().transpose();
+
+            _ = zbgfx.bgfx.setTransform(&model_mat.toArray(), 1);
+            try phong.setUniform("u_normal_mat", normal_mat);
+
+            zbgfx.bgfx.submit(renderer.view_world.id, phong.bgfx_handle, 0, 0);
+            zbgfx.bgfx.discard(zbgfx.bgfx.DiscardFlags_All);
+        }
+    }
+}
+
+fn renderColor(param: SystemParam) !void {
+    const _render = param.world.getResource(ecs.resources.Render) orelse unreachable;
+    const renderer = _render.renderer;
+    const common = renderer.programs.getByName("common") orelse unreachable;
+    const sampler = try common.getUniform("s_tex_color");
+
+    try renderer.textures.default.bind(sampler.handle, 0);
+
+    var entities = param.entities.iterator();
+    while (entities.next()) |entity| {
         const transform = param.world.getComponent(world.components.core.Transform, entity.*) orelse continue;
-        const mesh = param.world.getComponent(ecs.components.Mesh, entity.*) orelse continue;
+        const mesh_component = param.world.getComponent(ecs.components.Mesh, entity.*) orelse continue;
+        const mesh = renderer.meshes.get(mesh_component.handle) orelse continue;
+        const material = param.world.getComponent(ecs.components.Color, entity.*) orelse continue;
 
-        const model_mat = transform.toMatrix();
-        const normal_mat = model_mat.inverse().transpose();
-
-        _ = zbgfx.bgfx.setTransform(&model_mat.toArray(), 1);
-        u_normal.set(normal_mat);
-
-        try renderer.meshes.bind(mesh.handle, phong);
-        zbgfx.bgfx.submit(renderer.view_world.id, phong.bgfx_handle, 0, 0);
+        mesh.buffer.bind(world_state);
+        _ = zbgfx.bgfx.setTransform(&transform.toMatrix().toArray(), 1);
+        try common.setUniform("u_color", material.tint);
+        zbgfx.bgfx.submit(renderer.view_world.id, common.bgfx_handle, 0, 0);
+        zbgfx.bgfx.discard(zbgfx.bgfx.DiscardFlags_All);
     }
 }

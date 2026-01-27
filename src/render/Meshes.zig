@@ -25,7 +25,6 @@ pub const Mesh = struct {
     pub const Handle = core.Handle(Mesh);
 
     buffer: RenderBuffer = .{},
-    phong: Phong = .{},
 };
 
 pub const MeshMap = std.AutoHashMapUnmanaged(Mesh.Handle, Mesh);
@@ -50,21 +49,10 @@ pub fn loadFromModel(self: *Self, renderer: *Renderer, model: Model) !Mesh.Handl
     var buffer = try renderer.uploadVertexBuffer(vertex_buffer);
     errdefer buffer.deinit();
 
-    var result: Mesh = .{
-        .buffer = buffer,
-    };
-
-    // TODO: Load all materials.
-    if (model.materials.items.len > 0) {
-        const material = model.materials.items[0];
-        result.phong.diffuse = try loadTexture(renderer, material.diffuse_texture);
-        result.phong.specular = try loadTexture(renderer, material.specular_texture);
-        result.phong.specular_color = material.specular;
-        result.phong.shininess = material.specular_exponent;
-    }
-
     const handle: Mesh.Handle = .generate();
-    try self._map.put(renderer.allocator, handle, result);
+    try self._map.put(renderer.allocator, handle, .{
+        .buffer = buffer,
+    });
 
     return handle;
 }
@@ -80,13 +68,8 @@ pub fn loadFromBuffer(self: *Self, renderer: *Renderer, buffer: anytype) !Mesh.H
     return handle;
 }
 
-pub fn bind(self: Self, mesh: Mesh.Handle, shader: ?*const Program) !void {
-    const _mesh = self._map.get(mesh) orelse return Error.MeshNotFound;
-    _mesh.buffer.bind(Renderer.world_state);
-
-    if (shader) |_shader| {
-        try _mesh.phong.bind(_shader);
-    }
+pub fn get(self: Self, mesh: Mesh.Handle) ?Mesh {
+    return self._map.get(mesh);
 }
 
 fn convert(allocator: std.mem.Allocator, model: Model) !VertexBuffer32 {
@@ -110,22 +93,6 @@ fn convert(allocator: std.mem.Allocator, model: Model) !VertexBuffer32 {
     }
 
     return buffer;
-}
-
-fn loadTexture(renderer: *Renderer, path: ?[]const u8) !Texture {
-    const path_ = path orelse return .{};
-
-    return renderer.textures.loadImageAbsolute(
-        &renderer.mem_factory,
-        path_,
-    ) catch |err| {
-        std.log.warn(
-            "Failed to load texture '{s}'' from model. Error: {}",
-            .{ path_, err },
-        );
-
-        return .{};
-    };
 }
 
 fn addElement(

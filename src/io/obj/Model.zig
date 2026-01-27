@@ -268,7 +268,7 @@ fn processVec3(line: []const u8) Vec {
     const x = std.fmt.parseFloat(f32, it.next() orelse "") catch 0.0;
     const y = std.fmt.parseFloat(f32, it.next() orelse "") catch 0.0;
     const z = std.fmt.parseFloat(f32, it.next() orelse "") catch 0.0;
-    return .init(x, y, z, 0.0);
+    return .init(x, y, z, 1.0);
 }
 
 fn processFace(allocator: std.mem.Allocator, line: []const u8) !Face {

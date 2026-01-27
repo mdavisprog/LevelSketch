@@ -2,6 +2,7 @@ const clay = @import("clay");
 const ClayContext = @import("ClayContext.zig");
 const ClayLayout = @import("ClayLayout.zig");
 const core = @import("core");
+const editor = @import("editor");
 const gui = @import("root.zig");
 const platform = @import("platform");
 const render = @import("render");
@@ -15,6 +16,7 @@ const Font = render.Font;
 const Program = render.shaders.Program;
 const Renderer = render.Renderer;
 const Texture = render.Texture;
+const Vec = core.math.Vec;
 const Vec2f = core.math.Vec2f;
 const View = render.View;
 const World = _world.World;
@@ -89,7 +91,6 @@ pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
 
 pub fn update(
     self: *Self,
-    renderer: *Renderer,
     world: *World,
     delta_time: f32,
     mouse: platform.input.Mouse,
@@ -98,7 +99,7 @@ pub fn update(
 
     const delta = mouse.delta();
     if (!delta.isZero() or mouse.didChange(.left)) {
-        self._state.update(mouse, self, renderer, world);
+        self._state.update(mouse, self, world);
 
         const position = mouse.current;
         clay.setPointerState(.init(position.x, position.y), mouse.pressed(.left));
@@ -111,10 +112,18 @@ pub fn draw(self: *Self, renderer: *const Renderer) !void {
     const height: u16 = @intFromFloat(renderer.framebuffer_size.y);
     self.view.submitOrthographic(width, height);
 
+    const common = renderer.programs.getByName("common").?;
+    try common.setUniform("u_color", Vec.splat(1.0));
+
     try self._commands.run(self.view);
 }
 
 fn layout(self: *Self, world: *World) !void {
+    const orbit_enabled = if (world.getResource(editor.resources.Orbit)) |orbit|
+        orbit.enabled
+    else
+        false;
+
     self._commands.clear();
 
     self._clay_layout.begin();
@@ -139,7 +148,7 @@ fn layout(self: *Self, world: *World) !void {
                 &self._state,
                 clay.idc("LightOrbit"),
                 "Orbit",
-                world.light_orbit,
+                orbit_enabled,
                 onToggleOrbit,
             );
         }
@@ -149,8 +158,8 @@ fn layout(self: *Self, world: *World) !void {
 }
 
 fn onResetCamera(context: State.Context) bool {
-    context.world.camera.position = .init(0.0, 0.0, -3.0, 1.0);
-    context.world.camera.resetRotation();
+    _ = context;
+    std.debug.print("TODO: Implement onResetCamera\n", .{});
     return true;
 }
 
@@ -162,6 +171,7 @@ fn onQuit(context: State.Context) bool {
 
 fn onToggleOrbit(context: State.Context) bool {
     const data = context.getDataMut() orelse return false;
-    context.world.light_orbit = data.checkbox.checked;
+    const orbit = context.world.getResource(editor.resources.Orbit) orelse return false;
+    orbit.enabled = data.checkbox.checked;
     return true;
 }

@@ -18,12 +18,12 @@ pub fn initTranslation(translation: Vec) Self {
 }
 
 pub fn initRotation(rotation: Rotation) Self {
-    const pitch = std.math.degreesToRadians(rotation.pitch);
-    const yaw = std.math.degreesToRadians(rotation.yaw);
-    const roll = std.math.degreesToRadians(rotation.roll);
-    const quat = zmath.quatFromRollPitchYaw(pitch, yaw, roll);
     return .{
-        .data = zmath.matFromQuat(quat),
+        .data = zmath.matFromRollPitchYaw(
+            rotation.pitchRad(),
+            rotation.yawRad(),
+            rotation.rollRad(),
+        ),
     };
 }
 

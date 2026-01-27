@@ -14,8 +14,6 @@ const World = world.World;
 
 const Self = @This();
 
-camera: Camera = .{},
-light_orbit: bool = true,
 entities: Entities,
 components: Components,
 systems: Systems,
@@ -93,6 +91,12 @@ pub fn removeComponent(self: *Self, comptime T: type, entity: Entity) !void {
 
 pub fn getComponent(self: Self, comptime T: type, entity: Entity) ?*T {
     return self.components.get(T, entity);
+}
+
+pub fn hasComponent(self: Self, comptime T: type, entity: Entity) bool {
+    const id = self.components.getComponentId(T) orelse return false;
+    const signature = self.entities.getSignature(entity);
+    return signature.isSet(id);
 }
 
 /// A system with 0 components registered will always run. A system with registered components
