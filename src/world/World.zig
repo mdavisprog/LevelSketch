@@ -14,6 +14,10 @@ const World = world.World;
 
 const Self = @This();
 
+pub const Error = error{
+    DuplicateQuery,
+};
+
 entities: Entities,
 components: Components,
 systems: Systems,
@@ -99,11 +103,11 @@ pub fn hasComponent(self: Self, comptime T: type, entity: Entity) bool {
     return signature.isSet(id);
 }
 
-/// A system with 0 components registered will always run. A system with registered components
+/// A system with 0 queries registered will always run. A system with registered queries
 /// will only run if entities with matching components exist.
 pub fn registerSystem(
     self: *Self,
-    comptime components: []const type,
+    comptime queries: []const Systems.Query,
     schedule: Systems.Schedule,
     system: Systems.WorldSystem,
 ) !Systems.SystemId {
@@ -111,19 +115,27 @@ pub fn registerSystem(
         self._allocator,
         schedule,
         system,
-        components.len == 0,
+        queries.len,
     );
+    errdefer self.unregisterSystem(system_id);
 
-    var signature: Signature = .initEmpty();
-    inline for (components) |component| {
-        const component_id = self.components.getComponentId(component) orelse {
-            std.debug.panic("Component '{s}' has not been registered with the world.", .{
-                @typeName(component),
-            });
-        };
-        signature.set(@intCast(component_id));
+    inline for (queries, 0..) |query, i| {
+        var signature: Signature = .initEmpty();
+        inline for (query.components) |component| {
+            const component_id = self.components.getComponentId(component) orelse {
+                std.debug.panic("Component '{s}' has not been registered with the world.", .{
+                    @typeName(component),
+                });
+            };
+            signature.set(@intCast(component_id));
+        }
+
+        if (self.systems.hasQuery(system_id, signature)) {
+            return Error.DuplicateQuery;
+        }
+
+        try self.systems.setSignature(self._allocator, i, system_id, signature);
     }
-    try self.systems.setSignature(self._allocator, system_id, signature);
 
     return system_id;
 }
@@ -257,8 +269,12 @@ const ComponentB = struct {
     count: usize = 0,
 };
 
+const ComponentC = struct {
+    count: usize = 0,
+};
+
 fn systemA(param: SystemParam) !void {
-    var entities = param.entities.iterator();
+    var entities = param.queries[0].entities.iterator();
     while (entities.next()) |entity| {
         const component = param.world.getComponent(ComponentA, entity.*) orelse continue;
         component.count += 1;
@@ -266,12 +282,28 @@ fn systemA(param: SystemParam) !void {
 }
 
 fn systemAB(param: SystemParam) !void {
-    var entities = param.entities.iterator();
+    var entities = param.queries[0].entities.iterator();
     while (entities.next()) |entity| {
         const a = param.world.getComponent(ComponentA, entity.*) orelse continue;
         const b = param.world.getComponent(ComponentB, entity.*) orelse continue;
         a.count += 2;
         b.count += 2;
+    }
+}
+
+fn systemABC(param: SystemParam) !void {
+    var entities_ab = param.getEntities(0);
+    while (entities_ab.next()) |entity| {
+        const a = param.getComponent(ComponentA, entity.*) orelse continue;
+        const b = param.getComponent(ComponentB, entity.*) orelse continue;
+        a.count += 1;
+        b.count += 2;
+    }
+
+    var entities_c = param.getEntities(1);
+    while (entities_c.next()) |entity| {
+        const c = param.getComponent(ComponentC, entity.*) orelse continue;
+        c.count += 3;
     }
 }
 
@@ -282,7 +314,11 @@ test "register system" {
     defer _world.deinit();
 
     try _world.registerComponent(ComponentA);
-    _ = try _world.registerSystem(&.{ComponentA}, .startup, systemA);
+    _ = try _world.registerSystem(
+        &.{.init(&.{ComponentA})},
+        .startup,
+        systemA,
+    );
 
     const entity = _world.createEntity();
     try _world.insertComponent(ComponentA, entity, .{});
@@ -300,7 +336,7 @@ test "unregister system" {
     defer _world.deinit();
 
     try _world.registerComponent(ComponentA);
-    const system = try _world.registerSystem(&.{ComponentA}, .startup, systemA);
+    const system = try _world.registerSystem(&.{.init(&.{ComponentA})}, .startup, systemA);
 
     const entity = _world.createEntity();
     try _world.insertComponent(ComponentA, entity, .{});
@@ -315,6 +351,111 @@ test "unregister system" {
     try std.testing.expectEqual(1, component.count);
 }
 
+test "multiple queries" {
+    const allocator = std.testing.allocator;
+
+    var _world: Self = try .init(allocator);
+    defer _world.deinit();
+
+    try _world.registerComponents(&.{
+        ComponentA,
+        ComponentB,
+        ComponentC,
+    });
+
+    _ = try _world.registerSystem(
+        &.{
+            .init(&.{ ComponentA, ComponentB }),
+            .init(&.{ComponentC}),
+        },
+        .update,
+        systemABC,
+    );
+
+    const entityAB = _world.createEntity();
+    try _world.insertComponent(ComponentA, entityAB, .{});
+    try _world.insertComponent(ComponentB, entityAB, .{});
+
+    const entityC = _world.createEntity();
+    try _world.insertComponent(ComponentC, entityC, .{});
+
+    _world.runSystems(.update);
+
+    const a = _world.getComponent(ComponentA, entityAB) orelse unreachable;
+    const b = _world.getComponent(ComponentB, entityAB) orelse unreachable;
+    const c = _world.getComponent(ComponentC, entityC) orelse unreachable;
+
+    try std.testing.expectEqual(1, a.count);
+    try std.testing.expectEqual(2, b.count);
+    try std.testing.expectEqual(3, c.count);
+}
+
+test "multiple queries remove component" {
+    const allocator = std.testing.allocator;
+
+    var _world: Self = try .init(allocator);
+    defer _world.deinit();
+
+    try _world.registerComponents(&.{
+        ComponentA,
+        ComponentB,
+        ComponentC,
+    });
+
+    _ = try _world.registerSystem(
+        &.{
+            .init(&.{ ComponentA, ComponentB }),
+            .init(&.{ComponentC}),
+        },
+        .update,
+        systemABC,
+    );
+
+    const entityAB = _world.createEntity();
+    try _world.insertComponent(ComponentA, entityAB, .{});
+    try _world.insertComponent(ComponentB, entityAB, .{});
+
+    const entityC = _world.createEntity();
+    try _world.insertComponent(ComponentC, entityC, .{});
+
+    _world.runSystems(.update);
+
+    const a = _world.getComponent(ComponentA, entityAB) orelse unreachable;
+    const b = _world.getComponent(ComponentB, entityAB) orelse unreachable;
+    const c = _world.getComponent(ComponentC, entityC) orelse unreachable;
+
+    try std.testing.expectEqual(1, a.count);
+    try std.testing.expectEqual(2, b.count);
+    try std.testing.expectEqual(3, c.count);
+
+    try _world.removeComponent(ComponentA, entityAB);
+
+    _world.runSystems(.update);
+
+    try std.testing.expectEqual(1, a.count);
+    try std.testing.expectEqual(2, b.count);
+    try std.testing.expectEqual(6, c.count);
+}
+
+test "duplicate queries" {
+    const allocator = std.testing.allocator;
+
+    var _world: Self = try .init(allocator);
+    defer _world.deinit();
+
+    try _world.registerComponents(&.{ ComponentA, ComponentB });
+
+    const result = _world.registerSystem(
+        &.{
+            .init(&.{ ComponentA, ComponentB }),
+            .init(&.{ ComponentB, ComponentA }),
+        },
+        .startup,
+        systemAB,
+    );
+    try std.testing.expectEqual(Error.DuplicateQuery, result);
+}
+
 test "multiple systems" {
     const allocator = std.testing.allocator;
 
@@ -322,8 +463,8 @@ test "multiple systems" {
     defer _world.deinit();
 
     try _world.registerComponents(&.{ ComponentA, ComponentB });
-    _ = try _world.registerSystem(&.{ComponentA}, .update, systemA);
-    _ = try _world.registerSystem(&.{ ComponentA, ComponentB }, .update, systemAB);
+    _ = try _world.registerSystem(&.{.init(&.{ComponentA})}, .update, systemA);
+    _ = try _world.registerSystem(&.{.init(&.{ ComponentA, ComponentB })}, .update, systemAB);
 
     const entityA = _world.createEntity();
     const entityAB = _world.createEntity();
@@ -354,8 +495,8 @@ test "entity change systems" {
     defer _world.deinit();
 
     try _world.registerComponents(&.{ ComponentA, ComponentB });
-    _ = try _world.registerSystem(&.{ComponentA}, .update, systemA);
-    _ = try _world.registerSystem(&.{ ComponentA, ComponentB }, .update, systemAB);
+    _ = try _world.registerSystem(&.{.init(&.{ComponentA})}, .update, systemA);
+    _ = try _world.registerSystem(&.{.init(&.{ ComponentA, ComponentB })}, .update, systemAB);
 
     const entity = _world.createEntity();
     try _world.insertComponent(ComponentA, entity, .{});

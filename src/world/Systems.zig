@@ -11,14 +11,37 @@ const World = world.World;
 /// Holds all registered systems and updates what entities a system should run on.
 const Self = @This();
 
+pub const Query = struct {
+    pub const Result = struct {
+        entities: HashSetUnmanaged(Entity) = .empty,
+    };
+
+    components: []const type,
+
+    pub fn init(comptime components: []const type) Query {
+        return .{
+            .components = components,
+        };
+    }
+};
+
 /// Id representing a registered system. A value of '0' represents an invalid system.
 pub const SystemId = u32;
 
 /// The list of entities that is part of a system. Also includes the world object for
 /// component access.
 pub const SystemParam = struct {
-    entities: HashSetUnmanaged(Entity) = .empty,
+    queries: []const Query.Result,
     world: *World,
+    allocator: std.mem.Allocator,
+
+    pub fn getEntities(self: SystemParam, query: usize) HashSetUnmanaged(Entity).Iterator {
+        return self.queries[query].entities.iterator();
+    }
+
+    pub fn getComponent(self: SystemParam, comptime T: type, entity: Entity) ?*T {
+        return self.world.getComponent(T, entity);
+    }
 };
 
 /// Function signature for systems with direct world access.
@@ -34,7 +57,7 @@ const schedule_count = @typeInfo(Schedule).@"enum".fields.len;
 pub const invalid_system: SystemId = 0;
 
 systems: [schedule_count]std.AutoArrayHashMapUnmanaged(SystemId, SystemEntry) = @splat(.empty),
-_signatures: std.AutoHashMapUnmanaged(SystemId, Signature) = .empty,
+_signatures: std.AutoHashMapUnmanaged(SystemId, SystemQueries) = .empty,
 _system_id: SystemId = 1,
 
 pub fn init() Self {
@@ -45,12 +68,19 @@ pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
     for (&self.systems) |*systems| {
         var it = systems.iterator();
         while (it.next()) |entry| {
-            entry.value_ptr.entities.deinit(allocator);
+            for (entry.value_ptr.queries) |*query| {
+                query.entities.deinit(allocator);
+            }
+            allocator.free(entry.value_ptr.queries);
         }
 
         systems.deinit(allocator);
     }
 
+    var signatures = self._signatures.valueIterator();
+    while (signatures.next()) |signature| {
+        allocator.free(signature.queries);
+    }
     self._signatures.deinit(allocator);
 }
 
@@ -59,26 +89,47 @@ pub fn register(
     allocator: std.mem.Allocator,
     schedule: Schedule,
     system: WorldSystem,
-    always_run: bool,
+    num_queries: usize,
 ) !SystemId {
     var systems = &self.systems[@intFromEnum(schedule)];
     const id = self._system_id;
     try systems.put(allocator, id, .{
         .system = system,
-        .run_condition = if (always_run) .always else .entities,
+        .queries = try allocator.alloc(Query.Result, num_queries),
+        .run_condition = if (num_queries == 0) .always else .entities,
     });
     self._system_id += 1;
+
+    var it = systems.iterator();
+    while (it.next()) |entry| {
+        for (entry.value_ptr.queries) |*query| {
+            query.* = .{};
+        }
+    }
+
+    const signatures = try self._signatures.getOrPut(allocator, id);
+    signatures.value_ptr.queries = try allocator.alloc(Signature, num_queries);
+    for (signatures.value_ptr.queries) |*query| {
+        query.* = .initEmpty();
+    }
+
     return id;
 }
 
 pub fn unregister(self: *Self, allocator: std.mem.Allocator, system: SystemId) void {
     for (&self.systems) |*systems| {
         const entry = systems.getPtr(system) orelse continue;
-        entry.entities.deinit(allocator);
+        for (entry.queries) |*query| {
+            query.entities.deinit(allocator);
+        }
+        allocator.free(entry.queries);
         _ = systems.orderedRemove(system);
         break;
     }
 
+    if (self._signatures.getPtr(system)) |signatures| {
+        allocator.free(signatures.queries);
+    }
     _ = self._signatures.remove(system);
 }
 
@@ -90,13 +141,21 @@ pub fn run(self: *Self, schedule: Schedule, _world: *World) void {
 
         const should_run = switch (item.run_condition) {
             .always => true,
-            .entities => !item.entities.isEmpty(),
+            .entities => blk: {
+                for (item.queries) |query| {
+                    if (!query.entities.isEmpty()) {
+                        break :blk true;
+                    }
+                }
+                break :blk false;
+            },
         };
 
         if (should_run) {
             item.system(.{
-                .entities = entry.value_ptr.entities,
+                .queries = entry.value_ptr.queries,
                 .world = _world,
+                .allocator = _world._allocator,
             }) catch |err| {
                 std.debug.panic("Failed to run system: '{}'. Error: {}.", .{
                     item.system,
@@ -110,17 +169,21 @@ pub fn run(self: *Self, schedule: Schedule, _world: *World) void {
 pub fn setSignature(
     self: *Self,
     allocator: std.mem.Allocator,
+    query_index: usize,
     system: SystemId,
     signature: Signature,
 ) !void {
-    try self._signatures.put(allocator, system, signature);
+    const entry = try self._signatures.getOrPut(allocator, system);
+    entry.value_ptr.queries[query_index] = signature;
 }
 
 pub fn entityDestroyed(self: *Self, entity: Entity) void {
     for (&self.systems) |systems| {
         var it = systems.iterator();
         while (it.next()) |entry| {
-            _ = entry.value_ptr.entities.remove(entity);
+            for (entry.value_ptr.queries) |*query| {
+                _ = query.entities.remove(entity);
+            }
         }
     }
 }
@@ -135,16 +198,29 @@ pub fn entitySignatureChanged(
         var it = systems.iterator();
         while (it.next()) |entry| {
             const id = entry.key_ptr.*;
-            const system_signature = self._signatures.get(id) orelse continue;
-            const intersection = system_signature.intersectWith(signature);
+            const system_signatures = self._signatures.get(id) orelse continue;
+            for (system_signatures.queries, 0..) |query, i| {
+                const intersection = query.intersectWith(signature);
 
-            if (intersection.eql(system_signature)) {
-                try entry.value_ptr.entities.insert(allocator, entity);
-            } else {
-                _ = entry.value_ptr.entities.remove(entity);
+                if (intersection.eql(query)) {
+                    try entry.value_ptr.queries[i].entities.insert(allocator, entity);
+                } else {
+                    _ = entry.value_ptr.queries[i].entities.remove(entity);
+                }
             }
         }
     }
+}
+
+pub fn hasQuery(self: Self, system: SystemId, query: Signature) bool {
+    const signature = self._signatures.get(system) orelse return false;
+    for (signature.queries) |_query| {
+        if (_query.eql(query)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 /// Determines if a system should be run.
@@ -158,6 +234,10 @@ const RunCondition = enum {
 
 const SystemEntry = struct {
     system: WorldSystem,
-    entities: HashSetUnmanaged(Entity) = .empty,
+    queries: []Query.Result,
     run_condition: RunCondition = .entities,
+};
+
+const SystemQueries = struct {
+    queries: []Signature,
 };

@@ -28,13 +28,13 @@ pub const Editor = struct {
         try world.registerResource(resources.Orbit, .{});
 
         _ = try world.registerSystem(
-            &.{ components.Camera, _world.components.core.Transform },
+            &.{.init(&.{ components.Camera, _world.components.core.Transform })},
             .update,
             systems.updateCamera,
         );
 
         _ = try world.registerSystem(
-            &.{ components.Orbit, _world.components.core.Transform },
+            &.{.init(&.{ components.Orbit, _world.components.core.Transform })},
             .update,
             systems.orbit,
         );

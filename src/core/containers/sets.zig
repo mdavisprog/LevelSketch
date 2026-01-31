@@ -4,6 +4,7 @@ pub fn HashSetUnmanaged(comptime T: type) type {
     return struct {
         const Self = @This();
         const Keys = std.AutoHashMapUnmanaged(T, void);
+        pub const Iterator = Keys.KeyIterator;
 
         pub const empty: Self = .{};
 
@@ -33,7 +34,7 @@ pub fn HashSetUnmanaged(comptime T: type) type {
             return self._data.remove(key);
         }
 
-        pub fn iterator(self: Self) Keys.KeyIterator {
+        pub fn iterator(self: Self) Iterator {
             return self._data.keyIterator();
         }
 

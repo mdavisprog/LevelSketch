@@ -17,7 +17,7 @@ pub fn updateCamera(param: SystemParam) !void {
     const mouse = param.world.getResource(platform.input.resources.Mouse) orelse return;
     const _render = param.world.getResource(render.ecs.resources.Render) orelse return;
 
-    var entities = param.entities.iterator();
+    var entities = param.queries[0].entities.iterator();
     var submitted = false;
     while (entities.next()) |entity| {
         const transform = param.world.getComponent(world.components.core.Transform, entity.*) orelse continue;
@@ -94,7 +94,7 @@ pub fn orbit(param: SystemParam) !void {
     const frame = param.world.getResource(world.resources.core.Frame) orelse unreachable;
     const delta_time = frame.times.delta;
 
-    var entities = param.entities.iterator();
+    var entities = param.queries[0].entities.iterator();
     while (entities.next()) |entity| {
         const transform = param.world.getComponent(world.components.core.Transform, entity.*) orelse continue;
         const _orbit = param.world.getComponent(editor.components.Orbit, entity.*) orelse continue;

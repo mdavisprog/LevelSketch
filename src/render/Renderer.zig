@@ -127,18 +127,22 @@ pub fn initECS(self: *Self, _world: *World) !void {
     // TODO: Need a way to render all meshes and their materials in a single system.
     _ = try _world.registerSystem(
         &.{
-            world.components.core.Transform,
-            ecs.components.Mesh,
-            ecs.components.Phong,
+            .init(&.{
+                world.components.core.Transform,
+                ecs.components.Mesh,
+                ecs.components.Phong,
+            }),
         },
         .render,
         renderPhong,
     );
     _ = try _world.registerSystem(
         &.{
-            world.components.core.Transform,
-            ecs.components.Mesh,
-            ecs.components.Color,
+            .init(&.{
+                world.components.core.Transform,
+                ecs.components.Mesh,
+                ecs.components.Color,
+            }),
         },
         .render,
         renderColor,
@@ -204,7 +208,7 @@ fn renderPhong(param: SystemParam) !void {
         try phong.setUniform("u_light_diffuse", light_component.diffuse);
         try phong.setUniform("u_light_specular", light_component.specular);
 
-        var entities = param.entities.iterator();
+        var entities = param.queries[0].entities.iterator();
         while (entities.next()) |entity| {
             const transform = param.world.getComponent(world.components.core.Transform, entity.*) orelse continue;
             const mesh_component = param.world.getComponent(ecs.components.Mesh, entity.*) orelse continue;
@@ -242,7 +246,7 @@ fn renderColor(param: SystemParam) !void {
 
     try renderer.textures.default.bind(sampler.handle, 0);
 
-    var entities = param.entities.iterator();
+    var entities = param.queries[0].entities.iterator();
     while (entities.next()) |entity| {
         const transform = param.world.getComponent(world.components.core.Transform, entity.*) orelse continue;
         const mesh_component = param.world.getComponent(ecs.components.Mesh, entity.*) orelse continue;
