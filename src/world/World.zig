@@ -80,6 +80,18 @@ pub fn insertComponent(self: *Self, comptime T: type, entity: Entity, component:
     try self.systems.entitySignatureChanged(self._allocator, entity, signature);
 }
 
+pub fn insertComponents(self: *Self, entity: Entity, components: anytype) !void {
+    const ComponentsType = @TypeOf(components);
+    const components_info = @typeInfo(ComponentsType);
+    if (components_info != .@"struct") {
+        @compileError("Given components must be a struct or tuple.");
+    }
+
+    inline for (std.meta.fields(ComponentsType)) |field| {
+        try self.insertComponent(field.type, entity, @field(components, field.name));
+    }
+}
+
 pub fn removeComponent(self: *Self, comptime T: type, entity: Entity) !void {
     // Clear the component data
     try self.components.remove(T, self._allocator, entity);
@@ -566,4 +578,28 @@ test "resource" {
         const resource = _world.getResource(TestResource) orelse unreachable;
         try std.testing.expectEqual(10, resource.value);
     }
+}
+
+test "insert components" {
+    const allocator = std.testing.allocator;
+
+    var _world: World = try .init(allocator);
+    defer _world.deinit();
+
+    try _world.registerComponents(&.{ ComponentA, ComponentB });
+
+    const entity = _world.createEntity();
+    try _world.insertComponents(
+        entity,
+        .{
+            ComponentA{ .count = 1 },
+            ComponentB{ .count = 2 },
+        },
+    );
+
+    const a = _world.getComponent(ComponentA, entity) orelse unreachable;
+    const b = _world.getComponent(ComponentB, entity) orelse unreachable;
+
+    try std.testing.expectEqual(1, a.count);
+    try std.testing.expectEqual(2, b.count);
 }
