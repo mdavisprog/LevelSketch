@@ -173,6 +173,7 @@ pub fn registerSystem(
     const params = try self._allocator.create(ParametersType);
     errdefer self._allocator.destroy(params);
 
+    comptime var found_system_param = false;
     var queries: [system_fn.params.len]Signature = @splat(.initEmpty());
     // Loop through each parameter and update the tuple instance based on the parameter type.
     inline for (system_fn.params, 0..) |param, i| {
@@ -223,6 +224,15 @@ pub fn registerSystem(
                 .entities = entities,
             };
         } else if (param_type == SystemParam) {
+            if (found_system_param) {
+                @compileError(std.fmt.comptimePrint(
+                    "Multiple 'SystemParam' parameters found in system {}. Only one can " ++
+                    "exist at a time.",
+                    .{@TypeOf(system)},
+                ));
+            }
+            found_system_param = true;
+
             // Set up the SystemParam argument to be used with the system.
             @field(params, field) = .{
                 .world = self,
