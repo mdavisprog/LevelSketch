@@ -3,7 +3,12 @@ const std = @import("std");
 const world = @import("root.zig");
 
 const Signature = Components.Signature;
-const Entity = world.Entity;
+
+pub const Entity = struct {
+    pub const Id = u32;
+
+    id: Id = 0,
+};
 
 const Self = @This();
 
