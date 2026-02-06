@@ -50,8 +50,6 @@ pub const Editor = struct {
     }
 
     pub fn addLight(self: *Self, renderer: *Renderer) !void {
-        const lights = self.world.getResource(render.ecs.resources.Lights) orelse unreachable;
-
         const cube = try render.shapes.cube(u16, renderer, .splat(0.2), 0xFFFFFFFF);
         const cube_entity = self.world.createEntity();
         try self.world.insertComponent(_world.components.core.Transform, cube_entity, .{});
@@ -64,7 +62,5 @@ pub const Editor = struct {
             .ambient = .init(0.2, 0.2, 0.2, 1.0),
             .diffuse = .init(0.5, 0.5, 0.5, 1.0),
         });
-
-        try lights.entities.insert(self.world._allocator, cube_entity);
     }
 };

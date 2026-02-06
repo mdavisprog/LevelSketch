@@ -9,7 +9,3 @@ const Renderer = render.Renderer;
 pub const Render = struct {
     renderer: *Renderer,
 };
-
-pub const Lights = struct {
-    entities: HashSetUnmanaged(world.Entity) = .empty,
-};

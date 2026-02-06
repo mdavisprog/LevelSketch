@@ -115,7 +115,6 @@ pub fn initECS(self: *Self, _world: *World) !void {
     try _world.registerResource(ecs.resources.Render, .{
         .renderer = self,
     });
-    try _world.registerResource(ecs.resources.Lights, .{});
 
     try _world.registerComponents(&.{
         ecs.components.Mesh,
@@ -160,8 +159,7 @@ pub fn loadMeshFromBuffer(self: *Self, buffer: anytype) !Meshes.Mesh.Handle {
 }
 
 fn shutdownSystem(param: SystemParam) !void {
-    const lights = param.world.getResource(ecs.resources.Lights) orelse unreachable;
-    lights.entities.deinit(param.world._allocator);
+    _ = param;
 }
 
 fn updateSystem(param: SystemParam) !void {
@@ -185,9 +183,6 @@ fn renderPhong(
 ) !void {
     const _render = param.world.getResource(ecs.resources.Render) orelse unreachable;
     const renderer = _render.renderer;
-    // TODO: For now, all light entities are added to a resource. Should allow this system to
-    // query for light entities.
-    //const lights_resource = param.world.getResource(ecs.resources.Lights) orelse unreachable;
     const phong = renderer.programs.getByName("phong") orelse unreachable;
 
     var light_entities = lights.getEntities();
