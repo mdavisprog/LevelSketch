@@ -6,18 +6,22 @@ const std = @import("std");
 const world = @import("world");
 
 const Mat = core.math.Mat;
+const Query = world.Query;
 const Renderer = render.Renderer;
 const SystemParam = world.Systems.SystemParam;
 const Vec = core.math.Vec;
 
-pub fn updateCamera(param: SystemParam) !void {
+pub fn updateCamera(
+    cameras: Query(&.{ world.components.core.Transform, editor.components.Camera }),
+    param: SystemParam,
+) !void {
     const frame = param.world.getResource(world.resources.core.Frame) orelse return;
     const _platform = param.world.getResource(platform.resources.Platform) orelse return;
     const keyboard = param.world.getResource(platform.input.resources.Keyboard) orelse return;
     const mouse = param.world.getResource(platform.input.resources.Mouse) orelse return;
     const _render = param.world.getResource(render.ecs.resources.Render) orelse return;
 
-    var entities = param.queries[0].entities.iterator();
+    var entities = cameras.getEntities();
     var submitted = false;
     while (entities.next()) |entity| {
         const transform = param.world.getComponent(world.components.core.Transform, entity.*) orelse continue;
@@ -85,7 +89,10 @@ pub fn updateCamera(param: SystemParam) !void {
     }
 }
 
-pub fn orbit(param: SystemParam) !void {
+pub fn orbit(
+    orbits: Query(&.{ world.components.core.Transform, editor.components.Orbit }),
+    param: SystemParam,
+) !void {
     const resource = param.world.getResource(editor.resources.Orbit) orelse unreachable;
     if (!resource.enabled) {
         return;
@@ -94,7 +101,7 @@ pub fn orbit(param: SystemParam) !void {
     const frame = param.world.getResource(world.resources.core.Frame) orelse unreachable;
     const delta_time = frame.times.delta;
 
-    var entities = param.queries[0].entities.iterator();
+    var entities = orbits.getEntities();
     while (entities.next()) |entity| {
         const transform = param.world.getComponent(world.components.core.Transform, entity.*) orelse continue;
         const _orbit = param.world.getComponent(editor.components.Orbit, entity.*) orelse continue;

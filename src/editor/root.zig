@@ -27,17 +27,8 @@ pub const Editor = struct {
 
         try world.registerResource(resources.Orbit, .{});
 
-        _ = try world.registerSystem(
-            &.{.init(&.{ components.Camera, _world.components.core.Transform })},
-            .update,
-            systems.updateCamera,
-        );
-
-        _ = try world.registerSystem(
-            &.{.init(&.{ components.Orbit, _world.components.core.Transform })},
-            .update,
-            systems.orbit,
-        );
+        _ = try world.registerSystem(systems.updateCamera, .update);
+        _ = try world.registerSystem(systems.orbit, .update);
 
         const transform: _world.components.core.Transform = .{
             .translation = .init(0.0, 0.0, -3.0, 1.0),

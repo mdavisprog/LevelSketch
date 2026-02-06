@@ -1,5 +1,6 @@
 const Components = @import("Components.zig");
 const Entities = @import("Entities.zig");
+const Queries = @import("Queries.zig");
 const Resources = @import("Resources.zig");
 const std = @import("std");
 const world = @import("root.zig");
@@ -7,6 +8,7 @@ const world = @import("root.zig");
 const Signature = Components.Signature;
 const Camera = world.Camera;
 const Entity = world.Entity;
+const Query = Queries.Query;
 const Systems = world.Systems;
 const SystemParam = Systems.SystemParam;
 const Transform = world.components.core.Transform;
@@ -22,6 +24,7 @@ entities: Entities,
 components: Components,
 systems: Systems,
 resources: Resources,
+queries: *Queries,
 _allocator: std.mem.Allocator,
 
 pub fn init(allocator: std.mem.Allocator) !Self {
@@ -31,11 +34,15 @@ pub fn init(allocator: std.mem.Allocator) !Self {
     var resources: Resources = .init();
     try resources.add(world.resources.core.Frame, allocator, .{});
 
+    const queries = try allocator.create(Queries);
+    queries.* = .init();
+
     return .{
         .entities = .init(allocator),
         .components = components,
         .systems = .init(),
         .resources = resources,
+        .queries = queries,
         ._allocator = allocator,
     };
 }
@@ -45,6 +52,9 @@ pub fn deinit(self: *Self) void {
     self.components.deinit(self._allocator);
     self.systems.deinit(self._allocator);
     self.resources.deinit(self._allocator);
+    self.queries.deinit(self._allocator);
+
+    self._allocator.destroy(self.queries);
 }
 
 pub fn createEntity(self: *Self) Entity {
@@ -54,7 +64,7 @@ pub fn createEntity(self: *Self) Entity {
 pub fn destroyEntity(self: *Self, entity: Entity) !void {
     try self.entities.destroy(self._allocator, entity);
     try self.components.entityDestroyed(self._allocator, entity);
-    self.systems.entityDestroyed(entity);
+    self.queries.entityDestroyed(entity);
 }
 
 pub fn registerComponent(self: *Self, comptime T: type) !void {
@@ -77,7 +87,7 @@ pub fn insertComponent(self: *Self, comptime T: type, entity: Entity, component:
 
     // Notify all systems to move the entity to the proper sets
     const signature = self.entities.getSignature(entity);
-    try self.systems.entitySignatureChanged(self._allocator, entity, signature);
+    try self.queries.signatureChanged(self._allocator, signature, entity);
 }
 
 pub fn insertComponents(self: *Self, entity: Entity, components: anytype) !void {
@@ -88,8 +98,19 @@ pub fn insertComponents(self: *Self, entity: Entity, components: anytype) !void 
     }
 
     inline for (std.meta.fields(ComponentsType)) |field| {
-        try self.insertComponent(field.type, entity, @field(components, field.name));
+        try self.components.insert(
+            field.type,
+            self._allocator,
+            entity,
+            @field(components, field.name),
+        );
+
+        const id = self.components.getComponentId(field.type) orelse unreachable;
+        self.entities.setSignatureBit(entity, @intCast(id));
     }
+
+    const signature = self.entities.getSignature(entity);
+    try self.queries.signatureChanged(self._allocator, signature, entity);
 }
 
 pub fn removeComponent(self: *Self, comptime T: type, entity: Entity) !void {
@@ -102,7 +123,7 @@ pub fn removeComponent(self: *Self, comptime T: type, entity: Entity) !void {
 
     // Notify all systems to move the entity to the proper sets
     const signature = self.entities.getSignature(entity);
-    try self.systems.entitySignatureChanged(self._allocator, entity, signature);
+    try self.queries.signatureChanged(self._allocator, signature, entity);
 }
 
 pub fn getComponent(self: Self, comptime T: type, entity: Entity) ?*T {
@@ -115,40 +136,101 @@ pub fn hasComponent(self: Self, comptime T: type, entity: Entity) bool {
     return signature.isSet(id);
 }
 
-/// A system with 0 queries registered will always run. A system with registered queries
-/// will only run if entities with matching components exist.
+/// Registers the given system with the world. This function will reflect on the system and create
+/// queries based on the parameter types given to the system. A Query object contains a pointer
+/// to the entity set so that systems can iterate over valid entities.
+///
+/// The system must contain at least 1 parameter of type Query. The system can also contain only one
+/// SystemParam type.
 pub fn registerSystem(
     self: *Self,
-    comptime queries: []const Systems.Query,
+    system: anytype,
     schedule: Systems.Schedule,
-    system: Systems.WorldSystem,
 ) !Systems.SystemId {
-    const system_id = try self.systems.register(
-        self._allocator,
-        schedule,
-        system,
-        queries.len,
-    );
-    errdefer self.unregisterSystem(system_id);
-
-    inline for (queries, 0..) |query, i| {
-        var signature: Signature = .initEmpty();
-        inline for (query.components) |component| {
-            const component_id = self.components.getComponentId(component) orelse {
-                std.debug.panic("Component '{s}' has not been registered with the world.", .{
-                    @typeName(component),
-                });
-            };
-            signature.set(@intCast(component_id));
-        }
-
-        if (self.systems.hasQuery(system_id, signature)) {
-            return Error.DuplicateQuery;
-        }
-
-        try self.systems.setSignature(self._allocator, i, system_id, signature);
+    const system_info = @typeInfo(@TypeOf(system));
+    if (system_info != .@"fn") {
+        @compileError(std.fmt.comptimePrint(
+            "Given system {} is not a function.",
+            .{@TypeOf(system)},
+        ));
     }
 
+    const system_fn = system_info.@"fn";
+    if (system_fn.params.len == 0) {
+        @compileError("Given system has no parameters. The system must have either Query parameters or " ++
+            "SystemParam.");
+    }
+
+    // Get the tuple type and instance it. This instance will be passed in as parameters to the
+    // given system.
+    const ParametersType = std.meta.ArgsTuple(@TypeOf(system));
+    const params = try self._allocator.create(ParametersType);
+    errdefer self._allocator.destroy(params);
+
+    var queries: [system_fn.params.len]Signature = @splat(.initEmpty());
+    // Loop through each parameter and update the tuple instance based on the parameter type.
+    inline for (system_fn.params, 0..) |param, i| {
+        const param_type = param.type orelse {
+            @compileError(std.fmt.comptimePrint(
+                "Argument at index {} does not have a type",
+                .{i},
+            ));
+        };
+
+        const field = std.fmt.comptimePrint("{}", .{i});
+        if (Queries.isQueryType(param_type)) {
+            // This is a query object. Instance a default version of this to extract what components
+            // are a part of this query. The runtime will create a signature based on registered
+            // components and create a query to hold the entity set.
+            var signature: Signature = .initEmpty();
+
+            const param_default = std.mem.zeroInit(param_type, .{});
+            inline for (param_default.components) |component| {
+                const component_info = @typeInfo(component);
+                if (component_info != .@"struct") {
+                    @compileError(std.fmt.comptimePrint(
+                        "Query component '{}' is not a struct in system {}.",
+                        .{ component, @TypeOf(system) },
+                    ));
+                }
+
+                const id = self.components.getComponentId(component) orelse {
+                    std.debug.panic(
+                        "Failed to generate query. Component '{s}' is not registered.",
+                        .{@typeName(component)},
+                    );
+                };
+                signature.set(@intCast(id));
+            }
+
+            // Check for duplicate queries within the system.
+            for (queries) |query| {
+                if (query.eql(signature)) {
+                    return Error.DuplicateQuery;
+                }
+            }
+            queries[i] = signature;
+
+            // Update the tuple instance with the query object pointing to the entity set.
+            const entities = try self.queries.add(param_type, self._allocator, signature);
+            @field(params, field) = .{
+                .entities = entities,
+            };
+        } else if (param_type == SystemParam) {
+            // Set up the SystemParam argument to be used with the system.
+            @field(params, field) = .{
+                .world = self,
+                .allocator = self._allocator,
+            };
+        } else {
+            @compileError(std.fmt.comptimePrint(
+                "Invalid parameter type '{}' for system '{}'.",
+                .{ param_type, @TypeOf(system) },
+            ));
+        }
+    }
+
+    const system_id = try self.systems.register(self._allocator, system, params, schedule);
     return system_id;
 }
 
@@ -157,7 +239,7 @@ pub fn unregisterSystem(self: *Self, system: Systems.SystemId) void {
 }
 
 pub fn runSystems(self: *Self, schedule: Systems.Schedule) void {
-    self.systems.run(schedule, self);
+    self.systems.run(schedule);
 }
 
 pub fn registerResource(self: *Self, comptime T: type, resource: T) !void {
@@ -285,16 +367,16 @@ const ComponentC = struct {
     count: usize = 0,
 };
 
-fn systemA(param: SystemParam) !void {
-    var entities = param.queries[0].entities.iterator();
+fn systemA(a: Query(&.{ComponentA}), param: SystemParam) !void {
+    var entities = a.getEntities();
     while (entities.next()) |entity| {
         const component = param.world.getComponent(ComponentA, entity.*) orelse continue;
         component.count += 1;
     }
 }
 
-fn systemAB(param: SystemParam) !void {
-    var entities = param.queries[0].entities.iterator();
+fn systemAB(ab: Query(&.{ ComponentA, ComponentB }), param: SystemParam) !void {
+    var entities = ab.getEntities();
     while (entities.next()) |entity| {
         const a = param.world.getComponent(ComponentA, entity.*) orelse continue;
         const b = param.world.getComponent(ComponentB, entity.*) orelse continue;
@@ -303,19 +385,26 @@ fn systemAB(param: SystemParam) !void {
     }
 }
 
-fn systemABC(param: SystemParam) !void {
-    var entities_ab = param.getEntities(0);
+fn systemABC(
+    ab: Query(&.{ ComponentA, ComponentB }),
+    c: Query(&.{ComponentC}),
+    param: SystemParam,
+) !void {
+    var entities_ab = ab.getEntities();
     while (entities_ab.next()) |entity| {
-        const a = param.getComponent(ComponentA, entity.*) orelse continue;
-        const b = param.getComponent(ComponentB, entity.*) orelse continue;
-        a.count += 1;
-        b.count += 2;
+        if (param.getComponent(ComponentA, entity.*)) |a| {
+            a.count += 1;
+        }
+
+        if (param.getComponent(ComponentB, entity.*)) |b| {
+            b.count += 2;
+        }
     }
 
-    var entities_c = param.getEntities(1);
+    var entities_c = c.getEntities();
     while (entities_c.next()) |entity| {
-        const c = param.getComponent(ComponentC, entity.*) orelse continue;
-        c.count += 3;
+        const _c = param.getComponent(ComponentC, entity.*) orelse continue;
+        _c.count += 3;
     }
 }
 
@@ -326,11 +415,7 @@ test "register system" {
     defer _world.deinit();
 
     try _world.registerComponent(ComponentA);
-    _ = try _world.registerSystem(
-        &.{.init(&.{ComponentA})},
-        .startup,
-        systemA,
-    );
+    _ = try _world.registerSystem(systemA, .startup);
 
     const entity = _world.createEntity();
     try _world.insertComponent(ComponentA, entity, .{});
@@ -348,7 +433,7 @@ test "unregister system" {
     defer _world.deinit();
 
     try _world.registerComponent(ComponentA);
-    const system = try _world.registerSystem(&.{.init(&.{ComponentA})}, .startup, systemA);
+    const system = try _world.registerSystem(systemA, .startup);
 
     const entity = _world.createEntity();
     try _world.insertComponent(ComponentA, entity, .{});
@@ -375,14 +460,7 @@ test "multiple queries" {
         ComponentC,
     });
 
-    _ = try _world.registerSystem(
-        &.{
-            .init(&.{ ComponentA, ComponentB }),
-            .init(&.{ComponentC}),
-        },
-        .update,
-        systemABC,
-    );
+    _ = try _world.registerSystem(systemABC, .update);
 
     const entityAB = _world.createEntity();
     try _world.insertComponent(ComponentA, entityAB, .{});
@@ -414,14 +492,7 @@ test "multiple queries remove component" {
         ComponentC,
     });
 
-    _ = try _world.registerSystem(
-        &.{
-            .init(&.{ ComponentA, ComponentB }),
-            .init(&.{ComponentC}),
-        },
-        .update,
-        systemABC,
-    );
+    _ = try _world.registerSystem(systemABC, .update);
 
     const entityAB = _world.createEntity();
     try _world.insertComponent(ComponentA, entityAB, .{});
@@ -449,6 +520,11 @@ test "multiple queries remove component" {
     try std.testing.expectEqual(6, c.count);
 }
 
+fn systemDuplicate(
+    _: Query(&.{ ComponentA, ComponentB }),
+    _: Query(&.{ ComponentB, ComponentA }),
+) !void {}
+
 test "duplicate queries" {
     const allocator = std.testing.allocator;
 
@@ -457,14 +533,7 @@ test "duplicate queries" {
 
     try _world.registerComponents(&.{ ComponentA, ComponentB });
 
-    const result = _world.registerSystem(
-        &.{
-            .init(&.{ ComponentA, ComponentB }),
-            .init(&.{ ComponentB, ComponentA }),
-        },
-        .startup,
-        systemAB,
-    );
+    const result = _world.registerSystem(systemDuplicate, .startup);
     try std.testing.expectEqual(Error.DuplicateQuery, result);
 }
 
@@ -475,8 +544,8 @@ test "multiple systems" {
     defer _world.deinit();
 
     try _world.registerComponents(&.{ ComponentA, ComponentB });
-    _ = try _world.registerSystem(&.{.init(&.{ComponentA})}, .update, systemA);
-    _ = try _world.registerSystem(&.{.init(&.{ ComponentA, ComponentB })}, .update, systemAB);
+    _ = try _world.registerSystem(systemA, .update);
+    _ = try _world.registerSystem(systemAB, .update);
 
     const entityA = _world.createEntity();
     const entityAB = _world.createEntity();
@@ -507,8 +576,8 @@ test "entity change systems" {
     defer _world.deinit();
 
     try _world.registerComponents(&.{ ComponentA, ComponentB });
-    _ = try _world.registerSystem(&.{.init(&.{ComponentA})}, .update, systemA);
-    _ = try _world.registerSystem(&.{.init(&.{ ComponentA, ComponentB })}, .update, systemAB);
+    _ = try _world.registerSystem(systemA, .update);
+    _ = try _world.registerSystem(systemAB, .update);
 
     const entity = _world.createEntity();
     try _world.insertComponent(ComponentA, entity, .{});
@@ -561,7 +630,7 @@ test "resource" {
     var _world: World = try .init(allocator);
     defer _world.deinit();
 
-    _ = try _world.registerSystem(&.{}, .update, systemResource);
+    _ = try _world.registerSystem(systemResource, .update);
 
     try _world.registerResource(TestResource, .{
         .value = 5,

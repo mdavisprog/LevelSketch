@@ -32,8 +32,8 @@ pub fn init(_world: *World) !void {
     try _world.registerResource(input.resources.Keyboard, .{});
     try _world.registerResource(input.resources.Mouse, .{});
 
-    _ = try _world.registerSystem(&.{}, .update, update);
-    _ = try _world.registerSystem(&.{}, .shutdown, shutdown);
+    _ = try _world.registerSystem(update, .update);
+    _ = try _world.registerSystem(shutdown, .shutdown);
 }
 
 fn update(param: SystemParam) !void {

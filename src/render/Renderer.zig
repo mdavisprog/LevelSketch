@@ -12,6 +12,7 @@ const Meshes = render.Meshes;
 const Model = io.obj.Model;
 const Program = render.shaders.Program;
 const Programs = render.shaders.Programs;
+const Query = world.Query;
 const RenderBuffer = render.RenderBuffer;
 const SystemParam = world.Systems.SystemParam;
 const Textures = render.Textures;
@@ -123,31 +124,11 @@ pub fn initECS(self: *Self, _world: *World) !void {
         ecs.components.Color,
     });
 
-    _ = try _world.registerSystem(&.{}, .update, updateSystem);
+    _ = try _world.registerSystem(updateSystem, .update);
     // TODO: Need a way to render all meshes and their materials in a single system.
-    _ = try _world.registerSystem(
-        &.{
-            .init(&.{
-                world.components.core.Transform,
-                ecs.components.Mesh,
-                ecs.components.Phong,
-            }),
-        },
-        .render,
-        renderPhong,
-    );
-    _ = try _world.registerSystem(
-        &.{
-            .init(&.{
-                world.components.core.Transform,
-                ecs.components.Mesh,
-                ecs.components.Color,
-            }),
-        },
-        .render,
-        renderColor,
-    );
-    _ = try _world.registerSystem(&.{}, .shutdown, shutdownSystem);
+    _ = try _world.registerSystem(renderPhong, .render);
+    _ = try _world.registerSystem(renderColor, .render);
+    _ = try _world.registerSystem(shutdownSystem, .shutdown);
 }
 
 pub fn updateView(self: *Self, size: Vec2u) void {
@@ -190,16 +171,27 @@ fn updateSystem(param: SystemParam) !void {
     resource.renderer._uploads32.update(resource.renderer.allocator);
 }
 
-fn renderPhong(param: SystemParam) !void {
+fn renderPhong(
+    meshes: Query(&.{
+        world.components.core.Transform,
+        ecs.components.Mesh,
+        ecs.components.Phong,
+    }),
+    lights: Query(&.{
+        world.components.core.Transform,
+        ecs.components.Light,
+    }),
+    param: SystemParam,
+) !void {
     const _render = param.world.getResource(ecs.resources.Render) orelse unreachable;
     const renderer = _render.renderer;
     // TODO: For now, all light entities are added to a resource. Should allow this system to
     // query for light entities.
-    const lights_resource = param.world.getResource(ecs.resources.Lights) orelse unreachable;
+    //const lights_resource = param.world.getResource(ecs.resources.Lights) orelse unreachable;
     const phong = renderer.programs.getByName("phong") orelse unreachable;
 
-    var lights = lights_resource.entities.iterator();
-    while (lights.next()) |light| {
+    var light_entities = lights.getEntities();
+    while (light_entities.next()) |light| {
         const light_transform = param.world.getComponent(world.components.core.Transform, light.*) orelse continue;
         const light_component = param.world.getComponent(ecs.components.Light, light.*) orelse continue;
 
@@ -208,7 +200,7 @@ fn renderPhong(param: SystemParam) !void {
         try phong.setUniform("u_light_diffuse", light_component.diffuse);
         try phong.setUniform("u_light_specular", light_component.specular);
 
-        var entities = param.queries[0].entities.iterator();
+        var entities = meshes.getEntities();
         while (entities.next()) |entity| {
             const transform = param.world.getComponent(world.components.core.Transform, entity.*) orelse continue;
             const mesh_component = param.world.getComponent(ecs.components.Mesh, entity.*) orelse continue;
@@ -238,7 +230,14 @@ fn renderPhong(param: SystemParam) !void {
     }
 }
 
-fn renderColor(param: SystemParam) !void {
+fn renderColor(
+    meshes: Query(&.{
+        world.components.core.Transform,
+        ecs.components.Mesh,
+        ecs.components.Color,
+    }),
+    param: SystemParam,
+) !void {
     const _render = param.world.getResource(ecs.resources.Render) orelse unreachable;
     const renderer = _render.renderer;
     const common = renderer.programs.getByName("common") orelse unreachable;
@@ -246,7 +245,7 @@ fn renderColor(param: SystemParam) !void {
 
     try renderer.textures.default.bind(sampler.handle, 0);
 
-    var entities = param.queries[0].entities.iterator();
+    var entities = meshes.getEntities();
     while (entities.next()) |entity| {
         const transform = param.world.getComponent(world.components.core.Transform, entity.*) orelse continue;
         const mesh_component = param.world.getComponent(ecs.components.Mesh, entity.*) orelse continue;
