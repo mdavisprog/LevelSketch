@@ -61,6 +61,12 @@ pub fn createEntity(self: *Self) Entity {
     return self.entities.create();
 }
 
+pub fn createEntityWith(self: *Self, components: anytype) !Entity {
+    const entity = self.createEntity();
+    try self.insertComponents(entity, components);
+    return entity;
+}
+
 pub fn destroyEntity(self: *Self, entity: Entity) !void {
     try self.entities.destroy(self._allocator, entity);
     try self.components.entityDestroyed(self._allocator, entity);

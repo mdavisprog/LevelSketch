@@ -51,16 +51,17 @@ pub const Editor = struct {
 
     pub fn addLight(self: *Self, renderer: *Renderer) !void {
         const cube = try render.shapes.cube(u16, renderer, .splat(0.2), 0xFFFFFFFF);
-        const cube_entity = self.world.createEntity();
-        try self.world.insertComponent(_world.components.core.Transform, cube_entity, .{});
-        try self.world.insertComponent(render.ecs.components.Mesh, cube_entity, .{
-            .handle = cube,
-        });
-        try self.world.insertComponent(render.ecs.components.Color, cube_entity, .{});
-        try self.world.insertComponent(components.Orbit, cube_entity, .{});
-        try self.world.insertComponent(render.ecs.components.Light, cube_entity, .{
-            .ambient = .init(0.2, 0.2, 0.2, 1.0),
-            .diffuse = .init(0.5, 0.5, 0.5, 1.0),
+        _ = try self.world.createEntityWith(.{
+            _world.components.core.Transform{},
+            render.ecs.components.Mesh{
+                .handle = cube,
+            },
+            render.ecs.components.Color{},
+            components.Orbit{},
+            render.ecs.components.Light{
+                .ambient = .init(0.2, 0.2, 0.2, 1.0),
+                .diffuse = .init(0.5, 0.5, 0.5, 1.0),
+            },
         });
     }
 };
