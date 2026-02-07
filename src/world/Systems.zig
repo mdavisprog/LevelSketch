@@ -35,6 +35,7 @@ const schedule_count = @typeInfo(Schedule).@"enum".fields.len;
 pub const invalid_system: SystemId = 0;
 
 systems: [schedule_count]std.AutoArrayHashMapUnmanaged(SystemId, ISystem) = @splat(.empty),
+standalone: std.AutoHashMapUnmanaged(SystemId, ISystem) = .empty,
 _system_id: SystemId = 1,
 
 pub fn init() Self {
@@ -49,6 +50,12 @@ pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
         }
         systems.deinit(allocator);
     }
+
+    var it = self.standalone.valueIterator();
+    while (it.next()) |system| {
+        system.deinit(allocator);
+    }
+    self.standalone.deinit(allocator);
 }
 
 pub fn register(
@@ -62,7 +69,18 @@ pub fn register(
     var systems = &self.systems[@intFromEnum(schedule)];
     try systems.put(allocator, id, try generateSystem(system, allocator, params));
     self._system_id += 1;
+    return id;
+}
 
+pub fn registerStandalone(
+    self: *Self,
+    allocator: std.mem.Allocator,
+    system: anytype,
+    params: *ParamsType(system),
+) !SystemId {
+    const id = self._system_id;
+    try self.standalone.put(allocator, id, try generateSystem(system, allocator, params));
+    self._system_id += 1;
     return id;
 }
 
@@ -89,10 +107,27 @@ pub fn run(self: *Self, schedule: Schedule) void {
     }
 }
 
+pub fn runId(self: Self, id: SystemId) void {
+    const system = self.standalone.get(id) orelse return;
+    system.invoke() catch |err| {
+        std.debug.panic(
+            "Failed to run standalone system: '{s}'. Error: {}.",
+            .{ system.getName(), err },
+        );
+    };
+}
+
+pub fn setFirstSystemParam(self: Self, id: SystemId, value: anytype) bool {
+    const system = self.standalone.get(id) orelse return false;
+    system.setFirstParam(&value);
+    return true;
+}
+
 const ISystem = struct {
     const VTable = struct {
         deinit: *const fn (ptr: *anyopaque, allocator: std.mem.Allocator) void,
         invoke: *const fn (ptr: *anyopaque) anyerror!void,
+        setFirstParam: *const fn (ptr: *anyopaque, value: *const anyopaque) void,
         getName: *const fn () []const u8,
     };
 
@@ -105,6 +140,10 @@ const ISystem = struct {
 
     fn invoke(self: ISystem) !void {
         try self.vtable.invoke(self.ptr);
+    }
+
+    fn setFirstParam(self: ISystem, value: anytype) void {
+        self.vtable.setFirstParam(self.ptr, value);
     }
 
     fn getName(self: ISystem) []const u8 {
@@ -139,8 +178,21 @@ fn generateSystem(
             try @call(.auto, self.func, self.params.*);
         }
 
+        fn setFirstParam(ptr: *anyopaque, value: *const anyopaque) void {
+            const params_info = @typeInfo(ParamsType(system));
+            const param_type = params_info.@"struct".fields[0].type;
+
+            const self: *SystemSelf = @ptrCast(@alignCast(ptr));
+            @field(self.params, "0") = castValue(param_type, value);
+        }
+
         fn getName() []const u8 {
             return @typeName(Type);
+        }
+
+        fn castValue(comptime T: type, value: *const anyopaque) T {
+            const resolved: *const T = @ptrCast(@alignCast(value));
+            return resolved.*;
         }
     };
 
@@ -152,6 +204,7 @@ fn generateSystem(
         .vtable = .{
             .deinit = System.deinit,
             .invoke = System.invoke,
+            .setFirstParam = System.setFirstParam,
             .getName = System.getName,
         },
     };

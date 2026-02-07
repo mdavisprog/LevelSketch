@@ -1,5 +1,6 @@
 const Components = @import("Components.zig");
 const Entities = @import("Entities.zig");
+const Events = @import("Events.zig");
 const Queries = @import("Queries.zig");
 const Resources = @import("Resources.zig");
 const std = @import("std");
@@ -25,6 +26,7 @@ components: Components,
 systems: Systems,
 resources: Resources,
 queries: *Queries,
+events: *Events,
 _allocator: std.mem.Allocator,
 
 pub fn init(allocator: std.mem.Allocator) !Self {
@@ -37,12 +39,16 @@ pub fn init(allocator: std.mem.Allocator) !Self {
     const queries = try allocator.create(Queries);
     queries.* = .init();
 
+    const events = try allocator.create(Events);
+    events.* = .init();
+
     return .{
         .entities = .init(allocator),
         .components = components,
         .systems = .init(),
         .resources = resources,
         .queries = queries,
+        .events = events,
         ._allocator = allocator,
     };
 }
@@ -53,8 +59,10 @@ pub fn deinit(self: *Self) void {
     self.systems.deinit(self._allocator);
     self.resources.deinit(self._allocator);
     self.queries.deinit(self._allocator);
+    self.events.deinit(self._allocator);
 
     self._allocator.destroy(self.queries);
+    self._allocator.destroy(self.events);
 }
 
 pub fn createEntity(self: *Self) Entity {
@@ -153,20 +161,58 @@ pub fn registerSystem(
     system: anytype,
     schedule: Systems.Schedule,
 ) !Systems.SystemId {
-    const system_info = @typeInfo(@TypeOf(system));
-    if (system_info != .@"fn") {
-        @compileError(std.fmt.comptimePrint(
-            "Given system {} is not a function.",
-            .{@TypeOf(system)},
-        ));
-    }
+    verifySystem(system);
 
-    const system_fn = system_info.@"fn";
-    if (system_fn.params.len == 0) {
-        @compileError("Given system has no parameters. The system must have either Query parameters or " ++
-            "SystemParam.");
-    }
+    // Get the tuple type and instance it. This instance will be passed in as parameters to the
+    // given system.
+    const params = try self.parseSystemParams(system);
 
+    const system_id = try self.systems.register(self._allocator, system, params, schedule);
+    return system_id;
+}
+
+pub fn unregisterSystem(self: *Self, system: Systems.SystemId) void {
+    self.systems.unregister(self._allocator, system);
+}
+
+pub fn runSystems(self: *Self, schedule: Systems.Schedule) void {
+    self.systems.run(schedule);
+}
+
+pub fn registerResource(self: *Self, comptime T: type, resource: T) !void {
+    try self.resources.add(T, self._allocator, resource);
+}
+
+pub fn getResource(self: Self, comptime T: type) ?*T {
+    return self.resources.get(T);
+}
+
+pub fn registerEvent(self: *Self, comptime Event: type) !void {
+    try self.events.add(self._allocator, Event);
+}
+
+/// Same as registerSystem, but the system is not added to a schedule.
+pub fn registerEventListener(self: *Self, system: anytype) !void {
+    verifySystem(system);
+    const params = try self.parseSystemParams(system);
+    const event_type = blk: {
+        const params_info = @typeInfo(@TypeOf(params.*));
+        break :blk params_info.@"struct".fields[0].type;
+    };
+    const system_id = try self.systems.registerStandalone(self._allocator, system, params);
+    try self.events.addListener(event_type, self._allocator, system_id);
+}
+
+pub fn triggerEvent(self: Self, event: anytype) void {
+    const event_type = @TypeOf(event);
+    const listeners = self.events.getListeners(event_type);
+    for (listeners) |system| {
+        _ = self.systems.setFirstSystemParam(system, event);
+        self.systems.runId(system);
+    }
+}
+
+fn parseSystemParams(self: *Self, system: anytype) !*std.meta.ArgsTuple(@TypeOf(system)) {
     // Get the tuple type and instance it. This instance will be passed in as parameters to the
     // given system.
     const ParametersType = std.meta.ArgsTuple(@TypeOf(system));
@@ -174,6 +220,7 @@ pub fn registerSystem(
     errdefer self._allocator.destroy(params);
 
     comptime var found_system_param = false;
+    const system_fn = @typeInfo(@TypeOf(system)).@"fn";
     var queries: [system_fn.params.len]Signature = @splat(.initEmpty());
     // Loop through each parameter and update the tuple instance based on the parameter type.
     inline for (system_fn.params, 0..) |param, i| {
@@ -239,31 +286,44 @@ pub fn registerSystem(
                 .allocator = self._allocator,
             };
         } else {
-            @compileError(std.fmt.comptimePrint(
-                "Invalid parameter type '{}' for system '{}'.",
-                .{ param_type, @TypeOf(system) },
-            ));
+            // If this parameter is a struct, check to see if it is a registered event. Events
+            // must be the first parameter in the system and registered.
+            if (self.events.contains(param_type)) {
+                if (i != 0) {
+                    std.debug.panic(
+                        "Event system '{s}' does not have the event as the first parameter. " ++
+                        "Event systems must have the event type as the first parameter.",
+                        .{@typeName(@TypeOf(system))},
+                    );
+                }
+
+                @field(params, field) = .{};
+            } else {
+                std.debug.panic(
+                    "Invalid parameter type '{s}' for system '{s}'.",
+                    .{ @typeName(param_type), @typeName(@TypeOf(system)) },
+                );
+            }
         }
     }
 
-    const system_id = try self.systems.register(self._allocator, system, params, schedule);
-    return system_id;
+    return params;
 }
 
-pub fn unregisterSystem(self: *Self, system: Systems.SystemId) void {
-    self.systems.unregister(self._allocator, system);
-}
+fn verifySystem(system: anytype) void {
+    const system_info = @typeInfo(@TypeOf(system));
+    if (system_info != .@"fn") {
+        @compileError(std.fmt.comptimePrint(
+            "Given system {} is not a function.",
+            .{@TypeOf(system)},
+        ));
+    }
 
-pub fn runSystems(self: *Self, schedule: Systems.Schedule) void {
-    self.systems.run(schedule);
-}
-
-pub fn registerResource(self: *Self, comptime T: type, resource: T) !void {
-    try self.resources.add(T, self._allocator, resource);
-}
-
-pub fn getResource(self: Self, comptime T: type) ?*T {
-    return self.resources.get(T);
+    const system_fn = system_info.@"fn";
+    if (system_fn.params.len == 0) {
+        @compileError("Given system has no parameters. The system must have either a Query, " ++
+            "a SystemParam, or an Event.");
+    }
 }
 
 test "add entity" {
@@ -687,4 +747,37 @@ test "insert components" {
 
     try std.testing.expectEqual(1, a.count);
     try std.testing.expectEqual(2, b.count);
+}
+
+const EventA = struct {
+    count: u32 = 0,
+};
+
+fn systemEventA(event: EventA, query: Query(&.{ComponentA}), param: SystemParam) !void {
+    var entities = query.getEntities();
+    while (entities.next()) |entity| {
+        const a = param.getComponent(ComponentA, entity.*) orelse continue;
+        a.count = event.count;
+    }
+}
+
+test "event" {
+    const allocator = std.testing.allocator;
+
+    var _world: Self = try .init(allocator);
+    defer _world.deinit();
+
+    try _world.registerComponents(&.{ComponentA});
+    try _world.registerEvent(EventA);
+    try _world.registerEventListener(systemEventA);
+
+    const entity = try _world.createEntityWith(.{
+        ComponentA{},
+    });
+
+    const event: EventA = .{ .count = 5 };
+    _world.triggerEvent(event);
+
+    const a = _world.getComponent(ComponentA, entity) orelse unreachable;
+    try std.testing.expectEqual(event.count, a.count);
 }
