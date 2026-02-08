@@ -86,6 +86,10 @@ pub fn add(
     allocator: std.mem.Allocator,
     signature: Signature,
 ) !*const EntitySet {
+    if (self.entries.contains(signature)) {
+        return self.entries.getPtr(signature).?.entities;
+    }
+
     const entities = try allocator.create(EntitySet);
     errdefer allocator.destroy(entities);
     entities.* = .empty;
@@ -96,7 +100,7 @@ pub fn add(
         .entities = entities,
     };
 
-    try self.entries.putNoClobber(allocator, signature, generateIQuery(QueryType, query, entities));
+    try self.entries.put(allocator, signature, generateIQuery(QueryType, query, entities));
 
     return entities;
 }
