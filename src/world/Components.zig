@@ -36,8 +36,14 @@ pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
 
 pub fn register(self: *Self, comptime T: type, allocator: std.mem.Allocator) !void {
     const id = self._id;
-    var array: *Array(T) = try .init(allocator);
-    try self._arrays.put(allocator, id, array.interface());
+
+    // Check for marker components. These are components with no memory layout. If it is one,
+    // don't create an Array for this component. Just register the Id.
+    if (@sizeOf(T) > 0) {
+        var array: *Array(T) = try .init(allocator);
+        try self._arrays.put(allocator, id, array.interface());
+    }
+
     try self._types.put(allocator, @typeName(T), id);
     self._id += 1;
 }

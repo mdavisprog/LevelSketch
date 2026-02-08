@@ -105,7 +105,10 @@ pub fn insertComponents(self: *Self, entity: Entity, components: anytype) !void 
     const ComponentsType = @TypeOf(components);
     const components_info = @typeInfo(ComponentsType);
     if (components_info != .@"struct") {
-        @compileError("Given components must be a struct or tuple.");
+        @compileError(std.fmt.comptimePrint(
+            "Given components must be a struct or tuple. Type is {}.",
+            .{ComponentsType},
+        ));
     }
 
     inline for (std.meta.fields(ComponentsType)) |field| {
@@ -777,4 +780,28 @@ test "event" {
 
     const a = _world.getComponent(ComponentA, entity) orelse unreachable;
     try std.testing.expectEqual(event.count, a.count);
+}
+
+const MarkerComponent = struct {};
+
+fn systemMarker(markers: Query(&.{MarkerComponent}), param: SystemParam) !void {
+    try std.testing.expectEqual(1, markers.numEntities());
+
+    var entities = markers.getEntities();
+    while (entities.next()) |entity| {
+        try std.testing.expectEqual(null, param.getComponent(MarkerComponent, entity.*));
+    }
+}
+
+test "marker component" {
+    const allocator = std.testing.allocator;
+
+    var _world: Self = try .init(allocator);
+    defer _world.deinit();
+
+    try _world.registerComponent(MarkerComponent);
+    _ = try _world.registerSystem(systemMarker, .startup);
+    _ = try _world.createEntityWith(.{MarkerComponent{}});
+
+    _world.runSystems(.startup);
 }
