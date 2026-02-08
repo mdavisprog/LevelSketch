@@ -7,6 +7,8 @@ const Entity = world.Entity;
 /// Holds all arrays for each registered component type.
 const Self = @This();
 
+/// Components must remain a u32 as it is used to index into the bit set for an entity,
+/// a query, etc.
 pub const Id = u32;
 
 const Arrays = std.AutoHashMapUnmanaged(Id, IArray);
@@ -15,7 +17,7 @@ const Types = std.StringHashMapUnmanaged(Id);
 pub const max: usize = 512;
 pub const Signature = std.StaticBitSet(max);
 
-_id: Id = 1,
+_id: Id = 0,
 _arrays: Arrays = .empty,
 _types: Types = .empty,
 
