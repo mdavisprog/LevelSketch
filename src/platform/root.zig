@@ -7,13 +7,8 @@ const zglfw = @import("zglfw");
 const SystemParam = world.Systems.SystemParam;
 const World = world.World;
 
+pub const ecs = @import("ecs/root.zig");
 pub const input = @import("input/root.zig");
-
-pub const resources = struct {
-    pub const Platform = struct {
-        primary_window: Window,
-    };
-};
 
 pub fn init(_world: *World) !void {
     try zglfw.init();
@@ -26,22 +21,34 @@ pub fn init(_world: *World) !void {
     });
 
     const window: Window = try .init(_world._allocator, "Level Sketch", 960, 540);
-    try _world.registerResource(resources.Platform, .{
+    try _world.registerResource(ecs.resources.Platform, .{
         .primary_window = window,
     });
+    try _world.registerResource(ecs.resources.Frame, .{});
     try _world.registerResource(input.resources.Keyboard, .{});
     try _world.registerResource(input.resources.Mouse, .{});
 
-    _ = try _world.registerSystem(update, .update);
+    _ = try _world.registerSystem(update, .preupdate);
     _ = try _world.registerSystem(shutdown, .shutdown);
 }
 
 fn update(param: SystemParam) !void {
     const allocator = param.world._allocator;
 
-    const platform = param.world.getResource(resources.Platform) orelse unreachable;
+    const platform = param.world.getResource(ecs.resources.Platform) orelse unreachable;
+    const frame = param.world.getResource(ecs.resources.Frame) orelse unreachable;
     const keyboard = param.world.getResource(input.resources.Keyboard) orelse unreachable;
     const mouse = param.world.getResource(input.resources.Mouse) orelse unreachable;
+
+    // Update frame timings.
+    const current_time = zglfw.getTime();
+    const last_time = frame.times.current;
+    const delta_time: f32 = @floatCast(current_time - last_time);
+
+    frame.count += 1;
+    frame.times.current = current_time;
+    frame.times.elapsed += current_time - last_time;
+    frame.times.delta = delta_time;
 
     // Move any just_pressed keys to the pressed set. The release action will clear the
     // pressed events. Also want to clear the just_pressed/just_released sets. Those should
@@ -97,7 +104,7 @@ fn update(param: SystemParam) !void {
 }
 
 fn shutdown(param: SystemParam) !void {
-    const platform = param.world.getResource(resources.Platform) orelse unreachable;
+    const platform = param.world.getResource(ecs.resources.Platform) orelse unreachable;
     platform.primary_window.deinit(param.world._allocator);
 
     const keyboard = param.world.getResource(input.resources.Keyboard) orelse unreachable;

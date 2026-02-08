@@ -48,7 +48,7 @@ pub fn main() !void {
     defer the_world.deinit();
 
     try platform.init(&the_world);
-    const platform_resource = the_world.getResource(platform.resources.Platform).?;
+    const platform_resource = the_world.getResource(platform.ecs.resources.Platform).?;
     const mouse = the_world.getResource(platform.input.resources.Mouse).?;
 
     var bgfx_init: zbgfx.bgfx.Init = undefined;
@@ -107,9 +107,6 @@ pub fn main() !void {
     var main_gui: GUI = try .init(renderer);
     defer main_gui.deinit(allocator);
 
-    // Timing
-    var last_time: f64 = 0.0;
-
     try renderer.initECS(&the_world);
 
     var _editor: Editor = try .init(&the_world);
@@ -121,20 +118,10 @@ pub fn main() !void {
     the_world.runSystems(.startup);
 
     while (!platform_resource.primary_window.shouldClose()) {
-        const current_time = zglfw.getTime();
-        const delta_time: f32 = @floatCast(current_time - last_time);
-        last_time = current_time;
-
-        if (the_world.getResource(world.resources.core.Frame)) |frame| {
-            frame.count += 1;
-            frame.times.current = current_time;
-            frame.times.elapsed += current_time - last_time;
-            frame.times.delta = delta_time;
-        }
-
+        the_world.runSystems(.preupdate);
         the_world.runSystems(.update);
 
-        try main_gui.update(&the_world, delta_time, mouse.state);
+        try main_gui.update(&the_world, mouse.state);
 
         the_world.runSystems(.render);
 

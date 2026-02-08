@@ -27,6 +27,7 @@ pub const SystemParam = struct {
 
 pub const Schedule = enum {
     startup,
+    preupdate,
     update,
     render,
     shutdown,

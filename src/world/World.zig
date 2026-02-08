@@ -33,9 +33,6 @@ pub fn init(allocator: std.mem.Allocator) !Self {
     var components: Components = .init();
     try components.register(Transform, allocator);
 
-    var resources: Resources = .init();
-    try resources.add(world.resources.core.Frame, allocator, .{});
-
     const queries = try allocator.create(Queries);
     queries.* = .init();
 
@@ -46,7 +43,7 @@ pub fn init(allocator: std.mem.Allocator) !Self {
         .entities = .init(allocator),
         .components = components,
         .systems = .init(),
-        .resources = resources,
+        .resources = .init(),
         .queries = queries,
         .events = events,
         ._allocator = allocator,

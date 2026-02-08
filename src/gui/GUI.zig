@@ -92,11 +92,8 @@ pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
 pub fn update(
     self: *Self,
     world: *World,
-    delta_time: f32,
     mouse: platform.input.Mouse,
 ) !void {
-    _ = delta_time;
-
     const delta = mouse.delta();
     if (!delta.isZero() or mouse.didChange(.left)) {
         self._state.update(mouse, self, world);
@@ -163,7 +160,7 @@ fn onResetCamera(context: State.Context) bool {
 }
 
 fn onQuit(context: State.Context) bool {
-    const _platform = context.world.getResource(platform.resources.Platform) orelse return false;
+    const _platform = context.world.getResource(platform.ecs.resources.Platform) orelse return false;
     _platform.primary_window.setShouldClose(true);
     return true;
 }

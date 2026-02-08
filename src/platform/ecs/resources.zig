@@ -1,3 +1,5 @@
+const Window = @import("../Window.zig");
+
 pub const Frame = struct {
     pub const Times = struct {
         current: f64 = 0.0,
@@ -7,4 +9,8 @@ pub const Frame = struct {
 
     times: Times = .{},
     count: usize = 0,
+};
+
+pub const Platform = struct {
+    primary_window: Window,
 };

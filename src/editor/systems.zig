@@ -15,8 +15,8 @@ pub fn updateCamera(
     cameras: Query(&.{ world.components.core.Transform, editor.components.Camera }),
     param: SystemParam,
 ) !void {
-    const frame = param.world.getResource(world.resources.core.Frame) orelse return;
-    const _platform = param.world.getResource(platform.resources.Platform) orelse return;
+    const frame = param.world.getResource(platform.ecs.resources.Frame) orelse return;
+    const _platform = param.world.getResource(platform.ecs.resources.Platform) orelse return;
     const keyboard = param.world.getResource(platform.input.resources.Keyboard) orelse return;
     const mouse = param.world.getResource(platform.input.resources.Mouse) orelse return;
     const _render = param.world.getResource(render.ecs.resources.Render) orelse return;
@@ -98,7 +98,7 @@ pub fn orbit(
         return;
     }
 
-    const frame = param.world.getResource(world.resources.core.Frame) orelse unreachable;
+    const frame = param.world.getResource(platform.ecs.resources.Frame) orelse unreachable;
     const delta_time = frame.times.delta;
 
     var entities = orbits.getEntities();
