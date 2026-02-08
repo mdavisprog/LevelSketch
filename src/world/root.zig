@@ -12,6 +12,7 @@ pub const Entity = Entities.Entity;
 pub const Handle = core.Handle;
 pub const HashSetUnmanaged = core.containers.HashSetUnmanaged;
 pub const Query = Queries.Query;
+pub const SystemParam = Systems.SystemParam;
 
 test "refall" {
     std.testing.refAllDecls(@This());

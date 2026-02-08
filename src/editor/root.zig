@@ -11,6 +11,7 @@ const Vec = core.math.Vec;
 const World = _world.World;
 
 pub const components = @import("components.zig");
+pub const events = @import("events.zig");
 pub const resources = @import("resources.zig");
 
 pub const Editor = struct {
@@ -27,11 +28,14 @@ pub const Editor = struct {
 
         try world.registerResource(resources.Orbit, .{});
 
+        try world.registerEvent(events.ResetCamera);
+
         _ = try world.registerSystem(systems.updateCamera, .update);
         _ = try world.registerSystem(systems.orbit, .update);
+        try world.registerEventListener(events.onResetCamera);
 
         const transform: _world.components.core.Transform = .{
-            .translation = .init(0.0, 0.0, -3.0, 1.0),
+            .translation = components.Camera.default_pos,
             .rotation = Vec.forward.toRotation(),
         };
 

@@ -158,8 +158,7 @@ fn layout(self: *Self, world: *World) !void {
 }
 
 fn onResetCamera(context: State.Context) bool {
-    _ = context;
-    std.debug.print("TODO: Implement onResetCamera\n", .{});
+    context.world.triggerEvent(editor.events.ResetCamera{});
     return true;
 }
 
