@@ -11,7 +11,6 @@ const std = @import("std");
 const _world = @import("world");
 
 const Commands = render.Commands;
-const Cursor = gui.Cursor;
 const Font = render.Font;
 const Program = render.shaders.Program;
 const Renderer = render.Renderer;

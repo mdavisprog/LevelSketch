@@ -14,15 +14,11 @@ const zbgfx = @import("zbgfx");
 const zglfw = @import("zglfw");
 
 const commandline = core.commandline;
-const Cursor = gui.Cursor;
 const Editor = editor.Editor;
 const GUI = gui.GUI;
 const Mat = core.math.Mat;
-const Meshes = render.Meshes;
 const Model = io.obj.Model;
 const Renderer = render.Renderer;
-const Vec = core.math.Vec;
-const View = render.View;
 const World = world.World;
 
 pub fn main() !void {
@@ -87,14 +83,6 @@ pub fn main() !void {
     }
 
     renderer.framebuffer_size = framebuffer_size.to(f32);
-    const phong = renderer.programs.getByName("phong").?;
-
-    var light: render.materials.Light = .{
-        .ambient = .init(0.2, 0.2, 0.2, 1.0),
-        .diffuse = .init(0.5, 0.5, 0.5, 1.0),
-        .specular = .splat(1.0),
-    };
-    try light.bind(phong);
 
     zbgfx.bgfx.setDebug(zbgfx.bgfx.DebugFlags_None);
     zbgfx.bgfx.reset(
