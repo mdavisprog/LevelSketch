@@ -64,6 +64,10 @@ pub fn unsetSignatureBit(self: *Self, entity: Entity, index: usize) void {
     self.signatures[entity.id].unset(index);
 }
 
+pub fn setSignature(self: *Self, entity: Entity, signature: Signature) void {
+    self.signatures[entity.id] = signature;
+}
+
 pub fn getSignature(self: Self, entity: Entity) Signature {
     return self.signatures[entity.id];
 }

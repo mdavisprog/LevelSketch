@@ -72,6 +72,22 @@ pub fn createEntityWith(self: *Self, components: anytype) !Entity {
     return entity;
 }
 
+pub fn duplicateEntity(self: *Self, entity: Entity) !Entity {
+    const new_entity = self.createEntity();
+
+    const signature = self.entities.getSignature(entity);
+    self.entities.setSignature(new_entity, signature);
+    try self.queries.signatureChanged(self._allocator, signature, new_entity);
+
+    var it = signature.iterator(.{});
+    while (it.next()) |component| {
+        const data = self.components.getById(@intCast(component), entity) orelse continue;
+        try self.components.insertById(self._allocator, @intCast(component), new_entity, data);
+    }
+
+    return new_entity;
+}
+
 pub fn destroyEntity(self: *Self, entity: Entity) !void {
     try self.entities.destroy(self._allocator, entity);
     try self.components.entityDestroyed(self._allocator, entity);
@@ -274,7 +290,7 @@ fn parseSystemParams(self: *Self, system: anytype) !*std.meta.ArgsTuple(@TypeOf(
             if (found_system_param) {
                 @compileError(std.fmt.comptimePrint(
                     "Multiple 'SystemParam' parameters found in system {}. Only one can " ++
-                    "exist at a time.",
+                        "exist at a time.",
                     .{@TypeOf(system)},
                 ));
             }
@@ -292,7 +308,7 @@ fn parseSystemParams(self: *Self, system: anytype) !*std.meta.ArgsTuple(@TypeOf(
                 if (i != 0) {
                     std.debug.panic(
                         "Event system '{s}' does not have the event as the first parameter. " ++
-                        "Event systems must have the event type as the first parameter.",
+                            "Event systems must have the event type as the first parameter.",
                         .{@typeName(@TypeOf(system))},
                     );
                 }
@@ -357,6 +373,26 @@ test "destroy entity" {
 
     const entity4 = _world.createEntity();
     try std.testing.expectEqual(1, entity4.id);
+}
+
+test "duplicate entity" {
+    const allocator = std.testing.allocator;
+
+    var _world: Self = try .init(allocator);
+    defer _world.deinit();
+
+    try _world.registerComponent(ComponentA);
+
+    const entity = try _world.createEntityWith(.{ComponentA{ .count = 1 }});
+    const duplicate = try _world.duplicateEntity(entity);
+
+    try std.testing.expectEqual(0, entity.id);
+    try std.testing.expectEqual(1, duplicate.id);
+
+    const entity_a = _world.getComponent(ComponentA, entity) orelse unreachable;
+    const duplicate_a = _world.getComponent(ComponentA, duplicate) orelse unreachable;
+
+    try std.testing.expectEqual(entity_a.count, duplicate_a.count);
 }
 
 test "add component" {

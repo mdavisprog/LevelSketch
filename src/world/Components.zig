@@ -61,6 +61,17 @@ pub fn insert(
     try array.insert_fn(array.ptr, allocator, entity, @constCast(&component));
 }
 
+pub fn insertById(
+    self: *Self,
+    allocator: std.mem.Allocator,
+    id: Id,
+    entity: Entity,
+    component: *anyopaque,
+) !void {
+    const array = self._arrays.get(id) orelse return;
+    try array.insert_fn(array.ptr, allocator, entity, component);
+}
+
 pub fn remove(self: *Self, comptime T: type, allocator: std.mem.Allocator, entity: Entity) !void {
     const key = @typeName(T);
     const type_id = self._types.get(key) orelse return;
@@ -83,6 +94,11 @@ pub fn get(self: Self, comptime T: type, entity: Entity) ?*T {
     return @ptrCast(@alignCast(result));
 }
 
+pub fn getById(self: Self, id: Id, entity: Entity) ?*anyopaque {
+    const array = self._arrays.get(id) orelse return null;
+    return array.get_fn(array.ptr, entity);
+}
+
 pub fn getComponentId(self: Self, comptime T: type) ?Id {
     const key = @typeName(T);
     return self._types.get(key);
@@ -90,6 +106,17 @@ pub fn getComponentId(self: Self, comptime T: type) ?Id {
 
 pub fn getComponentIdByName(self: Self, component: []const u8) ?Id {
     return self._types.get(component);
+}
+
+pub fn getComponentNameById(self: Self, component: Id) ?[]const u8 {
+    var it = self._types.iterator();
+    while (it.next()) |entry| {
+        if (entry.value_ptr.* == component) {
+            return entry.key_ptr.*;
+        }
+    }
+
+    return null;
 }
 
 const IArray = struct {
