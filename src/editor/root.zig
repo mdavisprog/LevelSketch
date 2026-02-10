@@ -53,7 +53,7 @@ pub const Editor = struct {
         _ = self;
     }
 
-    pub fn addLight(self: *Self, renderer: *Renderer) !void {
+    pub fn addPointLight(self: *Self, renderer: *Renderer) !void {
         const cube = try render.shapes.cube(u16, renderer, .splat(0.2), 0xFFFFFFFF);
         _ = try self.world.createEntityWith(.{
             _world.components.core.Transform{},
@@ -62,6 +62,20 @@ pub const Editor = struct {
             },
             render.ecs.components.Color{},
             components.Orbit{},
+            render.ecs.components.Light{
+                .ambient = .init(0.2, 0.2, 0.2, 1.0),
+                .diffuse = .init(0.5, 0.5, 0.5, 1.0),
+            },
+            render.ecs.components.PointLight{},
+        });
+    }
+
+    pub fn addDirectionalLight(self: *Self, direction: Vec) !void {
+        _ = try self.world.createEntityWith(.{
+            _world.components.core.Transform{
+                .rotation = direction.toRotation(),
+            },
+            render.ecs.components.DirectionalLight{},
             render.ecs.components.Light{
                 .ambient = .init(0.2, 0.2, 0.2, 1.0),
                 .diffuse = .init(0.5, 0.5, 0.5, 1.0),

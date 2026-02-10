@@ -15,10 +15,12 @@ const zglfw = @import("zglfw");
 
 const commandline = core.commandline;
 const Editor = editor.Editor;
+const Entity = world.Entity;
 const GUI = gui.GUI;
 const Mat = core.math.Mat;
 const Model = io.obj.Model;
 const Renderer = render.Renderer;
+const Vec = core.math.Vec;
 const World = world.World;
 
 pub fn main() !void {
@@ -100,9 +102,46 @@ pub fn main() !void {
     var _editor: Editor = try .init(&the_world);
     defer _editor.deinit();
 
-    try loadCommandLineModels(renderer, &the_world);
+    const positions = [_]Vec{
+        .init3(0.0, 0.0, 0.0),
+        .init3(2.0, 5.0, -15.0),
+        .init3(-1.5, -2.2, -2.5),
+        .init3(-3.8, -2.0, -12.3),
+        .init3(2.4, -0.4, -3.5),
+        .init3(-1.7, 3.0, -7.5),
+        .init3(1.3, -2.0, -2.5),
+        .init3(1.5, 2.0, -2.5),
+        .init3(1.5, 0.2, -1.5),
+        .init3(-1.3, 1.0, -1.5),
+    };
 
-    try _editor.addLight(renderer);
+    const entities = loadCommandLineModels(renderer, &the_world) catch |err| {
+        std.debug.panic(
+            "There was an error trying to load models from the command-line. Error: {}",
+            .{err},
+        );
+    };
+
+    if (entities) |_entities| {
+        // Only duplicate the first loaded model.
+        const entity = _entities[0];
+
+        for (positions, 0..) |pos, i| {
+            const target = if (i == 0) entity else try the_world.duplicateEntity(entity);
+            const transform = the_world.getComponent(world.components.core.Transform, target) orelse continue;
+            transform.translation = pos;
+
+            const angle: f32 = 20.0 * @as(f32, @floatFromInt(i));
+            transform.rotation.pitch = angle;
+            transform.rotation.yaw = angle * 0.5;
+            transform.rotation.roll = angle * 0.3;
+        }
+
+        allocator.free(_entities);
+    }
+
+    try _editor.addPointLight(renderer);
+    try _editor.addDirectionalLight(Vec.up.mul(-1.0));
     the_world.runSystems(.startup);
 
     while (!platform_resource.primary_window.shouldClose()) {
@@ -134,11 +173,14 @@ fn printBGFXInfo() void {
 }
 
 // TODO: Move to 'editor' module.
-fn loadCommandLineModels(renderer: *Renderer, _world: *World) !void {
+fn loadCommandLineModels(renderer: *Renderer, _world: *World) !?[]Entity {
     const allocator = renderer.allocator;
 
-    const file_names = try commandline.getArgValues(allocator, "--model") orelse return;
+    const file_names = try commandline.getArgValues(allocator, "--model") orelse return null;
     defer allocator.free(file_names);
+
+    var entities: std.ArrayListUnmanaged(Entity) = .empty;
+    errdefer entities.deinit(allocator);
 
     for (file_names) |file_name| {
         const path = std.fs.cwd().realpathAlloc(renderer.allocator, file_name) catch |err| {
@@ -171,7 +213,15 @@ fn loadCommandLineModels(renderer: *Renderer, _world: *World) !void {
         } else {
             try _world.insertComponent(render.ecs.components.Color, entity, .{});
         }
+
+        try entities.append(allocator, entity);
     }
+
+    if (entities.items.len > 0) {
+        return try entities.toOwnedSlice(allocator);
+    }
+
+    return null;
 }
 
 fn loadTexture(renderer: *Renderer, path: ?[]const u8) !render.Texture {

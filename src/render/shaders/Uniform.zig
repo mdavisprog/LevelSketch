@@ -30,6 +30,10 @@ pub fn set(self: Self, value: anytype) void {
     }
 }
 
+pub fn setFloat(self: Self, value: f32) void {
+    zbgfx.bgfx.setUniform(self.handle, @ptrCast(&value), 1);
+}
+
 pub fn setVec(self: Self, value: Vec) void {
     zbgfx.bgfx.setUniform(self.handle, @ptrCast(&value.toArray()), 1);
 }

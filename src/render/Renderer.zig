@@ -16,6 +16,7 @@ const Query = world.Query;
 const RenderBuffer = render.RenderBuffer;
 const SystemParam = world.Systems.SystemParam;
 const Textures = render.Textures;
+const Transform = world.components.core.Transform;
 const Vec = core.math.Vec;
 const Vec2f = core.math.Vec2f;
 const Vec2u = core.math.Vec2u;
@@ -120,6 +121,8 @@ pub fn initECS(self: *Self, _world: *World) !void {
         ecs.components.Mesh,
         ecs.components.Phong,
         ecs.components.Light,
+        ecs.components.DirectionalLight,
+        ecs.components.PointLight,
         ecs.components.Color,
     });
 
@@ -175,8 +178,14 @@ fn renderPhong(
         ecs.components.Mesh,
         ecs.components.Phong,
     }),
-    lights: Query(&.{
+    point_lights: Query(&.{
         world.components.core.Transform,
+        ecs.components.Light,
+        ecs.components.PointLight,
+    }),
+    directional_light: Query(&.{
+        world.components.core.Transform,
+        ecs.components.DirectionalLight,
         ecs.components.Light,
     }),
     param: SystemParam,
@@ -185,16 +194,37 @@ fn renderPhong(
     const renderer = _render.renderer;
     const phong = renderer.programs.getByName("phong") orelse unreachable;
 
-    var light_entities = lights.getEntities();
-    while (light_entities.next()) |light| {
-        const light_transform = param.world.getComponent(world.components.core.Transform, light.*) orelse continue;
-        const light_component = param.world.getComponent(ecs.components.Light, light.*) orelse continue;
+    // Update light properties for shading all relevant meshes.
+    {
+        var entities = directional_light.getEntities();
+        while (entities.next()) |entity| {
+            const transform = param.world.getComponent(Transform, entity.*) orelse continue;
+            const light = param.world.getComponent(ecs.components.Light, entity.*) orelse continue;
 
-        try phong.setUniform("u_light_position", light_transform.translation);
-        try phong.setUniform("u_light_ambient", light_component.ambient);
-        try phong.setUniform("u_light_diffuse", light_component.diffuse);
-        try phong.setUniform("u_light_specular", light_component.specular);
+            try phong.setUniform("u_light_dir_direction", transform.rotation.toVec());
+            try phong.setUniform("u_light_dir_ambient", light.ambient);
+            try phong.setUniform("u_light_dir_diffuse", light.diffuse);
+            try phong.setUniform("u_light_dir_specular", light.specular);
+        }
+    }
 
+    {
+        var entities = point_lights.getEntities();
+        while (entities.next()) |entity| {
+            const transform = param.world.getComponent(Transform, entity.*) orelse continue;
+            const light = param.world.getComponent(ecs.components.Light, entity.*) orelse continue;
+            const point_light = param.world.getComponent(ecs.components.PointLight, entity.*) orelse continue;
+
+            try phong.setUniform("u_light_point_position", transform.translation);
+            try phong.setUniform("u_light_point_ambient", light.ambient);
+            try phong.setUniform("u_light_point_diffuse", light.diffuse);
+            try phong.setUniform("u_light_point_specular", light.specular);
+            try phong.setUniform("u_light_point_properties", point_light.toVec());
+        }
+    }
+
+    // Render each mesh.
+    {
         var entities = meshes.getEntities();
         while (entities.next()) |entity| {
             const transform = param.world.getComponent(world.components.core.Transform, entity.*) orelse continue;
@@ -205,7 +235,6 @@ fn renderPhong(
             mesh.buffer.bind(world_state);
             try phong.setTexture("s_diffuse", material.diffuse, 0);
             try phong.setTexture("s_specular", material.specular, 1);
-            try phong.setUniform("u_diffuse", material.diffuse_color);
             try phong.setUniform("u_specular_shininess", Vec.init(
                 material.specular_color.x(),
                 material.specular_color.y(),

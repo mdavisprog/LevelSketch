@@ -20,7 +20,6 @@ pub const Phong = struct {
 };
 
 pub const Light = struct {
-    position: Vec = .zero,
     ambient: Vec = .splat(1.0),
     diffuse: Vec = .splat(1.0),
     specular: Vec = .splat(1.0),
@@ -28,4 +27,16 @@ pub const Light = struct {
 
 pub const Color = struct {
     tint: Vec = .splat(1.0),
+};
+
+pub const DirectionalLight = struct {};
+
+pub const PointLight = struct {
+    constant: f32 = 1.0,
+    linear: f32 = 0.09,
+    quadratic: f32 = 0.032,
+
+    pub fn toVec(self: PointLight) Vec {
+        return .init(self.constant, self.linear, self.quadratic, 0.0);
+    }
 };
