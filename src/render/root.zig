@@ -3,7 +3,6 @@ pub const Commands = @import("Commands.zig");
 pub const ecs = @import("ecs/root.zig");
 pub const Font = @import("Font.zig");
 pub const Fonts = @import("Fonts.zig");
-pub const materials = @import("materials/root.zig");
 pub const MemFactory = @import("MemFactory.zig");
 pub const Meshes = @import("Meshes.zig");
 pub const RenderBuffer = @import("RenderBuffer.zig");
