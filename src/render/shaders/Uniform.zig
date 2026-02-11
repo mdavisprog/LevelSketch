@@ -16,6 +16,7 @@ pub fn set(self: Self, value: anytype) void {
     const ValueType = @TypeOf(value);
     switch (ValueType) {
         Vec => self.setVec(value),
+        []const Vec => self.setVecArray(value),
         Mat => self.setMat(value),
         f32 => self.setFloat(value),
         []const f32 => self.setArray(value),
@@ -36,6 +37,10 @@ pub fn setFloat(self: Self, value: f32) void {
 
 pub fn setVec(self: Self, value: Vec) void {
     zbgfx.bgfx.setUniform(self.handle, @ptrCast(&value.toArray()), 1);
+}
+
+pub fn setVecArray(self: Self, value: []const Vec) void {
+    zbgfx.bgfx.setUniform(self.handle, @ptrCast(value), @intCast(value.len));
 }
 
 pub fn setArray(self: Self, value: []const f32) void {

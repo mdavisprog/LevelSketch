@@ -190,6 +190,8 @@ fn renderPhong(
     }),
     param: SystemParam,
 ) !void {
+    const num_lights: usize = 4;
+
     const _render = param.world.getResource(ecs.resources.Render) orelse unreachable;
     const renderer = _render.renderer;
     const phong = renderer.programs.getByName("phong") orelse unreachable;
@@ -209,17 +211,46 @@ fn renderPhong(
     }
 
     {
+        try phong.setUniform("u_options", Vec.init(
+            @floatFromInt(point_lights.numEntities()),
+            0.0,
+            0.0,
+            0.0,
+        ));
+
+        var position: [num_lights]Vec = @splat(.splat(0.0));
+        var ambient: [num_lights]Vec = @splat(.splat(1.0));
+        var diffuse: [num_lights]Vec = @splat(.splat(1.0));
+        var specular: [num_lights]Vec = @splat(.splat(0.0));
+        var properties: [num_lights]Vec = @splat(.splat(0.0));
+        var i: usize = 0;
+
         var entities = point_lights.getEntities();
         while (entities.next()) |entity| {
             const transform = param.world.getComponent(Transform, entity.*) orelse continue;
             const light = param.world.getComponent(ecs.components.Light, entity.*) orelse continue;
             const point_light = param.world.getComponent(ecs.components.PointLight, entity.*) orelse continue;
 
-            try phong.setUniform("u_light_point_position", transform.translation);
-            try phong.setUniform("u_light_point_ambient", light.ambient);
-            try phong.setUniform("u_light_point_diffuse", light.diffuse);
-            try phong.setUniform("u_light_point_specular", light.specular);
-            try phong.setUniform("u_light_point_properties", point_light.toVec());
+            position[i] = transform.translation;
+            ambient[i] = light.ambient;
+            diffuse[i] = light.diffuse;
+            specular[i] = light.specular;
+            properties[i] = point_light.toVec();
+            i += 1;
+        }
+
+        if (i > 0) {
+            const u_position: []const Vec = position[0..i];
+            const u_ambient: []const Vec = ambient[0..i];
+            const u_diffuse: []const Vec = diffuse[0..i];
+            const u_specular: []const Vec = specular[0..i];
+            const u_properties: []const Vec = properties[0..i];
+
+            try phong.setUniform("u_light_point_position", u_position);
+            try phong.setUniform("u_light_point_ambient", u_ambient);
+            try phong.setUniform("u_light_point_diffuse", u_diffuse);
+            try phong.setUniform("u_light_point_specular", u_specular);
+            try phong.setUniform("u_light_point_properties", u_properties);
         }
     }
 
