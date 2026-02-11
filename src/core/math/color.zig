@@ -1,3 +1,5 @@
+const Vec = @import("Vec.zig");
+
 pub fn Color4(comptime T: type) type {
     if (T != u8 and T != f32) {
         @compileError("Color4 can only be of type u8 or f32.");
@@ -22,6 +24,18 @@ pub fn Color4(comptime T: type) type {
                 .b = b,
                 .a = a,
             };
+        }
+
+        pub fn toVec(self: Self) Vec {
+            if (T == f32) {
+                return .init(self.r, self.g, self.b, self.a);
+            } else {
+                const r = @as(f32, @floatFromInt(self.r)) / 255.0;
+                const g = @as(f32, @floatFromInt(self.g)) / 255.0;
+                const b = @as(f32, @floatFromInt(self.b)) / 255.0;
+                const a = @as(f32, @floatFromInt(self.a)) / 255.0;
+                return .init(r, g, b, a);
+            }
         }
 
         fn make(comptime r: u8, comptime g: u8, comptime b: u8, comptime a: u8) Self {

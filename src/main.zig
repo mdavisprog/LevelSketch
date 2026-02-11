@@ -140,7 +140,7 @@ pub fn main() !void {
         allocator.free(_entities);
     }
 
-    try _editor.addPointLight(renderer);
+    _ = try _editor.addPointLight(.init3(1.0, 1.0, 0.0), .init(0, 128, 0, 255));
     try _editor.addDirectionalLight(Vec.up.mul(-1.0));
     the_world.runSystems(.startup);
 

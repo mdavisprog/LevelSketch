@@ -4,9 +4,9 @@ const std = @import("std");
 const systems = @import("systems.zig");
 const _world = @import("world");
 
+const Color4b = core.math.Color4b;
 const Entity = _world.Entity;
 const Mat = core.math.Mat;
-const Renderer = render.Renderer;
 const Vec = core.math.Vec;
 const World = _world.World;
 
@@ -53,21 +53,18 @@ pub const Editor = struct {
         _ = self;
     }
 
-    pub fn addPointLight(self: *Self, renderer: *Renderer) !void {
-        const cube = try render.shapes.cube(u16, renderer, .splat(0.2), 0xFFFFFFFF);
-        _ = try self.world.createEntityWith(.{
-            _world.components.core.Transform{},
-            render.ecs.components.Mesh{
-                .handle = cube,
+    pub fn addPointLight(self: *Self, position: Vec, color: Color4b) !Entity {
+        const entity = try self.world.createEntityWith(.{
+            _world.components.core.Transform{
+                .translation = position,
             },
-            render.ecs.components.Color{},
-            components.Orbit{},
             render.ecs.components.Light{
                 .ambient = .init(0.2, 0.2, 0.2, 1.0),
-                .diffuse = .init(0.5, 0.5, 0.5, 1.0),
+                .diffuse = color.toVec(),
             },
             render.ecs.components.PointLight{},
         });
+        return entity;
     }
 
     pub fn addDirectionalLight(self: *Self, direction: Vec) !void {
