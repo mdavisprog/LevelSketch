@@ -102,19 +102,6 @@ pub fn main() !void {
     var _editor: Editor = try .init(&the_world);
     defer _editor.deinit();
 
-    const positions = [_]Vec{
-        .init3(0.0, 0.0, 0.0),
-        .init3(2.0, 5.0, -15.0),
-        .init3(-1.5, -2.2, -2.5),
-        .init3(-3.8, -2.0, -12.3),
-        .init3(2.4, -0.4, -3.5),
-        .init3(-1.7, 3.0, -7.5),
-        .init3(1.3, -2.0, -2.5),
-        .init3(1.5, 2.0, -2.5),
-        .init3(1.5, 0.2, -1.5),
-        .init3(-1.3, 1.0, -1.5),
-    };
-
     const entities = loadCommandLineModels(renderer, &the_world) catch |err| {
         std.debug.panic(
             "There was an error trying to load models from the command-line. Error: {}",
@@ -123,20 +110,6 @@ pub fn main() !void {
     };
 
     if (entities) |_entities| {
-        // Only duplicate the first loaded model.
-        const entity = _entities[0];
-
-        for (positions, 0..) |pos, i| {
-            const target = if (i == 0) entity else try the_world.duplicateEntity(entity);
-            const transform = the_world.getComponent(world.components.core.Transform, target) orelse continue;
-            transform.translation = pos;
-
-            const angle: f32 = 20.0 * @as(f32, @floatFromInt(i));
-            transform.rotation.pitch = angle;
-            transform.rotation.yaw = angle * 0.5;
-            transform.rotation.roll = angle * 0.3;
-        }
-
         allocator.free(_entities);
     }
 
@@ -182,6 +155,7 @@ fn loadCommandLineModels(renderer: *Renderer, _world: *World) !?[]Entity {
     var entities: std.ArrayListUnmanaged(Entity) = .empty;
     errdefer entities.deinit(allocator);
 
+    var offset: f32 = 0.0;
     for (file_names) |file_name| {
         const path = std.fs.cwd().realpathAlloc(renderer.allocator, file_name) catch |err| {
             std.log.warn("Failed load model file {s}. Error: {}", .{ file_name, err });
@@ -195,7 +169,9 @@ fn loadCommandLineModels(renderer: *Renderer, _world: *World) !?[]Entity {
         const mesh = try renderer.loadMeshFromModel(model);
 
         const entity = _world.createEntity();
-        try _world.insertComponent(world.components.core.Transform, entity, .{});
+        try _world.insertComponent(world.components.core.Transform, entity, .{
+            .translation = .init3(offset, 0.0, 0.0),
+        });
         try _world.insertComponent(render.ecs.components.Mesh, entity, .{
             .handle = mesh,
         });
@@ -215,6 +191,8 @@ fn loadCommandLineModels(renderer: *Renderer, _world: *World) !?[]Entity {
         }
 
         try entities.append(allocator, entity);
+
+        offset += 2.0;
     }
 
     if (entities.items.len > 0) {
