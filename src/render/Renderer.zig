@@ -196,6 +196,10 @@ fn renderPhong(
     const renderer = _render.renderer;
     const phong = renderer.programs.getByName("phong") orelse unreachable;
 
+    // Renders the empty scene. Will properly clear the background. If not here and no meshes are
+    // found, then the framebuffer will just be a black screen.
+    renderer.view_world.touch();
+
     // Update light properties for shading all relevant meshes.
     {
         var entities = directional_light.getEntities();
