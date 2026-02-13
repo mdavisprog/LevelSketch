@@ -8,7 +8,7 @@ const LineReader = io.LineReader;
 
 const Self = @This();
 
-name: []const u8,
+name: []const u8 = "",
 ambient: Vec = .zero,
 diffuse: Vec = .splat(1.0),
 specular: Vec = .zero,

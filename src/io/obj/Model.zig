@@ -164,7 +164,7 @@ pub fn getTextureCoordFace(self: Self, face: usize, index: usize) ?Vec {
 }
 
 pub fn getNormal(self: Self, index: usize) ?Vec {
-    if (self.normals.items.len == 0 or index >= self.tex_coords.items.len) {
+    if (self.normals.items.len == 0 or index >= self.normals.items.len) {
         return null;
     }
 
