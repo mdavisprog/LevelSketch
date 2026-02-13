@@ -207,6 +207,12 @@ pub fn registerEvent(self: *Self, comptime Event: type) !void {
     try self.events.add(self._allocator, Event);
 }
 
+pub fn registerEvents(self: *Self, comptime EventTypes: []const type) !void {
+    inline for (EventTypes) |Event| {
+        try self.events.add(self._allocator, Event);
+    }
+}
+
 /// Same as registerSystem, but the system is not added to a schedule.
 pub fn registerEventListener(self: *Self, system: anytype) !void {
     verifySystem(system);
