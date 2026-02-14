@@ -10,6 +10,13 @@ const Query = world.Query;
 const Renderer = render.Renderer;
 const SystemParam = world.Systems.SystemParam;
 const Vec = core.math.Vec;
+const Window = platform.Window;
+const World = world.World;
+
+pub fn startup(param: SystemParam) !void {
+    const _platform = param.world.getResource(platform.ecs.resources.Platform) orelse unreachable;
+    _platform.primary_window.setOnDroppedFiles(onDroppedFiles, @ptrCast(param.world));
+}
 
 pub fn updateCamera(
     cameras: Query(&.{ world.components.core.Transform, editor.components.Camera }),
@@ -116,4 +123,25 @@ pub fn orbit(
             .getTranslation();
         transform.translation.setY(sin);
     }
+}
+
+fn onDroppedFiles(files: Window.DroppedFiles) void {
+    const _world: *World = @ptrCast(@alignCast(files.user_data));
+    const allocator = _world._allocator;
+
+    var paths: [][]const u8 = allocator.alloc([]const u8, files.paths.len) catch |err| {
+        std.debug.panic("Failed to allocate memory for paths. Error: {}", .{err});
+    };
+    defer allocator.free(paths);
+
+    var i: usize = 0;
+    var it = files.iterator();
+    while (it.next()) |path| {
+        paths[i] = path;
+        i += 1;
+    }
+
+    _world.triggerEvent(editor.events.LoadAssets{
+        .paths = paths,
+    });
 }

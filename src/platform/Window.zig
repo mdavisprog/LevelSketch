@@ -18,6 +18,33 @@ pub const KeyEvent = struct {
 };
 pub const KeyEventBuffer = StaticArrayList(KeyEvent, 8);
 
+pub const DroppedFiles = struct {
+    pub const Iterator = struct {
+        paths: [][*:0]const u8,
+        index: usize = 0,
+
+        pub fn next(self: *Iterator) ?[]const u8 {
+            if (self.index >= self.paths.len) {
+                return null;
+            }
+
+            const result = self.paths[self.index];
+            self.index += 1;
+            return std.mem.span(result);
+        }
+    };
+
+    paths: [][*:0]const u8,
+    user_data: ?*anyopaque = null,
+
+    pub fn iterator(self: DroppedFiles) Iterator {
+        return .{
+            .paths = self.paths,
+        };
+    }
+};
+pub const OnDroppedFiles = *const fn (files: DroppedFiles) void;
+
 handle: *zglfw.Window,
 
 pub fn init(allocator: std.mem.Allocator, title: []const u8, width: u32, height: u32) !Self {
@@ -84,16 +111,25 @@ pub fn setShouldClose(self: Self, should_close: bool) void {
     self.handle.setShouldClose(should_close);
 }
 
+pub fn setOnDroppedFiles(self: Self, on_dropped_files: OnDroppedFiles, user_data: ?*anyopaque,) void {
+    const data = self.handle.getUserPointer(Data).?;
+    data.on_dropped_files.callback = on_dropped_files;
+    data.on_dropped_files.user_data = user_data;
+}
+
 fn registerCallbacks(window: *zglfw.Window) void {
     _ = zglfw.setKeyCallback(window, onKey);
+    _ = zglfw.setDropCallback(window, onDrop);
 }
 
 fn unregisterCallbacks(window: *zglfw.Window) void {
     _ = zglfw.setKeyCallback(window, null);
+    _ = zglfw.setDropCallback(window, null);
 }
 
 const Data = struct {
     key_events: KeyEventBuffer = .empty,
+    on_dropped_files: generateCallback(OnDroppedFiles) = .{},
 };
 
 fn onKey(
@@ -115,5 +151,31 @@ fn onKey(
         .action = _action,
     }) catch |err| {
         std.debug.panic("Failed to append key event. Error: {}", .{err});
+    };
+}
+
+fn onDrop(window: *zglfw.Window, count: i32, paths: [*][*:0]const u8) callconv(.c) void {
+    const data: *Data = window.getUserPointer(Data).?;
+    if (data.on_dropped_files.callback) |callback| {
+        callback(.{
+            .paths = paths[0..@intCast(count)],
+            .user_data = data.on_dropped_files.user_data,
+        });
+    }
+}
+
+fn generateCallback(comptime T: type) type {
+    return struct {
+        const Callback = @This();
+
+        callback: ?T = null,
+        user_data: ?*anyopaque = null,
+
+        pub fn init(callback: T, user_data: ?*anyopaque) Callback {
+            return .{
+                .callback = callback,
+                .user_data = user_data,
+            };
+        }
     };
 }

@@ -28,11 +28,16 @@ pub const Editor = struct {
 
         try world.registerResource(resources.Orbit, .{});
 
-        try world.registerEvent(events.ResetCamera);
+        try world.registerEvents(&.{
+            events.ResetCamera,
+            events.LoadAssets,
+        });
 
+        _ = try world.registerSystem(systems.startup, .startup);
         _ = try world.registerSystem(systems.updateCamera, .update);
         _ = try world.registerSystem(systems.orbit, .update);
         try world.registerEventListener(events.onResetCamera);
+        try world.registerEventListener(events.onLoadAssets);
 
         const transform: _world.components.core.Transform = .{
             .translation = components.Camera.default_pos,

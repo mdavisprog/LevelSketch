@@ -1,6 +1,5 @@
 const glfw = @import("glfw.zig");
 const std = @import("std");
-const Window = @import("Window.zig");
 const world = @import("world");
 const zglfw = @import("zglfw");
 
@@ -9,6 +8,7 @@ const World = world.World;
 
 pub const ecs = @import("ecs/root.zig");
 pub const input = @import("input/root.zig");
+pub const Window = @import("Window.zig");
 
 pub fn init(_world: *World) !void {
     try zglfw.init();

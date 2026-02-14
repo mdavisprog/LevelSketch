@@ -52,6 +52,7 @@ pub fn build(b: *std.Build) !void {
     });
     try builder.addModule("editor", "src/editor/root.zig", &.{
         "core",
+        "io",
         "platform",
         "render",
         "world",

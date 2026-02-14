@@ -15,6 +15,7 @@ const Programs = render.shaders.Programs;
 const Query = world.Query;
 const RenderBuffer = render.RenderBuffer;
 const SystemParam = world.Systems.SystemParam;
+const Texture = render.Texture;
 const Textures = render.Textures;
 const Transform = world.components.core.Transform;
 const Vec = core.math.Vec;
@@ -159,6 +160,20 @@ pub fn loadMeshFromModel(self: *Self, model: Model) !Meshes.Mesh.Handle {
 
 pub fn loadMeshFromBuffer(self: *Self, buffer: anytype) !Meshes.Mesh.Handle {
     return self.meshes.loadFromBuffer(self, buffer);
+}
+
+pub fn loadTextureOrDefault(self: *Self, path: []const u8) !Texture {
+    return self.textures.loadImageAbsolute(
+        &self.mem_factory,
+        path,
+    ) catch |err| {
+        std.log.warn(
+            "Failed to load texture '{s}'' from model. Error: {}",
+            .{ path, err },
+        );
+
+        return self.textures.default;
+    };
 }
 
 fn shutdownSystem(param: SystemParam) !void {
