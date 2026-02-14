@@ -9,6 +9,7 @@ const Program = render.shaders.Program;
 const RenderBuffer = render.RenderBuffer;
 const Renderer = render.Renderer;
 const Texture = render.Texture;
+const Vec = core.math.Vec;
 const Vertex = render.Vertex;
 const VertexBuffer32 = render.VertexBuffer32;
 
@@ -79,17 +80,32 @@ fn convert(allocator: std.mem.Allocator, model: Model) !VertexBuffer32 {
     defer visited.deinit();
 
     for (model.faces.items) |face| {
-        const element1 = face.getTransformed(0) orelse continue;
-        const element2 = face.getTransformed(1) orelse continue;
-        const element3 = face.getTransformed(2) orelse continue;
+        var first_index: u32 = 0;
+        for (0..face.elements.items.len) |element_index| {
+            const element = face.getTransformed(element_index) orelse return Error.InvalidModel;
+            try addElement(allocator, &buffer, &visited, model, element);
 
-        try addElement(allocator, &buffer, &visited, model, element1);
-        try addElement(allocator, &buffer, &visited, model, element2);
-        try addElement(allocator, &buffer, &visited, model, element3);
+            // Keep track of the first element for this face. This is needed for faces with more
+            // than three vertices e.g. quads.
+            if (element_index == 0) {
+                first_index = buffer.indices.items[buffer.indices.items.len - 1];
+            }
 
-        // Swap the indices to ensure winding order.
-        const len = buffer.indices.items.len;
-        std.mem.swap(u32, &buffer.indices.items[len - 2], &buffer.indices.items[len - 1]);
+            if (element_index >= 2) {
+                // If this face is not a triangle, then need to generate a triangle to behave like
+                // a triangle fan using the first element of this face as the pivot.
+                if (element_index > 2) {
+                    // Need to account for the indices swapped from the previous triangle.
+                    const other = buffer.indices.items[buffer.indices.items.len - 3];
+                    try buffer.indices.append(allocator, first_index);
+                    try buffer.indices.append(allocator, other);
+                }
+
+                // The final two elements need to be swapped for proper winding order.
+                const len = buffer.indices.items.len;
+                std.mem.swap(u32, &buffer.indices.items[len - 2], &buffer.indices.items[len - 1]);
+            }
+        }
     }
 
     return buffer;
@@ -115,8 +131,10 @@ fn addElement(
 
 fn toVertex(element: Model.Face.Element, model: Model) ?Vertex {
     const position = model.getVertex(element.vertex) orelse return null;
-    const normal = model.getNormal(element.normal) orelse return null;
-    const texture = model.getTextureCoord(element.texture) orelse return null;
+    // Normal and texture coordinates are optional for faces. If not specified, mark them as
+    // zero.
+    const normal = model.getNormal(element.normal) orelse Vec.zero;
+    const texture = model.getTextureCoord(element.texture) orelse Vec.zero;
 
     return .init(position, normal, texture, 0xFFFFFFFF);
 }
