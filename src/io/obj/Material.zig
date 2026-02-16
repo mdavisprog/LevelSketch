@@ -11,8 +11,8 @@ const Self = @This();
 name: []const u8 = "",
 ambient: Vec = .zero,
 diffuse: Vec = .splat(1.0),
-specular: Vec = .zero,
-specular_exponent: f32 = 0.0,
+specular: Vec = .splat(1.0),
+specular_exponent: f32 = 32.0,
 diffuse_texture: ?[]const u8 = null,
 specular_texture: ?[]const u8 = null,
 

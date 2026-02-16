@@ -283,6 +283,7 @@ fn renderPhong(
             const material = param.world.getComponent(ecs.components.Phong, entity.*) orelse continue;
 
             mesh.buffer.bind(world_state);
+            try phong.setUniform("u_diffuse", material.diffuse_color);
             try phong.setTexture("s_diffuse", material.diffuse, 0);
             try phong.setTexture("s_specular", material.specular, 1);
             try phong.setUniform("u_specular_shininess", Vec.init(

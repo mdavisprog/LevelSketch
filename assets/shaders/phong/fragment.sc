@@ -28,6 +28,7 @@ uniform vec4 u_options;
 // Mesh properties
 SAMPLER2D(s_diffuse, 0);
 SAMPLER2D(s_specular, 1);
+uniform vec4 u_diffuse;
 uniform vec4 u_specular_shininess;
 #define u_specular u_specular_shininess.xyz
 #define u_shininess u_specular_shininess.w
@@ -38,9 +39,9 @@ vec4 calcDirectionalLight(vec3 normal, vec3 view_dir, vec2 texcoord) {
     vec3 reflect_dir = reflect(-dir, normal);
     float spec = pow(max(dot(view_dir, reflect_dir), 0.0), u_shininess);
 
-    vec4 ambient = u_light_dir_ambient * texture2D(s_diffuse, texcoord);
-    vec4 diffuse = u_light_dir_diffuse * diff * texture2D(s_diffuse, texcoord);
-    vec4 specular = u_light_dir_specular * spec * texture2D(s_specular, texcoord);
+    vec4 ambient = u_light_dir_ambient * texture2D(s_diffuse, texcoord) * u_diffuse;
+    vec4 diffuse = u_light_dir_diffuse * diff * texture2D(s_diffuse, texcoord) * u_diffuse;
+    vec4 specular = u_light_dir_specular * spec * texture2D(s_specular, texcoord) * vec4(u_specular, 1.0);
 
     return ambient + diffuse + specular;
 }
@@ -55,9 +56,9 @@ vec4 calcPointLight(int index, vec3 normal, vec3 view_dir, vec3 frag_pos, vec2 t
     float attenuation = 1.0 / (u_light_point_constant(index) + u_light_point_linear(index) * distance +
         u_light_point_quadratic(index) * (distance * distance));
 
-    vec4 ambient  = u_light_point_ambient[index] * texture2D(s_diffuse, texcoord);
-    vec4 diffuse  = u_light_point_diffuse[index] * diff * texture2D(s_diffuse, texcoord);
-    vec4 specular = u_light_point_specular[index] * spec * texture2D(s_specular, texcoord);
+    vec4 ambient  = u_light_point_ambient[index] * texture2D(s_diffuse, texcoord) * u_diffuse;
+    vec4 diffuse  = u_light_point_diffuse[index] * diff * texture2D(s_diffuse, texcoord) * u_diffuse;
+    vec4 specular = u_light_point_specular[index] * spec * texture2D(s_specular, texcoord) * vec4(u_specular, 1.0);
 
     ambient  *= attenuation;
     diffuse  *= attenuation;
