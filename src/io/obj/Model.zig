@@ -358,16 +358,22 @@ const ProcessResult = struct {
         defer allocator.free(directory);
 
         for (self.material_paths.items) |path| {
-            const materials = blk: {
+            const materials_or_error = blk: {
                 if (std.fs.path.isAbsolute(path)) {
-                    break :blk try Material.loadFile(allocator, path);
+                    break :blk Material.loadFile(allocator, path);
                 } else {
                     const full_path = try std.fs.path.join(allocator, &.{ directory, path });
                     defer allocator.free(full_path);
 
-                    break :blk try Material.loadFile(allocator, full_path);
+                    break :blk Material.loadFile(allocator, full_path);
                 }
             };
+
+            const materials = materials_or_error catch |err| {
+                std.log.warn("Failed to load material '{s}'. Error: {}", .{ path, err });
+                continue;
+            };
+
             defer allocator.free(materials);
 
             try model.materials.appendSlice(allocator, materials);
