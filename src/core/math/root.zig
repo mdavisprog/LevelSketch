@@ -22,6 +22,12 @@ pub const Vec2us = vec2.Vec2(usize);
 
 pub const Vec = @import("Vec.zig");
 
+pub fn sinCos(value: anytype) struct { @TypeOf(value), @TypeOf(value) } {
+    const sin = std.math.sin(value);
+    const cos = std.math.cos(value);
+    return .{ sin, cos };
+}
+
 test "refall" {
     std.testing.refAllDecls(@This());
 }

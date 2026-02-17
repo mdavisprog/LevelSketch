@@ -188,6 +188,130 @@ pub fn cubeBuffer(
     return buffer;
 }
 
+pub const Cylinder = struct {
+    radius: f32 = 0.5,
+    half_height: f32 = 0.5,
+    resolution: u32 = 32,
+    segments: u32 = 1,
+};
+
+pub fn cylinder(
+    comptime IndexType: type,
+    renderer: *Renderer,
+    settings: Cylinder,
+) !VertexBuffer(Vertex, IndexType) {
+    const allocator = renderer.allocator;
+
+    std.debug.assert(settings.resolution > 2);
+    std.debug.assert(settings.segments > 0);
+
+    const num_rings = settings.segments + 1;
+    const step_theta: f32 = std.math.tau / @as(f32, @floatFromInt(settings.resolution));
+    const step_y = 2.0 * settings.half_height / @as(f32, @floatFromInt(settings.segments));
+
+    var buffer: VertexBuffer(Vertex, IndexType) = try .init(allocator, 0, 0);
+    errdefer buffer.deinit(allocator);
+
+    // rings
+
+    for (0..num_rings) |ring| {
+        const y = -settings.half_height + @as(f32, @floatFromInt(ring)) * step_y;
+
+        var segment: u32 = 0;
+        while (segment <= settings.resolution) {
+            defer segment += 1;
+
+            const fsegment: f32 = @floatFromInt(segment);
+            const theta = fsegment * step_theta;
+            const sin, const cos = core.math.sinCos(theta);
+
+            const vertex: Vertex = .init(
+                .init3(settings.radius * cos, y, settings.radius * sin),
+                .init3(cos, 0.0, sin),
+                .init2(
+                    fsegment / @as(f32, @floatFromInt(settings.resolution)),
+                    @as(f32, @floatFromInt(ring)) / fsegment,
+                ),
+                0xFFFFFFFF,
+            );
+            try buffer.vertices.append(allocator, vertex);
+        }
+    }
+
+    // barrel skin
+
+    for (0..settings.segments) |i| {
+        const _i: u32 = @intCast(i);
+        const ring = _i * (settings.resolution + 1);
+        const next_ring = (_i + 1) * (settings.resolution + 1);
+
+        for (0..settings.resolution) |j| {
+            const _j: u32 = @intCast(j);
+            try buffer.indices.appendSlice(allocator, &.{
+                @intCast(ring + _j),
+                @intCast(ring + _j + 1),
+                @intCast(next_ring + _j),
+                @intCast(next_ring + _j),
+                @intCast(ring + _j + 1),
+                @intCast(next_ring + _j + 1),
+            });
+        }
+    }
+
+    // caps
+
+    try cylinderBuildCap(IndexType, allocator, settings, &buffer, true, step_theta);
+    try cylinderBuildCap(IndexType, allocator, settings, &buffer, false, step_theta);
+
+    return buffer;
+}
+
+pub fn cylinderMesh(
+    comptime IndexType: type,
+    renderer: *Renderer,
+    settings: Cylinder,
+) !Meshes.Mesh.Handle {
+    const buffer = try cylinder(IndexType, renderer, settings);
+    return try renderer.loadMeshFromBuffer(buffer);
+}
+
+fn cylinderBuildCap(
+    comptime IndexType: type,
+    allocator: std.mem.Allocator,
+    settings: Cylinder,
+    buffer: *VertexBuffer(Vertex, IndexType),
+    top: bool,
+    step_theta: f32,
+) !void {
+    const offset: u32 = @intCast(buffer.vertices.items.len);
+    const y, const normal_y: f32, const winding: struct { u32, u32 } = if (top)
+        .{ settings.half_height, 1.0, .{ @as(u32, 1), 0 } }
+    else
+        .{ -settings.half_height, -1.0, .{ 0, 1 } };
+
+    for (0..settings.resolution) |i| {
+        const theta = @as(f32, @floatFromInt(i)) * step_theta;
+        const sin, const cos = core.math.sinCos(theta);
+
+        const vertex: Vertex = .init(
+            .init3(cos * settings.radius, y, sin * settings.radius),
+            .init3(0.0, normal_y, 0.0),
+            .init2(0.5 * (cos + 1.0), 1.0 - 0.5 * (sin + 1.0)),
+            0xFFFFFFFF,
+        );
+        try buffer.vertices.append(allocator, vertex);
+    }
+
+    for (1..(settings.resolution - 1)) |i| {
+        const _i: u32 = @intCast(i);
+        try buffer.indices.appendSlice(allocator, &.{
+            @intCast(offset),
+            @intCast(offset + _i + winding.@"1"),
+            @intCast(offset + _i + winding.@"0"),
+        });
+    }
+}
+
 fn quarterArcPoints(
     center: Vec2f,
     radius: f32,
