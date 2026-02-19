@@ -401,6 +401,18 @@ test "duplicate entity" {
     try std.testing.expectEqual(entity_a.count, duplicate_a.count);
 }
 
+test "invalid entity" {
+    const allocator = std.testing.allocator;
+
+    var _world: Self = try .init(allocator);
+    defer _world.deinit();
+
+    try std.testing.expectError(
+        Components.Error.InvalidEntity,
+        _world.insertComponent(Transform, .invalid, .{}),
+    );
+}
+
 test "add component" {
     const allocator = std.testing.allocator;
 

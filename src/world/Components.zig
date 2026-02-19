@@ -4,6 +4,10 @@ const world = @import("root.zig");
 
 const Entity = world.Entity;
 
+pub const Error = error{
+    InvalidEntity,
+};
+
 /// Holds all arrays for each registered component type.
 const Self = @This();
 
@@ -55,6 +59,10 @@ pub fn insert(
     entity: Entity,
     component: T,
 ) !void {
+    if (!entity.isValid()) {
+        return Error.InvalidEntity;
+    }
+
     const key = @typeName(T);
     const type_id = self._types.get(key) orelse return;
     const array = self._arrays.get(type_id) orelse return;
@@ -68,6 +76,10 @@ pub fn insertById(
     entity: Entity,
     component: *anyopaque,
 ) !void {
+    if (!entity.isValid()) {
+        return Error.InvalidEntity;
+    }
+
     const array = self._arrays.get(id) orelse return;
     try array.insert_fn(array.ptr, allocator, entity, component);
 }
@@ -87,6 +99,10 @@ pub fn entityDestroyed(self: Self, allocator: std.mem.Allocator, entity: Entity)
 }
 
 pub fn get(self: Self, comptime T: type, entity: Entity) ?*T {
+    if (!entity.isValid()) {
+        return null;
+    }
+
     const key = @typeName(T);
     const type_id = self._types.get(key) orelse return null;
     const array = self._arrays.get(type_id) orelse return null;
@@ -95,6 +111,10 @@ pub fn get(self: Self, comptime T: type, entity: Entity) ?*T {
 }
 
 pub fn getById(self: Self, id: Id, entity: Entity) ?*anyopaque {
+    if (!entity.isValid()) {
+        return null;
+    }
+
     const array = self._arrays.get(id) orelse return null;
     return array.get_fn(array.ptr, entity);
 }

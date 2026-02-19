@@ -6,8 +6,15 @@ const Signature = Components.Signature;
 
 pub const Entity = struct {
     pub const Id = u32;
+    pub const invalid: Entity = .{
+        .id = std.math.maxInt(Id),
+    };
 
     id: Id = 0,
+
+    pub fn isValid(self: Entity) bool {
+        return self.id != invalid.id;
+    }
 };
 
 const Self = @This();
