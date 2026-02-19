@@ -42,10 +42,13 @@ pub fn main() !void {
     try stb.init(allocator);
     defer stb.deinit();
 
-    var the_world: World = try .init(allocator);
-    defer the_world.deinit();
+    const the_world: *World = try .init(allocator);
+    defer {
+        the_world.deinit();
+        allocator.destroy(the_world);
+    }
 
-    try platform.init(&the_world);
+    try platform.init(the_world);
     const platform_resource = the_world.getResource(platform.ecs.resources.Platform).?;
     const mouse = the_world.getResource(platform.input.resources.Mouse).?;
 
@@ -97,12 +100,12 @@ pub fn main() !void {
     var main_gui: GUI = try .init(renderer);
     defer main_gui.deinit(allocator);
 
-    try renderer.initECS(&the_world);
+    try renderer.initECS(the_world);
 
-    var _editor: Editor = try .init(&the_world);
+    var _editor: Editor = try .init(the_world);
     defer _editor.deinit();
 
-    const entities = loadCommandLineModels(renderer, &the_world) catch |err| {
+    const entities = loadCommandLineModels(renderer, the_world) catch |err| {
         std.debug.panic(
             "There was an error trying to load models from the command-line. Error: {}",
             .{err},
@@ -121,7 +124,7 @@ pub fn main() !void {
         the_world.runSystems(.preupdate);
         the_world.runSystems(.update);
 
-        try main_gui.update(&the_world, mouse.state);
+        try main_gui.update(the_world, mouse.state);
 
         the_world.runSystems(.render);
 

@@ -29,25 +29,34 @@ queries: *Queries,
 events: *Events,
 _allocator: std.mem.Allocator,
 
-pub fn init(allocator: std.mem.Allocator) !Self {
-    var components: Components = .init();
-    try components.register(Transform, allocator);
-
+/// Creates a world object on the heap. This is due to needing to register systems that require
+/// a pointer to the world when a SystemParam parameter is found.
+pub fn init(allocator: std.mem.Allocator) !*Self {
     const queries = try allocator.create(Queries);
+    errdefer allocator.destroy(queries);
     queries.* = .init();
 
     const events = try allocator.create(Events);
+    errdefer allocator.destroy(events);
     events.* = .init();
 
-    return .{
+    const result = try allocator.create(Self);
+    result.* = .{
         .entities = .init(allocator),
-        .components = components,
+        .components = .init(),
         .systems = .init(),
         .resources = .init(),
         .queries = queries,
         .events = events,
         ._allocator = allocator,
     };
+    errdefer allocator.destroy(result);
+
+    try result.registerComponents(&.{
+        world.components.core.Transform,
+    });
+
+    return result;
 }
 
 pub fn deinit(self: *Self) void {
@@ -135,7 +144,12 @@ pub fn insertComponents(self: *Self, entity: Entity, components: anytype) !void 
             @field(components, field.name),
         );
 
-        const id = self.components.getComponentId(field.type) orelse unreachable;
+        const id = self.components.getComponentId(field.type) orelse {
+            std.debug.panic(
+                "Failed to insert component '{s}'. Component not registered.",
+                .{@typeName(field.type)},
+            );
+        };
         self.entities.setSignatureBit(entity, @intCast(id));
     }
 
@@ -348,11 +362,16 @@ fn verifySystem(system: anytype) void {
     }
 }
 
+fn destroyWorld(_world: *World) void {
+    _world.deinit();
+    _world._allocator.destroy(_world);
+}
+
 test "add entity" {
     const allocator = std.testing.allocator;
 
-    var _world: Self = try .init(allocator);
-    defer _world.deinit();
+    const _world: *Self = try .init(allocator);
+    defer destroyWorld(_world);
 
     const entity = _world.createEntity();
     try std.testing.expectEqual(0, entity.id);
@@ -361,8 +380,8 @@ test "add entity" {
 test "destroy entity" {
     const allocator = std.testing.allocator;
 
-    var _world: Self = try .init(allocator);
-    defer _world.deinit();
+    const _world: *Self = try .init(allocator);
+    defer destroyWorld(_world);
 
     const entity1 = _world.createEntity();
     const entity2 = _world.createEntity();
@@ -384,8 +403,8 @@ test "destroy entity" {
 test "duplicate entity" {
     const allocator = std.testing.allocator;
 
-    var _world: Self = try .init(allocator);
-    defer _world.deinit();
+    const _world: *Self = try .init(allocator);
+    defer destroyWorld(_world);
 
     try _world.registerComponent(ComponentA);
 
@@ -404,8 +423,8 @@ test "duplicate entity" {
 test "invalid entity" {
     const allocator = std.testing.allocator;
 
-    var _world: Self = try .init(allocator);
-    defer _world.deinit();
+    const _world: *Self = try .init(allocator);
+    defer destroyWorld(_world);
 
     try std.testing.expectError(
         Components.Error.InvalidEntity,
@@ -416,8 +435,8 @@ test "invalid entity" {
 test "add component" {
     const allocator = std.testing.allocator;
 
-    var _world: Self = try .init(allocator);
-    defer _world.deinit();
+    const _world: *Self = try .init(allocator);
+    defer destroyWorld(_world);
 
     const entity = _world.createEntity();
     try _world.insertComponent(Transform, entity, .{
@@ -440,8 +459,8 @@ test "add component" {
 test "remove component" {
     const allocator = std.testing.allocator;
 
-    var _world: Self = try .init(allocator);
-    defer _world.deinit();
+    const _world: *Self = try .init(allocator);
+    defer destroyWorld(_world);
 
     const entity = _world.createEntity();
     try _world.insertComponent(Transform, entity, .{
@@ -462,8 +481,8 @@ test "remove component" {
 test "update component" {
     const allocator = std.testing.allocator;
 
-    var _world: Self = try .init(allocator);
-    defer _world.deinit();
+    const _world: *Self = try .init(allocator);
+    defer destroyWorld(_world);
 
     const entity = _world.createEntity();
     try _world.insertComponent(Transform, entity, .{
@@ -541,8 +560,8 @@ fn systemABC(
 test "register system" {
     const allocator = std.testing.allocator;
 
-    var _world: Self = try .init(allocator);
-    defer _world.deinit();
+    const _world: *Self = try .init(allocator);
+    defer destroyWorld(_world);
 
     try _world.registerComponent(ComponentA);
     _ = try _world.registerSystem(systemA, .startup);
@@ -559,8 +578,8 @@ test "register system" {
 test "unregister system" {
     const allocator = std.testing.allocator;
 
-    var _world: Self = try .init(allocator);
-    defer _world.deinit();
+    const _world: *Self = try .init(allocator);
+    defer destroyWorld(_world);
 
     try _world.registerComponent(ComponentA);
     const system = try _world.registerSystem(systemA, .startup);
@@ -581,8 +600,8 @@ test "unregister system" {
 test "multiple queries" {
     const allocator = std.testing.allocator;
 
-    var _world: Self = try .init(allocator);
-    defer _world.deinit();
+    const _world: *Self = try .init(allocator);
+    defer destroyWorld(_world);
 
     try _world.registerComponents(&.{
         ComponentA,
@@ -613,8 +632,8 @@ test "multiple queries" {
 test "multiple queries remove component" {
     const allocator = std.testing.allocator;
 
-    var _world: Self = try .init(allocator);
-    defer _world.deinit();
+    const _world: *Self = try .init(allocator);
+    defer destroyWorld(_world);
 
     try _world.registerComponents(&.{
         ComponentA,
@@ -658,8 +677,8 @@ fn systemDuplicate(
 test "duplicate queries" {
     const allocator = std.testing.allocator;
 
-    var _world: Self = try .init(allocator);
-    defer _world.deinit();
+    const _world: *Self = try .init(allocator);
+    defer destroyWorld(_world);
 
     try _world.registerComponents(&.{ ComponentA, ComponentB });
 
@@ -670,8 +689,8 @@ test "duplicate queries" {
 test "multiple systems" {
     const allocator = std.testing.allocator;
 
-    var _world: Self = try .init(allocator);
-    defer _world.deinit();
+    const _world: *Self = try .init(allocator);
+    defer destroyWorld(_world);
 
     try _world.registerComponents(&.{ ComponentA, ComponentB });
     _ = try _world.registerSystem(systemA, .update);
@@ -702,8 +721,8 @@ test "multiple systems" {
 test "entity change systems" {
     const allocator = std.testing.allocator;
 
-    var _world: Self = try .init(allocator);
-    defer _world.deinit();
+    const _world: *Self = try .init(allocator);
+    defer destroyWorld(_world);
 
     try _world.registerComponents(&.{ ComponentA, ComponentB });
     _ = try _world.registerSystem(systemA, .update);
@@ -757,8 +776,8 @@ fn systemResource(param: SystemParam) !void {
 test "resource" {
     const allocator = std.testing.allocator;
 
-    var _world: World = try .init(allocator);
-    defer _world.deinit();
+    const _world: *Self = try .init(allocator);
+    defer destroyWorld(_world);
 
     _ = try _world.registerSystem(systemResource, .update);
 
@@ -782,8 +801,8 @@ test "resource" {
 test "insert components" {
     const allocator = std.testing.allocator;
 
-    var _world: World = try .init(allocator);
-    defer _world.deinit();
+    const _world: *Self = try .init(allocator);
+    defer destroyWorld(_world);
 
     try _world.registerComponents(&.{ ComponentA, ComponentB });
 
@@ -818,8 +837,8 @@ fn systemEventA(event: EventA, query: Query(&.{ComponentA}), param: SystemParam)
 test "event" {
     const allocator = std.testing.allocator;
 
-    var _world: Self = try .init(allocator);
-    defer _world.deinit();
+    const _world: *Self = try .init(allocator);
+    defer destroyWorld(_world);
 
     try _world.registerComponents(&.{ComponentA});
     try _world.registerEvent(EventA);
@@ -850,8 +869,8 @@ fn systemMarker(markers: Query(&.{MarkerComponent}), param: SystemParam) !void {
 test "marker component" {
     const allocator = std.testing.allocator;
 
-    var _world: Self = try .init(allocator);
-    defer _world.deinit();
+    const _world: *Self = try .init(allocator);
+    defer destroyWorld(_world);
 
     try _world.registerComponent(MarkerComponent);
     _ = try _world.registerSystem(systemMarker, .startup);
