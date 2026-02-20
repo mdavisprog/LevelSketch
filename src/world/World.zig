@@ -1,6 +1,7 @@
 const Components = @import("Components.zig");
 const Entities = @import("Entities.zig");
 const Events = @import("Events.zig");
+const internal_systems = @import("systems/root.zig");
 const Queries = @import("Queries.zig");
 const Resources = @import("Resources.zig");
 const std = @import("std");
@@ -54,7 +55,11 @@ pub fn init(allocator: std.mem.Allocator) !*Self {
 
     try result.registerComponents(&.{
         world.components.core.Transform,
+        world.components.core.ResolvedTransform,
+        world.components.core.Child,
     });
+
+    _ = try result.registerSystem(internal_systems.resolveTransforms, .postupdate);
 
     return result;
 }
@@ -136,7 +141,7 @@ pub fn insertComponents(self: *Self, entity: Entity, components: anytype) !void 
         ));
     }
 
-    inline for (std.meta.fields(ComponentsType)) |field| {
+    inline for (std.meta.fields(ComponentsType), 0..) |field, i| {
         try self.components.insert(
             field.type,
             self._allocator,
@@ -145,10 +150,18 @@ pub fn insertComponents(self: *Self, entity: Entity, components: anytype) !void 
         );
 
         const id = self.components.getComponentId(field.type) orelse {
-            std.debug.panic(
-                "Failed to insert component '{s}'. Component not registered.",
-                .{@typeName(field.type)},
-            );
+            if (field.type == type) {
+                std.debug.panic(
+                    "Failed to insert component. Component given at index '{}'' is of 'type', " ++
+                        "not an instance.",
+                    .{i},
+                );
+            } else {
+                std.debug.panic(
+                    "Failed to insert component '{s}'. Component not registered.",
+                    .{@typeName(field.type)},
+                );
+            }
         };
         self.entities.setSignatureBit(entity, @intCast(id));
     }
@@ -168,6 +181,16 @@ pub fn removeComponent(self: *Self, comptime T: type, entity: Entity) !void {
     // Notify all systems to move the entity to the proper sets
     const signature = self.entities.getSignature(entity);
     try self.queries.signatureChanged(self._allocator, signature, entity);
+}
+
+pub fn getOrInsertComponent(self: *Self, comptime T: type, entity: Entity) !?*T {
+    if (self.getComponent(T, entity)) |component| {
+        return component;
+    }
+
+    try self.insertComponent(T, entity, std.mem.zeroInit(T, .{}));
+
+    return self.getComponent(T, entity).?;
 }
 
 pub fn getComponent(self: Self, comptime T: type, entity: Entity) ?*T {
@@ -877,4 +900,38 @@ test "marker component" {
     _ = try _world.createEntityWith(.{MarkerComponent{}});
 
     _world.runSystems(.startup);
+}
+
+test "hierarchy" {
+    const allocator = std.testing.allocator;
+
+    const _world: *Self = try .init(allocator);
+    defer destroyWorld(_world);
+
+    const parent = try _world.createEntityWith(.{
+        Transform{
+            .translation = .init3(0.0, 2.0, 0.0),
+        },
+    });
+
+    const child = try _world.createEntityWith(.{
+        Transform{
+            .translation = .init3(2.0, 0.0, 0.0),
+        },
+        world.components.core.Child{
+            .parent = parent,
+        },
+    });
+
+    _world.runSystems(.postupdate);
+
+    const transform = _world.getComponent(
+        world.components.core.ResolvedTransform,
+        child,
+    ) orelse unreachable;
+
+    const position = transform.transform.getTranslation();
+    try std.testing.expectEqual(2.0, position.x());
+    try std.testing.expectEqual(2.0, position.y());
+    try std.testing.expectEqual(0.0, position.z());
 }

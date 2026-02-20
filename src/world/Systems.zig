@@ -29,6 +29,7 @@ pub const Schedule = enum {
     startup,
     preupdate,
     update,
+    postupdate,
     render,
     shutdown,
 };

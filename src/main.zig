@@ -123,12 +123,10 @@ pub fn main() !void {
     while (!platform_resource.primary_window.shouldClose()) {
         the_world.runSystems(.preupdate);
         the_world.runSystems(.update);
-
         try main_gui.update(the_world, mouse.state);
+        the_world.runSystems(.postupdate);
 
         the_world.runSystems(.render);
-
-        // Render the GUI
         try main_gui.draw(renderer);
 
         _ = zbgfx.bgfx.frame(false);

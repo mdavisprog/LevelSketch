@@ -6,7 +6,9 @@ const std = @import("std");
 const world = @import("world");
 const zbgfx = @import("zbgfx");
 
+const Entity = world.Entity;
 const Fonts = render.Fonts;
+const Mat = core.math.Mat;
 const MemFactory = render.MemFactory;
 const Meshes = render.Meshes;
 const Model = io.obj.Model;
@@ -277,7 +279,6 @@ fn renderPhong(
     {
         var entities = meshes.getEntities();
         while (entities.next()) |entity| {
-            const transform = param.world.getComponent(world.components.core.Transform, entity.*) orelse continue;
             const mesh_component = param.world.getComponent(ecs.components.Mesh, entity.*) orelse continue;
             const mesh = renderer.meshes.get(mesh_component.handle) orelse continue;
             const material = param.world.getComponent(ecs.components.Phong, entity.*) orelse continue;
@@ -293,7 +294,7 @@ fn renderPhong(
                 material.shininess,
             ));
 
-            const model_mat = transform.toMatrix();
+            const model_mat = getTransform(entity.*, param);
             const normal_mat = model_mat.inverse().transpose();
 
             _ = zbgfx.bgfx.setTransform(&model_mat.toArray(), 1);
@@ -322,15 +323,27 @@ fn renderColor(
 
     var entities = meshes.getEntities();
     while (entities.next()) |entity| {
-        const transform = param.world.getComponent(world.components.core.Transform, entity.*) orelse continue;
         const mesh_component = param.world.getComponent(ecs.components.Mesh, entity.*) orelse continue;
         const mesh = renderer.meshes.get(mesh_component.handle) orelse continue;
         const material = param.world.getComponent(ecs.components.Color, entity.*) orelse continue;
 
+        const mat = getTransform(entity.*, param);
         mesh.buffer.bind(world_state);
-        _ = zbgfx.bgfx.setTransform(&transform.toMatrix().toArray(), 1);
+        _ = zbgfx.bgfx.setTransform(&mat.toArray(), 1);
         try common.setUniform("u_color", material.tint);
         zbgfx.bgfx.submit(renderer.view_world.id, common.bgfx_handle, 0, 0);
         zbgfx.bgfx.discard(zbgfx.bgfx.DiscardFlags_All);
     }
+}
+
+fn getTransform(entity: Entity, param: SystemParam) Mat {
+    if (param.getComponent(world.components.core.ResolvedTransform, entity)) |transform| {
+        return transform.transform;
+    }
+
+    if (param.getComponent(world.components.core.Transform, entity)) |transform| {
+        return transform.toMatrix();
+    }
+
+    return .identity;
 }

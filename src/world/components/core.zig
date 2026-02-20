@@ -1,5 +1,8 @@
 const core = @import("core");
+const std = @import("std");
+const world = @import("../root.zig");
 
+const Entity = world.Entity;
 const Mat = core.math.Mat;
 const Rotation = core.math.Rotation;
 const Vec = core.math.Vec;
@@ -14,4 +17,12 @@ pub const Transform = struct {
             .rotate(self.rotation)
             .scale(self.scale);
     }
+};
+
+pub const ResolvedTransform = struct {
+    transform: Mat = .identity,
+};
+
+pub const Child = struct {
+    parent: Entity = .invalid,
 };

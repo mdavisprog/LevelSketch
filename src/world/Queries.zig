@@ -30,6 +30,11 @@ pub fn Query(comptime components: []const type) type {
             const entities = self.entities orelse return 0;
             return entities.count();
         }
+
+        pub fn hasEntity(self: QuerySelf, entity: Entity) bool {
+            const entities = self.entities orelse return false;
+            return entities.contains(entity);
+        }
     };
 }
 
