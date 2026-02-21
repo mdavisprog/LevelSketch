@@ -112,19 +112,19 @@ pub fn quadRounded(
     return builder.buffer;
 }
 
-pub fn cube(
+pub fn cubeMesh(
     comptime IndexType: type,
     renderer: *Renderer,
     half_size: Vec,
     color: u32,
 ) !Meshes.Mesh.Handle {
-    var buffer = try cubeBuffer(IndexType, renderer.allocator, half_size, color);
+    var buffer = try cube(IndexType, renderer.allocator, half_size, color);
     errdefer buffer.deinit(renderer.allocator);
 
     return renderer.loadMeshFromBuffer(buffer);
 }
 
-pub fn cubeBuffer(
+pub fn cube(
     comptime IndexType: type,
     allocator: std.mem.Allocator,
     half_size: Vec,
@@ -272,6 +272,94 @@ pub fn cylinderMesh(
     settings: Cylinder,
 ) !Meshes.Mesh.Handle {
     const buffer = try cylinder(IndexType, renderer, settings);
+    return try renderer.loadMeshFromBuffer(buffer);
+}
+
+pub const Cone = struct {
+    radius: f32 = 0.5,
+    height: f32 = 1.0,
+    resolution: u32 = 32,
+};
+
+pub fn cone(
+    comptime IndexType: type,
+    renderer: *Renderer,
+    settings: Cone,
+) !VertexBuffer(Vertex, IndexType) {
+    const allocator = renderer.allocator;
+
+    var buffer: VertexBuffer(Vertex, IndexType) = try .init(allocator, 0, 0);
+    errdefer buffer.deinit(allocator);
+
+    const half_height = settings.height * 0.5;
+    try buffer.vertices.append(allocator, .init(
+        .init3(0.0, half_height, 0.0),
+        .init3(0.0, 0.0, 0.0),
+        .init2(0.5, 0.5),
+        0xFFFFFFFF,
+    ));
+
+    const normal_slope = settings.radius / settings.height;
+    const normalization_factor = 1.0 / std.math.sqrt(1.0 + normal_slope * normal_slope);
+    const step_theta = std.math.tau / @as(f32, @floatFromInt(settings.resolution));
+
+    for (0..settings.resolution) |segment| {
+        const theta = @as(f32, @floatFromInt(segment)) * step_theta;
+        const sin, const cos = core.math.sinCos(theta);
+
+        const normal = Vec.init3(cos, normal_slope, sin).mul(normalization_factor);
+        try buffer.vertices.append(allocator, .init(
+            .init3(settings.radius * cos, -half_height, settings.radius * sin),
+            normal,
+            .init2(0.5 + cos * 0.5, 0.5 + sin * 0.5),
+            0xFFFFFFFF,
+        ));
+    }
+
+    for (1..settings.resolution) |j| {
+        try buffer.indices.appendSlice(allocator, &.{
+            @intCast(0),
+            @intCast(j),
+            @intCast(j + 1),
+        });
+    }
+
+    try buffer.indices.appendSlice(allocator, &.{
+        0,
+        @intCast(settings.resolution),
+        1,
+    });
+
+    const index_offset: IndexType = @intCast(buffer.vertices.items.len);
+    for (0..settings.resolution) |i| {
+        const theta = @as(f32, @floatFromInt(i)) * step_theta;
+        const sin, const cos = core.math.sinCos(theta);
+
+        try buffer.vertices.append(allocator, .init(
+            .init3(cos * settings.radius, -half_height, sin * settings.radius),
+            .init3(0.0, -1.0, 0.0),
+            .init2(0.5 * (cos + 1.0), 1.0 - 0.5 * (sin + 1.0)),
+            0xFFFFFFFF,
+        ));
+    }
+
+    for (1..(settings.resolution - 1)) |i| {
+        try buffer.indices.appendSlice(allocator, &.{
+            index_offset,
+            index_offset + @as(IndexType, @intCast(i)) + 1,
+            index_offset + @as(IndexType, @intCast(i)),
+        });
+    }
+
+    return buffer;
+}
+
+pub fn coneMesh(
+    comptime IndexType: type,
+    renderer: *Renderer,
+    settings: Cone,
+) !Meshes.Mesh.Handle {
+    const buffer = try cone(IndexType, renderer, settings);
     return try renderer.loadMeshFromBuffer(buffer);
 }
 
